@@ -101,7 +101,7 @@ export function SlotManager({
             width: '100%',
             padding: '10px 14px',
             marginBottom: 16,
-            background: registry.slots.length >= MAX_SLOTS ? '#E8ECF0' : '#E8F0FA',
+            background: registry.slots.length >= MAX_SLOTS ? '#E8ECF0' : '#EDE0FA',
             border: `2px solid ${registry.slots.length >= MAX_SLOTS ? UI_BORDER : UI_PRIMARY}`,
             borderRadius: 8,
             fontSize: 14,
@@ -141,7 +141,7 @@ export function SlotManager({
                     padding: '10px 12px',
                     borderRadius: 8,
                     border: `2px solid ${isActive ? UI_PRIMARY : UI_BORDER}`,
-                    background: isActive ? '#F0F5FC' : '#fff',
+                    background: isActive ? '#F5F0FC' : '#fff',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32 }}>
@@ -189,7 +189,7 @@ export function SlotManager({
                         fontSize: 11,
                         fontWeight: 600,
                         color: UI_PRIMARY,
-                        background: '#D6E4F5',
+                        background: '#D6D0F5',
                         padding: '2px 8px',
                         borderRadius: 10,
                         whiteSpace: 'nowrap',

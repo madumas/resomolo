@@ -256,7 +256,7 @@ export function ProblemZone({
                 style={{
                   minWidth: MIN_BUTTON_SIZE_PX,
                   minHeight: MIN_BUTTON_SIZE_PX,
-                  background: showSharePanel ? '#E8F0FA' : 'none',
+                  background: showSharePanel ? '#EDE0FA' : 'none',
                   border: `1px solid ${showSharePanel ? UI_PRIMARY : UI_BORDER}`,
                   borderRadius: 6,
                   cursor: 'pointer',

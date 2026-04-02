@@ -25,7 +25,7 @@ export const COLORS = {
   border: '#D1D5DB',
   borderLight: '#E5E7EB',
   destructive: '#C82828',
-  primary: '#185FA5',
+  primary: '#7028e0',
 
   // Highlights
   highlightBleu: '#C5D9F0',
@@ -47,13 +47,13 @@ export const COLORS = {
 // Layout — aligné TracéVite
 export const TOOLBAR_HEIGHT = 64;
 export const STATUS_BAR_HEIGHT = 44;
-export const STATUS_BAR_BG = '#E3EBF5';
+export const STATUS_BAR_BG = '#EDE5F5';
 export const ACTION_BAR_HEIGHT = 56;
 
 // UI colors — exports nommés (alignés TracéVite)
 export const UI_BG = '#F5F7FA';
 export const UI_SURFACE = '#FFFFFF';
-export const UI_PRIMARY = '#185FA5';
+export const UI_PRIMARY = '#7028e0';
 export const UI_DESTRUCTIVE = '#C82828';
 export const UI_BORDER = '#D1D8E0';
 export const UI_TEXT_PRIMARY = '#1A2433';

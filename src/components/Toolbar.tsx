@@ -165,7 +165,7 @@ function ToolButton({ tool, active, dimmed, onClick }: {
         alignItems: 'center',
         gap: 2,
         padding: '4px 10px',
-        background: active ? '#E8F0FA' : UI_SURFACE,
+        background: active ? '#EDE0FA' : UI_SURFACE,
         border: `${active ? 2 : 1}px solid ${active ? UI_PRIMARY : UI_BORDER}`,
         borderRadius: 6,
         fontSize: 11,

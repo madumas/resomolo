@@ -50,7 +50,7 @@ export function StatusBar({
                 height: MIN_BUTTON_SIZE_PX,
                 border: `1px solid ${jetonQuantity === n ? UI_PRIMARY : UI_BORDER}`,
                 borderRadius: 4,
-                background: jetonQuantity === n ? '#E8F0FA' : '#fff',
+                background: jetonQuantity === n ? '#EDE0FA' : '#fff',
                 color: jetonQuantity === n ? UI_PRIMARY : UI_TEXT_SECONDARY,
                 fontSize: 13,
                 fontWeight: jetonQuantity === n ? 600 : 400,
