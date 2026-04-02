@@ -15,6 +15,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "deploy": "npm run build && npx wrangler deploy",
+    "deploy:preview": "npm run build && npx wrangler deploy --env preview",
     "test:e2e": "npx playwright test",
     "test:e2e:headed": "npx playwright test --headed",
     "test:e2e:ui": "npx playwright test --ui"

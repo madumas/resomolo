@@ -1,0 +1,2 @@
+# www → apex redirects handled via Cloudflare DNS rules
+# SPA routing handled via wrangler.jsonc not_found_handling
