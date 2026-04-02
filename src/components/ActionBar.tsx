@@ -18,6 +18,7 @@ interface ActionBarProps {
   onShowSlotManager: () => void;
   onExportImage?: () => void;
   onExportPdf?: () => void;
+  onShareLink?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
 }
 
@@ -34,6 +35,7 @@ export function ActionBar({
   onShowSlotManager,
   onExportImage,
   onExportPdf,
+  onShareLink,
   sessionTimer,
 }: ActionBarProps) {
   // showMore removed — fullscreen is now a standalone toggle
@@ -101,19 +103,12 @@ export function ActionBar({
         <FolderIcon /> Modélisations
       </ActionBtn>
 
-      {/* Export image */}
-      {onExportImage && (
-        <ActionBtn onClick={onExportImage} title="Exporter une image de la modélisation" aria-label="Photo">
-          <CameraIcon /> Photo
-        </ActionBtn>
-      )}
-
-      {/* Export PDF */}
-      {onExportPdf && (
-        <ActionBtn onClick={onExportPdf} title="Exporter en PDF" aria-label="PDF">
-          PDF
-        </ActionBtn>
-      )}
+      {/* Partager — regroupe Photo, PDF, Lien */}
+      <ShareMenu
+        onExportImage={onExportImage}
+        onExportPdf={onExportPdf}
+        onShareLink={onShareLink}
+      />
 
       <div style={{ flex: 1 }} />
 
@@ -174,6 +169,95 @@ export function ActionBar({
       {/* Fullscreen toggle — same position as GéoMolo/TracéVite */}
       <FullscreenToggle />
     </div>
+  );
+}
+
+function ShareMenu({ onExportImage, onExportPdf, onShareLink }: {
+  onExportImage?: () => void;
+  onExportPdf?: () => void;
+  onShareLink?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!onExportImage && !onExportPdf && !onShareLink) return null;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <ActionBtn
+        onClick={() => setOpen(!open)}
+        title="Partager"
+        aria-label="Partager"
+        active={open}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 8v4h10V8M7 1v8M4 4l3-3 3 3" />
+        </svg>
+        {' '}Partager
+      </ActionBtn>
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginBottom: 8,
+            background: '#fff',
+            border: `1px solid ${UI_BORDER}`,
+            borderRadius: 10,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            padding: 6,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            zIndex: 20,
+            minWidth: 180,
+          }}
+        >
+          {onExportImage && (
+            <ShareRow icon={<CameraIcon />} label="Photo (PNG)" onClick={() => { onExportImage(); setOpen(false); }} />
+          )}
+          {onExportPdf && (
+            <ShareRow icon={<span style={{ fontSize: 13, fontWeight: 600 }}>PDF</span>} label="Document (PDF)" onClick={() => { onExportPdf(); setOpen(false); }} />
+          )}
+          {onShareLink && (
+            <ShareRow icon={
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 8a3 3 0 004 1l2-2a3 3 0 00-4-4L6 5M8 6a3 3 0 00-4-1L2 7a3 3 0 004 4l2-2" />
+              </svg>
+            } label="Lien & QR code" onClick={() => { onShareLink(); setOpen(false); }} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShareRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        minHeight: 48,
+        background: 'none',
+        border: 'none',
+        borderRadius: 6,
+        fontSize: 13,
+        color: UI_PRIMARY,
+        cursor: 'pointer',
+        width: '100%',
+        textAlign: 'left',
+      }}
+      onPointerEnter={e => { (e.target as HTMLElement).style.background = '#F3F0FA'; }}
+      onPointerLeave={e => { (e.target as HTMLElement).style.background = 'none'; }}
+    >
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>{icon}</span>
+      {label}
+    </button>
   );
 }
 

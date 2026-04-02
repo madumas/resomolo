@@ -21,6 +21,7 @@ import { Canvas } from './components/Canvas';
 import { StatusBar } from './components/StatusBar';
 import { ProblemSelector } from './components/ProblemSelector';
 import { AdultGuide } from './components/AdultGuide';
+import { SharePanel } from './components/SharePanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -41,6 +42,7 @@ export default function App() {
   const [showProblemSelector, setShowProblemSelector] = useState(false);
   const [problemZoneActive, setProblemZoneActive] = useState(false);
   const [showAdultGuide, setShowAdultGuide] = useState(false);
+  const [showSharePanel, setShowSharePanel] = useState(false);
   const [showRelance, setShowRelance] = useState(false);
   const [relanceIndex, setRelanceIndex] = useState(0);
   const [arrowFromId, setArrowFromId] = useState<string | null>(null);
@@ -608,11 +610,22 @@ export default function App() {
           if (svg) exportModelisationAsPng(probleme, problemeHighlights, svg);
         }}
         onExportPdf={handleExportPdf}
+        onShareLink={() => setShowSharePanel(true)}
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
       />
 
       {/* Adult guide overlay */}
       {showAdultGuide && <AdultGuide onClose={handleCloseAdultGuide} />}
+
+      {/* Share panel overlay */}
+      {showSharePanel && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setShowSharePanel(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 12, padding: 20, maxWidth: 480, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <SharePanel problemText={probleme} pieces={pieces} onClose={() => setShowSharePanel(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Settings overlay */}
       {showSettings && (
