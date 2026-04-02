@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
-import { UI_BORDER, UI_BG, UI_SURFACE, UI_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
@@ -58,28 +58,32 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
     {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     <div data-testid="toolbar" role="toolbar" aria-label="Outils de modélisation" style={{
       display: 'flex',
-      padding: '6px 10px',
-      background: UI_BG,
+      padding: '0 8px',
+      background: UI_SURFACE,
       borderBottom: `1px solid ${UI_BORDER}`,
       flexShrink: 0,
       alignItems: 'center',
+      height: 64,
+      fontSize: 13,
     }}>
       {/* Zone gauche : logo + outils (scrollable) */}
       <div style={{
         display: 'flex',
+        padding: '0 8px',
         gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flex: 1,
         overflow: 'hidden',
+        height: '100%',
       }}>
         <button
           onClick={() => setShowAbout(true)}
           aria-label="À propos de RésoMolo"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
         >
-          <Logo height={34} />
+          <Logo height={32} />
         </button>
-        <div style={{ width: 1, height: 44, background: UI_BORDER, marginRight: 4, flexShrink: 0 }} />
+        <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
         {visibleTools.map(tool => (
           <ToolButton
             key={tool.type}
@@ -99,20 +103,19 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
               alignItems: 'center',
               justifyContent: 'center',
               gap: 2,
-              padding: '4px 10px',
-              background: UI_SURFACE,
-              border: `1px solid ${UI_BORDER}`,
+              padding: '4px 8px',
+              background: 'transparent',
+              border: '1px solid transparent',
               borderRadius: 6,
-              fontSize: 10,
+              fontSize: 11,
               color: UI_TEXT_SECONDARY,
-              minWidth: 52,
-              minHeight: 44,
+              minWidth: 44,
+              height: 56,
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: 10 }}>Plus</span>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
           </button>
         )}
       </div>
@@ -120,10 +123,12 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
       {/* Zone droite : ModeSelector + Problèmes */}
       <div style={{
         display: 'flex',
+        padding: '0 8px',
         gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flexShrink: 0,
         marginLeft: MIN_BUTTON_GAP_PX,
+        height: '100%',
       }}>
         <ModeSelector mode={toolbarMode} onChange={onModeChange} />
         <button
@@ -131,10 +136,10 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           style={{
             padding: '6px 12px',
             fontSize: 12,
-            background: UI_SURFACE,
+            background: 'transparent',
             border: `1px solid ${UI_BORDER}`,
             borderRadius: 6,
-            color: UI_TEXT_SECONDARY,
+            color: UI_TEXT_PRIMARY,
             cursor: 'pointer',
             minHeight: 44,
           }}
@@ -163,15 +168,17 @@ function ToolButton({ tool, active, dimmed, onClick }: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 2,
-        padding: '4px 10px',
-        background: active ? '#EDE0FA' : UI_SURFACE,
-        border: `${active ? 2 : 1}px solid ${active ? UI_PRIMARY : UI_BORDER}`,
+        padding: '4px 8px',
+        background: active ? '#EDE0FA' : 'transparent',
+        border: active ? `2px solid ${UI_PRIMARY}` : '1px solid transparent',
         borderRadius: 6,
         fontSize: 11,
-        color: active ? UI_PRIMARY : UI_TEXT_SECONDARY,
-        minWidth: 52,
-        minHeight: 44,
+        fontWeight: 500,
+        color: active ? UI_PRIMARY : UI_TEXT_PRIMARY,
+        minWidth: 44,
+        height: 56,
         opacity: dimmed ? 0.5 : 1,
         transition: 'opacity 0.3s',
         cursor: 'pointer',
@@ -179,7 +186,7 @@ function ToolButton({ tool, active, dimmed, onClick }: {
       }}
     >
       <tool.Icon />
-      <span style={{ fontSize: 11 }}>{tool.label}</span>
+      <span>{tool.label}</span>
     </button>
   );
 }

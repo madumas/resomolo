@@ -111,7 +111,7 @@ export function ActionBar({
         <span style={{
           fontSize: 11,
           fontWeight: sessionTimer.alerted ? 600 : 400,
-          color: sessionTimer.alerted ? '#B45309' : UI_TEXT_SECONDARY,
+          color: sessionTimer.alerted ? '#9060C0' : UI_TEXT_SECONDARY,
           fontVariantNumeric: 'tabular-nums',
         }}>
           {sessionTimer.formatted}

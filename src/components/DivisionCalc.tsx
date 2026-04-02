@@ -239,14 +239,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     <div
       style={{
         position: 'absolute', left: Math.max(8, left), top: 8,
-        background: '#fff', border: '2px solid #185FA5',
+        background: '#fff', border: '2px solid #7028e0',
         borderRadius: 10, padding: 16,
         maxHeight: 'calc(100% - 16px)', overflowY: 'auto',
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 20,
       }}
       onPointerDown={e => e.stopPropagation()}
     >
-      <div style={{ fontSize: 13, color: '#185FA5', fontWeight: 600, marginBottom: 10 }}>
+      <div style={{ fontSize: 13, color: '#7028e0', fontWeight: 600, marginBottom: 10 }}>
         Division posée
       </div>
 
@@ -414,7 +414,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
       {/* Buttons */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
         <button onClick={onCancel} style={btnStyle}>Annuler</button>
-        <button onClick={commit} style={{ ...btnStyle, background: '#185FA5', color: '#fff', border: 'none' }}>Valider</button>
+        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
       </div>
     </div>
   );
@@ -449,7 +449,7 @@ const btnStyle: React.CSSProperties = {
 };
 
 const addStepBtnStyle: React.CSSProperties = {
-  padding: '8px 16px', fontSize: 13, border: '1px dashed #185FA5',
+  padding: '8px 16px', fontSize: 13, border: '1px dashed #7028e0',
   borderRadius: 6, background: '#EBF0F9', cursor: 'pointer', minHeight: 44,
-  color: '#185FA5', fontWeight: 500,
+  color: '#7028e0', fontWeight: 500,
 };

@@ -202,14 +202,14 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     <div
       style={{
         position: 'absolute', left: Math.max(8, left), top: 8,
-        background: '#fff', border: '2px solid #185FA5',
+        background: '#fff', border: '2px solid #7028e0',
         borderRadius: 10, padding: 16,
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 20,
         maxHeight: 'calc(100% - 16px)', overflowY: 'auto',
       }}
       onPointerDown={e => e.stopPropagation()}
     >
-      <div style={{ fontSize: 13, color: '#185FA5', fontWeight: 600, marginBottom: 10 }}>
+      <div style={{ fontSize: 13, color: '#7028e0', fontWeight: 600, marginBottom: 10 }}>
         Calcul en colonnes
       </div>
 
@@ -294,7 +294,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       {/* Buttons */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
         <button onClick={onCancel} style={btnStyle}>Annuler</button>
-        <button onClick={commit} style={{ ...btnStyle, background: '#185FA5', color: '#fff', border: 'none' }}>Valider</button>
+        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
       </div>
     </div>
   );
@@ -324,7 +324,7 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId }: {
 const carryStyle: React.CSSProperties = {
   width: CELL, height: CELL * 0.65, fontSize: 18, textAlign: 'center',
   border: '1px dashed #D5D0E0', background: '#FEF9EF', borderRadius: 4,
-  color: '#B45309', fontFamily: 'monospace', outline: 'none',
+  color: '#9060C0', fontFamily: 'monospace', outline: 'none',
 };
 
 const btnStyle: React.CSSProperties = {

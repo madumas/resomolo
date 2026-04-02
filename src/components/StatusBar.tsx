@@ -25,11 +25,11 @@ export function StatusBar({
   return (
     <div data-testid="status-bar" role="status" aria-live="polite" style={{
       padding: '6px 16px',
-      background: variant === 'relance' ? '#FFF7ED' : STATUS_BAR_BG,
+      background: variant === 'relance' ? '#F5F0FA' : STATUS_BAR_BG,
       borderBottom: `1px solid ${UI_BORDER}`,
-      borderLeft: `3px solid ${variant === 'relance' ? '#B45309' : UI_PRIMARY}`,
+      borderLeft: `3px solid ${variant === 'relance' ? '#9060C0' : UI_PRIMARY}`,
       fontSize: 13,
-      color: variant === 'relance' ? '#B45309' : UI_PRIMARY,
+      color: variant === 'relance' ? '#9060C0' : UI_PRIMARY,
       flexShrink: 0,
       height: STATUS_BAR_HEIGHT,
       display: 'flex',
@@ -108,7 +108,7 @@ function StatusMessage({ message, variant }: { message: string; variant: 'defaul
   }
   const badge = message.slice(0, sep);
   const instruction = message.slice(sep + 3);
-  const badgeColor = variant === 'relance' ? '#B45309' : UI_PRIMARY;
+  const badgeColor = variant === 'relance' ? '#9060C0' : UI_PRIMARY;
   return (
     <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{
@@ -122,7 +122,7 @@ function StatusMessage({ message, variant }: { message: string; variant: 'defaul
       }}>
         {badge}
       </span>
-      <span style={{ color: variant === 'relance' ? '#B45309' : UI_TEXT_SECONDARY }}>
+      <span style={{ color: variant === 'relance' ? '#9060C0' : UI_TEXT_SECONDARY }}>
         {instruction}
       </span>
     </span>

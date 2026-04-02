@@ -283,7 +283,7 @@ export function ProblemZone({
                   border: `1px solid ${isTTSSpeaking ? '#F59E0B' : UI_BORDER}`,
                   borderRadius: 6,
                   cursor: 'pointer',
-                  color: isTTSSpeaking ? '#B45309' : UI_TEXT_SECONDARY,
+                  color: isTTSSpeaking ? '#9060C0' : UI_TEXT_SECONDARY,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >

@@ -1,10 +1,10 @@
 export const COLORS = {
   // Canvas
-  canvasBg: '#FAFCFF',
+  canvasBg: '#FAFAFE',
 
   // Pieces
-  pieceBorder: '#185FA5',
-  pieceFill: 'rgba(24, 95, 165, 0.15)',
+  pieceBorder: '#9898A8',
+  pieceFill: 'rgba(150, 150, 170, 0.10)',
 
   // Piece colors
   bleu: '#185FA5',
@@ -41,7 +41,7 @@ export const COLORS = {
   calculBorder: '#D5D0E0',
 
   // Reponse
-  reponseBorder: '#185FA5',
+  reponseBorder: '#9898A8',
 } as const;
 
 // Layout — aligné TracéVite

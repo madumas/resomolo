@@ -106,7 +106,7 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
           </button>
         </div>
         {shareUrl.length > 1500 && (
-          <div style={{ fontSize: 10, color: '#B45309', marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: '#9060C0', marginTop: 4 }}>
             Lien long ({shareUrl.length} car.) — vérifier qu'il fonctionne après envoi.
           </div>
         )}

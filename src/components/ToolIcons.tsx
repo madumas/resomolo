@@ -6,8 +6,8 @@ import type React from 'react';
  */
 
 const S = {
-  width: 28,
-  height: 28,
+  width: 32,
+  height: 32,
   viewBox: '0 0 20 20',
   fill: 'none',
   xmlns: 'http://www.w3.org/2000/svg',
@@ -31,7 +31,7 @@ const SA = {
 export function JetonIcon() {
   return (
     <svg {...S}>
-      <circle cx="10" cy="10" r="7" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.2" />
+      <circle cx="10" cy="10" r="7" stroke={stroke} strokeWidth="2" fill="currentColor" fillOpacity="0.2" />
     </svg>
   );
 }
@@ -40,7 +40,7 @@ export function JetonIcon() {
 export function BarreIcon() {
   return (
     <svg {...S}>
-      <rect x="2" y="7" width="16" height="6" rx="1.5" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+      <rect x="2" y="7" width="16" height="6" rx="1.5" stroke={stroke} strokeWidth="2" fill="currentColor" fillOpacity="0.15" />
     </svg>
   );
 }
@@ -58,7 +58,7 @@ export function CalculIcon() {
 export function ReponseIcon() {
   return (
     <svg {...S}>
-      <rect x="3" y="3" width="14" height="14" rx="2" stroke={stroke} strokeWidth="1.5" fill="none" />
+      <rect x="3" y="3" width="14" height="14" rx="2" stroke={stroke} strokeWidth="2" fill="none" />
       <path d="M6 10l3 3 5-6" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
@@ -68,7 +68,7 @@ export function ReponseIcon() {
 export function BoiteIcon() {
   return (
     <svg {...S}>
-      <rect x="3" y="3" width="14" height="14" rx="2" stroke={stroke} strokeWidth="1.5" strokeDasharray="3 2" fill="none" />
+      <rect x="3" y="3" width="14" height="14" rx="2" stroke={stroke} strokeWidth="2" strokeDasharray="3 2" fill="none" />
     </svg>
   );
 }
@@ -77,7 +77,7 @@ export function BoiteIcon() {
 export function EtiquetteIcon() {
   return (
     <svg {...S}>
-      <path d="M7 16l3-12 3 12M8 12h4" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M7 16l3-12 3 12M8 12h4" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -86,7 +86,7 @@ export function EtiquetteIcon() {
 export function FlecheIcon() {
   return (
     <svg {...S}>
-      <path d="M4 10h12M12 6l4 4-4 4" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M4 10h12M12 6l4 4-4 4" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -95,10 +95,10 @@ export function FlecheIcon() {
 export function DroiteNumeriqueIcon() {
   return (
     <svg {...S}>
-      <line x1="2" y1="10" x2="18" y2="10" stroke={stroke} strokeWidth="1.5" />
-      <line x1="4" y1="7" x2="4" y2="13" stroke={stroke} strokeWidth="1.5" />
-      <line x1="10" y1="7" x2="10" y2="13" stroke={stroke} strokeWidth="1.5" />
-      <line x1="16" y1="7" x2="16" y2="13" stroke={stroke} strokeWidth="1.5" />
+      <line x1="2" y1="10" x2="18" y2="10" stroke={stroke} strokeWidth="2" />
+      <line x1="4" y1="7" x2="4" y2="13" stroke={stroke} strokeWidth="2" />
+      <line x1="10" y1="7" x2="10" y2="13" stroke={stroke} strokeWidth="2" />
+      <line x1="16" y1="7" x2="16" y2="13" stroke={stroke} strokeWidth="2" />
     </svg>
   );
 }
@@ -110,7 +110,7 @@ export function DeplacerIcon() {
       <path
         d="M10 3v14M3 10h14M10 3l-3 3M10 3l3 3M10 17l-3-3M10 17l3-3M3 10l3-3M3 10l3 3M17 10l-3-3M17 10l-3 3"
         stroke={stroke}
-        strokeWidth="1.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -144,7 +144,7 @@ export function RedoIcon() {
 export function DeleteIcon() {
   return (
     <svg {...SA}>
-      <path d="M4 6h12M8 6V4h4v2M6 6v10h8V6" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M4 6h12M8 6V4h4v2M6 6v10h8V6" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -165,8 +165,8 @@ export function SettingsIcon() {
   }
   return (
     <svg {...SA}>
-      <polygon points={pts.join(' ')} stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-      <circle cx="10" cy="10" r="2.5" stroke={stroke} strokeWidth="1.5" fill="none" />
+      <polygon points={pts.join(' ')} stroke={stroke} strokeWidth="2" strokeLinejoin="round" fill="none" />
+      <circle cx="10" cy="10" r="2.5" stroke={stroke} strokeWidth="2" fill="none" />
     </svg>
   );
 }
@@ -175,8 +175,8 @@ export function SettingsIcon() {
 export function HelpIcon() {
   return (
     <svg {...SA}>
-      <circle cx="10" cy="10" r="8" stroke={stroke} strokeWidth="1.5" fill="none" />
-      <path d="M8 7.5a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2.5 2-2.5 3.5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="10" cy="10" r="8" stroke={stroke} strokeWidth="2" fill="none" />
+      <path d="M8 7.5a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2.5 2-2.5 3.5" stroke={stroke} strokeWidth="2" strokeLinecap="round" fill="none" />
       <circle cx="10" cy="15" r="0.75" fill={stroke} />
     </svg>
   );
@@ -186,8 +186,8 @@ export function HelpIcon() {
 export function ShareIcon() {
   return (
     <svg {...SA}>
-      <path d="M10 13V4M10 4L7 7M10 4l3 3" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 11v5a2 2 0 002 2h8a2 2 0 002-2v-5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M10 13V4M10 4L7 7M10 4l3 3" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 11v5a2 2 0 002 2h8a2 2 0 002-2v-5" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -196,8 +196,8 @@ export function ShareIcon() {
 export function CameraIcon() {
   return (
     <svg {...SA}>
-      <path d="M3 7h2l1.5-2h7L15 7h2v9H3V7z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-      <circle cx="10" cy="11" r="2.5" stroke={stroke} strokeWidth="1.5" fill="none" />
+      <path d="M3 7h2l1.5-2h7L15 7h2v9H3V7z" stroke={stroke} strokeWidth="2" strokeLinejoin="round" fill="none" />
+      <circle cx="10" cy="11" r="2.5" stroke={stroke} strokeWidth="2" fill="none" />
     </svg>
   );
 }
@@ -205,7 +205,7 @@ export function CameraIcon() {
 /** Speaker: volume icon — for TTS read-aloud button */
 export function SpeakerIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M3 7h2l4-4v12l-4-4H3V7z" />
       <path d="M12 6.5c1 1 1 4 0 5" strokeLinecap="round" />
       <path d="M14 4.5c2 2 2 7 0 9" strokeLinecap="round" />
@@ -216,7 +216,7 @@ export function SpeakerIcon() {
 /** StopCircle: stop icon — for TTS stop button */
 export function StopCircleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="9" cy="9" r="7" />
       <rect x="6" y="6" width="6" height="6" rx="1" fill="currentColor" />
     </svg>
