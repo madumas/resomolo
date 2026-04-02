@@ -640,15 +640,9 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('40-problem-bank-loaded.png'), fullPage: true });
   });
 
-  test('21 — PDF export button exists (in ⋯ menu)', async ({ page }) => {
-    // Open the ⋯ more menu in action bar
-    const moreBtn = page.locator('[data-testid="action-bar"] button:has-text("⋯")');
-    await expect(moreBtn).toBeVisible({ timeout: 3000 });
-    await moreBtn.click();
-    await page.waitForTimeout(300);
-
-    // Verify "PDF" button in popover
-    const pdfBtn = page.locator('button:has-text("PDF")');
+  test('21 — PDF export button exists', async ({ page }) => {
+    // Verify "PDF" button in action bar
+    const pdfBtn = page.locator('[data-testid="action-bar"] button[aria-label="PDF"]');
     await expect(pdfBtn).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('41-pdf-button.png'), fullPage: true });
@@ -659,15 +653,9 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('42-after-pdf-click.png'), fullPage: true });
   });
 
-  test('22 — Presentation mode button (in ⋯ menu)', async ({ page }) => {
-    // Open the ⋯ more menu in action bar
-    const moreBtn = page.locator('[data-testid="action-bar"] button:has-text("⋯")');
-    await expect(moreBtn).toBeVisible({ timeout: 3000 });
-    await moreBtn.click();
-    await page.waitForTimeout(300);
-
-    // Verify "Présenter" button in popover
-    const presenterBtn = page.locator('button:has-text("Présenter")');
+  test('22 — Presentation mode button', async ({ page }) => {
+    // Verify fullscreen/presentation button in action bar
+    const presenterBtn = page.locator('[data-testid="action-bar"] button[aria-label="Mode présentation"]');
     await expect(presenterBtn).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('43-presenter-button.png'), fullPage: true });
@@ -1010,6 +998,278 @@ test.describe('Visual audit — full flow', () => {
       // Verify copy button exists
       const copyBtn = page.locator('button:has-text("Copier")');
       await expect(copyBtn).toBeVisible({ timeout: 2000 });
+    }
+  });
+
+  test('32 — Tablet viewport 768px: toolbar + context actions', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await navigateAndReady(page);
+
+    await page.screenshot({ path: shot('60-tablet-initial.png'), fullPage: true });
+
+    // Place a barre and check context actions fit
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Deselect tool, select piece
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      await page.screenshot({ path: shot('61-tablet-context-actions.png'), fullPage: true });
+
+      // Verify context actions don't overflow viewport
+      const box = await ctxActions.boundingBox();
+      if (box) {
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(768);
+      }
+    }
+  });
+
+  test('33 — Toolbar ⋯ expanded: all tools visible', async ({ page }) => {
+    // Open toolbar ⋯ to show all tools
+    const toolbarMore = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
+    if (await toolbarMore.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await toolbarMore.click();
+      await page.waitForTimeout(300);
+
+      // Verify expanded tools are visible (Calcul, Réponse, etc.)
+      await expect(page.locator('[data-testid="tool-calcul"]')).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('[data-testid="tool-reponse"]')).toBeVisible({ timeout: 2000 });
+
+      await page.screenshot({ path: shot('62-toolbar-expanded.png'), fullPage: true });
+    }
+
+    // Also verify the ActionBar has PDF and fullscreen buttons
+    const pdfBtn = page.locator('[data-testid="action-bar"] button[aria-label="PDF"]');
+    await expect(pdfBtn).toBeVisible({ timeout: 2000 });
+
+    await page.screenshot({ path: shot('63-actionbar-full.png'), fullPage: true });
+  });
+
+  test('34 — Settings panel screenshot', async ({ page }) => {
+    await openSettings(page);
+
+    // Verify profiles visible
+    await expect(page.locator('text=Aide légère')).toBeVisible({ timeout: 2000 });
+
+    await page.screenshot({ path: shot('64-settings-panel.png'), fullPage: true });
+
+    // Scroll down to see more settings
+    const dialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    await dialog.evaluate(el => el.scrollTop = 300);
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('65-settings-panel-scrolled.png'), fullPage: true });
+
+    await closeSettings(page);
+  });
+
+  test('35 — Profile "Aide maximale" applied', async ({ page }) => {
+    await openSettings(page);
+
+    // Select "Aide maximale" profile
+    const maxBtn = page.locator('button:has-text("Aide maximale")');
+    if (await maxBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await maxBtn.click();
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('66-aide-maximale-selected.png'), fullPage: true });
+
+    await closeSettings(page);
+
+    // Place a piece and verify larger text / tolerance
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('67-aide-maximale-canvas.png'), fullPage: true });
+  });
+
+  test('36 — Inactivity relance after delay', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    // Load a problem to enable relances
+    await openProblemSelector(page);
+    const firstProblem = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button').nth(1);
+    if (await firstProblem.isVisible().catch(() => false)) {
+      await firstProblem.click();
+      await page.waitForTimeout(500);
+    }
+    // Dismiss any remaining overlay
+    await dismissOverlays(page);
+    await page.waitForTimeout(300);
+
+    // Place a piece to move past initial relance
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'barre'); // deselect tool
+
+    // Change relance delay to 3s for testing via settings
+    await openSettings(page);
+    const timerInput = page.locator('[role="dialog"][aria-label="Paramètres"] input[type="number"]').first();
+    if (await timerInput.isVisible().catch(() => false)) {
+      await timerInput.fill('3');
+      await timerInput.press('Tab');
+      await page.waitForTimeout(200);
+    }
+    await closeSettings(page);
+
+    // Wait for inactivity relance (3s + buffer)
+    await page.waitForTimeout(5000);
+
+    // Check status bar for relance message
+    const statusBar = page.locator('[data-testid="status-bar"]');
+    const statusText = await statusBar.innerText();
+
+    await page.screenshot({ path: shot('68-inactivity-relance.png'), fullPage: true });
+
+    // The relance should have a question-style message
+    expect(statusText.length).toBeGreaterThan(10);
+  });
+
+  test('37 — Bar naming result visible', async ({ page }) => {
+    // Place a barre
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Deselect tool, select piece
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Click "Nommer" in context actions
+    const nommerBtn = page.locator('[data-testid="context-actions"] button:has-text("Nommer")');
+    if (await nommerBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await nommerBtn.click();
+      await page.waitForTimeout(300);
+
+      const editor = page.locator('[data-testid="inline-editor"]');
+      if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await editor.fill('Pommes de Léa');
+        await editor.press('Enter');
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // Click elsewhere to deselect
+    await clickCanvas(page, 400, 50);
+    await page.waitForTimeout(300);
+
+    // Verify label text is visible on the bar
+    const labelText = page.locator('[data-testid="canvas-svg"] text:has-text("Pommes de Léa")');
+    expect(await labelText.count()).toBeGreaterThanOrEqual(1);
+
+    await page.screenshot({ path: shot('69-bar-named-result.png'), fullPage: true });
+  });
+
+  test('38 — Droite numérique: change Max and Pas', async ({ page }) => {
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    // Deselect tool, select the droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 180, 120);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      // Change Max to 20
+      const maxBtn = ctxActions.locator('button:has-text("Max:")');
+      if (await maxBtn.isVisible().catch(() => false)) {
+        await maxBtn.click();
+        await page.waitForTimeout(200);
+        const val20 = ctxActions.locator('button:has-text("20")');
+        if (await val20.isVisible().catch(() => false)) {
+          await val20.click();
+          await page.waitForTimeout(300);
+        }
+      }
+
+      // Change Pas to 2
+      const pasBtn = ctxActions.locator('button:has-text("Pas:")');
+      if (await pasBtn.isVisible().catch(() => false)) {
+        await pasBtn.click();
+        await page.waitForTimeout(200);
+        const val2 = ctxActions.locator('button:has-text("2")');
+        if (await val2.isVisible().catch(() => false)) {
+          await val2.click();
+          await page.waitForTimeout(300);
+        }
+      }
+    }
+
+    await page.screenshot({ path: shot('70-droite-max20-pas2.png'), fullPage: true });
+
+    // Verify more tick marks exist (0 to 20 by 2 = 11 ticks)
+    const ticks = page.locator('[data-testid="canvas-svg"] line');
+    expect(await ticks.count()).toBeGreaterThanOrEqual(10);
+  });
+
+  test('39 — Saturated canvas: 15+ pieces', async ({ page }) => {
+    // Place many pieces quickly
+    for (let i = 0; i < 5; i++) {
+      await selectTool(page, 'jeton');
+      await clickCanvas(page, 30 + i * 40, 80);
+      await page.waitForTimeout(150);
+    }
+    for (let i = 0; i < 4; i++) {
+      await selectTool(page, 'barre');
+      await clickCanvas(page, 50 + i * 80, 140);
+      await page.waitForTimeout(150);
+    }
+    for (let i = 0; i < 3; i++) {
+      await selectTool(page, 'boite');
+      await clickCanvas(page, 50 + i * 120, 200);
+      await page.waitForTimeout(150);
+    }
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 100, 180);
+    await page.waitForTimeout(300);
+    const editor1 = page.locator('[data-testid="inline-editor"]');
+    if (await editor1.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await editor1.fill('5 + 3 = 8');
+      await editor1.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 250, 180);
+    await page.waitForTimeout(300);
+    const editor2 = page.locator('[data-testid="inline-editor"]');
+    if (await editor2.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await editor2.fill('Il y a 8 pommes');
+      await editor2.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Deselect everything
+    await selectTool(page, 'reponse');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('71-saturated-canvas.png'), fullPage: true });
+
+    // Verify watermarks still render (very dim)
+    // Verify context actions still work on a piece
+    await clickCanvas(page, 30, 80); // click first jeton
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      const box = await ctxActions.boundingBox();
+      if (box) {
+        // Verify it doesn't overflow the viewport
+        expect(box.y).toBeGreaterThanOrEqual(0);
+      }
+      await page.screenshot({ path: shot('72-saturated-context-actions.png'), fullPage: true });
     }
   });
 });

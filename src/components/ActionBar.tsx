@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { canUndo, canRedo } from '../model/undo';
 import type { UndoManager, DominantHand } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
@@ -36,7 +36,7 @@ export function ActionBar({
   onExportPdf,
   sessionTimer,
 }: ActionBarProps) {
-  const [showMore, setShowMore] = useState(false);
+  // showMore removed — fullscreen is now a standalone toggle
   return (
     <div data-testid="action-bar" style={{
       display: 'flex',
@@ -108,41 +108,12 @@ export function ActionBar({
         </ActionBtn>
       )}
 
-      {/* More actions (PDF, Présenter) */}
-      <div style={{ position: 'relative' }}>
-        <ActionBtn onClick={() => setShowMore(!showMore)} title="Plus d'actions" aria-label="Plus">
-          ⋯
+      {/* Export PDF */}
+      {onExportPdf && (
+        <ActionBtn onClick={onExportPdf} title="Exporter en PDF" aria-label="PDF">
+          PDF
         </ActionBtn>
-        {showMore && (
-          <div style={{
-            position: 'absolute',
-            bottom: '100%',
-            left: 0,
-            marginBottom: 6,
-            background: UI_SURFACE,
-            border: `1px solid ${UI_BORDER}`,
-            borderRadius: 8,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            zIndex: 20,
-            minWidth: 140,
-          }}>
-            {onExportPdf && (
-              <ActionBtn onClick={() => { onExportPdf(); setShowMore(false); }} title="Exporter en PDF">
-                PDF
-              </ActionBtn>
-            )}
-            <ActionBtn onClick={() => { document.documentElement.requestFullscreen?.(); setShowMore(false); }} title="Mode présentation" aria-label="Mode présentation">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M2 5V2h3M11 2h3v3M14 11v3h-3M5 14H2v-3" />
-              </svg>
-            </ActionBtn>
-          </div>
-        )}
-      </div>
+      )}
 
       <div style={{ flex: 1 }} />
 
@@ -199,7 +170,58 @@ export function ActionBar({
       >
         <HelpIcon />
       </button>
+
+      {/* Fullscreen toggle — same position as GéoMolo/TracéVite */}
+      <FullscreenToggle />
     </div>
+  );
+}
+
+function FullscreenToggle() {
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  return (
+    <button
+      onClick={() => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.documentElement.requestFullscreen?.();
+        }
+      }}
+      title="Mode présentation"
+      aria-label="Mode présentation"
+      data-testid="demo-toggle"
+      style={{
+        minWidth: MIN_BUTTON_SIZE_PX,
+        height: MIN_BUTTON_SIZE_PX,
+        padding: 0,
+        border: 'none',
+        borderRadius: 4,
+        background: isFullscreen ? UI_PRIMARY : 'transparent',
+        color: isFullscreen ? '#FFF' : UI_PRIMARY,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {isFullscreen ? (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M5 1v4H1M11 1v4h4M15 11h-4v4M1 11h4v4" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M2 5V2h3M11 2h3v3M14 11v3h-3M5 14H2v-3" />
+        </svg>
+      )}
+    </button>
   );
 }
 
