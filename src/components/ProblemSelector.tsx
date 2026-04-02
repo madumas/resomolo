@@ -152,7 +152,7 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                 { value: 'all' as CategoryFilter, label: 'Tous' },
                 { value: 'additif' as CategoryFilter, label: 'Additif' },
                 { value: 'multiplicatif' as CategoryFilter, label: 'Multiplicatif' },
-                { value: 'complexe' as CategoryFilter, label: 'Complexe' },
+                { value: 'complexe' as CategoryFilter, label: 'Multi-étapes' },
               ]).map(opt => (
                 <button
                   key={opt.value}

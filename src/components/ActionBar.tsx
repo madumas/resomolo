@@ -228,7 +228,7 @@ function ActionBtn({ children, onClick, disabled, active, destructive, title, 'a
         borderRadius: 6,
         background: isDestructiveActive ? UI_DESTRUCTIVE : UI_SURFACE,
         border: `2px solid ${isDestructiveActive ? UI_DESTRUCTIVE : disabled ? UI_DISABLED_BG : UI_BORDER}`,
-        color: isDestructiveActive ? '#fff' : destructive ? UI_DESTRUCTIVE : disabled ? UI_BORDER : UI_TEXT_SECONDARY,
+        color: isDestructiveActive ? '#fff' : disabled ? UI_BORDER : UI_TEXT_SECONDARY,
         fontWeight: isDestructiveActive ? 700 : undefined,
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.5 : 1,

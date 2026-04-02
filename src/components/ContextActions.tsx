@@ -89,7 +89,7 @@ export function ContextActions({
         top: anchorY,
         transform: `translate(-50%, ${placeAbove ? '-100%' : '0'})`,
         display: 'flex',
-        gap: 8,
+        gap: 10,
         background: '#fff',
         border: '1px solid #D5D0E0',
         borderRadius: 8,
@@ -386,7 +386,7 @@ function CtxBtn({ children, onClick, active, destructive, back }: {
     <button
       onClick={onClick}
       style={{
-        padding: back ? '8px 10px' : '8px 12px',
+        padding: back ? '10px 12px' : '10px 14px',
         fontSize: back ? 14 : 12,
         borderRadius: 6,
         background: back ? '#F3F4F6' : destructive ? '#FEE2E2' : active ? '#EBF0F9' : UI_BG,

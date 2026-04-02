@@ -639,8 +639,13 @@ export function Canvas({
         </defs>
 
         {/* 3.2: Suggested zones for children with executive function deficits */}
-        {(showSuggestedZones || pieces.filter(p => !p.locked).length === 0) && (
-          <g pointerEvents="none" opacity={pieces.filter(p => !p.locked).length === 0 ? 0.5 : pieces.filter(p => !p.locked).length < 3 ? 0.6 : 0.25}>
+        {/* Zone watermarks — always visible, dimmer with more pieces */}
+        <g pointerEvents="none" opacity={(() => {
+          const n = pieces.filter(p => !p.locked).length;
+          if (n === 0) return 0.5;
+          if (showSuggestedZones && n < 3) return 0.4;
+          return 0.12;
+        })()}>
             {/* Top zone: Modélisation */}
             <rect
               x={15} y={viewBoxHeight * 0.08}
@@ -671,8 +676,7 @@ export function Canvas({
             >
               Calcul et réponse
             </text>
-          </g>
-        )}
+        </g>
 
         {/* Render pieces */}
         {/* Render boîtes first (background), then everything else on top */}

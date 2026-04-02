@@ -489,6 +489,12 @@ export default function App() {
   } else if (showLabelNudge) {
     statusMessage = 'Tu peux nommer tes barres en cliquant dessus → Nommer';
     statusVariant = 'relance';
+  } else if (
+    pieces.some(p => p.type === 'barre' || p.type === 'jeton' || p.type === 'boite') &&
+    pieces.some(p => p.type === 'calcul' && 'expression' in p && (p as any).expression?.length > 0) &&
+    pieces.some(p => p.type === 'reponse' && 'text' in p && (p as any).text?.length > 0)
+  ) {
+    statusMessage = 'Ta modélisation est complète! Relis le problème pour vérifier.';
   } else if (selectedPieceId) {
     statusMessage = 'Choisis une action, ou clique ailleurs pour désélectionner';
   } else {
