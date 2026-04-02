@@ -40,11 +40,6 @@ const ALL_TOOLS: ToolDef[] = [
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
 
-// Expanded from ⋯ in simplified mode
-const EXPANDED_TOOLS: ToolDef[] = [
-  ...ALL_TOOLS,
-];
-
 const SIMPLE_TYPES: Set<string> = new Set(SIMPLE_TOOLS.map(t => t.type));
 
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {

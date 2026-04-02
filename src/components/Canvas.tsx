@@ -1448,12 +1448,18 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
                 tabIndex={-1}
                 onPointerDown={e => e.preventDefault()}
                 onClick={() => {
-                  // Route to DivisionCalc if expression contains ÷, else ColumnCalc
-                  if (onDivisionCalc && (inputRef.current?.value?.includes('÷') || inputRef.current?.value?.includes('/'))) {
-                    onDivisionCalc();
-                  } else {
-                    onColumnCalc();
-                  }
+                  // Commit current value before switching to column mode
+                  const val = inputRef.current?.value ?? '';
+                  committed.current = true;
+                  onCommit(val);
+                  // Route to DivisionCalc if expression contains ÷ or /, else ColumnCalc
+                  setTimeout(() => {
+                    if (onDivisionCalc && (val.includes('÷') || val.includes('/'))) {
+                      onDivisionCalc();
+                    } else if (onColumnCalc) {
+                      onColumnCalc();
+                    }
+                  }, 0);
                 }}
                 style={{
                   minHeight: MIN_BUTTON_SIZE_PX,
