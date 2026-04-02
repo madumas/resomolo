@@ -105,3 +105,39 @@ export async function navigateAndReady(page: Page, url = '/'): Promise<void> {
   await page.waitForTimeout(300);
   await dismissOverlays(page);
 }
+
+/**
+ * Open the Settings panel by clicking the gear button.
+ */
+export async function openSettings(page: Page): Promise<void> {
+  await page.locator('button[aria-label="Paramètres"]').click();
+  await page.waitForSelector('[role="dialog"][aria-label="Paramètres"]', { timeout: 3000 });
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Close the Settings panel by clicking "Fermer".
+ */
+export async function closeSettings(page: Page): Promise<void> {
+  const dialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+  await dialog.locator('button:has-text("Fermer")').click();
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Open the Problem selector by clicking "Problèmes" button.
+ */
+export async function openProblemSelector(page: Page): Promise<void> {
+  await page.locator('[data-testid="toolbar"] button:has-text("Problèmes")').click();
+  await page.waitForSelector('[role="dialog"][aria-label="Banque de problèmes"]', { timeout: 3000 });
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Open the Slot Manager by clicking "Modélisations" button.
+ */
+export async function openSlotManager(page: Page): Promise<void> {
+  await page.locator('[data-testid="action-bar"] button:has-text("Modélisations")').click();
+  await page.waitForSelector('[role="dialog"][aria-label="Mes modélisations"]', { timeout: 3000 });
+  await page.waitForTimeout(200);
+}

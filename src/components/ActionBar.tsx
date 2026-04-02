@@ -16,6 +16,7 @@ interface ActionBarProps {
   onShowSettings: () => void;
   onShowSlotManager: () => void;
   onExportImage?: () => void;
+  onExportPdf?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
 }
 
@@ -31,6 +32,7 @@ export function ActionBar({
   onShowSettings,
   onShowSlotManager,
   onExportImage,
+  onExportPdf,
   sessionTimer,
 }: ActionBarProps) {
   return (
@@ -103,6 +105,18 @@ export function ActionBar({
           <CameraIcon /> Photo
         </ActionBtn>
       )}
+
+      {/* Export PDF */}
+      {onExportPdf && (
+        <ActionBtn onClick={onExportPdf} title="Exporter en PDF" aria-label="PDF">
+          PDF
+        </ActionBtn>
+      )}
+
+      {/* Presentation mode */}
+      <ActionBtn onClick={() => document.documentElement.requestFullscreen?.()} title="Mode présentation (plein écran)">
+        Présenter
+      </ActionBtn>
 
       <div style={{ flex: 1 }} />
 

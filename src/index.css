@@ -52,3 +52,21 @@ svg g.piece-new {
     height: auto !important;
   }
 }
+
+/* Presentation mode — fullscreen hides UI chrome */
+:fullscreen [data-testid="toolbar"],
+:fullscreen [data-testid="status-bar"],
+:fullscreen [data-testid="action-bar"] {
+  display: none !important;
+}
+:fullscreen [data-testid="canvas-svg"] {
+  height: 100vh !important;
+}
+:-webkit-full-screen [data-testid="toolbar"],
+:-webkit-full-screen [data-testid="status-bar"],
+:-webkit-full-screen [data-testid="action-bar"] {
+  display: none !important;
+}
+:-webkit-full-screen [data-testid="canvas-svg"] {
+  height: 100vh !important;
+}

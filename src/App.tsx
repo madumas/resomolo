@@ -3,6 +3,7 @@ import { appReducer, createInitialAppState } from './model/state';
 import type { Action } from './model/state';
 import { loadSettings, saveSettings, clearAllStorage, exportModelisation, importModelisation, loadEmergencySave } from './model/persistence';
 import { parseShareParam, exportModelisationAsPng } from './engine/share';
+import { exportModelisationAsPdf } from './engine/pdf-export';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useSlotManager } from './hooks/useSlotManager';
 import { migrateIfNeeded } from './model/slot-persistence';
@@ -381,6 +382,11 @@ export default function App() {
     exportModelisation(current);
   }, [current]);
 
+  const handleExportPdf = useCallback(() => {
+    const svg = document.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement | null;
+    if (svg) exportModelisationAsPdf(probleme, svg);
+  }, [probleme]);
+
   const handleImport = useCallback(async (file: File) => {
     const state = await importModelisation(file);
     if (state) {
@@ -576,6 +582,7 @@ export default function App() {
           const svg = document.querySelector('[data-testid="canvas-svg"]') as SVGSVGElement | null;
           if (svg) exportModelisationAsPng(probleme, problemeHighlights, svg);
         }}
+        onExportPdf={handleExportPdf}
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
       />
 
