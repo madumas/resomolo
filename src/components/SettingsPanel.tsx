@@ -248,7 +248,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           <ButtonGroup<FontFamily>
             options={[
               { value: 'system', label: 'Système' },
-              { value: 'luciole', label: 'Luciole' },
+              { value: 'atkinson', label: 'Lisible' },
               { value: 'opendyslexic', label: 'OpenDyslexic' },
             ]}
             selected={settings.fontFamily}

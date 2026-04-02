@@ -134,7 +134,7 @@ export type ToolbarMode = 'essentiel' | 'complet';
 export type SoundMode = 'off' | 'reduced' | 'full';
 export type TextScale = 1 | 1.25 | 1.5;
 export type DominantHand = 'left' | 'right';
-export type FontFamily = 'system' | 'luciole' | 'opendyslexic';
+export type FontFamily = 'system' | 'atkinson' | 'opendyslexic';
 export type LetterSpacing = 0 | 0.05 | 0.1;
 export type TTSRate = 0.7 | 1.0 | 1.3;
 
@@ -154,7 +154,7 @@ export interface Settings {
   dominantHand: DominantHand;
   problemAlwaysVisible: boolean;
   showSuggestedZones: boolean;    // 3.2: semi-transparent zone markers to guide placement
-  fontFamily: FontFamily;         // system, luciole, opendyslexic
+  fontFamily: FontFamily;         // system, atkinson, opendyslexic
   letterSpacing: LetterSpacing;   // 0, 0.05, 0.1 (em)
   ttsEnabled: boolean;            // show/hide TTS button in ProblemZone
   ttsRate: TTSRate;               // 0.7 (slow), 1.0 (normal), 1.3 (fast)

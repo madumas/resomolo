@@ -173,13 +173,15 @@ export default function App() {
     if (settingsLoadedRef.current) saveSettings(settings);
     setSoundMode(settings.soundMode);
     setGainMultiplier(settings.soundGain);
-    // Apply font family + letter spacing
-    const fontMap: Record<string, string> = {
-      system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-      luciole: "'Luciole', -apple-system, sans-serif",
-      opendyslexic: "'OpenDyslexic', -apple-system, sans-serif",
+    // Apply font family + letter spacing + size compensation
+    const fontMap: Record<string, { family: string; sizeAdjust: string }> = {
+      system: { family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", sizeAdjust: '100%' },
+      atkinson: { family: "'Atkinson Hyperlegible', -apple-system, sans-serif", sizeAdjust: '110%' },
+      opendyslexic: { family: "'OpenDyslexic', -apple-system, sans-serif", sizeAdjust: '105%' },
     };
-    document.documentElement.style.setProperty('--font-body', fontMap[settings.fontFamily] || fontMap.system);
+    const font = fontMap[settings.fontFamily] || fontMap.system;
+    document.documentElement.style.setProperty('--font-body', font.family);
+    document.documentElement.style.setProperty('--font-size-adjust', font.sizeAdjust);
     document.documentElement.style.setProperty('--letter-spacing', settings.letterSpacing ? `${settings.letterSpacing}em` : 'normal');
   }, [settings]);
 
