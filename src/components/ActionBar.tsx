@@ -92,17 +92,6 @@ export function ActionBar({
 
       {/* Reset moved to SettingsPanel — too risky for impulsive children */}
 
-      <Separator />
-
-      {/* Mes travaux */}
-      <ActionBtn
-        onClick={onShowSlotManager}
-        title="Mes travaux"
-        aria-label="Mes travaux"
-      >
-        <FolderIcon /> Mes travaux
-      </ActionBtn>
-
       <div style={{ flex: 1 }} />
 
       {/* R6: Session timer */}
@@ -117,7 +106,28 @@ export function ActionBar({
         </span>
       )}
 
-      {/* Partager — zone droite (action adulte) */}
+      {/* Mes travaux — zone droite comme GéoMolo */}
+      <button
+        onClick={onShowSlotManager}
+        title="Mes travaux"
+        aria-label="Mes travaux"
+        style={{
+          background: 'none',
+          border: `1px solid ${UI_PRIMARY}`,
+          borderRadius: '50%',
+          width: MIN_BUTTON_SIZE_PX,
+          height: MIN_BUTTON_SIZE_PX,
+          color: UI_PRIMARY,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <FolderIcon />
+      </button>
+
+      {/* Partager */}
       <ShareMenu
         onExportImage={onExportImage}
         onExportPdf={onExportPdf}
