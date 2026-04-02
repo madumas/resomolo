@@ -4,6 +4,7 @@ import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BORDER, UI_BG, UI_SURFACE, UI_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
+import { AboutDialog } from './AboutDialog';
 import { JetonIcon, BarreIcon, DroiteNumeriqueIcon, CalculIcon, ReponseIcon, BoiteIcon, EtiquetteIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
 
 interface ToolbarProps {
@@ -38,6 +39,7 @@ const SECONDARY_TYPES: Set<string> = new Set(SECONDARY_TOOLS.map(t => t.type));
 
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
   const [showMore, setShowMore] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const isComplet = toolbarMode === 'complet';
   const showSecondary = isComplet || showMore || (activeTool !== null && SECONDARY_TYPES.has(activeTool as string));
@@ -52,6 +54,8 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
   }
 
   return (
+    <>
+    {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     <div data-testid="toolbar" role="toolbar" aria-label="Outils de modélisation" style={{
       display: 'flex',
       padding: '6px 10px',
@@ -68,7 +72,13 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         flex: 1,
         overflow: 'hidden',
       }}>
-        <Logo height={34} />
+        <button
+          onClick={() => setShowAbout(true)}
+          aria-label="À propos de RésoMolo"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+        >
+          <Logo height={34} />
+        </button>
         <div style={{ width: 1, height: 44, background: UI_BORDER, marginRight: 4, flexShrink: 0 }} />
         {visibleTools.map(tool => (
           <ToolButton
@@ -133,6 +143,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         </button>
       </div>
     </div>
+    </>
   );
 }
 
