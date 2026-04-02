@@ -114,17 +114,20 @@ export function ActionBar({
         style={{
           background: 'none',
           border: `1px solid ${UI_PRIMARY}`,
-          borderRadius: '50%',
-          width: MIN_BUTTON_SIZE_PX,
-          height: MIN_BUTTON_SIZE_PX,
+          borderRadius: 6,
+          minHeight: MIN_BUTTON_SIZE_PX,
+          padding: '4px 10px',
           color: UI_PRIMARY,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: 4,
+          fontSize: 11,
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
         }}
       >
-        <FolderIcon />
+        <FolderIcon /> Mes travaux
       </button>
 
       {/* Partager */}
