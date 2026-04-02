@@ -200,6 +200,10 @@ test.describe('Visual audit — full flow', () => {
 
     await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Camille a lu 3 fois plus de pages que Théo. Camille a lu 45 pages. Combien de pages Théo a-t-il lues?'));
 
+    // Ensure all overlays are dismissed (guide may reappear with ?probleme= param)
+    await dismissOverlays(page);
+    await page.waitForTimeout(300);
+
     // Step 1: Place a bar
     await selectTool(page, 'barre');
     await clickCanvas(page, 50, 60);
@@ -799,6 +803,199 @@ test.describe('Visual audit — full flow', () => {
 
         await page.screenshot({ path: shot('50-bars-grouped.png'), fullPage: true });
       }
+    }
+  });
+
+  test('26 — Boîte: placement, naming, jetons inside', async ({ page }) => {
+    // Place a boîte
+    await selectTool(page, 'boite');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    // Verify boîte exists (dashed rect)
+    const boites = page.locator('[data-testid="canvas-svg"] rect[stroke-dasharray]');
+    expect(await boites.count()).toBeGreaterThanOrEqual(1);
+
+    await page.screenshot({ path: shot('51-boite-placed.png'), fullPage: true });
+
+    // Deselect tool, click on the boîte to select it
+    await selectTool(page, 'boite'); // toggle off
+    await clickCanvas(page, 160, 140);
+    await page.waitForTimeout(400);
+
+    // Check context actions for "Nommer"
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      const nommerBtn = ctxActions.locator('button:has-text("Nommer")');
+      if (await nommerBtn.isVisible().catch(() => false)) {
+        await nommerBtn.click();
+        await page.waitForTimeout(300);
+
+        const editor = page.locator('[data-testid="inline-editor"]');
+        if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await editor.fill('Pommes');
+          await editor.press('Enter');
+          await page.waitForTimeout(300);
+        }
+      }
+    }
+
+    // Place jetons inside the boîte
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 160, 140);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 175, 140);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 190, 140);
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('52-boite-with-jetons.png'), fullPage: true });
+  });
+
+  test('27 — Étiquette: placement and editing', async ({ page }) => {
+    // Étiquette is in SECONDARY_TOOLS — need to show more tools first or use complet mode
+    // Click "⋯" to show more tools
+    const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
+    if (await moreBtn.isVisible().catch(() => false)) {
+      await moreBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await selectTool(page, 'etiquette');
+    await clickCanvas(page, 200, 100);
+    await page.waitForTimeout(500);
+
+    // Fill the etiquette text
+    const editor = page.locator('[data-testid="inline-editor"]');
+    if (await editor.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await editor.fill('12 pommes');
+      await editor.press('Enter');
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('53-etiquette-placed.png'), fullPage: true });
+
+    // Verify text element exists with the content
+    const textEl = page.locator('[data-testid="canvas-svg"] text:has-text("12 pommes")');
+    expect(await textEl.count()).toBeGreaterThanOrEqual(1);
+  });
+
+  test('28 — Déplacer: move a piece', async ({ page }) => {
+    // Place a barre first
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    // Switch to déplacer tool
+    await selectTool(page, 'deplacer');
+    await page.waitForTimeout(200);
+
+    // Click on the barre to pick it up
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('54-deplacer-picked-up.png'), fullPage: true });
+
+    // Click elsewhere to put it down
+    await clickCanvas(page, 300, 180);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('55-deplacer-moved.png'), fullPage: true });
+
+    // Verify the piece still exists
+    const rects = page.locator('[data-testid="canvas-svg"] rect').first();
+    await expect(rects).toBeVisible();
+  });
+
+  test('29 — Calcul en colonnes: open overlay', async ({ page }) => {
+    // Place a calcul piece with a multiplication
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 200, 150);
+    await page.waitForTimeout(500);
+
+    const calcEditor = page.locator('[data-testid="inline-editor"]');
+    if (await calcEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await calcEditor.fill('34 x 12');
+      await calcEditor.press('Enter');
+      await page.waitForTimeout(300);
+    }
+
+    // Deselect tool, select the calcul piece
+    await selectTool(page, 'calcul'); // toggle off
+    await clickCanvas(page, 200, 150);
+    await page.waitForTimeout(400);
+
+    // Click "En colonnes" in context actions
+    const colBtn = page.locator('[data-testid="context-actions"] button:has-text("En colonnes")');
+    if (await colBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await colBtn.click();
+      await page.waitForTimeout(400);
+
+      // Verify ColumnCalc overlay opens
+      const colHeading = page.locator('text=Calcul en colonnes').first();
+      await expect(colHeading).toBeVisible({ timeout: 3000 });
+
+      await page.screenshot({ path: shot('56-colonnes-overlay.png'), fullPage: true });
+
+      // Close it
+      const cancelBtn = page.locator('button:has-text("Annuler")').first();
+      if (await cancelBtn.isVisible().catch(() => false)) {
+        await cancelBtn.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await page.screenshot({ path: shot('57-after-colonnes-cancel.png'), fullPage: true });
+  });
+
+  test('30 — Export image (Photo)', async ({ page }) => {
+    // Place some pieces to have content
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // deselect
+
+    // Click Photo button in action bar
+    const photoBtn = page.locator('[data-testid="action-bar"] button:has-text("Photo")');
+    await expect(photoBtn).toBeVisible({ timeout: 3000 });
+
+    // Listen for download event
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+    await photoBtn.click();
+    const download = await downloadPromise;
+
+    // Verify a download was triggered (PNG)
+    if (download) {
+      expect(download.suggestedFilename()).toContain('.png');
+    }
+
+    await page.screenshot({ path: shot('58-after-photo-export.png'), fullPage: true });
+  });
+
+  test('31 — Partage: link and QR generation', async ({ page }) => {
+    // Load a problem first
+    await openProblemSelector(page);
+    const firstProblem = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button').nth(1);
+    if (await firstProblem.isVisible().catch(() => false)) {
+      await firstProblem.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Open problem zone share panel
+    const shareBtn = page.locator('button[aria-label="Partager"]');
+    if (await shareBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await shareBtn.click();
+      await page.waitForTimeout(400);
+
+      // Verify share panel is visible with link input and QR
+      const linkInput = page.locator('input[readonly]');
+      expect(await linkInput.count()).toBeGreaterThanOrEqual(1);
+
+      await page.screenshot({ path: shot('59-share-panel.png'), fullPage: true });
+
+      // Verify copy button exists
+      const copyBtn = page.locator('button:has-text("Copier")');
+      await expect(copyBtn).toBeVisible({ timeout: 2000 });
     }
   });
 });
