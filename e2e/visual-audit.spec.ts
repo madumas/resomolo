@@ -457,7 +457,7 @@ test.describe('Visual audit — full flow', () => {
   test('16 — Template response (Phrase à trous)', async ({ page }) => {
     // Place a réponse piece
     await selectTool(page, 'reponse');
-    await clickCanvas(page, 200, 300);
+    await clickCanvas(page, 200, 150);
     await page.waitForTimeout(500);
 
     const repEditor = page.locator('[data-testid="inline-editor"]');
@@ -469,7 +469,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the réponse piece
     await selectTool(page, 'reponse'); // toggle off
-    await clickCanvas(page, 200, 300);
+    await clickCanvas(page, 200, 150);
     await page.waitForTimeout(400);
 
     // Look for "Phrase à trous" button in context actions
@@ -669,15 +669,16 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('44-slot-manager.png'), fullPage: true });
 
-    // Click "Nouvelle modélisation"
+    // Click "Nouvelle modélisation" — dialog closes after creation
     const newSlotBtn = page.locator('button:has-text("Nouvelle modélisation")');
     if (await newSlotBtn.isVisible().catch(() => false)) {
       await newSlotBtn.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       await page.screenshot({ path: shot('45-slot-manager-after-create.png'), fullPage: true });
 
-      // Verify at least one slot entry exists
+      // Reopen slot manager to verify the new slot exists
+      await openSlotManager(page);
       const slotEntries = page.locator('[role="dialog"][aria-label="Mes modélisations"]').locator('text=En cours');
       const slotCount = await slotEntries.count();
       expect(slotCount).toBeGreaterThanOrEqual(1);
