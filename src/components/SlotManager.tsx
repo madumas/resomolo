@@ -101,7 +101,7 @@ export function SlotManager({
             width: '100%',
             padding: '10px 14px',
             marginBottom: 16,
-            background: registry.slots.length >= MAX_SLOTS ? '#E8ECF0' : '#EDE0FA',
+            background: registry.slots.length >= MAX_SLOTS ? '#ECEAF0' : '#EDE0FA',
             border: `2px solid ${registry.slots.length >= MAX_SLOTS ? UI_BORDER : UI_PRIMARY}`,
             borderRadius: 8,
             fontSize: 14,

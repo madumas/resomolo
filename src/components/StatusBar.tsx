@@ -87,7 +87,7 @@ export function StatusBar({
               fontSize: 11,
               background: 'none',
               color: UI_TEXT_SECONDARY,
-              border: '1px solid #D1D5DB',
+              border: '1px solid #D5D0E0',
               borderRadius: 4,
               cursor: 'pointer',
               minHeight: MIN_BUTTON_SIZE_PX,

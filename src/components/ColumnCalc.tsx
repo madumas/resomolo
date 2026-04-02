@@ -244,7 +244,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       {/* Operator + Operand 2 */}
       <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
         <select value={operator} onChange={e => setOperator(e.target.value)}
-          style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D1D5DB', borderRadius: 6, background: '#F5F7FA', cursor: 'pointer', fontFamily: 'monospace' }}>
+          style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', fontFamily: 'monospace' }}>
           {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
         </select>
         {op2.map((d, col) => (
@@ -255,7 +255,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       </div>
 
       {/* First separator */}
-      <div style={{ borderTop: '3px solid #1A2433', margin: `${GAP}px 0`, marginLeft: CELL + GAP }} />
+      <div style={{ borderTop: '3px solid #1E1A2E', margin: `${GAP}px 0`, marginLeft: CELL + GAP }} />
 
       {/* Intermediate lines (for multi-digit multiplication) */}
       {needsIntermediates && (
@@ -275,13 +275,13 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
             </div>
           ))}
           {/* Second separator before final result */}
-          <div style={{ borderTop: '3px solid #1A2433', margin: `${GAP}px 0`, marginLeft: CELL + GAP }} />
+          <div style={{ borderTop: '3px solid #1E1A2E', margin: `${GAP}px 0`, marginLeft: CELL + GAP }} />
         </>
       )}
 
       {/* Result */}
       <div style={{ display: 'flex', gap: GAP, alignItems: 'center' }}>
-        <div style={{ width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#4B5563' }}>
+        <div style={{ width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#55506A' }}>
           =
         </div>
         {result.map((d, col) => (
@@ -314,7 +314,7 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId }: {
       style={{
         width: CELL, height: CELL, fontSize: 28,
         fontWeight: bold ? 700 : 400, textAlign: 'center',
-        border: '2px solid #D1D5DB', borderRadius: 6,
+        border: '2px solid #D5D0E0', borderRadius: 6,
         fontFamily: "'Consolas', 'Courier New', monospace",
         outline: 'none', background: '#FAFCFF',
       }} />
@@ -323,11 +323,11 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId }: {
 
 const carryStyle: React.CSSProperties = {
   width: CELL, height: CELL * 0.65, fontSize: 18, textAlign: 'center',
-  border: '1px dashed #D1D5DB', background: '#FEF9EF', borderRadius: 4,
+  border: '1px dashed #D5D0E0', background: '#FEF9EF', borderRadius: 4,
   color: '#B45309', fontFamily: 'monospace', outline: 'none',
 };
 
 const btnStyle: React.CSSProperties = {
-  padding: '10px 20px', fontSize: 14, border: '1px solid #D1D5DB',
-  borderRadius: 6, background: '#F5F7FA', cursor: 'pointer', minHeight: 44,
+  padding: '10px 20px', fontSize: 14, border: '1px solid #D5D0E0',
+  borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', minHeight: 44,
 };

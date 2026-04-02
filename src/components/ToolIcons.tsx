@@ -201,3 +201,24 @@ export function CameraIcon() {
     </svg>
   );
 }
+
+/** Speaker: volume icon — for TTS read-aloud button */
+export function SpeakerIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M3 7h2l4-4v12l-4-4H3V7z" />
+      <path d="M12 6.5c1 1 1 4 0 5" strokeLinecap="round" />
+      <path d="M14 4.5c2 2 2 7 0 9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** StopCircle: stop icon — for TTS stop button */
+export function StopCircleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="9" cy="9" r="7" />
+      <rect x="6" y="6" width="6" height="6" rx="1" fill="currentColor" />
+    </svg>
+  );
+}

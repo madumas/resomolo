@@ -19,11 +19,11 @@ export const COLORS = {
   jauneFill: 'rgba(184, 134, 11, 0.15)',
 
   // UI
-  text: '#1A2433',
-  textLight: '#4B5563',
-  uiBg: '#F5F7FA',
-  border: '#D1D5DB',
-  borderLight: '#E5E7EB',
+  text: '#1E1A2E',
+  textLight: '#55506A',
+  uiBg: '#F6F4FA',
+  border: '#D5D0E0',
+  borderLight: '#E8E5F0',
   destructive: '#C82828',
   primary: '#7028e0',
 
@@ -38,7 +38,7 @@ export const COLORS = {
 
   // Calcul
   calculBg: '#FFFFFF',
-  calculBorder: '#D1D5DB',
+  calculBorder: '#D5D0E0',
 
   // Reponse
   reponseBorder: '#185FA5',
@@ -51,15 +51,15 @@ export const STATUS_BAR_BG = '#EDE5F5';
 export const ACTION_BAR_HEIGHT = 56;
 
 // UI colors — exports nommés (alignés TracéVite)
-export const UI_BG = '#F5F7FA';
+export const UI_BG = '#F6F4FA';
 export const UI_SURFACE = '#FFFFFF';
 export const UI_PRIMARY = '#7028e0';
 export const UI_DESTRUCTIVE = '#C82828';
-export const UI_BORDER = '#D1D8E0';
-export const UI_TEXT_PRIMARY = '#1A2433';
-export const UI_TEXT_SECONDARY = '#4A5568';
-export const UI_DISABLED_BG = '#E8ECF0';
-export const UI_DISABLED_TEXT = '#9CA3AF';
+export const UI_BORDER = '#D5D0E0';
+export const UI_TEXT_PRIMARY = '#1E1A2E';
+export const UI_TEXT_SECONDARY = '#55506A';
+export const UI_DISABLED_BG = '#ECEAF0';
+export const UI_DISABLED_TEXT = '#9E9AAF';
 
 // High contrast overrides
 export const HIGH_CONTRAST = {

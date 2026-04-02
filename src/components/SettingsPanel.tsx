@@ -1,4 +1,4 @@
-import type { Settings, ToleranceProfile, SoundMode, TextScale, DominantHand, SettingsProfile } from '../model/types';
+import type { Settings, ToleranceProfile, SoundMode, TextScale, DominantHand, SettingsProfile, FontFamily, LetterSpacing, TTSRate } from '../model/types';
 import { SETTINGS_PROFILES } from '../model/types';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 
@@ -100,7 +100,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
                     const sec = Math.max(30, Math.min(120, Number(e.target.value) || 45));
                     update({ relanceDelayMs: sec * 1000 });
                   }}
-                  style={{ width: 52, padding: '4px 6px', borderRadius: 4, border: '1px solid #D1D5DB', fontSize: 13, textAlign: 'center' }}
+                  style={{ width: 52, padding: '4px 6px', borderRadius: 4, border: '1px solid #D5D0E0', fontSize: 13, textAlign: 'center' }}
                 />
                 sec
               </label>
@@ -150,7 +150,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
                     const min = Math.max(5, Math.min(60, Number(e.target.value) || 20));
                     update({ sessionTimerAlertMinutes: min });
                   }}
-                  style={{ width: 52, padding: '4px 6px', borderRadius: 4, border: '1px solid #D1D5DB', fontSize: 13, textAlign: 'center' }}
+                  style={{ width: 52, padding: '4px 6px', borderRadius: 4, border: '1px solid #D5D0E0', fontSize: 13, textAlign: 'center' }}
                 />
                 min
               </label>
@@ -240,6 +240,63 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           <ToggleBtn
             active={settings.showSuggestedZones}
             onChange={on => update({ showSuggestedZones: on })}
+          />
+        </SettingGroup>
+
+        {/* Police */}
+        <SettingGroup label="Police">
+          <ButtonGroup<FontFamily>
+            options={[
+              { value: 'system', label: 'Système' },
+              { value: 'luciole', label: 'Luciole' },
+              { value: 'opendyslexic', label: 'OpenDyslexic' },
+            ]}
+            selected={settings.fontFamily}
+            onChange={v => update({ fontFamily: v })}
+          />
+        </SettingGroup>
+
+        {/* Espacement des lettres — only when not system font */}
+        {settings.fontFamily !== 'system' && (
+          <SettingGroup label="Espacement des lettres">
+            <ButtonGroup<`${LetterSpacing}`>
+              options={[
+                { value: '0', label: 'Normal' },
+                { value: '0.05', label: 'Aéré' },
+                { value: '0.1', label: 'Très aéré' },
+              ]}
+              selected={`${settings.letterSpacing}`}
+              onChange={v => update({ letterSpacing: parseFloat(v) as LetterSpacing })}
+            />
+          </SettingGroup>
+        )}
+
+        {/* Lecture à voix haute */}
+        <SettingGroup label="Lecture à voix haute">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ToggleBtn
+              active={settings.ttsEnabled}
+              onChange={on => update({ ttsEnabled: on })}
+            />
+            {settings.ttsEnabled && (
+              <ButtonGroup<`${TTSRate}`>
+                options={[
+                  { value: '0.7', label: 'Lent' },
+                  { value: '1', label: 'Normal' },
+                  { value: '1.3', label: 'Rapide' },
+                ]}
+                selected={`${settings.ttsRate}`}
+                onChange={v => update({ ttsRate: parseFloat(v) as TTSRate })}
+              />
+            )}
+          </div>
+        </SettingGroup>
+
+        {/* Lecture guidée */}
+        <SettingGroup label="Lecture guidée (phrase par phrase)">
+          <ToggleBtn
+            active={settings.guidedReadingEnabled}
+            onChange={on => update({ guidedReadingEnabled: on })}
           />
         </SettingGroup>
 

@@ -137,7 +137,7 @@ export async function generateQrDataUrl(url: string): Promise<string> {
   return QRCode.toDataURL(url, {
     width: 320, // 160px at 2x for retina
     margin: 2,
-    color: { dark: '#1A2433', light: '#FFFFFF' },
+    color: { dark: '#1E1A2E', light: '#FFFFFF' },
   });
 }
 
@@ -260,12 +260,12 @@ function drawProblemText(
     const hl = highlights.find(h => h.start <= wordStart && h.end >= wordEnd);
 
     if (hl && word.trim()) {
-      const bg = HIGHLIGHT_BG[hl.color] ?? '#E5E7EB';
+      const bg = HIGHLIGHT_BG[hl.color] ?? '#E8E5F0';
       ctx.fillStyle = bg;
       ctx.fillRect(curX - 2, curY - 14, wordWidth + 4, 20);
     }
 
-    ctx.fillStyle = '#1A2433';
+    ctx.fillStyle = '#1E1A2E';
     ctx.fillText(word, curX, curY);
     curX += wordWidth;
     charIndex += word.length;

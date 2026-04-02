@@ -131,7 +131,7 @@ export function ModeSelector({ mode, onChange }: ModeSelectorProps) {
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
-                background: index === focusIndex ? '#F0F4F8' : 'transparent',
+                background: index === focusIndex ? '#F2F0F8' : 'transparent',
                 borderLeft: m.value === mode ? `3px solid ${UI_PRIMARY}` : '3px solid transparent',
               }}
               data-testid={`mode-option-${m.value}`}

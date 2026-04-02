@@ -25,7 +25,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
         textAnchor="end"
         dominantBaseline="central"
         fontSize={5}
-        fill={hasLabel ? '#1A2433' : 'transparent'}
+        fill={hasLabel ? '#1E1A2E' : 'transparent'}
         data-testid="bar-label"
         data-edit-target={`${piece.id}-label`}
       >
@@ -63,7 +63,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={6}
-        fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1A2433') : (!hasLabel ? (piece.locked ? '#9CA3AF' : color) : 'transparent')}
+        fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1E1A2E') : (!hasLabel ? (piece.locked ? '#9CA3AF' : color) : 'transparent')}
         fontWeight={600}
         opacity={hasValue ? 1 : 0.5}
         data-edit-target={`${piece.id}-value`}

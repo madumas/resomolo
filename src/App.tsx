@@ -12,6 +12,7 @@ import { DEFAULT_SETTINGS } from './model/types';
 import { canUndo, canRedo, undo, redo } from './model/undo';
 import { useTutorial } from './hooks/useTutorial';
 import { useSessionTimer } from './hooks/useSessionTimer';
+import { useTTS } from './hooks/useTTS';
 import { Toolbar } from './components/Toolbar';
 import { ActionBar } from './components/ActionBar';
 import { ProblemZone } from './components/ProblemZone';
@@ -66,6 +67,9 @@ export default function App() {
 
   // R6: Session timer
   const sessionTimer = useSessionTimer(settings.sessionTimerEnabled, settings.sessionTimerAlertMinutes);
+
+  // TTS (text-to-speech)
+  const tts = useTTS();
 
   // When tutorial changes problem, update state
   useEffect(() => {
@@ -164,11 +168,19 @@ export default function App() {
     loadSettings().then(s => { setSettings(s); settingsLoadedRef.current = true; });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save settings on change + sync sound engine (skip initial mount to avoid overwriting saved settings)
+  // Auto-save settings on change + sync sound/font/spacing (skip initial mount)
   useEffect(() => {
     if (settingsLoadedRef.current) saveSettings(settings);
     setSoundMode(settings.soundMode);
     setGainMultiplier(settings.soundGain);
+    // Apply font family + letter spacing
+    const fontMap: Record<string, string> = {
+      system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      luciole: "'Luciole', -apple-system, sans-serif",
+      opendyslexic: "'OpenDyslexic', -apple-system, sans-serif",
+    };
+    document.documentElement.style.setProperty('--font-body', fontMap[settings.fontFamily] || fontMap.system);
+    document.documentElement.style.setProperty('--letter-spacing', settings.letterSpacing ? `${settings.letterSpacing}em` : 'normal');
   }, [settings]);
 
   const handleCloseAdultGuide = useCallback(() => {
@@ -504,6 +516,13 @@ export default function App() {
         onHighlightAdd={handleHighlightAdd}
         onHighlightRemove={handleHighlightRemove}
         onTextChange={current.problemeReadOnly ? undefined : handleTextChange}
+        ttsEnabled={settings.ttsEnabled}
+        ttsRate={settings.ttsRate}
+        onTTSCharIndex={tts.currentCharIndex}
+        onStartTTS={() => tts.speak(probleme, settings.ttsRate)}
+        onStopTTS={tts.stop}
+        isTTSSpeaking={tts.isSpeaking}
+        guidedReadingEnabled={settings.guidedReadingEnabled}
       />}
 
       {/* Canvas */}

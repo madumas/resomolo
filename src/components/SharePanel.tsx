@@ -81,8 +81,8 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
               fontSize: 12,
               border: `1px solid ${UI_BORDER}`,
               borderRadius: 4,
-              background: '#F5F7FA',
-              color: '#1A2433',
+              background: '#F6F4FA',
+              color: '#1E1A2E',
               minWidth: 0,
             }}
           />
@@ -126,7 +126,7 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
             title="Cliquer pour copier l'image"
           />
         ) : (
-          <div style={{ width: 120, height: 120, background: '#F5F7FA', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: UI_TEXT_SECONDARY }}>
+          <div style={{ width: 120, height: 120, background: '#F6F4FA', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: UI_TEXT_SECONDARY }}>
             Chargement...
           </div>
         )}
@@ -136,7 +136,7 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
             style={{
               padding: '4px 8px',
               fontSize: 11,
-              background: '#F5F7FA',
+              background: '#F6F4FA',
               border: `1px solid ${UI_BORDER}`,
               borderRadius: 4,
               cursor: 'pointer',
@@ -150,7 +150,7 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
             style={{
               padding: '4px 8px',
               fontSize: 11,
-              background: qrCopied ? '#D1FAE5' : '#F5F7FA',
+              background: qrCopied ? '#D1FAE5' : '#F6F4FA',
               border: `1px solid ${qrCopied ? '#065F46' : UI_BORDER}`,
               borderRadius: 4,
               cursor: 'pointer',

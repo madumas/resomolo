@@ -282,7 +282,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
             style={{
               width: CELL * 1.2, height: CELL, fontSize: 28,
               fontWeight: 700, textAlign: 'center',
-              border: '2px solid #D1D5DB', borderRadius: 6,
+              border: '2px solid #D5D0E0', borderRadius: 6,
               fontFamily: "'Consolas', 'Courier New', monospace",
               outline: 'none', background: '#FAFCFF',
             }}
@@ -295,7 +295,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         <div style={{ width: totalDividendAreaLeft, flexShrink: 0 }} />
         <div style={{
           flex: 1,
-          borderTop: '3px solid #1A2433',
+          borderTop: '3px solid #1E1A2E',
           height: 0,
           marginTop: GAP,
           marginBottom: GAP,
@@ -323,7 +323,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         <div style={{
           width: bracketWidth,
           alignSelf: 'stretch',
-          background: '#1A2433',
+          background: '#1E1A2E',
           marginLeft: bracketGap,
           marginRight: bracketGap,
           borderRadius: 1,
@@ -351,7 +351,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           {/* Subtraction line: "−" label + product cells */}
           <div style={{ display: 'flex', gap: 0, alignItems: 'center', marginTop: GAP * 2 }}>
             <div style={{ width: totalDividendAreaLeft, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
-              <span style={{ fontSize: 22, color: '#4B5563', fontFamily: 'monospace', fontWeight: 600 }}>−</span>
+              <span style={{ fontSize: 22, color: '#55506A', fontFamily: 'monospace', fontWeight: 600 }}>−</span>
             </div>
             <div style={{ display: 'flex', gap: GAP }}>
               {step.product.map((d, col) => (
@@ -405,7 +405,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           </button>
         )}
         {steps.length > 1 && (
-          <button onClick={removeStep} style={{ ...addStepBtnStyle, color: '#9CA3AF', borderColor: '#D1D5DB' }}>
+          <button onClick={removeStep} style={{ ...addStepBtnStyle, color: '#9CA3AF', borderColor: '#D5D0E0' }}>
             − Retirer
           </button>
         )}
@@ -435,7 +435,7 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId, colIdx }: 
       style={{
         width: CELL, height: CELL, fontSize: 28,
         fontWeight: bold ? 700 : 400, textAlign: 'center',
-        border: '2px solid #D1D5DB', borderRadius: 6,
+        border: '2px solid #D5D0E0', borderRadius: 6,
         fontFamily: "'Consolas', 'Courier New', monospace",
         outline: 'none',
         background: isEvenCol ? 'rgba(0,0,0,0.02)' : '#FAFCFF',
@@ -444,8 +444,8 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId, colIdx }: 
 }
 
 const btnStyle: React.CSSProperties = {
-  padding: '10px 20px', fontSize: 14, border: '1px solid #D1D5DB',
-  borderRadius: 6, background: '#F5F7FA', cursor: 'pointer', minHeight: 44,
+  padding: '10px 20px', fontSize: 14, border: '1px solid #D5D0E0',
+  borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', minHeight: 44,
 };
 
 const addStepBtnStyle: React.CSSProperties = {

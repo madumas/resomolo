@@ -25,7 +25,7 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
       borderRadius: 12,
       padding: 24,
       boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-      border: '1px solid #E5E7EB',
+      border: '1px solid #E8E5F0',
       maxWidth: 400,
       width: '90%',
     }}>
@@ -44,7 +44,7 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
               gap: 4,
               padding: '12px 16px',
               background: UI_BG,
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E8E5F0',
               borderRadius: 8,
               cursor: 'pointer',
               textAlign: 'left',

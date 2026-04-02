@@ -15,7 +15,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
             fill="none" stroke="#185FA5" strokeWidth={0.5} strokeDasharray="2 1" />
         )}
         <line x1={x} y1={y} x2={x + width} y2={y}
-          stroke="#4A5568" strokeWidth={1} />
+          stroke="#55506A" strokeWidth={1} />
         <text x={x + width / 2} y={y + 8} textAnchor="middle" fontSize={4} fill="#B91C1C">
           Ajuster min/max
         </text>
@@ -39,11 +39,11 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
 
       {/* Main line */}
       <line x1={x} y1={y} x2={x + width} y2={y}
-        stroke="#4A5568" strokeWidth={1} />
+        stroke="#55506A" strokeWidth={1} />
 
       {/* Arrow heads at both ends */}
-      <polygon points={`${x - 3},${y} ${x + 2},${y - 2} ${x + 2},${y + 2}`} fill="#4A5568" />
-      <polygon points={`${x + width + 3},${y} ${x + width - 2},${y - 2} ${x + width - 2},${y + 2}`} fill="#4A5568" />
+      <polygon points={`${x - 3},${y} ${x + 2},${y - 2} ${x + 2},${y + 2}`} fill="#55506A" />
+      <polygon points={`${x + width + 3},${y} ${x + width - 2},${y - 2} ${x + width - 2},${y + 2}`} fill="#55506A" />
 
       {/* Tick marks and labels */}
       {Array.from({ length: numTicks }, (_, i) => {
@@ -52,8 +52,8 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
         return (
           <g key={i}>
             <line x1={tx} y1={y - 3} x2={tx} y2={y + 3}
-              stroke="#4A5568" strokeWidth={0.5} />
-            <text x={tx} y={y + 8} textAnchor="middle" fontSize={4} fill="#4A5568">
+              stroke="#55506A" strokeWidth={0.5} />
+            <text x={tx} y={y + 8} textAnchor="middle" fontSize={4} fill="#55506A">
               {val}
             </text>
           </g>

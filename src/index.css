@@ -10,7 +10,8 @@ html, body, #root {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+  letter-spacing: var(--letter-spacing, normal);
   color: #1A2433;
   background: #F5F7FA;
   -webkit-font-smoothing: antialiased;

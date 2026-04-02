@@ -634,7 +634,7 @@ export function Canvas({
       >
         <defs>
           <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <path d="M0,0 L8,3 L0,6" fill="#4A5568" />
+            <path d="M0,0 L8,3 L0,6" fill="#55506A" />
           </marker>
         </defs>
 
@@ -645,7 +645,7 @@ export function Canvas({
             <rect
               x={15} y={viewBoxHeight * 0.08}
               width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.48}
-              fill="#F0F4F8"
+              fill="#F2F0F8"
               stroke="#B0BEC5" strokeWidth={1} strokeDasharray="6 4"
               rx={4}
             />
@@ -660,7 +660,7 @@ export function Canvas({
             <rect
               x={15} y={viewBoxHeight * 0.62}
               width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.30}
-              fill="#F0F4F8"
+              fill="#F2F0F8"
               stroke="#B0BEC5" strokeWidth={1} strokeDasharray="6 4"
               rx={4}
             />
@@ -694,7 +694,7 @@ export function Canvas({
             <line key={`attach-${piece.id}`}
               x1={piece.x} y1={piece.y}
               x2={pc.x} y2={pc.y}
-              stroke="#D1D5DB" strokeWidth={0.3} strokeDasharray="2 1"
+              stroke="#D5D0E0" strokeWidth={0.3} strokeDasharray="2 1"
             />
           );
         })}
@@ -731,9 +731,9 @@ export function Canvas({
             return (
               <g key={gid}>
                 <path d={`M${minX},${bracketY} L${minX},${bracketY + 4} L${maxRight},${bracketY + 4} L${maxRight},${bracketY}`}
-                  fill="none" stroke="#4A5568" strokeWidth={0.5} />
+                  fill="none" stroke="#55506A" strokeWidth={0.5} />
                 {labelBar.groupLabel && (
-                  <text x={(minX + maxRight) / 2} y={bracketY + 9} textAnchor="middle" fontSize={4.5} fill="#1A2433">
+                  <text x={(minX + maxRight) / 2} y={bracketY + 9} textAnchor="middle" fontSize={4.5} fill="#1E1A2E">
                     {labelBar.groupLabel}
                   </text>
                 )}
@@ -777,12 +777,12 @@ export function Canvas({
               <path
                 d={`M ${fromEdge.x} ${fromEdge.y} Q ${finalCpX} ${finalCpY} ${toEdge.x} ${toEdge.y}`}
                 fill="none"
-                stroke={isSelected ? '#185FA5' : '#4A5568'}
+                stroke={isSelected ? '#7028e0' : '#55506A'}
                 strokeWidth={isSelected ? 1.5 : 1}
                 markerEnd="url(#arrowhead)"
               />
               {fleche.label && (
-                <text x={labelX} y={labelY} textAnchor="middle" fontSize={4.5} fill="#1A2433"
+                <text x={labelX} y={labelY} textAnchor="middle" fontSize={4.5} fill="#1E1A2E"
                   data-edit-target={piece.id}>
                   {fleche.label}
                 </text>
@@ -1048,7 +1048,7 @@ export function Canvas({
             position: 'absolute', bottom: 12, left: 12,
             display: 'flex', gap: 8, padding: '4px 10px',
             background: 'rgba(255,255,255,0.9)', borderRadius: 6,
-            border: '1px solid #E5E7EB', fontSize: 12, zIndex: 10,
+            border: '1px solid #E8E5F0', fontSize: 12, zIndex: 10,
           }}>
             {COLOR_ORDER.filter(c => counts[c]).map(color => [color, counts[color]] as [string, number]).map(([color, count]) => (
               <span key={color} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1075,7 +1075,7 @@ export function Canvas({
             height: 44,
             borderRadius: 8,
             background: '#fff',
-            border: '1px solid #D1D5DB',
+            border: '1px solid #D5D0E0',
             boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
             cursor: isArranging ? 'wait' : 'pointer',
             opacity: isArranging ? 0.5 : 1,
@@ -1083,7 +1083,7 @@ export function Canvas({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 18,
-            color: '#4A5568',
+            color: '#55506A',
             zIndex: 10,
           }}
         >
@@ -1098,7 +1098,7 @@ export function Canvas({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          color: '#4B5563',
+          color: '#55506A',
           fontSize: 16,
           textAlign: 'center',
           lineHeight: 2,
@@ -1165,14 +1165,14 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
         x={piece.x - 2} y={piece.y - 7}
         width={w} height={h}
         rx={1.5}
-        fill={isSelected ? '#EBF0F9' : '#F0F2F5'}
-        stroke={isSelected ? '#185FA5' : 'none'}
+        fill={isSelected ? '#F0EBF9' : '#F0F2F5'}
+        stroke={isSelected ? '#7028e0' : 'none'}
         strokeWidth={0.5}
       />
       <text
         x={piece.x} y={piece.y}
         fontSize={5}
-        fill="#1A2433"
+        fill="#1E1A2E"
         data-edit-target={piece.id}
       >
         {piece.text || '…'}
@@ -1187,14 +1187,14 @@ function BoitePiece({ piece, isSelected }: { piece: Piece & { type: 'boite' }; i
       <rect
         x={piece.x} y={piece.y} width={piece.width} height={piece.height}
         rx={2} fill="rgba(156,163,175,0.05)"
-        stroke={isSelected ? '#185FA5' : '#9CA3AF'}
+        stroke={isSelected ? '#7028e0' : '#9CA3AF'}
         strokeWidth={isSelected ? 1 : 0.5}
         strokeDasharray="3 2"
       />
       {/* Label at top (always render for edit target positioning) */}
       <text
         x={piece.x + 4} y={piece.y - 3}
-        fontSize={4.5} fill={piece.label ? '#4B5563' : 'transparent'}
+        fontSize={4.5} fill={piece.label ? '#55506A' : 'transparent'}
         data-testid="boite-label"
         data-edit-target={piece.id}
       >
@@ -1204,7 +1204,7 @@ function BoitePiece({ piece, isSelected }: { piece: Piece & { type: 'boite' }; i
         <rect
           x={piece.x - 1} y={piece.y - 1}
           width={piece.width + 2} height={piece.height + 2}
-          rx={3} fill="none" stroke="#185FA5" strokeWidth={0.5} strokeDasharray="2 1"
+          rx={3} fill="none" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="2 1"
         />
       )}
     </g>
@@ -1393,7 +1393,7 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
         style={{
           minWidth: 200,
           height: Math.max(28, fontSize * 1.8),
-          border: '2px solid #185FA5',
+          border: '2px solid #7028e0',
           borderRadius: 6,
           padding: '2px 6px',
           fontSize: Math.round(fontSize),
