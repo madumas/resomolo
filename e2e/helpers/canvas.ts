@@ -54,9 +54,19 @@ export async function waitForStatus(page: Page, text: string | RegExp): Promise<
 
 /**
  * Select a tool by clicking its toolbar button.
+ * Auto-expands the toolbar if the tool is hidden (simplified mode).
  */
 export async function selectTool(page: Page, tool: string): Promise<void> {
-  await page.locator(`[data-testid="tool-${tool}"]`).click();
+  const btn = page.locator(`[data-testid="tool-${tool}"]`);
+  if (!await btn.isVisible({ timeout: 500 }).catch(() => false)) {
+    // Tool is hidden — click ⋯ to expand
+    const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
+    if (await moreBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await moreBtn.click();
+      await page.waitForTimeout(200);
+    }
+  }
+  await btn.click();
   await page.waitForTimeout(100);
 }
 

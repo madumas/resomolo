@@ -78,10 +78,9 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
           width={w + 2}
           height={h + 2}
           rx={2.5}
-          fill="none"
-          stroke={color}
-          strokeWidth={0.5}
-          strokeDasharray="2 1"
+          fill="rgba(112, 40, 224, 0.06)"
+          stroke="#7028e0"
+          strokeWidth={1}
         />
       )}
     </g>

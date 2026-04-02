@@ -12,7 +12,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
       <g>
         {isSelected && (
           <rect x={x - 2} y={y - 10} width={width + 4} height={24} rx={2}
-            fill="none" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="2 1" />
+            fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
         )}
         <line x1={x} y1={y} x2={x + width} y2={y}
           stroke="#55506A" strokeWidth={1} />
@@ -34,7 +34,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
       {/* Selection highlight */}
       {isSelected && (
         <rect x={x - 2} y={y - 10} width={width + 4} height={h + 4} rx={2}
-          fill="none" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="2 1" />
+          fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
       )}
 
       {/* Main line */}

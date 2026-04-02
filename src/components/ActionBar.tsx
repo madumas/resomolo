@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { canUndo, canRedo } from '../model/undo';
 import type { UndoManager, DominantHand } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
@@ -35,6 +36,7 @@ export function ActionBar({
   onExportPdf,
   sessionTimer,
 }: ActionBarProps) {
+  const [showMore, setShowMore] = useState(false);
   return (
     <div data-testid="action-bar" style={{
       display: 'flex',
@@ -106,17 +108,39 @@ export function ActionBar({
         </ActionBtn>
       )}
 
-      {/* Export PDF */}
-      {onExportPdf && (
-        <ActionBtn onClick={onExportPdf} title="Exporter en PDF" aria-label="PDF">
-          PDF
+      {/* More actions (PDF, Présenter) */}
+      <div style={{ position: 'relative' }}>
+        <ActionBtn onClick={() => setShowMore(!showMore)} title="Plus d'actions" aria-label="Plus">
+          ⋯
         </ActionBtn>
-      )}
-
-      {/* Presentation mode */}
-      <ActionBtn onClick={() => document.documentElement.requestFullscreen?.()} title="Mode présentation (plein écran)">
-        Présenter
-      </ActionBtn>
+        {showMore && (
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: 0,
+            marginBottom: 6,
+            background: UI_SURFACE,
+            border: `1px solid ${UI_BORDER}`,
+            borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            padding: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            zIndex: 20,
+            minWidth: 140,
+          }}>
+            {onExportPdf && (
+              <ActionBtn onClick={() => { onExportPdf(); setShowMore(false); }} title="Exporter en PDF">
+                PDF
+              </ActionBtn>
+            )}
+            <ActionBtn onClick={() => { document.documentElement.requestFullscreen?.(); setShowMore(false); }} title="Mode présentation">
+              Présenter
+            </ActionBtn>
+          </div>
+        )}
+      </div>
 
       <div style={{ flex: 1 }} />
 

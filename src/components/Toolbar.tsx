@@ -19,34 +19,43 @@ interface ToolbarProps {
 
 type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
 
-const ESSENTIAL_TOOLS: ToolDef[] = [
+// Mode Simplifié : 4 outils de base
+const SIMPLE_TOOLS: ToolDef[] = [
+  { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
+  { type: 'barre', label: 'Barre', Icon: BarreIcon },
+  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
+];
+
+// Mode Complet : tous les outils
+const ALL_TOOLS: ToolDef[] = [
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
   { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
   { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
-];
-
-const SECONDARY_TOOLS: ToolDef[] = [
   { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
   { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
+  { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
 
-const DEPLACER_TOOL: ToolDef = { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon };
+// Expanded from ⋯ in simplified mode
+const EXPANDED_TOOLS: ToolDef[] = [
+  ...ALL_TOOLS,
+];
 
-const SECONDARY_TYPES: Set<string> = new Set(SECONDARY_TOOLS.map(t => t.type));
+const SIMPLE_TYPES: Set<string> = new Set(SIMPLE_TOOLS.map(t => t.type));
 
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
   const [showMore, setShowMore] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 
   const isComplet = toolbarMode === 'complet';
-  const showSecondary = isComplet || showMore || (activeTool !== null && SECONDARY_TYPES.has(activeTool as string));
+  // Show all tools if: complet mode, user clicked ⋯, or active tool is not in simple set
+  const showAll = isComplet || showMore || (activeTool !== null && !SIMPLE_TYPES.has(activeTool as string));
 
-  let visibleTools = showSecondary
-    ? [...ESSENTIAL_TOOLS, ...SECONDARY_TOOLS, DEPLACER_TOOL]
-    : [...ESSENTIAL_TOOLS, DEPLACER_TOOL];
+  let visibleTools = showAll ? ALL_TOOLS : SIMPLE_TOOLS;
 
   // Filter tools if availablePieces is set (always keep 'deplacer')
   if (availablePieces) {
@@ -93,7 +102,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
           />
         ))}
-        {!isComplet && !showSecondary && (
+        {!isComplet && !showAll && (
           <button
             onClick={() => setShowMore(true)}
             aria-label="Plus d'outils"

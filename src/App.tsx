@@ -55,6 +55,8 @@ export default function App() {
   const [isSharedProblem, setIsSharedProblem] = useState(false);
   const relanceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [showLabelNudge, setShowLabelNudge] = useState(false);
+  const labelNudgeShownRef = useRef(false);
   const settingsLoadedRef = useRef(false);
   const [appReady, setAppReady] = useState(false);
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
@@ -291,6 +293,20 @@ export default function App() {
     return () => { if (inactivityTimer.current) clearTimeout(inactivityTimer.current); };
   }, [hasProblem, hasPieces, activityTick, settings.relanceDelayMs, tutorial.isActive]);
 
+  // Nudge: encourage labeling bars after 5s if unlabeled bars exist
+  const unlabeledBars = pieces.filter(p => p.type === 'barre' && !('label' in p && (p as any).label));
+  useEffect(() => {
+    if (labelNudgeShownRef.current || unlabeledBars.length === 0 || tutorial.isActive) {
+      setShowLabelNudge(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setShowLabelNudge(true);
+      labelNudgeShownRef.current = true;
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [unlabeledBars.length, tutorial.isActive]);
+
   // When tutorial is done, show problem selector
   useEffect(() => {
     if (tutorial.isDone) {
@@ -469,6 +485,9 @@ export default function App() {
     statusVariant = 'relance';
   } else if (showInactivityRelance) {
     statusMessage = RELANCE_QUESTIONS[inactivityRelanceIndex];
+    statusVariant = 'relance';
+  } else if (showLabelNudge) {
+    statusMessage = 'Tu peux nommer tes barres en cliquant dessus → Nommer';
     statusVariant = 'relance';
   } else if (selectedPieceId) {
     statusMessage = 'Choisis une action, ou clique ailleurs pour désélectionner';

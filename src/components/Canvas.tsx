@@ -639,8 +639,8 @@ export function Canvas({
         </defs>
 
         {/* 3.2: Suggested zones for children with executive function deficits */}
-        {showSuggestedZones && (
-          <g pointerEvents="none" opacity={pieces.filter(p => !p.locked).length < 3 ? 0.6 : 0.25}>
+        {(showSuggestedZones || pieces.filter(p => !p.locked).length === 0) && (
+          <g pointerEvents="none" opacity={pieces.filter(p => !p.locked).length === 0 ? 0.5 : pieces.filter(p => !p.locked).length < 3 ? 0.6 : 0.25}>
             {/* Top zone: Modélisation */}
             <rect
               x={15} y={viewBoxHeight * 0.08}
@@ -1165,9 +1165,9 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
         x={piece.x - 2} y={piece.y - 7}
         width={w} height={h}
         rx={1.5}
-        fill={isSelected ? '#F0EBF9' : '#F0F2F5'}
+        fill={isSelected ? 'rgba(112, 40, 224, 0.08)' : '#F0F2F5'}
         stroke={isSelected ? '#7028e0' : 'none'}
-        strokeWidth={0.5}
+        strokeWidth={1}
       />
       <text
         x={piece.x} y={piece.y}
@@ -1186,10 +1186,10 @@ function BoitePiece({ piece, isSelected }: { piece: Piece & { type: 'boite' }; i
     <g>
       <rect
         x={piece.x} y={piece.y} width={piece.width} height={piece.height}
-        rx={2} fill="rgba(156,163,175,0.05)"
+        rx={2} fill={isSelected ? 'rgba(112, 40, 224, 0.06)' : 'rgba(156,163,175,0.05)'}
         stroke={isSelected ? '#7028e0' : '#9CA3AF'}
-        strokeWidth={isSelected ? 1 : 0.5}
-        strokeDasharray="3 2"
+        strokeWidth={isSelected ? 1.5 : 0.5}
+        strokeDasharray={isSelected ? undefined : '3 2'}
       />
       {/* Label at top (always render for edit target positioning) */}
       <text
@@ -1204,7 +1204,7 @@ function BoitePiece({ piece, isSelected }: { piece: Piece & { type: 'boite' }; i
         <rect
           x={piece.x - 1} y={piece.y - 1}
           width={piece.width + 2} height={piece.height + 2}
-          rx={3} fill="none" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="2 1"
+          rx={3} fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1}
         />
       )}
     </g>
@@ -1521,7 +1521,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
     case 'jeton': {
       const dx = pos.x - piece.x;
       const dy = pos.y - piece.y;
-      return Math.sqrt(dx * dx + dy * dy) <= 7 + jetonPadding;
+      return Math.sqrt(dx * dx + dy * dy) <= 9 + jetonPadding;
     }
     case 'barre': {
       const w = piece.sizeMultiplier * refUnit;

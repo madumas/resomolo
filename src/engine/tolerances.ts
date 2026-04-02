@@ -20,7 +20,7 @@ export interface Tolerances {
  * Hit test uses radius 7mm (larger than visual JETON_DIAMETER/2 for accessibility).
  * (7 + padding) * 2 < JETON_SPACING → padding < JETON_SPACING/2 - 7
  */
-const JETON_HIT_RADIUS = 7; // mm — matches hitTest in Canvas.tsx
+const JETON_HIT_RADIUS = 9; // mm — larger than visual for accessibility
 const MAX_JETON_PADDING = Math.max(0, JETON_SPACING_MM / 2 - JETON_HIT_RADIUS - 0.1);
 
 export function getTolerances(profile: ToleranceProfile): Tolerances {

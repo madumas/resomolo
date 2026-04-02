@@ -10,6 +10,13 @@ interface ProblemSelectorProps {
 
 type CycleFilter = 2 | 3 | 'all';
 type DifficultyFilter = 1 | 2 | 3 | 'all';
+type CategoryFilter = 'all' | 'additif' | 'multiplicatif' | 'complexe';
+
+const CATEGORY_GROUPS: Record<Exclude<CategoryFilter, 'all'>, string[]> = {
+  additif: ['addition', 'soustraction'],
+  multiplicatif: ['multiplication', 'division', 'comparaison'],
+  complexe: ['multi-etapes', 'partage'],
+};
 
 const LIBRE_PRESET: ProblemPreset = {
   id: 'libre',
@@ -27,10 +34,12 @@ function difficultyStars(d: 1 | 2 | 3): string {
 export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
   const filtered = PROBLEM_PRESETS.filter(p => {
     if (cycleFilter !== 'all' && p.cycle !== cycleFilter) return false;
     if (difficultyFilter !== 'all' && p.difficulty !== difficultyFilter) return false;
+    if (categoryFilter !== 'all' && !CATEGORY_GROUPS[categoryFilter].includes(p.category)) return false;
     return true;
   });
 
@@ -126,6 +135,38 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                     background: difficultyFilter === opt.value ? '#EDE0FA' : '#fff',
                     border: `2px solid ${difficultyFilter === opt.value ? UI_PRIMARY : UI_BORDER}`,
                     color: difficultyFilter === opt.value ? UI_PRIMARY : UI_TEXT_SECONDARY,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category filter */}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: UI_TEXT_PRIMARY, marginBottom: 6 }}>Type</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {([
+                { value: 'all' as CategoryFilter, label: 'Tous' },
+                { value: 'additif' as CategoryFilter, label: 'Additif' },
+                { value: 'multiplicatif' as CategoryFilter, label: 'Multiplicatif' },
+                { value: 'complexe' as CategoryFilter, label: 'Complexe' },
+              ]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setCategoryFilter(opt.value)}
+                  style={{
+                    minWidth: MIN_BUTTON_SIZE_PX,
+                    minHeight: MIN_BUTTON_SIZE_PX,
+                    padding: '6px 14px',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: categoryFilter === opt.value ? 700 : 400,
+                    background: categoryFilter === opt.value ? '#EDE0FA' : '#fff',
+                    border: `2px solid ${categoryFilter === opt.value ? UI_PRIMARY : UI_BORDER}`,
+                    color: categoryFilter === opt.value ? UI_PRIMARY : UI_TEXT_SECONDARY,
                     cursor: 'pointer',
                   }}
                 >

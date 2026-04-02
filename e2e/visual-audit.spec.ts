@@ -640,29 +640,37 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('40-problem-bank-loaded.png'), fullPage: true });
   });
 
-  test('21 — PDF export button exists', async ({ page }) => {
-    // Verify "PDF" button in action bar
-    const pdfBtn = page.locator('[data-testid="action-bar"] button:has-text("PDF")');
+  test('21 — PDF export button exists (in ⋯ menu)', async ({ page }) => {
+    // Open the ⋯ more menu in action bar
+    const moreBtn = page.locator('[data-testid="action-bar"] button:has-text("⋯")');
+    await expect(moreBtn).toBeVisible({ timeout: 3000 });
+    await moreBtn.click();
+    await page.waitForTimeout(300);
+
+    // Verify "PDF" button in popover
+    const pdfBtn = page.locator('button:has-text("PDF")');
     await expect(pdfBtn).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('41-pdf-button.png'), fullPage: true });
 
-    // Click it — just verify no crash (PDF generation may fail in headless but button should respond)
     await pdfBtn.click();
     await page.waitForTimeout(500);
 
     await page.screenshot({ path: shot('42-after-pdf-click.png'), fullPage: true });
   });
 
-  test('22 — Presentation mode button', async ({ page }) => {
-    // Verify "Présenter" button exists in action bar
-    const presenterBtn = page.locator('[data-testid="action-bar"] button:has-text("Présenter")');
+  test('22 — Presentation mode button (in ⋯ menu)', async ({ page }) => {
+    // Open the ⋯ more menu in action bar
+    const moreBtn = page.locator('[data-testid="action-bar"] button:has-text("⋯")');
+    await expect(moreBtn).toBeVisible({ timeout: 3000 });
+    await moreBtn.click();
+    await page.waitForTimeout(300);
+
+    // Verify "Présenter" button in popover
+    const presenterBtn = page.locator('button:has-text("Présenter")');
     await expect(presenterBtn).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('43-presenter-button.png'), fullPage: true });
-
-    // Note: requestFullscreen may not work in headless, just verify button exists
-    // We don't click because it may cause issues in headless mode
   });
 
   test('23 — Slot manager: create and switch', async ({ page }) => {
@@ -812,7 +820,13 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 150, 120);
     await page.waitForTimeout(400);
 
-    // Verify boîte exists (dashed rect)
+    // Deselect tool to deselect piece, then verify boîte exists
+    await selectTool(page, 'boite'); // toggle off
+    await page.waitForTimeout(200);
+    // Click empty area to deselect piece
+    await clickCanvas(page, 400, 50);
+    await page.waitForTimeout(200);
+
     const boites = page.locator('[data-testid="canvas-svg"] rect[stroke-dasharray]');
     expect(await boites.count()).toBeGreaterThanOrEqual(1);
 
