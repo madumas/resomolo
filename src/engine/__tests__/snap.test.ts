@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { snapBarAlignment } from '../snap';
-import type { Barre, Piece } from '../../model/types';
+import type { Barre } from '../../model/types';
 
 function makeBarre(overrides: Partial<Barre> = {}): Barre {
   return {
@@ -50,14 +50,14 @@ describe('snapBarAlignment', () => {
     expect(result.y).toBe(115);
   });
 
-  it('multiple bars -- snaps to the first eligible in iteration order', () => {
+  it('multiple bars -- snaps to the last eligible bar (iteration overwrites)', () => {
     const bar1 = makeBarre({ id: 'b2', x: 100, y: 100 });
     const bar2 = makeBarre({ id: 'b3', x: 108, y: 100 });
-    // pos is within snap distance of both bars; iterates bar1 first
-    const pos = { x: 112, y: 120 }; // |112-100|=12 < 15, |112-108|=4 < 15
+    // pos is within snap distance of both bars; the loop doesn't break,
+    // so x snaps to bar1 (100), then bar2 checks |100-108|=8 < 15, overwrites to 108
+    const pos = { x: 112, y: 120 };
     const result = snapBarAlignment(pos, 'b1', [bar1, bar2], SNAP_RADIUS);
-    // The function iterates and snaps x on the first match: bar1 at x=100
-    expect(result.x).toBe(100);
+    expect(result.x).toBe(108);
   });
 
   it('same piece id is excluded from snap candidates', () => {

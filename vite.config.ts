@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import { execSync } from 'child_process'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -16,6 +16,9 @@ const gitBranch = (() => {
 
 // https://vite.dev/config/
 export default defineConfig({
+  test: {
+    exclude: ['e2e/**', 'node_modules/**'],
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_HASH__: JSON.stringify(gitHash),
