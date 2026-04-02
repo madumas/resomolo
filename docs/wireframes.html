@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModéliVite — Wireframes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #E8ECF0; color: #1A2433; line-height: 1.5; }
+
+  h1 { text-align: center; padding: 32px 0 8px; font-size: 28px; color: #185FA5; }
+  h1 span { font-weight: 300; color: #6B7280; font-size: 18px; display: block; margin-top: 4px; }
+
+  .wireframe-set { max-width: 900px; margin: 0 auto; padding: 0 16px 60px; }
+
+  .wireframe-title {
+    font-size: 20px; font-weight: 600; color: #1A2433;
+    margin: 48px 0 6px; padding-top: 32px;
+    border-top: 2px solid #D1D5DB;
+  }
+  .wireframe-title:first-of-type { border-top: none; margin-top: 24px; }
+  .wireframe-desc { color: #6B7280; font-size: 14px; margin-bottom: 16px; }
+
+  /* === APP FRAME === */
+  .app {
+    background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden; border: 1px solid #D1D5DB;
+  }
+
+  /* Header */
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; background: #F5F7FA; border-bottom: 1px solid #E5E7EB;
+    font-size: 13px;
+  }
+  .app-logo { font-weight: 700; color: #185FA5; font-size: 16px; }
+  .app-header-right { display: flex; gap: 8px; align-items: center; }
+  .hdr-btn {
+    background: #fff; border: 1px solid #D1D5DB; border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; color: #4A5568; cursor: default;
+  }
+  .hdr-slot { max-width: 160px; }
+
+  /* Problem zone */
+  .problem-zone {
+    padding: 12px 16px; background: #F0F4F8; border-bottom: 1px solid #E5E7EB;
+    font-size: 14px; position: relative;
+  }
+  .problem-zone .label { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .problem-text { color: #1A2433; }
+  .hl-blue { background: #C5D9F0; border-radius: 2px; padding: 0 2px; }
+  .hl-orange { background: #F5D5C0; border-radius: 2px; padding: 0 2px; }
+  .hl-green { background: #C5E8D5; border-radius: 2px; padding: 0 2px; }
+  .pastilles { position: absolute; right: 16px; top: 12px; display: flex; gap: 6px; }
+  .pastille { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; cursor: default; }
+  .pastille.blue { background: #C5D9F0; border-color: #185FA5; }
+  .pastille.orange { background: #F5D5C0; border-color: #C24B22; }
+  .pastille.green { background: #C5E8D5; border-color: #0B7285; }
+
+  /* Canvas */
+  .canvas {
+    min-height: 340px; padding: 20px; position: relative;
+    background: #FAFCFF;
+  }
+
+  /* Pieces */
+  .piece-bar {
+    height: 28px; border-radius: 4px; border: 2px solid; display: flex; align-items: center;
+    justify-content: center; font-size: 13px; font-weight: 500; position: absolute;
+  }
+  .piece-bar.blue { background: rgba(24,95,165,0.15); border-color: #185FA5; color: #185FA5; }
+  .piece-bar.red { background: rgba(194,75,34,0.15); border-color: #C24B22; color: #C24B22; }
+  .piece-bar.green { background: rgba(11,114,133,0.15); border-color: #0B7285; color: #0B7285; }
+
+  .piece-label {
+    position: absolute; font-size: 13px; color: #1A2433;
+    background: #F0F2F5; border-radius: 4px; padding: 2px 8px;
+  }
+
+  .piece-token {
+    width: 24px; height: 24px; border-radius: 50%; position: absolute;
+  }
+  .piece-token.blue { background: #185FA5; }
+  .piece-token.red { background: #C24B22; }
+  .piece-token.green { background: #0B7285; }
+  .piece-token.yellow { background: #B8860B; }
+
+  .piece-arrow {
+    position: absolute; color: #4A5568; font-size: 12px; display: flex; align-items: center; gap: 4px;
+  }
+  .piece-arrow .arrow-line {
+    height: 2px; background: #4A5568; flex-shrink: 0;
+  }
+  .piece-arrow .arrow-head {
+    width: 0; height: 0; border-left: 6px solid #4A5568;
+    border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  }
+  .piece-arrow .arrow-label {
+    position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; background: #F0F2F5; padding: 1px 6px; border-radius: 3px; white-space: nowrap;
+  }
+
+  .piece-calcul {
+    position: absolute; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 15px; background: #fff; border: 1px solid #D1D5DB; border-radius: 6px;
+    padding: 6px 12px; color: #1A2433;
+  }
+
+  .piece-reponse {
+    position: absolute; background: #fff; border: 2px solid #185FA5; border-radius: 6px;
+    padding: 8px 14px; font-size: 14px; color: #1A2433;
+  }
+  .piece-reponse .rep-label { font-size: 10px; color: #185FA5; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+
+  .piece-box {
+    position: absolute; border: 2px dashed #9CA3AF; border-radius: 6px;
+    background: rgba(156,163,175,0.05);
+  }
+  .piece-box .box-label { position: absolute; top: -10px; left: 8px; font-size: 11px; color: #6B7280; background: #FAFCFF; padding: 0 4px; }
+
+  .piece-brace {
+    position: absolute; color: #4A5568; font-size: 11px; display: flex; align-items: center;
+  }
+  .brace-line { width: 2px; background: #4A5568; }
+  .brace-label { font-size: 12px; color: #1A2433; background: #F0F2F5; padding: 2px 8px; border-radius: 3px; margin-left: 6px; }
+
+  /* Column calc */
+  .col-calc {
+    position: absolute; background: #fff; border: 1px solid #D1D5DB; border-radius: 6px;
+    padding: 8px 10px; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  .col-calc .col-row { display: flex; gap: 2px; justify-content: flex-end; margin: 1px 0; }
+  .col-calc .col-cell {
+    width: 38px; height: 46px; border: 1px solid #E5E7EB; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: #FAFCFF;
+  }
+  .col-calc .col-cell.empty { color: #D1D5DB; }
+  .col-calc .col-cell.carry { border: none; font-size: 10px; color: #6B7280; height: 16px; background: transparent; }
+  .col-calc .col-cell.op { border: none; background: transparent; color: #4A5568; font-size: 14px; }
+  .col-calc .col-sep { height: 2px; background: #1A2433; margin: 3px 0; }
+  .col-calc .col-label { font-size: 10px; color: #6B7280; font-family: -apple-system, system-ui, sans-serif; margin-bottom: 4px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 6px; padding: 10px 16px; background: #F5F7FA;
+    border-top: 1px solid #E5E7EB; flex-wrap: wrap;
+  }
+  .tool-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px 10px; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px;
+    font-size: 10px; color: #4A5568; min-width: 52px; cursor: default;
+  }
+  .tool-btn.active { border-color: #185FA5; color: #185FA5; background: #EBF0F9; }
+  .tool-icon { font-size: 18px; line-height: 1; }
+  .tool-more { border-style: dashed; color: #9CA3AF; }
+
+  /* Status bar */
+  .statusbar {
+    padding: 6px 16px; background: #EBF0F9; border-top: 1px solid #E5E7EB;
+    font-size: 12px; color: #185FA5;
+  }
+
+  /* Context actions */
+  .ctx-actions {
+    position: absolute; display: flex; gap: 4px; background: #fff;
+    border: 1px solid #D1D5DB; border-radius: 8px; padding: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .ctx-btn {
+    padding: 10px 14px; font-size: 12px; border-radius: 6px;
+    background: #F5F7FA; border: 1px solid #E5E7EB; color: #4A5568; cursor: default;
+    white-space: nowrap; min-height: 44px; min-width: 44px; display: flex; align-items: center;
+  }
+  .ctx-btn.active-ctx { background: #EBF0F9; border-color: #185FA5; color: #185FA5; }
+
+  /* Annotations wireframe */
+  .annotation {
+    position: absolute; font-size: 11px; color: #9CA3AF; font-style: italic;
+    pointer-events: none;
+  }
+
+  /* Dividers in bars */
+  .bar-divided { position: relative; overflow: hidden; }
+  .bar-div-line {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(24,95,165,0.4);
+  }
+  .bar-colored-part {
+    position: absolute; top: 0; bottom: 0; background: rgba(24,95,165,0.35);
+  }
+</style>
+</head>
+<body>
+
+<h1>ModéliVite <span>Wireframes — Problèmes typiques 4e année</span></h1>
+
+<div class="wireframe-set">
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 1: Comparaison multiplicative -->
+<!-- ============================================================ -->
+<div class="wireframe-title">1. Comparaison multiplicative — Schéma en barre</div>
+<div class="wireframe-desc">L'enfant utilise la pièce Barre pour modéliser « 3 fois plus ». La barre est dupliquée, les étiquettes nomment chaque partie, le calcul est écrit par l'enfant.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Problème p.42 &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="pastilles">
+      <div class="pastille blue"></div>
+      <div class="pastille orange"></div>
+      <div class="pastille green"></div>
+    </div>
+    <div class="problem-text">
+      <span class="hl-blue">Camille</span> a lu <span class="hl-green">3 fois plus</span> de pages que <span class="hl-blue">Théo</span>.
+      <span class="hl-blue">Camille a lu 45 pages</span>.
+      <span class="hl-orange">Combien de pages Théo a-t-il lues?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 280px;">
+    <!-- Barre Théo (1x = 60mm -> 120px) -->
+    <div class="piece-label" style="left: 20px; top: 28px;">Théo</div>
+    <div class="piece-bar blue" style="left: 70px; top: 22px; width: 120px;">?</div>
+
+    <!-- Barres Camille (3 barres dupliquées, alignées à gauche) -->
+    <div class="piece-label" style="left: 20px; top: 72px;">Camille</div>
+    <div class="piece-bar blue" style="left: 70px; top: 66px; width: 120px;"></div>
+    <div class="piece-bar blue" style="left: 190px; top: 66px; width: 120px;"></div>
+    <div class="piece-bar blue" style="left: 310px; top: 66px; width: 120px;"></div>
+
+    <!-- Accolade Camille -->
+    <div class="piece-brace" style="left: 70px; top: 100px; width: 360px; flex-direction: column; align-items: center;">
+      <div style="width: 100%; height: 12px; border-left: 2px solid #4A5568; border-right: 2px solid #4A5568; border-bottom: 2px solid #4A5568; border-radius: 0 0 8px 8px;"></div>
+      <div class="brace-label" style="margin-left: 0; margin-top: 4px;">45 pages</div>
+    </div>
+
+    <!-- Flèche "3 fois plus" -->
+    <div class="piece-arrow" style="left: 440px; top: 34px; flex-direction: column; height: 55px;">
+      <div style="width: 2px; height: 40px; background: #4A5568;"></div>
+      <div style="width: 0; height: 0; border-top: 6px solid #4A5568; border-left: 4px solid transparent; border-right: 4px solid transparent;"></div>
+      <div style="position: absolute; right: -50px; top: 14px; font-size: 11px; background: #F0F2F5; padding: 1px 6px; border-radius: 3px;">3 fois plus</div>
+    </div>
+
+    <!-- Calcul (écrit par l'enfant) -->
+    <div class="piece-calcul" style="left: 70px; top: 160px;">45 ÷ 3 = 15</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 70px; top: 210px;">
+      <div class="rep-label">Réponse</div>
+      Théo a lu 15 pages.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn active"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Barre placée</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 2: Multi-étapes avec données implicites -->
+<!-- ============================================================ -->
+<div class="wireframe-title">2. Problème multi-étapes — Flèches et calculs chaînés</div>
+<div class="wireframe-desc">L'enfant décompose le problème en étapes. Chaque calcul est ancré à son contexte via des étiquettes. L'outil ne calcule rien — l'enfant écrit tout.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Sortie musée &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="pastilles">
+      <div class="pastille blue"></div>
+      <div class="pastille orange"></div>
+      <div class="pastille green"></div>
+    </div>
+    <div class="problem-text">
+      Une classe de <span class="hl-blue">28 élèves</span> va au musée. Le transport coûte <span class="hl-blue">4 $ par élève</span>.
+      L'entrée coûte <span class="hl-blue">6 $ par élève</span>. L'école paie <span class="hl-blue">100 $</span>.
+      Les parents doivent payer <span class="hl-green">le reste</span>.
+      <span class="hl-orange">Combien les parents doivent-ils payer en tout?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 340px;">
+    <!-- Étiquette 28 élèves -->
+    <div class="piece-label" style="left: 20px; top: 16px; font-weight: 600;">28 élèves</div>
+
+    <!-- Transport -->
+    <div class="piece-label" style="left: 20px; top: 56px;">Transport</div>
+    <div class="piece-calcul" style="left: 130px; top: 50px;">28 × 4 = 112 $</div>
+
+    <!-- Entrée -->
+    <div class="piece-label" style="left: 20px; top: 96px;">Entrée</div>
+    <div class="piece-calcul" style="left: 130px; top: 90px;">28 × 6 = 168 $</div>
+
+    <!-- Flèche vers coût total -->
+    <div style="position: absolute; left: 310px; top: 62px; width: 2px; height: 55px; background: #D1D5DB;"></div>
+    <div style="position: absolute; left: 290px; top: 117px; width: 24px; height: 2px; background: #4A5568;"></div>
+    <div style="position: absolute; left: 312px; top: 113px; width: 0; height: 0; border-left: 6px solid #4A5568; border-top: 4px solid transparent; border-bottom: 4px solid transparent;"></div>
+
+    <!-- Coût total -->
+    <div class="piece-label" style="left: 330px; top: 56px;">Coût total</div>
+    <div class="piece-calcul" style="left: 330px; top: 78px;">112 + 168 = 280 $</div>
+
+    <!-- École -->
+    <div class="piece-label" style="left: 20px; top: 160px;">L'école paie</div>
+    <div class="piece-label" style="left: 130px; top: 160px; font-weight: 600;">100 $</div>
+
+    <!-- Parents -->
+    <div class="piece-label" style="left: 20px; top: 210px;">Parents</div>
+    <div class="piece-calcul" style="left: 130px; top: 204px;">280 - 100 = 180 $</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 20px; top: 264px;">
+      <div class="rep-label">Réponse</div>
+      Les parents doivent payer 180 $.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn active"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Calcul — Clique pour placer un calcul</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 3: Division partage avec jetons et boîtes -->
+<!-- ============================================================ -->
+<div class="wireframe-title">3. Division partage — Jetons et boîtes</div>
+<div class="wireframe-desc">L'enfant modélise un partage avec des boîtes (groupes) et des jetons (unités). Le mode « Plus de pièces » est ouvert pour accéder à Boîte et Étiquette.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Partage cartes &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      <span class="hl-blue">3 amis</span> se partagent également <span class="hl-blue">15 cartes</span>.
+      <span class="hl-orange">Combien chaque ami reçoit-il de cartes?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 300px;">
+    <!-- Étiquette source -->
+    <div class="piece-label" style="left: 180px; top: 10px; font-weight: 600;">15 cartes</div>
+
+    <!-- Flèches de distribution -->
+    <div style="position: absolute; left: 120px; top: 38px; width: 80px; height: 2px; background: #4A5568; transform: rotate(25deg); transform-origin: right;"></div>
+    <div style="position: absolute; left: 200px; top: 36px; width: 2px; height: 24px; background: #4A5568;"></div>
+    <div style="position: absolute; left: 280px; top: 38px; width: 80px; height: 2px; background: #4A5568; transform: rotate(-25deg); transform-origin: left;"></div>
+
+    <!-- Boîte Ami 1 -->
+    <div class="piece-box" style="left: 20px; top: 66px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 1</div>
+      <div class="piece-token blue" style="left: 12px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 32px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 52px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 72px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 92px; top: 20px;"></div>
+    </div>
+
+    <!-- Boîte Ami 2 -->
+    <div class="piece-box" style="left: 170px; top: 66px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 2</div>
+      <div class="piece-token blue" style="left: 12px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 32px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 52px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 72px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 92px; top: 20px;"></div>
+    </div>
+
+    <!-- Boîte Ami 3 -->
+    <div class="piece-box" style="left: 320px; top: 66px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 3</div>
+      <div class="piece-token blue" style="left: 12px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 32px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 52px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 72px; top: 20px;"></div>
+      <div class="piece-token blue" style="left: 92px; top: 20px;"></div>
+    </div>
+
+    <!-- Calcul -->
+    <div class="piece-calcul" style="left: 20px; top: 170px;">15 ÷ 3 = 5</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 20px; top: 220px;">
+      <div class="rep-label">Réponse</div>
+      Chaque ami reçoit 5 cartes.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn active"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn"><span class="tool-icon">&#9647;</span>Boîte</div>
+    <div class="tool-btn"><span class="tool-icon">A</span>Étiquette</div>
+    <div class="tool-btn"><span class="tool-icon">&#8594;</span>Flèche</div>
+  </div>
+  <div class="statusbar">Jeton — Quantité : 5 &nbsp;&#x2022;&nbsp; Clique pour placer 5 jetons</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 4: Calcul en colonnes -->
+<!-- ============================================================ -->
+<div class="wireframe-title">4. Calcul en colonnes — Alignement automatique des chiffres</div>
+<div class="wireframe-desc">L'enfant a modélisé le problème et doit maintenant calculer 28 × 4. Il passe en mode colonnes pour avoir les chiffres alignés par valeur de position. Il tape chaque chiffre lui-même.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Friandises &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      Malik veut acheter <span class="hl-blue">28 friandises</span> à <span class="hl-blue">4 $</span> chacune.
+      <span class="hl-orange">Combien doit-il payer?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 310px;">
+    <!-- Barres de modélisation simple -->
+    <div class="piece-label" style="left: 20px; top: 16px;">28 friandises × 4 $ chacune</div>
+
+    <!-- Calcul en mode expression (premier calcul) -->
+    <div class="piece-calcul" style="left: 20px; top: 50px; color: #9CA3AF;">28 × 4 = ?</div>
+    <div class="annotation" style="left: 195px; top: 54px;">&#8592; l'enfant ne sait pas le résultat de tête</div>
+
+    <!-- Actions contextuelles -->
+    <div class="ctx-actions" style="left: 20px; top: 84px;">
+      <div class="ctx-btn">Éditer</div>
+      <div class="ctx-btn active-ctx">En colonnes</div>
+      <div class="ctx-btn">Déplacer</div>
+      <div class="ctx-btn" style="color: #C82828;">Supprimer</div>
+    </div>
+
+    <!-- Calcul en mode colonnes (résultat) -->
+    <div class="col-calc" style="left: 20px; top: 130px;">
+      <div class="col-label">En colonnes</div>
+      <div class="col-row">
+        <div class="col-cell carry">3</div>
+        <div class="col-cell carry"></div>
+      </div>
+      <div class="col-row">
+        <div class="col-cell">2</div>
+        <div class="col-cell">8</div>
+      </div>
+      <div class="col-row">
+        <div class="col-cell op">×</div>
+        <div class="col-cell">4</div>
+      </div>
+      <div class="col-sep"></div>
+      <div class="col-row">
+        <div class="col-cell">1</div>
+        <div class="col-cell">1</div>
+        <div class="col-cell">2</div>
+      </div>
+    </div>
+
+    <div class="annotation" style="left: 120px; top: 142px;">&#8592; retenue tapée par l'enfant</div>
+    <div class="annotation" style="left: 120px; top: 172px;">&#8592; opérandes transférés du mode expression</div>
+    <div class="annotation" style="left: 120px; top: 225px;">&#8592; résultat tapé par l'enfant, chiffre par chiffre</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 20px; top: 258px;">
+      <div class="rep-label">Réponse</div>
+      Malik doit payer 112 $.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn active"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Calcul sélectionné — En colonnes</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 5: Fractions avec barre subdivisée -->
+<!-- ============================================================ -->
+<div class="wireframe-title">5. Fractions — Barre subdivisée</div>
+<div class="wireframe-desc">L'enfant compare deux fractions en subdivisant deux barres de même taille. Il colorie les parts pour visualiser la comparaison. Pas de calcul nécessaire — la réponse est visible dans le schéma.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Fractions pizza &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      <span class="hl-blue">Éva a mangé 2/4 de sa pizza</span>. <span class="hl-blue">Kim a mangé 3/8 de sa pizza</span> (même taille).
+      <span class="hl-orange">Qui a mangé le plus?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 260px;">
+    <!-- Barre Éva (divisée en 4, 2 colorées) -->
+    <div class="piece-label" style="left: 20px; top: 20px;">Éva — 2/4</div>
+    <div class="piece-bar blue bar-divided" style="left: 20px; top: 48px; width: 360px;">
+      <div class="bar-colored-part" style="left: 0; width: 50%;"></div>
+      <div class="bar-div-line" style="left: 25%;"></div>
+      <div class="bar-div-line" style="left: 50%;"></div>
+      <div class="bar-div-line" style="left: 75%;"></div>
+    </div>
+    <div class="piece-label" style="left: 388px; top: 48px; font-size: 12px; color: #185FA5;">&#9664; mangé</div>
+
+    <!-- Barre Kim (divisée en 8, 3 colorées) -->
+    <div class="piece-label" style="left: 20px; top: 96px;">Kim — 3/8</div>
+    <div class="piece-bar blue bar-divided" style="left: 20px; top: 124px; width: 360px;">
+      <div class="bar-colored-part" style="left: 0; width: 37.5%;"></div>
+      <div class="bar-div-line" style="left: 12.5%;"></div>
+      <div class="bar-div-line" style="left: 25%;"></div>
+      <div class="bar-div-line" style="left: 37.5%;"></div>
+      <div class="bar-div-line" style="left: 50%;"></div>
+      <div class="bar-div-line" style="left: 62.5%;"></div>
+      <div class="bar-div-line" style="left: 75%;"></div>
+      <div class="bar-div-line" style="left: 87.5%;"></div>
+    </div>
+    <div class="piece-label" style="left: 388px; top: 124px; font-size: 12px; color: #185FA5;">&#9664; mangé</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 20px; top: 180px;">
+      <div class="rep-label">Réponse</div>
+      Éva a mangé le plus parce que 2/4 est plus grand que 3/8.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn active"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Barre sélectionnée — Divisée en 8 parts, 3 colorées</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 6: Espace vide avec questions de relance -->
+<!-- ============================================================ -->
+<div class="wireframe-title">6. Premier contact — Questions de relance</div>
+<div class="wireframe-desc">L'enfant vient d'ouvrir un problème et n'a encore rien placé. Après 30 secondes, la barre d'état affiche les questions de relance PFEQ pour amorcer le processus de modélisation.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Nouveau &nbsp;&#9662;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8634;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      Sarah a 3 boîtes de 12 crayons. Elle donne 8 crayons à son ami.
+      Combien de crayons lui reste-t-il?
+    </div>
+    <div class="pastilles">
+      <div class="pastille blue"></div>
+      <div class="pastille orange"></div>
+      <div class="pastille green"></div>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+    <div style="color: #D1D5DB; font-size: 14px; text-align: center;">
+      (espace vide — l'enfant n'a encore rien placé)
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar" style="background: #FFF7ED; color: #B45309;">
+    Que sais-tu?&nbsp;&nbsp;&bull;&nbsp;&nbsp;Que cherches-tu?&nbsp;&nbsp;&bull;&nbsp;&nbsp;Qu'est-ce qui se passe dans l'histoire?
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 7: Échafaudage avec pièces verrouillées -->
+<!-- ============================================================ -->
+<div class="wireframe-title">7. Échafaudage — Pièces verrouillées par l'adulte</div>
+<div class="wireframe-desc">L'adulte a préparé un fichier .modelivite avec deux barres pré-placées et verrouillées (bordure grise). L'enfant doit les étiqueter, choisir la bonne taille, et compléter le calcul et la réponse.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Exercice guidé &nbsp;&#9662;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8634;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      Lucas a ramassé <span class="hl-blue">4 fois plus</span> de feuilles que Mia.
+      <span class="hl-blue">Lucas a ramassé 32 feuilles</span>.
+      <span class="hl-orange">Combien de feuilles Mia a-t-elle ramassées?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 280px;">
+    <!-- Barre 1 verrouillée (grise, avec cadenas) -->
+    <div class="piece-bar" style="left: 70px; top: 22px; width: 100px; background: rgba(156,163,175,0.15); border-color: #9CA3AF; color: #9CA3AF;">
+      &#128274;
+    </div>
+    <div class="piece-label" style="left: 20px; top: 28px; color: #9CA3AF; background: #F0F2F5;">?</div>
+    <div class="annotation" style="left: 180px; top: 26px;">&#8592; verrouillée — l'enfant doit ajouter une étiquette</div>
+
+    <!-- Barre 2 verrouillée -->
+    <div class="piece-bar" style="left: 70px; top: 66px; width: 100px; background: rgba(156,163,175,0.15); border-color: #9CA3AF; color: #9CA3AF;">
+      &#128274;
+    </div>
+    <div class="piece-label" style="left: 20px; top: 72px; color: #9CA3AF; background: #F0F2F5;">?</div>
+    <div class="annotation" style="left: 180px; top: 70px;">&#8592; verrouillée — l'enfant doit ajouter une étiquette</div>
+
+    <!-- Zone vide pour calcul et réponse -->
+    <div style="position: absolute; left: 70px; top: 130px; color: #D1D5DB; font-size: 13px; border: 1px dashed #E5E7EB; padding: 12px 20px; border-radius: 6px;">
+      L'enfant place son Calcul et sa Réponse ici
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Tu peux commencer par placer ce que tu connais.</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 8: Amorçage par surlignage (le premier geste) -->
+<!-- ============================================================ -->
+<div class="wireframe-title">8. Amorçage — Le surlignage comme premier geste</div>
+<div class="wireframe-desc">L'enfant vient d'ouvrir un problème. La pastille bleue est pré-sélectionnée. Le canvas invite à lire et cliquer sur les nombres. Les outils sont légèrement atténués — le surlignage est proposé en premier. Rien n'est bloquant : l'enfant peut cliquer un outil directement.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Nouveau &nbsp;&#9662;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8634;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone" style="border: 2px solid #185FA5;">
+    <div class="label">Problème — <span style="color: #185FA5; font-weight: 600;">clique sur les nombres</span></div>
+    <div class="pastilles">
+      <div class="pastille blue" style="box-shadow: 0 0 0 3px rgba(24,95,165,0.3);"></div>
+      <div class="pastille orange"></div>
+      <div class="pastille green"></div>
+    </div>
+    <div class="problem-text">
+      Camille a lu 3 fois plus de pages que Théo.
+      Camille a lu 45 pages.
+      Combien de pages Théo a-t-il lues?
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 160px; display: flex; align-items: center; justify-content: center;">
+    <div style="color: #9CA3AF; font-size: 15px; text-align: center; line-height: 2;">
+      Commence par lire le problème.<br>
+      Clique sur les nombres.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn" style="opacity: 0.5;"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn" style="opacity: 0.5;"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn" style="opacity: 0.5;"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn" style="opacity: 0.5;"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more" style="opacity: 0.5;"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Clique sur les nombres dans le problème</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 9: Après surlignage — transition vers modélisation -->
+<!-- ============================================================ -->
+<div class="wireframe-title">9. Après surlignage — Prêt à modéliser</div>
+<div class="wireframe-desc">L'enfant a surligné des données. Le canvas change de message. Les outils sont maintenant mis en évidence. La zone problème a des couleurs — l'espace n'est plus vide, l'inertie est brisée.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Nouveau &nbsp;&#9662;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8634;</div>
+      <div class="hdr-btn" style="opacity: 0.3;">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="pastilles">
+      <div class="pastille blue"></div>
+      <div class="pastille orange"></div>
+      <div class="pastille green" style="box-shadow: 0 0 0 3px rgba(11,114,133,0.3);"></div>
+    </div>
+    <div class="problem-text">
+      <span class="hl-blue">Camille</span> a lu <span class="hl-green">3 fois plus</span> de pages que <span class="hl-blue">Théo</span>.
+      <span class="hl-blue">Camille a lu 45 pages</span>.
+      <span class="hl-orange">Combien de pages Théo a-t-il lues?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 160px; display: flex; align-items: center; justify-content: center;">
+    <div style="color: #185FA5; font-size: 15px; text-align: center; font-weight: 500;">
+      Place ta première pièce.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn" style="border-color: #185FA5; box-shadow: 0 0 0 2px rgba(24,95,165,0.15);"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Choisis une pièce pour commencer ta modélisation</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 10: Zone problème compacte + boutons flottants -->
+<!-- ============================================================ -->
+<div class="wireframe-title">10. Zone compacte + boutons Ranger / Voir tout</div>
+<div class="wireframe-desc">La zone problème est repliée : seule la première ligne et les données surlignées restent visibles. Les boutons flottants « Voir tout » et « Ranger » sont en bas à droite du canvas. L'enfant a construit un schéma un peu désordonné.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Sortie musée &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone" style="padding: 8px 16px; cursor: pointer;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-size: 13px; color: #6B7280;">
+        &#9654; Une classe de <span class="hl-blue">28 élèves</span> va au musée...
+        &nbsp;&nbsp;
+        <span class="hl-blue">4 $</span> &nbsp; <span class="hl-blue">6 $</span> &nbsp; <span class="hl-blue">100 $</span>
+      </div>
+      <div style="font-size: 11px; color: #9CA3AF;">cliquer pour déplier</div>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 300px;">
+    <!-- Modélisation un peu en désordre -->
+    <div class="piece-label" style="left: 30px; top: 10px; font-weight: 600;">28 élèves</div>
+    <div class="piece-calcul" style="left: 200px; top: 30px;">28 × 4 = 112 $</div>
+    <div class="piece-label" style="left: 15px; top: 70px;">Entrée</div>
+    <div class="piece-calcul" style="left: 80px; top: 100px;">28 × 6 = 168 $</div>
+    <div class="piece-calcul" style="left: 300px; top: 90px;">112 + 168 = 280 $</div>
+    <div class="piece-label" style="left: 40px; top: 155px;">École</div>
+    <div class="piece-label" style="left: 100px; top: 155px; font-weight: 600;">100 $</div>
+    <div class="piece-calcul" style="left: 30px; top: 195px;">280 - 100 = 180 $</div>
+
+    <!-- Boutons flottants -->
+    <div style="position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px;">
+      <div style="width: 44px; height: 44px; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #4A5568; box-shadow: 0 1px 4px rgba(0,0,0,0.1); cursor: default;" title="Voir tout">&#8690;</div>
+      <div style="width: 44px; height: 44px; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #4A5568; box-shadow: 0 1px 4px rgba(0,0,0,0.1); cursor: default;" title="Ranger">&#9783;</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn active"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">Calcul — Clique pour placer un calcul</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WIREFRAME 11: Division avec reste -->
+<!-- ============================================================ -->
+<div class="wireframe-title">11. Division avec reste — Jetons restants</div>
+<div class="wireframe-desc">16 cartes partagées entre 3 amis. Chaque ami reçoit 5 cartes. Il reste 1 carte « orpheline » hors des boîtes. L'enfant voit physiquement le reste.</div>
+
+<div class="app">
+  <div class="app-header">
+    <div class="app-logo">ModéliVite</div>
+    <div class="app-header-right">
+      <div class="hdr-btn hdr-slot">Partage reste &nbsp;&#9662;</div>
+      <div class="hdr-btn">&#8634;</div>
+      <div class="hdr-btn">&#8635;</div>
+      <div class="hdr-btn">&#9881;</div>
+    </div>
+  </div>
+  <div class="problem-zone">
+    <div class="label">Problème</div>
+    <div class="problem-text">
+      <span class="hl-blue">3 amis</span> se partagent <span class="hl-blue">16 cartes</span> également.
+      <span class="hl-orange">Combien chaque ami reçoit-il?</span>
+      <span class="hl-orange">Combien en reste-t-il?</span>
+    </div>
+  </div>
+  <div class="canvas" style="min-height: 320px;">
+    <!-- Étiquette source -->
+    <div class="piece-label" style="left: 170px; top: 10px; font-weight: 600;">16 cartes</div>
+
+    <!-- Boîte Ami 1 -->
+    <div class="piece-box" style="left: 20px; top: 50px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 1</div>
+      <div class="piece-token blue" style="left: 12px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 34px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 56px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 78px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 100px; top: 22px;"></div>
+    </div>
+
+    <!-- Boîte Ami 2 -->
+    <div class="piece-box" style="left: 170px; top: 50px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 2</div>
+      <div class="piece-token blue" style="left: 12px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 34px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 56px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 78px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 100px; top: 22px;"></div>
+    </div>
+
+    <!-- Boîte Ami 3 -->
+    <div class="piece-box" style="left: 320px; top: 50px; width: 130px; height: 80px;">
+      <div class="box-label">Ami 3</div>
+      <div class="piece-token blue" style="left: 12px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 34px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 56px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 78px; top: 22px;"></div>
+      <div class="piece-token blue" style="left: 100px; top: 22px;"></div>
+    </div>
+
+    <!-- Jeton restant (orphelin, hors des boîtes) -->
+    <div class="piece-token red" style="left: 470px; top: 80px; width: 18px; height: 18px;"></div>
+    <div class="piece-label" style="left: 468px; top: 104px; font-size: 11px; color: #C24B22;">reste</div>
+
+    <!-- Calcul -->
+    <div class="piece-calcul" style="left: 20px; top: 160px;">16 ÷ 3 = 5 reste 1</div>
+
+    <!-- Réponse -->
+    <div class="piece-reponse" style="left: 20px; top: 218px;">
+      <div class="rep-label">Réponse</div>
+      Chaque ami reçoit 5 cartes. Il reste 1 carte.
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="tool-btn active"><span class="tool-icon">&#9679;</span>Jeton</div>
+    <div class="tool-btn"><span class="tool-icon">&#9644;</span>Barre</div>
+    <div class="tool-btn"><span class="tool-icon">=</span>Calcul</div>
+    <div class="tool-btn"><span class="tool-icon">&#9745;</span>Réponse</div>
+    <div class="tool-btn tool-more"><span class="tool-icon">&#8943;</span>Plus</div>
+  </div>
+  <div class="statusbar">5 jetons placés dans Ami 3</div>
+</div>
+
+</div><!-- /wireframe-set -->
+
+</body>
+</html>

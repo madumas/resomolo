@@ -1,0 +1,374 @@
+import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Reponse } from './types';
+import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM } from './types';
+import { createUndoManager, pushState, undo as undoFn, redo as redoFn } from './undo';
+
+// === Initial state ===
+
+export function createInitialState(probleme = '', readOnly = false): ModelisationState {
+  return {
+    probleme,
+    problemeReadOnly: readOnly,
+    problemeHighlights: [],
+    referenceUnitMm: REFERENCE_UNIT_MM,
+    pieces: [],
+    availablePieces: null,
+  };
+}
+
+export function createInitialUndoManager(probleme = '', readOnly = false): UndoManager {
+  return createUndoManager(createInitialState(probleme, readOnly));
+}
+
+// === Actions ===
+
+export type Action =
+  | { type: 'PLACE_PIECE'; piece: Piece }
+  | { type: 'PLACE_PIECES'; pieces: Piece[] } // batch (e.g. multiple jetons)
+  | { type: 'MOVE_PIECE'; id: string; x: number; y: number }
+  | { type: 'MOVE_PIECE_LIVE'; id: string; x: number; y: number }
+  | { type: 'EDIT_PIECE'; id: string; changes: Record<string, unknown> }
+  | { type: 'DELETE_PIECE'; id: string }
+  | { type: 'HIGHLIGHT_ADD'; highlight: Highlight }
+  | { type: 'HIGHLIGHT_REMOVE'; start: number; end: number }
+  | { type: 'SET_PROBLEM'; text: string; readOnly: boolean }
+  | { type: 'SET_PROBLEM_AND_CLEAR'; text: string; readOnly: boolean }
+  | { type: 'CLEAR_PIECES' } // recommencer
+  | { type: 'ARRANGE_PIECES'; moves: Array<{ id: string; x: number; y: number }> }
+  | { type: 'UNGROUP_BARRES'; groupId: string }
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
+  | { type: 'RESTORE'; undoManager: UndoManager };
+
+// === App state (wraps undo manager + UI state) ===
+
+export interface AppState {
+  undoManager: UndoManager;
+  activeTool: ToolType;
+  selectedPieceId: string | null;
+  editingPieceId: string | null;
+  problemZoneExpanded: boolean;
+}
+
+export function createInitialAppState(probleme = '', readOnly = false): AppState {
+  return {
+    undoManager: createInitialUndoManager(probleme, readOnly),
+    activeTool: null,
+    selectedPieceId: null,
+    editingPieceId: null,
+    problemZoneExpanded: true,
+  };
+}
+
+// === Helpers ===
+
+/** Compute piece center for the reducer (simplified — no external deps). */
+function getReponseWidthSimple(piece: Reponse): number {
+  if (piece.template) {
+    const parts = piece.template.split('___');
+    const blanks = piece.text ? piece.text.split('|') : [];
+    let tpl = '';
+    for (let i = 0; i < parts.length; i++) {
+      tpl += parts[i];
+      if (i < parts.length - 1) tpl += blanks[i] || '____';
+    }
+    return Math.max(120, tpl.length * 3.2 + 20);
+  }
+  return Math.max(100, piece.text.length * 4 + 20);
+}
+
+function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: number; y: number } {
+  switch (piece.type) {
+    case 'jeton': return { x: piece.x, y: piece.y };
+    case 'barre': return { x: piece.x + (piece.sizeMultiplier * referenceUnitMm) / 2, y: piece.y + BAR_HEIGHT_MM / 2 };
+    case 'boite': return { x: piece.x + piece.width / 2, y: piece.y + piece.height / 2 };
+    case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) / 2, y: piece.y + 7 };
+    case 'reponse': return { x: piece.x + getReponseWidthSimple(piece) / 2, y: piece.y + 11 };
+    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
+    default: return { x: piece.x, y: piece.y };
+  }
+}
+
+/** Auto-resize boîtes to fit their child jetons. */
+function autoResizeBoite(state: ModelisationState): ModelisationState {
+  const boites = state.pieces.filter((p): p is Boite => p.type === 'boite');
+  let pieces = state.pieces;
+  let changed = false;
+
+  for (const boite of boites) {
+    const children = pieces.filter(p => p.type === 'jeton' && p.parentId === boite.id);
+    if (children.length === 0) continue;
+
+    const padding = 10; // mm
+    const minX = Math.min(...children.map(c => c.x)) - padding;
+    const maxX = Math.max(...children.map(c => c.x)) + padding;
+    const minY = Math.min(...children.map(c => c.y)) - padding;
+    const maxY = Math.max(...children.map(c => c.y)) + padding;
+
+    const newWidth = Math.max(boite.width, maxX - minX);
+    const newHeight = Math.max(boite.height, maxY - minY);
+    const newX = Math.min(boite.x, minX);
+    const newY = Math.min(boite.y, minY);
+
+    if (newWidth !== boite.width || newHeight !== boite.height || newX !== boite.x || newY !== boite.y) {
+      changed = true;
+      pieces = pieces.map(p =>
+        p.id === boite.id
+          ? { ...p, x: newX, y: newY, width: newWidth, height: newHeight } as Piece
+          : p
+      );
+    }
+  }
+
+  return changed ? { ...state, pieces } : state;
+}
+
+/** Auto-scale referenceUnitMm so that the widest barre fits in the canvas. */
+function autoScaleReference(state: ModelisationState): ModelisationState {
+  const barres = state.pieces.filter(p => p.type === 'barre');
+  if (barres.length === 0) return state;
+  const maxMultiplier = Math.max(...barres.map(b => (b as any).sizeMultiplier));
+  const maxWidth = 470; // CANVAS_WIDTH_MM (500) - 2 * MARGIN (15)
+  if (maxMultiplier * state.referenceUnitMm > maxWidth) {
+    // C3: Floor of 10mm to prevent referenceUnitMm = 0
+    return { ...state, referenceUnitMm: Math.max(10, Math.floor(maxWidth / maxMultiplier)) };
+  }
+  return state;
+}
+
+/** C3: Restore referenceUnitMm after deleting barres (may allow larger unit again). */
+function autoRestoreReference(state: ModelisationState): ModelisationState {
+  const barres = state.pieces.filter(p => p.type === 'barre');
+  if (barres.length === 0) return { ...state, referenceUnitMm: REFERENCE_UNIT_MM };
+  const maxMultiplier = Math.max(...barres.map(b => (b as any).sizeMultiplier));
+  const maxWidth = 470;
+  const ideal = Math.min(REFERENCE_UNIT_MM, Math.floor(maxWidth / maxMultiplier));
+  return { ...state, referenceUnitMm: Math.max(10, ideal) };
+}
+
+// === Reducer ===
+
+function reduceModelisation(state: ModelisationState, action: Action): ModelisationState | null {
+  switch (action.type) {
+    case 'PLACE_PIECE': {
+      let newState = { ...state, pieces: [...state.pieces, action.piece] };
+      if (action.piece.type === 'jeton' && action.piece.parentId) {
+        newState = autoResizeBoite(newState);
+      }
+      if (action.piece.type === 'barre') {
+        newState = autoScaleReference(newState);
+      }
+      return newState;
+    }
+
+    case 'PLACE_PIECES': {
+      const newState = { ...state, pieces: [...state.pieces, ...action.pieces] };
+      const hasParentedJeton = action.pieces.some(p => p.type === 'jeton' && p.parentId);
+      return hasParentedJeton ? autoResizeBoite(newState) : newState;
+    }
+
+    case 'MOVE_PIECE':
+    case 'MOVE_PIECE_LIVE': {
+      const movedPiece = state.pieces.find(p => p.id === action.id);
+      if (!movedPiece) return state;
+
+      const dx = action.x - movedPiece.x;
+      const dy = action.y - movedPiece.y;
+
+      // Move the piece + move attached children (étiquettes, jetons in boîte)
+      let pieces = state.pieces.map(p => {
+        if (p.id === action.id) return { ...p, x: action.x, y: action.y };
+        // Étiquettes follow their parent
+        if (p.type === 'etiquette' && (p as Etiquette).attachedTo === action.id) {
+          return { ...p, x: p.x + dx, y: p.y + dy };
+        }
+        // Jetons follow their parent boîte
+        if (p.type === 'jeton' && (p as Jeton).parentId === action.id && movedPiece.type === 'boite') {
+          return { ...p, x: p.x + dx, y: p.y + dy };
+        }
+        return p;
+      });
+
+      // MOVE_PIECE (final, not live): detach étiquette if moved far from parent
+      if (action.type === 'MOVE_PIECE' && movedPiece.type === 'etiquette' && (movedPiece as Etiquette).attachedTo) {
+        const parent = pieces.find(p => p.id === (movedPiece as Etiquette).attachedTo);
+        if (parent) {
+          const center = getPieceCenterSimple(parent, state.referenceUnitMm);
+          const dist = Math.hypot(action.x - center.x, action.y - center.y);
+          if (dist > 15) {
+            pieces = pieces.map(p =>
+              p.id === movedPiece.id ? { ...p, attachedTo: null } as Piece : p
+            );
+          }
+        }
+      }
+
+      // MOVE_PIECE (final): update jeton parentId based on boîte containment
+      if (action.type === 'MOVE_PIECE' && movedPiece.type === 'jeton') {
+        const boite = pieces.find(p =>
+          p.type === 'boite' && p.id !== action.id &&
+          action.x >= p.x && action.x <= p.x + (p as Boite).width &&
+          action.y >= p.y && action.y <= p.y + (p as Boite).height
+        );
+        const newParentId = boite ? boite.id : null;
+        if (newParentId !== (movedPiece as Jeton).parentId) {
+          pieces = pieces.map(p =>
+            p.id === action.id ? { ...p, parentId: newParentId } as Piece : p
+          );
+        }
+      }
+
+      let newState = { ...state, pieces };
+
+      // Auto-resize boîtes if the moved piece is a jeton (parented or just un-parented)
+      if (movedPiece.type === 'jeton') {
+        newState = autoResizeBoite(newState);
+      }
+
+      return newState;
+    }
+
+    case 'EDIT_PIECE': {
+      // I5: Guard — prevent overwriting type and id via changes
+      const { type: _t, id: _i, ...safeChanges } = action.changes as any;
+      let newState = {
+        ...state,
+        pieces: state.pieces.map(p =>
+          p.id === action.id ? { ...p, ...safeChanges } as Piece : p
+        ),
+      };
+      if ('sizeMultiplier' in safeChanges) {
+        newState = autoScaleReference(newState);
+      }
+      return newState;
+    }
+
+    case 'DELETE_PIECE': {
+      // Cascade: also delete attached fleches and etiquettes
+      const deletedId = action.id;
+      const filteredState = {
+        ...state,
+        pieces: state.pieces.filter(p => {
+          if (p.id === deletedId) return false;
+          if (p.type === 'fleche' && (p.fromId === deletedId || p.toId === deletedId)) return false;
+          if (p.type === 'etiquette' && p.attachedTo === deletedId) return false;
+          if (p.type === 'jeton' && p.parentId === deletedId) return false;
+          return true;
+        }),
+      };
+      // C3: Recalculate reference unit after deletion (may allow restoration)
+      return autoRestoreReference(filteredState);
+    }
+
+    case 'HIGHLIGHT_ADD':
+      return {
+        ...state,
+        problemeHighlights: [...state.problemeHighlights, action.highlight],
+      };
+
+    case 'HIGHLIGHT_REMOVE':
+      return {
+        ...state,
+        problemeHighlights: state.problemeHighlights.filter(
+          h => !(h.start === action.start && h.end === action.end)
+        ),
+      };
+
+    case 'SET_PROBLEM':
+      return {
+        ...state,
+        probleme: action.text,
+        problemeReadOnly: action.readOnly,
+        problemeHighlights: [],
+      };
+
+    case 'SET_PROBLEM_AND_CLEAR':
+      return {
+        ...state,
+        probleme: action.text,
+        problemeReadOnly: action.readOnly,
+        problemeHighlights: [],
+        pieces: [],
+      };
+
+    case 'CLEAR_PIECES':
+      return {
+        ...state,
+        pieces: [],
+      };
+
+    // I1: Atomic ungroup operation (replaces N individual EDIT_PIECE dispatches)
+    case 'UNGROUP_BARRES':
+      return {
+        ...state,
+        pieces: state.pieces.map(p =>
+          p.type === 'barre' && (p as any).groupId === action.groupId
+            ? { ...p, groupId: null, groupLabel: null } as Piece
+            : p
+        ),
+      };
+
+    case 'ARRANGE_PIECES':
+      return {
+        ...state,
+        pieces: state.pieces.map(p => {
+          const move = action.moves.find(m => m.id === p.id);
+          return move ? { ...p, x: move.x, y: move.y } : p;
+        }),
+      };
+
+    default:
+      return null; // not a modelisation action
+  }
+}
+
+export function appReducer(state: AppState, action: Action): AppState {
+  switch (action.type) {
+    case 'UNDO':
+      return {
+        ...state,
+        undoManager: undoFn(state.undoManager),
+        selectedPieceId: null,
+        editingPieceId: null,
+      };
+
+    case 'REDO':
+      return {
+        ...state,
+        undoManager: redoFn(state.undoManager),
+        selectedPieceId: null,
+        editingPieceId: null,
+      };
+
+    case 'RESTORE':
+      return {
+        ...state,
+        undoManager: action.undoManager,
+        selectedPieceId: null,
+        editingPieceId: null,
+      };
+
+    case 'MOVE_PIECE_LIVE': {
+      // Live position update during drag — no undo push
+      const liveModel = reduceModelisation(state.undoManager.current, action);
+      if (!liveModel) return state;
+      return { ...state, undoManager: { ...state.undoManager, current: liveModel } };
+    }
+
+    default: {
+      const newModelState = reduceModelisation(state.undoManager.current, action);
+      if (newModelState === null) return state;
+
+      // Auto-expand problem zone when Reponse is placed
+      let problemZoneExpanded = state.problemZoneExpanded;
+      if (action.type === 'PLACE_PIECE' && action.piece.type === 'reponse') {
+        problemZoneExpanded = true;
+      }
+
+      return {
+        ...state,
+        undoManager: pushState(state.undoManager, newModelState),
+        problemZoneExpanded,
+      };
+    }
+  }
+}

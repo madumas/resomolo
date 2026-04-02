@@ -1,0 +1,188 @@
+import { useState, useEffect, useCallback } from 'react';
+import { UI_PRIMARY, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
+import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
+import { generateShareUrl, generateQrDataUrl, copyTextToClipboard, copyImageToClipboard, downloadDataUrl } from '../engine/share';
+import type { Piece } from '../model/types';
+
+interface SharePanelProps {
+  problemText: string;
+  pieces: Piece[];
+  onClose: () => void;
+}
+
+export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [qrCopied, setQrCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState('');
+
+  useEffect(() => {
+    const url = generateShareUrl(problemText, pieces);
+    setShareUrl(url);
+    generateQrDataUrl(url).then(setQrDataUrl);
+  }, [problemText, pieces]);
+
+  // Escape to close
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
+    };
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  }, [onClose]);
+
+  const handleCopyLink = useCallback(async () => {
+    await copyTextToClipboard(shareUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [shareUrl]);
+
+  const handleCopyQr = useCallback(async () => {
+    if (!qrDataUrl) return;
+    const ok = await copyImageToClipboard(qrDataUrl);
+    if (ok) {
+      setQrCopied(true);
+      setTimeout(() => setQrCopied(false), 2000);
+    }
+  }, [qrDataUrl]);
+
+  const handleDownloadQr = useCallback(() => {
+    if (!qrDataUrl) return;
+    downloadDataUrl(qrDataUrl, 'resomolo-qr.png');
+  }, [qrDataUrl]);
+
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        background: '#FFFFFF',
+        borderBottom: `1px solid ${UI_BORDER}`,
+        display: 'flex',
+        gap: 16,
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+      }}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Link section */}
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ fontSize: 11, color: UI_TEXT_SECONDARY, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Lien de partage
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            type="text"
+            readOnly
+            value={shareUrl}
+            onFocus={e => e.target.select()}
+            style={{
+              flex: 1,
+              padding: '6px 8px',
+              fontSize: 12,
+              border: `1px solid ${UI_BORDER}`,
+              borderRadius: 4,
+              background: '#F5F7FA',
+              color: '#1A2433',
+              minWidth: 0,
+            }}
+          />
+          <button
+            onClick={handleCopyLink}
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              background: linkCopied ? '#D1FAE5' : UI_PRIMARY,
+              color: linkCopied ? '#065F46' : '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              minHeight: MIN_BUTTON_SIZE_PX,
+              whiteSpace: 'nowrap',
+              transition: 'background 0.2s',
+            }}
+          >
+            {linkCopied ? '✓ Copié!' : 'Copier le lien'}
+          </button>
+        </div>
+        {shareUrl.length > 1500 && (
+          <div style={{ fontSize: 10, color: '#B45309', marginTop: 4 }}>
+            Lien long ({shareUrl.length} car.) — vérifier qu'il fonctionne après envoi.
+          </div>
+        )}
+      </div>
+
+      {/* QR section */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <div style={{ fontSize: 11, color: UI_TEXT_SECONDARY, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          QR Code
+        </div>
+        {qrDataUrl ? (
+          <img
+            src={qrDataUrl}
+            alt="QR Code"
+            style={{ width: 120, height: 120, cursor: 'pointer', borderRadius: 4, border: `1px solid ${UI_BORDER}` }}
+            onClick={handleCopyQr}
+            title="Cliquer pour copier l'image"
+          />
+        ) : (
+          <div style={{ width: 120, height: 120, background: '#F5F7FA', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: UI_TEXT_SECONDARY }}>
+            Chargement...
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 6, fontSize: 11 }}>
+          <button
+            onClick={handleDownloadQr}
+            style={{
+              padding: '4px 8px',
+              fontSize: 11,
+              background: '#F5F7FA',
+              border: `1px solid ${UI_BORDER}`,
+              borderRadius: 4,
+              cursor: 'pointer',
+              color: UI_TEXT_SECONDARY,
+            }}
+          >
+            Télécharger
+          </button>
+          <button
+            onClick={handleCopyQr}
+            style={{
+              padding: '4px 8px',
+              fontSize: 11,
+              background: qrCopied ? '#D1FAE5' : '#F5F7FA',
+              border: `1px solid ${qrCopied ? '#065F46' : UI_BORDER}`,
+              borderRadius: 4,
+              cursor: 'pointer',
+              color: qrCopied ? '#065F46' : UI_TEXT_SECONDARY,
+              transition: 'all 0.2s',
+            }}
+          >
+            {qrCopied ? '✓ Copié!' : 'Copier'}
+          </button>
+        </div>
+      </div>
+
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        aria-label="Fermer le panneau de partage"
+        style={{
+          minWidth: MIN_BUTTON_SIZE_PX,
+          minHeight: MIN_BUTTON_SIZE_PX,
+          background: 'none',
+          border: `1px solid ${UI_BORDER}`,
+          borderRadius: 4,
+          cursor: 'pointer',
+          fontSize: 16,
+          color: UI_TEXT_SECONDARY,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}

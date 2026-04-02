@@ -1,0 +1,28 @@
+{
+  "name": "RésoMolo — Modélisation de problèmes mathématiques",
+  "short_name": "RésoMolo",
+  "description": "Aidez votre enfant à modéliser des problèmes de maths visuellement. Jetons, barres, boîtes — pas besoin de crayon.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#7028e0",
+  "lang": "fr-CA",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

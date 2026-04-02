@@ -1,0 +1,153 @@
+import { useState, useCallback, useEffect } from 'react';
+import type { ModelisationState } from '../model/types';
+
+export type TutorialStep =
+  | 'problem1_intro'
+  | 'problem1_highlight'
+  | 'problem1_place_tokens'
+  | 'problem1_calc'
+  | 'problem1_answer'
+  | 'transition'
+  | 'problem2_intro'
+  | 'problem2_place_bar'
+  | 'problem2_resize'
+  | 'problem2_calc'
+  | 'problem2_answer'
+  | 'done'
+  | null;
+
+const TUTORIAL_PROBLEM_1 = 'Théo a 5 pommes. Il en donne 2 à Léa. Combien lui en reste-t-il?';
+const TUTORIAL_PROBLEM_2 = 'Il y a 3 tables. Chaque table a 4 crayons. Combien y a-t-il de crayons en tout?';
+
+const STEP_MESSAGES: Record<Exclude<TutorialStep, null>, string> = {
+  problem1_intro: 'Tutoriel — Commence par lire le problème ci-dessus.',
+  problem1_highlight: 'Clique sur les nombres importants pour les surligner en bleu.',
+  problem1_place_tokens: 'Clique sur Jeton, puis clique dans le canvas pour placer les pommes de Théo.',
+  problem1_calc: 'Maintenant, clique sur Calcul et écris ton opération.',
+  problem1_answer: 'Clique sur Réponse et écris combien il reste.',
+  transition: 'Passons au deuxième problème...',
+  problem2_intro: 'Clique sur Barre, puis clique dans le canvas pour placer une barre.',
+  problem2_place_bar: 'Sélectionne la barre et clique Copier pour en faire 2 copies.',
+  problem2_resize: 'Clique sur Calcul et écris ton opération.',
+  problem2_calc: 'Clique sur Réponse et écris ta réponse.',
+  problem2_answer: 'Tu connais les pièces! Clique Suivant pour commencer.',
+  done: '',
+};
+
+// Steps where the "Suivant" button is shown (manual advancement)
+const SHOW_NEXT: Set<TutorialStep> = new Set([
+  'problem1_intro',
+  'problem1_highlight',
+  'problem1_place_tokens',
+  'problem1_calc',
+  'problem1_answer',
+  'problem2_intro',
+  'problem2_place_bar',
+  'problem2_resize',
+  'problem2_calc',
+  'problem2_answer',
+]);
+
+const STEP_ORDER: Exclude<TutorialStep, null>[] = [
+  'problem1_intro',
+  'problem1_highlight',
+  'problem1_place_tokens',
+  'problem1_calc',
+  'problem1_answer',
+  'transition',
+  'problem2_intro',
+  'problem2_place_bar',
+  'problem2_resize',
+  'problem2_calc',
+  'problem2_answer',
+  'done',
+];
+
+// R8: State-shape detection predicates per step.
+// When the predicate returns true, the tutorial auto-advances after a short delay.
+const STEP_DETECTORS: Partial<Record<NonNullable<TutorialStep>, (s: ModelisationState) => boolean>> = {
+  // problem1_intro: pas de detector — avancement manuel seulement
+  problem1_highlight: s => s.problemeHighlights.length > 0,
+  problem1_place_tokens: s => s.pieces.some(p => p.type === 'jeton'),
+  problem1_calc: s => s.pieces.some(p => p.type === 'calcul'),
+  problem1_answer: s => s.pieces.some(p => p.type === 'reponse'),
+  problem2_intro: s => s.pieces.some(p => p.type === 'barre'),
+  problem2_place_bar: s => s.pieces.filter(p => p.type === 'barre').length >= 3,
+  problem2_resize: s => s.pieces.some(p => p.type === 'calcul'),
+  problem2_calc: s => s.pieces.some(p => p.type === 'reponse'),
+  problem2_answer: s => s.pieces.some(p => p.type === 'reponse' && 'text' in p && (p.text as string).length > 0),
+};
+
+export function useTutorial(state: ModelisationState) {
+  const [step, setStep] = useState<TutorialStep>(null);
+  const [tutorialProblemIndex, setTutorialProblemIndex] = useState(0);
+
+  // Manual advancement — the user/adult clicks "Suivant"
+  const nextStep = useCallback(() => {
+    if (!step || step === 'done') return;
+    const currentIdx = STEP_ORDER.indexOf(step);
+    if (currentIdx < 0 || currentIdx >= STEP_ORDER.length - 1) {
+      setStep('done');
+      return;
+    }
+    const next = STEP_ORDER[currentIdx + 1];
+    // Handle transition between problems
+    if (next === 'transition') {
+      setTutorialProblemIndex(1);
+      setStep('problem2_intro');
+    } else {
+      setStep(next);
+    }
+  }, [step]);
+
+  // R8: Auto-advance when the detection predicate is satisfied.
+  // Uses setStep(prev => ...) to guard against race with manual "Suivant" (C4 fix).
+  useEffect(() => {
+    if (!step || step === 'done') return;
+    const detector = STEP_DETECTORS[step];
+    if (!detector || !detector(state)) return;
+
+    const currentStep = step;
+    const timer = setTimeout(() => {
+      setStep(prev => {
+        if (prev !== currentStep) return prev; // already advanced manually
+        const idx = STEP_ORDER.indexOf(currentStep);
+        if (idx < 0 || idx >= STEP_ORDER.length - 1) return 'done';
+        const next = STEP_ORDER[idx + 1];
+        if (next === 'transition') {
+          setTutorialProblemIndex(1);
+          return 'problem2_intro';
+        }
+        return next;
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [step, state.pieces, state.problemeHighlights]);
+
+  const startTutorial = useCallback(() => {
+    setStep('problem1_intro');
+    setTutorialProblemIndex(0);
+  }, []);
+
+  const skipTutorial = useCallback(() => {
+    setStep('done');
+  }, []);
+
+  const isActive = step !== null && step !== 'done';
+  const message = step ? STEP_MESSAGES[step] : '';
+  const currentProblem = tutorialProblemIndex === 0 ? TUTORIAL_PROBLEM_1 : TUTORIAL_PROBLEM_2;
+  const showNextButton = step !== null && SHOW_NEXT.has(step);
+
+  return {
+    isActive,
+    isDone: step === 'done',
+    step,
+    message,
+    currentProblem,
+    tutorialProblemIndex,
+    showNextButton,
+    startTutorial,
+    skipTutorial,
+    nextStep,
+  };
+}

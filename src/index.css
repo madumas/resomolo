@@ -1,0 +1,52 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #1A2433;
+  background: #F5F7FA;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+/* Micro-animation: piece placement pop */
+@keyframes piece-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+svg g.piece-new {
+  animation: piece-pop 150ms ease-out;
+}
+
+@media print {
+  [data-testid="toolbar"],
+  [data-testid="status-bar"],
+  [data-testid="action-bar"] {
+    display: none !important;
+  }
+  body, #root, #root > div {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+}

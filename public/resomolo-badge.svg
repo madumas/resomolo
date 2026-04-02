@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Variante B: badge arrondi avec icône -->
+
+  <!-- Fond arrondi -->
+  <rect x="4" y="4" width="112" height="112" rx="28" fill="#863bff"/>
+  <rect x="10" y="10" width="100" height="100" rx="24" fill="#9d5fff"/>
+
+  <!-- Reflet -->
+  <ellipse cx="50" cy="32" rx="30" ry="14" fill="#b080ff" opacity="0.3"/>
+
+  <!-- Ampoule centrée -->
+  <g transform="translate(36, 18)">
+    <line x1="24" y1="4" x2="24" y2="-2" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="10" x2="7" y2="5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <line x1="36" y1="10" x2="41" y2="5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="24" cy="24" rx="16" ry="18" fill="white"/>
+    <rect x="17" y="40" width="14" height="6" rx="2" fill="white" opacity="0.7"/>
+    <rect x="19" y="47" width="10" height="3" rx="1.5" fill="white" opacity="0.5"/>
+  </g>
+
+  <!-- Texte -->
+  <text x="60" y="92" font-family="Verdana, sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">RÉSO</text>
+  <text x="60" y="108" font-family="Verdana, sans-serif" font-size="12" font-weight="400" fill="white" text-anchor="middle" opacity="0.8" letter-spacing="2">MOLO</text>
+</svg>
