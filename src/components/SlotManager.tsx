@@ -61,7 +61,7 @@ export function SlotManager({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Mes modélisations"
+      aria-label="Mes travaux"
       style={{
         position: 'fixed',
         inset: 0,
@@ -87,10 +87,10 @@ export function SlotManager({
         onClick={e => e.stopPropagation()}
       >
         <h2 style={{ fontSize: 18, color: UI_PRIMARY, marginBottom: 20, fontWeight: 700 }}>
-          Mes modélisations
+          Mes travaux
         </h2>
 
-        {/* Nouvelle modélisation button */}
+        {/* Nouveau travail button */}
         <button
           onClick={onCreateSlot}
           disabled={registry.slots.length >= MAX_SLOTS}
@@ -112,7 +112,7 @@ export function SlotManager({
           }}
         >
           <FolderPlusIcon />
-          Nouvelle modélisation
+          Nouveau travail
           {registry.slots.length >= MAX_SLOTS && (
             <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 'auto' }}>
               (max {MAX_SLOTS})

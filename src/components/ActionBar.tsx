@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { canUndo, canRedo } from '../model/undo';
 import type { UndoManager, DominantHand } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
@@ -94,21 +94,14 @@ export function ActionBar({
 
       <Separator />
 
-      {/* Mes modélisations */}
+      {/* Mes travaux */}
       <ActionBtn
         onClick={onShowSlotManager}
-        title="Mes modélisations"
-        aria-label="Mes modélisations"
+        title="Mes travaux"
+        aria-label="Mes travaux"
       >
-        <FolderIcon /> Modélisations
+        <FolderIcon /> Mes travaux
       </ActionBtn>
-
-      {/* Partager — regroupe Photo, PDF, Lien */}
-      <ShareMenu
-        onExportImage={onExportImage}
-        onExportPdf={onExportPdf}
-        onShareLink={onShareLink}
-      />
 
       <div style={{ flex: 1 }} />
 
@@ -123,6 +116,13 @@ export function ActionBar({
           {sessionTimer.formatted}
         </span>
       )}
+
+      {/* Partager — zone droite (action adulte) */}
+      <ShareMenu
+        onExportImage={onExportImage}
+        onExportPdf={onExportPdf}
+        onShareLink={onShareLink}
+      />
 
       {/* Settings */}
       <button
@@ -178,11 +178,24 @@ function ShareMenu({ onExportImage, onExportPdf, onShareLink }: {
   onShareLink?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [open]);
 
   if (!onExportImage && !onExportPdf && !onShareLink) return null;
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={menuRef} style={{ position: 'relative' }}>
       <ActionBtn
         onClick={() => setOpen(!open)}
         title="Partager"
@@ -283,12 +296,12 @@ function FullscreenToggle() {
       aria-label="Mode présentation"
       data-testid="demo-toggle"
       style={{
-        minWidth: MIN_BUTTON_SIZE_PX,
+        width: MIN_BUTTON_SIZE_PX,
         height: MIN_BUTTON_SIZE_PX,
         padding: 0,
-        border: 'none',
-        borderRadius: 4,
-        background: isFullscreen ? UI_PRIMARY : 'transparent',
+        border: `1px solid ${UI_PRIMARY}`,
+        borderRadius: '50%',
+        background: isFullscreen ? UI_PRIMARY : 'none',
         color: isFullscreen ? '#FFF' : UI_PRIMARY,
         cursor: 'pointer',
         display: 'flex',

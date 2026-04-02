@@ -51,7 +51,7 @@ export async function migrateIfNeeded(): Promise<SlotRegistry> {
       const parsed = JSON.parse(legacyRaw);
       const undoManager = parsed.data || parsed;
       if (undoManager?.current?.pieces?.length > 0) {
-        const slot = createSlotMetadata('Modélisation 1');
+        const slot = createSlotMetadata('Travail 1');
         const newRegistry: SlotRegistry = {
           slots: [slot],
           activeSlotId: slot.id,

@@ -49,7 +49,7 @@ export function useSlotManager({ undoManager, dispatch }: UseSlotManagerOptions)
       if (prev.activeSlotId) {
         saveSlotData(prev.activeSlotId, undoManagerRef.current); // fire-and-forget
       }
-      const slotName = name || `Modélisation ${prev.nextNumber}`;
+      const slotName = name || `Travail ${prev.nextNumber}`;
       const slot = createSlotMetadata(slotName);
       saveSlotData(slot.id, newUndoManager); // fire-and-forget
       const newRegistry: SlotRegistry = {
@@ -77,7 +77,7 @@ export function useSlotManager({ undoManager, dispatch }: UseSlotManagerOptions)
     let newRegistry: SlotRegistry;
     if (remaining.length === 0) {
       // Create a new blank slot
-      const slot = createSlotMetadata(`Modélisation ${reg.nextNumber}`);
+      const slot = createSlotMetadata(`Travail ${reg.nextNumber}`);
       const newUndoManager = createInitialUndoManager();
       await saveSlotData(slot.id, newUndoManager);
       newRegistry = { slots: [slot], activeSlotId: slot.id, nextNumber: reg.nextNumber + 1 };
@@ -127,7 +127,7 @@ export function useSlotManager({ undoManager, dispatch }: UseSlotManagerOptions)
     let slotId: string | null = null;
     setRegistry(prev => {
       if (prev.activeSlotId) { slotId = prev.activeSlotId; return prev; }
-      const slot = createSlotMetadata(`Modélisation ${prev.nextNumber}`);
+      const slot = createSlotMetadata(`Travail ${prev.nextNumber}`);
       slotId = slot.id;
       saveSlotData(slot.id, undoManagerRef.current); // fire-and-forget
       const newRegistry: SlotRegistry = {
