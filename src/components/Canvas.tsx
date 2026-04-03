@@ -1288,7 +1288,7 @@ export function Canvas({
               style={{
                 position: 'absolute', left, top, width: w, height: h,
                 border: '1px solid #B0A0D0', borderRadius: 2,
-                textAlign: 'center', fontSize: 13,
+                textAlign: 'center', fontSize: Math.min(13, w / 5),
                 background: ri === 0 && t.headerRow ? '#F2F0F8' : '#fff',
                 fontWeight: ri === 0 && t.headerRow ? 600 : 400,
                 outline: 'none', padding: 0, zIndex: 15,
@@ -1896,7 +1896,7 @@ function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols, 
               fill="none" stroke={isEditing ? '#B0A0D0' : '#D5D0E0'} strokeWidth={isEditing ? 0.4 : 0.3} />
             <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
+              fontSize={Math.min(ri === 0 && piece.headerRow ? 4 : 3.5, TABLEAU_CELL_W / Math.max(1, (cell || '').length * 0.6))}
               fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
               fill={isEditing ? 'transparent' : '#1E1A2E'}
               data-edit-target={`${piece.id}-${ri}-${ci}`}>
