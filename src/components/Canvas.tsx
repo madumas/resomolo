@@ -76,7 +76,7 @@ export function Canvas({
   editingPieceId,
   jetonQuantity,
   deleteMode,
-  deleteConfirmId: _deleteConfirmId,
+  deleteConfirmId,
   toleranceProfile: _toleranceProfile,
   cursorSmoothing: _cursorSmoothing,
   smoothingAlpha: _smoothingAlpha,
@@ -743,6 +743,29 @@ export function Canvas({
             />
           </g>
         ))}
+
+        {/* Delete confirmation overlay — red highlight on piece pending deletion */}
+        {deleteConfirmId && (() => {
+          const piece = pieces.find(p => p.id === deleteConfirmId);
+          if (!piece) return null;
+          const center = getPieceCenter(piece, referenceUnitMm);
+          // Get approximate bounds
+          let bx = piece.x - 2, by = piece.y - 2, bw = 20, bh = 14;
+          if (isBarre(piece)) { bw = piece.sizeMultiplier * referenceUnitMm + 4; bh = BAR_HEIGHT_MM + 4; }
+          else if (piece.type === 'boite') { bw = (piece as Boite).width + 4; bh = (piece as Boite).height + 4; }
+          else if (piece.type === 'jeton') { bx = piece.x - 8; by = piece.y - 8; bw = 16; bh = 16; }
+          else if (piece.type === 'calcul') { bw = Math.max(60, (piece as any).expression?.length * 5 + 10) + 4; bh = 16; }
+          else if (piece.type === 'reponse') { bw = getReponseWidth(piece as Reponse) + 4; bh = 26; }
+          else if (isTableau(piece)) { bw = piece.cols * TABLEAU_CELL_W + 4; bh = piece.rows * TABLEAU_CELL_H + 4; }
+          else if (isDroiteNumerique(piece)) { bw = (piece as DroiteNumerique).width + 4; bh = 24; by = piece.y - 12; }
+          return (
+            <rect x={bx} y={by} width={bw} height={bh} rx={3}
+              fill="rgba(200, 40, 40, 0.12)" stroke="#C82828" strokeWidth={1.5}
+              style={{ pointerEvents: 'none' }}>
+              <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite" />
+            </rect>
+          );
+        })()}
 
         {/* Group brackets */}
         {(() => {
