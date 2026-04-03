@@ -1491,20 +1491,21 @@ function formatExpr(s: string): string {
   return s.replace(/\*/g, '×').replace(/x/gi, '×').replace(/\//g, '÷').replace(/\./g, ',');
 }
 
-// Parse an expression like "28 × 4 = 112" into components
+// Parse an expression like "28 × 4 = 112" or "3,45 + 2,78 = 6,23" into components
 function parseExpression(expr: string): { op1: string; op2: string; operator: string; result: string } | null {
   if (!expr) return null;
   // Normalize operators
   const normalized = expr.replace(/×/g, '*').replace(/x/gi, '*').replace(/÷/g, '/').replace(/−/g, '-');
-  // Match: number operator number = number
-  const match = normalized.match(/^\s*(\d+)\s*([+\-*/])\s*(\d+)\s*(?:=\s*(\d+))?\s*$/);
+  // Match: number (with optional decimal comma/dot) operator number = number
+  const match = normalized.match(/^\s*(\d+(?:[,\.]\d+)?)\s*([+\-*/])\s*(\d+(?:[,\.]\d+)?)\s*(?:=\s*(\d+(?:[,\.]\d+)?))?\s*$/);
   if (!match) return null;
   const opMap: Record<string, string> = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  // Normalize commas to dots for internal use
   return {
-    op1: match[1],
-    op2: match[3],
+    op1: match[1].replace(/,/g, '.'),
+    op2: match[3].replace(/,/g, '.'),
     operator: opMap[match[2]] || '+',
-    result: match[4] || '',
+    result: match[4] ? match[4].replace(/,/g, '.') : '',
   };
 }
 

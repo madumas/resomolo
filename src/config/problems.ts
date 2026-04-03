@@ -179,4 +179,58 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     category: 'multi-etapes',
     difficulty: 3,
   },
+
+  // ── Cycle 2, Décimaux (difficulty 2) ──
+  {
+    id: 'c2-dec-1',
+    title: 'Monnaie et soustraction',
+    text: 'Léa a 3,50 $. Elle achète un jus à 1,75 $. Combien lui reste-t-il?',
+    cycle: 2,
+    category: 'soustraction',
+    difficulty: 2,
+  },
+  {
+    id: 'c2-dec-2',
+    title: 'Mesures et différence',
+    text: 'Marc mesure 1,35 m. Sara mesure 1,48 m. Combien Sara mesure-t-elle de plus que Marc?',
+    cycle: 2,
+    category: 'soustraction',
+    difficulty: 2,
+  },
+
+  // ── Cycle 3, Décimaux (difficulty 2) ──
+  {
+    id: 'c3-dec-1',
+    title: 'Multiplication décimale',
+    text: 'Un paquet de farine pèse 2,5 kg. Combien pèsent 4 paquets?',
+    cycle: 3,
+    category: 'multiplication',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-dec-2',
+    title: 'Partage décimal',
+    text: 'Trois amis se partagent également 12,60 $. Combien chacun reçoit-il?',
+    cycle: 3,
+    category: 'division',
+    difficulty: 2,
+  },
+
+  // ── Cycle 3, Fractions (difficulty 2) ──
+  {
+    id: 'c3-frac-add',
+    title: 'Addition de fractions',
+    text: 'Marie mange 2/8 d\'une pizza. Léo mange 3/8 de la même pizza. Quelle fraction de la pizza ont-ils mangée ensemble?',
+    cycle: 3,
+    category: 'addition',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-frac-mult',
+    title: 'Fraction d\'un tout',
+    text: 'Un réservoir plein contient 12 litres d\'eau. Il est rempli aux 3/4. Combien de litres contient-il?',
+    cycle: 3,
+    category: 'multiplication',
+    difficulty: 2,
+  },
 ];

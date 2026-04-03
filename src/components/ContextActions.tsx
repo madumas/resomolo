@@ -223,14 +223,46 @@ export function ContextActions({
             </>
           ) : (
             <>
-              {[2, 3, 4, 6].map(n => (
+              {/* Row 1 — Unit fractions (divisions only, empty coloredParts) */}
+              <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}>
+                Diviser en
+              </span>
+              {[2, 3, 4, 5, 6, 8, 10, 12].map(n => (
                 <CtxBtn key={n} onClick={() => {
                   onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
                   setBarSubmenu('none');
                 }}>
-                  1/{n}
+                  {n}
                 </CtxBtn>
               ))}
+              {/* Row 2 — Common fractions (pre-filled coloredParts) */}
+              <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}>
+                Fractions courantes
+              </span>
+              <CtxBtn onClick={() => {
+                onEditPiece(piece.id, { divisions: 3, coloredParts: [0, 1], showFraction: true });
+                setBarSubmenu('none');
+              }}>
+                2/3
+              </CtxBtn>
+              <CtxBtn onClick={() => {
+                onEditPiece(piece.id, { divisions: 4, coloredParts: [0, 1, 2], showFraction: true });
+                setBarSubmenu('none');
+              }}>
+                3/4
+              </CtxBtn>
+              <CtxBtn onClick={() => {
+                onEditPiece(piece.id, { divisions: 5, coloredParts: [0, 1], showFraction: true });
+                setBarSubmenu('none');
+              }}>
+                2/5
+              </CtxBtn>
+              <CtxBtn onClick={() => {
+                onEditPiece(piece.id, { divisions: 8, coloredParts: [0, 1, 2], showFraction: true });
+                setBarSubmenu('none');
+              }}>
+                3/8
+              </CtxBtn>
             </>
           )}
         </>

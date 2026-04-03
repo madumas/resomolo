@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface ColumnCalcData {
   op1: string[];
@@ -7,6 +7,7 @@ export interface ColumnCalcData {
   carry: string[];
   intermediates: string[][]; // intermediate lines for multi-digit multiplication
   operator: string;
+  decimalPosition: number | null; // number of decimal places (null = integer mode)
 }
 
 interface ColumnCalcProps {
@@ -34,12 +35,30 @@ function emptyRow(): Row {
 
 function numToRow(num: string | undefined): Row {
   if (!num) return emptyRow();
-  const digits = num.split('');
+  // Remove comma/dot for digit extraction
+  const clean = (num || '').replace(/[,\.]/g, '');
+  const digits = clean.split('');
   const row = emptyRow();
   for (let i = 0; i < digits.length && i < NUM_COLS; i++) {
     row[NUM_COLS - 1 - i] = digits[digits.length - 1 - i];
   }
   return row;
+}
+
+function detectDecimalPosition(num: string | undefined): number | null {
+  if (!num) return null;
+  const match = num.match(/[,\.](\d+)$/);
+  return match ? match[1].length : null;
+}
+
+function rowToNumWithDecimal(row: Row, decPos: number | null): string {
+  const raw = row.join('').replace(/^0+/, '') || '0';
+  if (decPos === null || decPos === 0) return raw;
+  // Pad raw if shorter than decPos (e.g. "5" with decPos=2 → "0,05")
+  const padded = raw.padStart(decPos + 1, '0');
+  const intPart = padded.slice(0, -decPos) || '0';
+  const decPart = padded.slice(-decPos);
+  return `${intPart},${decPart}`;
 }
 
 function rowToNum(row: Row): string {
@@ -60,6 +79,11 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     savedData?.intermediates || [emptyRow()]
   );
   const [operator, setOperator] = useState(savedData?.operator || initialOperator || '+');
+  const initialDecPos = detectDecimalPosition(initialOp1)
+    ?? detectDecimalPosition(initialOp2)
+    ?? savedData?.decimalPosition
+    ?? null;
+  const [decimalPosition, setDecimalPosition] = useState<number | null>(initialDecPos);
   const cellRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   // Auto-adjust number of intermediate lines based on op2 digits (for multiplication)
@@ -180,9 +204,9 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   };
 
   const commit = () => {
-    const n1 = rowToNum(op1);
-    const n2 = rowToNum(op2);
-    const res = rowToNum(result);
+    const n1 = decimalPosition !== null ? rowToNumWithDecimal(op1, decimalPosition) : rowToNum(op1);
+    const n2 = decimalPosition !== null ? rowToNumWithDecimal(op2, decimalPosition) : rowToNum(op2);
+    const res = decimalPosition !== null ? rowToNumWithDecimal(result, decimalPosition) : rowToNum(result);
     const op = operator === '−' ? '-' : operator === '×' ? '×' : operator;
     const rawExpr = res && n1 !== '0' && n2 !== '0'
       ? `${n1} ${op} ${n2} = ${res}`
@@ -194,6 +218,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     const data: ColumnCalcData = {
       op1: [...op1], op2: [...op2], result: [...result],
       carry: [...carry], intermediates: intermediates.map(r => [...r]), operator,
+      decimalPosition,
     };
     onCommit(expr || '', data);
   };
@@ -216,18 +241,22 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       {/* Carry row */}
       <div style={{ display: 'flex', gap: GAP, marginBottom: 4, marginLeft: CELL + GAP }}>
         {carry.map((d, col) => (
-          <input
-            key={`carry-${col}`}
-            ref={el => setCellRef(`carry-${col}`, el)}
-            data-cell={`carry-${col}`}
-            type="text" inputMode="decimal" maxLength={1}
-            value={d}
-            onChange={e => handleCellChange(carry, setCarry, 'carry', col, e.target.value)}
-            onKeyDown={e => handleKeyDown('carry', col, e)}
-            onFocus={e => e.target.select()}
-            placeholder="·"
-            style={carryStyle}
-          />
+          <React.Fragment key={`carry-${col}`}>
+            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+              <span style={decimalSepStyle}>,</span>
+            )}
+            <input
+              ref={el => setCellRef(`carry-${col}`, el)}
+              data-cell={`carry-${col}`}
+              type="text" inputMode="decimal" maxLength={1}
+              value={d}
+              onChange={e => handleCellChange(carry, setCarry, 'carry', col, e.target.value)}
+              onKeyDown={e => handleKeyDown('carry', col, e)}
+              onFocus={e => e.target.select()}
+              placeholder="·"
+              style={carryStyle}
+            />
+          </React.Fragment>
         ))}
       </div>
 
@@ -235,9 +264,14 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
         <div style={{ width: CELL, height: CELL }} />
         {op1.map((d, col) => (
-          <CellInput key={`op1-${col}`} cellId={`op1-${col}`} refCb={el => setCellRef(`op1-${col}`, el)}
-            value={d} onChange={v => handleCellChange(op1, setOp1, 'op1', col, v)}
-            onKeyDown={e => handleKeyDown('op1', col, e)} />
+          <React.Fragment key={`op1-${col}`}>
+            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+              <span style={decimalSepStyle}>,</span>
+            )}
+            <CellInput cellId={`op1-${col}`} refCb={el => setCellRef(`op1-${col}`, el)}
+              value={d} onChange={v => handleCellChange(op1, setOp1, 'op1', col, v)}
+              onKeyDown={e => handleKeyDown('op1', col, e)} />
+          </React.Fragment>
         ))}
       </div>
 
@@ -248,9 +282,14 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
           {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
         </select>
         {op2.map((d, col) => (
-          <CellInput key={`op2-${col}`} cellId={`op2-${col}`} refCb={el => setCellRef(`op2-${col}`, el)}
-            value={d} onChange={v => handleCellChange(op2, setOp2, 'op2', col, v)}
-            onKeyDown={e => handleKeyDown('op2', col, e)} />
+          <React.Fragment key={`op2-${col}`}>
+            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+              <span style={decimalSepStyle}>,</span>
+            )}
+            <CellInput cellId={`op2-${col}`} refCb={el => setCellRef(`op2-${col}`, el)}
+              value={d} onChange={v => handleCellChange(op2, setOp2, 'op2', col, v)}
+              onKeyDown={e => handleKeyDown('op2', col, e)} />
+          </React.Fragment>
         ))}
       </div>
 
@@ -266,11 +305,16 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
                 {intIdx === 0 ? '' : `+`}
               </div>
               {intRow.map((d, col) => (
-                <CellInput key={`int${intIdx}-${col}`} cellId={`int${intIdx}-${col}`}
-                  refCb={el => setCellRef(`int${intIdx}-${col}`, el)}
-                  value={d}
-                  onChange={v => handleCellChange(intRow, null, `int${intIdx}`, col, v, intIdx)}
-                  onKeyDown={e => handleKeyDown(`int${intIdx}`, col, e)} />
+                <React.Fragment key={`int${intIdx}-${col}`}>
+                  {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+                    <span style={decimalSepStyle}>,</span>
+                  )}
+                  <CellInput cellId={`int${intIdx}-${col}`}
+                    refCb={el => setCellRef(`int${intIdx}-${col}`, el)}
+                    value={d}
+                    onChange={v => handleCellChange(intRow, null, `int${intIdx}`, col, v, intIdx)}
+                    onKeyDown={e => handleKeyDown(`int${intIdx}`, col, e)} />
+                </React.Fragment>
               ))}
             </div>
           ))}
@@ -285,10 +329,31 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
           =
         </div>
         {result.map((d, col) => (
-          <CellInput key={`result-${col}`} cellId={`result-${col}`} refCb={el => setCellRef(`result-${col}`, el)}
-            value={d} onChange={v => handleCellChange(result, setResult, 'result', col, v)}
-            onKeyDown={e => handleKeyDown('result', col, e)} bold />
+          <React.Fragment key={`result-${col}`}>
+            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+              <span style={decimalSepStyle}>,</span>
+            )}
+            <CellInput cellId={`result-${col}`} refCb={el => setCellRef(`result-${col}`, el)}
+              value={d} onChange={v => handleCellChange(result, setResult, 'result', col, v)}
+              onKeyDown={e => handleKeyDown('result', col, e)} bold />
+          </React.Fragment>
         ))}
+      </div>
+
+      {/* Decimal mode buttons */}
+      <div style={{ display: 'flex', gap: GAP, marginTop: 8 }}>
+        <button onClick={() => setDecimalPosition(null)}
+          style={{ ...decBtnStyle, ...(decimalPosition === null ? decBtnActiveStyle : {}) }}>
+          Entier
+        </button>
+        <button onClick={() => setDecimalPosition(1)}
+          style={{ ...decBtnStyle, ...(decimalPosition === 1 ? decBtnActiveStyle : {}) }}>
+          1 décimale
+        </button>
+        <button onClick={() => setDecimalPosition(2)}
+          style={{ ...decBtnStyle, ...(decimalPosition === 2 ? decBtnActiveStyle : {}) }}>
+          2 décimales
+        </button>
       </div>
 
       {/* Buttons */}
@@ -330,4 +395,18 @@ const carryStyle: React.CSSProperties = {
 const btnStyle: React.CSSProperties = {
   padding: '10px 20px', fontSize: 14, border: '1px solid #D5D0E0',
   borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', minHeight: 44,
+};
+
+const decimalSepStyle: React.CSSProperties = {
+  width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: 24, fontWeight: 700, color: '#1E1A2E', fontFamily: 'monospace',
+};
+
+const decBtnStyle: React.CSSProperties = {
+  padding: '6px 12px', fontSize: 13, border: '1px solid #D5D0E0',
+  borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', minHeight: 36,
+};
+
+const decBtnActiveStyle: React.CSSProperties = {
+  background: '#7028e0', color: '#fff', border: '1px solid #7028e0',
 };
