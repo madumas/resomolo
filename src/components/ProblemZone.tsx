@@ -60,7 +60,7 @@ export function ProblemZone({
   guidedReadingEnabled,
 }: ProblemZoneProps) {
   const [activeColor, setActiveColor] = useState<HighlightColor>('bleu');
-  const [showSharePanel, setShowSharePanel] = useState(false);
+  // showSharePanel removed — sharing is in ActionBar
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(text);
   useEffect(() => { setEditText(text); }, [text]);
@@ -291,40 +291,16 @@ export function ProblemZone({
               </button>
             </>
           )}
-          {/* Bouton Partager — masqué en contexte élève */}
-          {text && !isSharedProblem && (
-            <>
-              <div style={{ width: 1, height: 28, background: UI_BORDER, margin: '0 2px' }} />
-              <button
-                onClick={() => setShowSharePanel(!showSharePanel)}
-                title="Partager ce problème"
-                aria-label="Partager ce problème"
-                style={{
-                  minWidth: MIN_BUTTON_SIZE_PX,
-                  minHeight: MIN_BUTTON_SIZE_PX,
-                  background: showSharePanel ? '#EDE0FA' : 'none',
-                  border: `1px solid ${showSharePanel ? UI_PRIMARY : UI_BORDER}`,
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  color: showSharePanel ? UI_PRIMARY : UI_TEXT_SECONDARY,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ShareIcon />
-              </button>
-            </>
-          )}
+          {/* Partager déplacé dans l'ActionBar */}
         </div>
       </div>
 
-      {/* Panneau de partage inline */}
-      {showSharePanel && (
+      {/* SharePanel removed — sharing is handled by ActionBar */}
+      {false && (
         <SharePanel
           problemText={text}
           pieces={pieces}
-          onClose={() => setShowSharePanel(false)}
+          onClose={() => {}}
         />
       )}
 
