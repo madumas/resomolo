@@ -14,6 +14,7 @@ import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
 import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
+import { TableauEditor } from './TableauEditor';
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
 import { onPlace, onSnap } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
@@ -101,13 +102,14 @@ export function Canvas({
   const [mode, setMode] = useState<InteractionMode>({ type: 'idle' });
   const [columnCalcPieceId, setColumnCalcPieceId] = useState<string | null>(null);
   const [divisionCalcPieceId, setDivisionCalcPieceId] = useState<string | null>(null);
+  const [tableauEditorPieceId, setTableauEditorPieceId] = useState<string | null>(null);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
   const originalMovePos = useRef<{ x: number; y: number } | null>(null);
-  const tableauEditCellRef = useRef<{ row: number; col: number } | null>(null);
+  // tableauEditCellRef removed — TableauEditor handles its own cell editing
   const moveOffset = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
@@ -211,18 +213,11 @@ export function Canvas({
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
       }
-      // Tableau direct cell edit — ANY click on a tableau edits the clicked cell
+      // Tableau — open dedicated TableauEditor overlay (like ColumnCalc)
       if (isTableau(hitPiece)) {
-        const relX = pos.x - hitPiece.x;
-        const relY = pos.y - hitPiece.y;
-        const col = Math.floor(relX / TABLEAU_CELL_W);
-        const row = Math.floor(relY / TABLEAU_CELL_H);
-        if (row >= 0 && row < hitPiece.rows && col >= 0 && col < hitPiece.cols) {
-          tableauEditCellRef.current = { row, col };
-          setEditingBarField('label');
-          onStartEdit(hitPiece.id);
-          return;
-        }
+        setTableauEditorPieceId(hitPiece.id);
+        onSelectPiece(null);
+        return;
       }
       // Subdivision toggle — clicking on a subdivided bar that is already selected
       if (isBarre(hitPiece) && hitPiece.id === selectedPieceId && hitPiece.divisions) {
@@ -879,24 +874,6 @@ export function Canvas({
           placeholder = 'Texte de la flèche...';
           fieldKey = 'label';
           svgFontSizeMm = 4.5;
-        } else if (piece.type === 'tableau') {
-          // Edit the cell that was clicked (via tableauEditCellRef), or first empty cell
-          const t = piece as Tableau;
-          let targetRow = tableauEditCellRef.current?.row ?? 0;
-          let targetCol = tableauEditCellRef.current?.col ?? 0;
-          if (!tableauEditCellRef.current) {
-            outer: for (let r = 0; r < t.rows; r++) {
-              for (let c = 0; c < t.cols; c++) {
-                if (!t.cells[r][c]) { targetRow = r; targetCol = c; break outer; }
-              }
-            }
-          }
-          // Ref consumed — clear after reading
-          tableauEditCellRef.current = null;
-          initialValue = t.cells[targetRow][targetCol];
-          placeholder = targetRow === 0 && t.headerRow ? 'En-tête...' : 'Donnée...';
-          fieldKey = `cells-${targetRow}-${targetCol}`;
-          svgFontSizeMm = 4;
         } else {
           return null;
         }
@@ -905,8 +882,6 @@ export function Canvas({
         // data-edit-target attributes: pieceId for direct text, pieceId-label/value for bar fields.
         const editTargetId = piece.type === 'barre'
           ? `${piece.id}-${editingBarField || 'label'}`
-          : piece.type === 'tableau' && fieldKey.startsWith('cells-')
-          ? `${piece.id}-${fieldKey.replace('cells-', '')}`
           : piece.id;
         const targetEl = svgEl.querySelector(`[data-edit-target="${editTargetId}"]`);
         const targetRect = targetEl?.getBoundingClientRect();
@@ -959,20 +934,8 @@ export function Canvas({
             isCalcul={isCalcul}
             monospace={isCalcul}
             fontSize={svgFontSizeMm * mmToPx}
-            isTableauCell={piece.type === 'tableau'}
-            tableauCellWidthPx={piece.type === 'tableau' ? TABLEAU_CELL_W * mmToPx : undefined}
-            tableauCellHeightPx={piece.type === 'tableau' ? TABLEAU_CELL_H * mmToPx : undefined}
             onCommit={(value) => {
-              if (fieldKey.startsWith('cells-')) {
-                // Tableau cell edit: fieldKey = "cells-row-col"
-                const [, rowStr, colStr] = fieldKey.split('-');
-                const row = parseInt(rowStr), col = parseInt(colStr);
-                const t = piece as Tableau;
-                const newCells = t.cells.map((r, ri) => ri === row ? r.map((c, ci) => ci === col ? value : c) : [...r]);
-                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { cells: newCells } });
-              } else {
-                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
-              }
+              dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
               onStopEdit();
             }}
             onCancel={onStopEdit}
@@ -1087,6 +1050,35 @@ export function Canvas({
               setDivisionCalcPieceId(null);
             }}
             onCancel={() => setDivisionCalcPieceId(null)}
+          />
+        );
+      })()}
+
+      {/* Tableau editor overlay */}
+      {tableauEditorPieceId && (() => {
+        const piece = pieces.find(p => p.id === tableauEditorPieceId);
+        if (!piece || piece.type !== 'tableau') return null;
+        const t = piece as Tableau;
+        const center = getPieceCenter(piece, referenceUnitMm);
+        const ctm = svgRef.current?.getScreenCTM();
+        const canvasRect = svgRef.current?.parentElement?.getBoundingClientRect();
+        const screenPt = ctm && canvasRect
+          ? new DOMPoint(center.x, center.y).matrixTransform(ctm)
+          : null;
+        const editorLeft = screenPt && canvasRect ? screenPt.x - canvasRect.left - 80 : 100;
+        return (
+          <TableauEditor
+            left={editorLeft}
+            top={8}
+            initialCells={t.cells}
+            rows={t.rows}
+            cols={t.cols}
+            headerRow={t.headerRow}
+            onCommit={(cells) => {
+              dispatch({ type: 'EDIT_PIECE', id: tableauEditorPieceId, changes: { cells } });
+              setTableauEditorPieceId(null);
+            }}
+            onCancel={() => setTableauEditorPieceId(null)}
           />
         );
       })()}
@@ -1390,15 +1382,12 @@ function ReponsePiece({ piece, isSelected }: {
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, isTableauCell, tableauCellWidthPx, tableauCellHeightPx, onCommit, onCancel, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, onCommit, onCancel, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
   fontSize?: number;
   monospace?: boolean;
-  isTableauCell?: boolean;
-  tableauCellWidthPx?: number;
-  tableauCellHeightPx?: number;
   onCommit: (value: string) => void;
   onCancel: () => void;
   onColumnCalc?: () => void;
@@ -1468,11 +1457,10 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
           commit();
         }}
         style={{
-          minWidth: isTableauCell ? undefined : 200,
-          width: isTableauCell ? tableauCellWidthPx : undefined,
-          height: isTableauCell ? tableauCellHeightPx : Math.max(28, fontSize * 1.8),
+          minWidth: 200,
+          height: Math.max(28, fontSize * 1.8),
           border: `2px solid #7028e0`,
-          borderRadius: isTableauCell ? 2 : 6,
+          borderRadius: 6,
           padding: '2px 6px',
           fontSize: Math.round(fontSize),
           fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
