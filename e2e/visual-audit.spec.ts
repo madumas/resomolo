@@ -121,7 +121,12 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 67);
     await page.waitForTimeout(400);
 
-    // Test Copier (Level 1 action, visible by default)
+    // Test Copier (in Plus… submenu)
+    const plusBtnCopy = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
+    if (await plusBtnCopy.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await plusBtnCopy.click();
+      await page.waitForTimeout(200);
+    }
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     if (await btnCopy.isVisible().catch(() => false)) {
       await btnCopy.click();
@@ -788,9 +793,16 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('48-bars-before-grouping.png'), fullPage: true });
 
-    // Select the first bar, open Plus submenu, click Grouper
+    // Select the first bar, open Plus… submenu, click Grouper
     await clickCanvas(page, 110, 67);
     await page.waitForTimeout(400);
+
+    // Open Plus… submenu first
+    const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
+    if (await plusBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await plusBtn.click();
+      await page.waitForTimeout(200);
+    }
 
     const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
     if (await grouperBtn.isVisible().catch(() => false)) {
@@ -2034,9 +2046,14 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
 
-    // Select first bar, click "Même taille"
+    // Select first bar, open Plus… submenu, click "Même taille"
     await clickCanvas(page, 110, 67);
     await page.waitForTimeout(400);
+    const plusBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
+    if (await plusBtn2.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await plusBtn2.click();
+      await page.waitForTimeout(200);
+    }
     const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Même taille")');
     if (await memeTailleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await memeTailleBtn.click();
