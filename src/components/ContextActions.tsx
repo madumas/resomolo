@@ -47,7 +47,7 @@ export function ContextActions({
   onDismiss: _onDismiss,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
-  const [showDivideOptions, setShowDivideOptions] = useState(false);
+  // showDivideOptions removed — fraction submenu handles division presets
 
   // 2.2: Submenu state for bar context actions (reduces cognitive overload)
   const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'plus' | 'fraction'>('none');
@@ -168,145 +168,70 @@ export function ContextActions({
         </CtxBtn>
       )}
 
-      {/* Bar-specific actions — 2.2: grouped into submenus to reduce cognitive overload */}
-      {isBarre(piece) && (
+      {/* Barre — actions stables, submenus inline */}
+      {isBarre(piece) && barSubmenu === 'none' && (
         <>
-          {/* Level 1: main actions (when no submenu is open) */}
-          {barSubmenu === 'none' && (
-            <>
-              <CtxBtn onClick={() => onStartEditLabel(piece.id)}>
-                Nommer
-              </CtxBtn>
-              <CtxBtn onClick={() => onStartEditValue(piece.id)}>
-                Valeur
-              </CtxBtn>
-              {!piece.locked && (
-                <CtxBtn onClick={() => setBarSubmenu('taille')}>
-                  Taille {piece.sizeMultiplier}× ▸
-                </CtxBtn>
-              )}
-              {!piece.locked && (
-                <CtxBtn onClick={() => setBarSubmenu('fraction')}>
-                  Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : '▸'}
-                </CtxBtn>
-              )}
-              {!piece.locked && (
-                <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>
-                  Copier
-                </CtxBtn>
-              )}
-              {!piece.locked && (
-                <CtxBtn onClick={() => setBarSubmenu('plus')}>
-                  Plus ▸
-                </CtxBtn>
-              )}
-            </>
+          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
+          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+          {!piece.locked && (
+            <CtxBtn onClick={() => setBarSubmenu('taille')}>
+              Taille {piece.sizeMultiplier}×
+            </CtxBtn>
           )}
-
-          {/* Taille submenu: back + size presets */}
-          {barSubmenu === 'taille' && (
+          {!piece.locked && (
+            <CtxBtn onClick={() => setBarSubmenu('fraction')}>
+              Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
+            </CtxBtn>
+          )}
+          {!piece.locked && (
+            <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
+          )}
+          {!piece.locked && (
+            <CtxBtn onClick={() => onStartEqualizing(piece.id)}>Même taille</CtxBtn>
+          )}
+          {!piece.locked && !piece.groupId && (
+            <CtxBtn onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
+          )}
+          {piece.groupId && (
+            <CtxBtn onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
+          )}
+        </>
+      )}
+      {/* Barre — submenu Taille */}
+      {isBarre(piece) && barSubmenu === 'taille' && (
+        <>
+          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+            <CtxBtn key={n} active={piece.sizeMultiplier === n}
+              onClick={() => { onResizeBar(piece.id, n); setBarSubmenu('none'); }}>
+              {n}×
+            </CtxBtn>
+          ))}
+        </>
+      )}
+      {/* Barre — submenu Fraction */}
+      {isBarre(piece) && barSubmenu === 'fraction' && (
+        <>
+          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
+          {piece.divisions ? (
             <>
-              <CtxBtn onClick={() => setBarSubmenu('none')} back>
-                ←
+              <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center' }}>
+                Clique sur la barre pour colorer
+              </span>
+              <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [], showFraction: false }); setBarSubmenu('none'); }}>
+                Effacer
               </CtxBtn>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                <CtxBtn
-                  key={n}
-                  active={piece.sizeMultiplier === n}
-                  onClick={() => { onResizeBar(piece.id, n); setBarSubmenu('none'); }}
-                >
-                  {n}×
+            </>
+          ) : (
+            <>
+              {[2, 3, 4, 6].map(n => (
+                <CtxBtn key={n} onClick={() => {
+                  onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
+                  setBarSubmenu('none');
+                }}>
+                  1/{n}
                 </CtxBtn>
               ))}
-            </>
-          )}
-
-          {/* Fraction submenu: divide presets → stays selected for coloring */}
-          {barSubmenu === 'fraction' && (
-            <>
-              <CtxBtn onClick={() => setBarSubmenu('none')} back>
-                ←
-              </CtxBtn>
-              {piece.divisions ? (
-                <>
-                  <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [], showFraction: false }); setBarSubmenu('none'); }}>
-                    Effacer
-                  </CtxBtn>
-                  <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '0 4px' }}>
-                    Clique sur la barre pour colorer
-                  </span>
-                </>
-              ) : (
-                <>
-                  {[2, 3, 4, 6].map(n => (
-                    <CtxBtn key={n} onClick={() => {
-                      onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
-                      setBarSubmenu('none');
-                      // Bar stays selected — child can click parts to color them
-                    }}>
-                      1/{n}
-                    </CtxBtn>
-                  ))}
-                </>
-              )}
-            </>
-          )}
-
-          {/* Plus submenu: back + diviser/effacer + même taille + grouper/dégrouper */}
-          {barSubmenu === 'plus' && (
-            <>
-              <CtxBtn onClick={() => setBarSubmenu('none')} back>
-                ←
-              </CtxBtn>
-              {/* I7: Subdiviser — inline buttons instead of prompt() */}
-              {!piece.divisions && !showDivideOptions && (
-                <CtxBtn onClick={() => setShowDivideOptions(true)}>
-                  Diviser
-                </CtxBtn>
-              )}
-              {showDivideOptions && (
-                <>
-                  {[2, 3, 4, 6, 8, 10, 12].map(n => (
-                    <CtxBtn key={n} onClick={() => {
-                      onEditPiece(piece.id, { divisions: n, coloredParts: [] });
-                      setShowDivideOptions(false);
-                      setBarSubmenu('none');
-                    }}>
-                      {n}
-                    </CtxBtn>
-                  ))}
-                </>
-              )}
-              {/* Remove subdivisions */}
-              {piece.divisions && (
-                <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [], showFraction: false }); setBarSubmenu('none'); }}>
-                  Effacer divisions
-                </CtxBtn>
-              )}
-              {/* Fraction label toggle */}
-              {piece.divisions && piece.coloredParts.length > 0 && (
-                <CtxBtn
-                  active={piece.showFraction}
-                  onClick={() => onEditPiece(piece.id, { showFraction: !piece.showFraction })}
-                >
-                  Fraction
-                </CtxBtn>
-              )}
-              {/* Même taille (Égaliser) */}
-              <CtxBtn onClick={() => onStartEqualizing(piece.id)}>
-                Même taille
-              </CtxBtn>
-              {/* Grouper */}
-              {!piece.groupId && (
-                <CtxBtn onClick={() => onStartGrouping(piece.id)}>
-                  Grouper
-                </CtxBtn>
-              )}
-              {piece.groupId && (
-                <CtxBtn onClick={() => onUngroup(piece.groupId!)}>
-                  Dégrouper
-                </CtxBtn>
-              )}
             </>
           )}
         </>

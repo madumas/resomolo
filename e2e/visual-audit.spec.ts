@@ -792,25 +792,18 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 110, 67);
     await page.waitForTimeout(400);
 
-    const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    if (await plusBtn.isVisible().catch(() => false)) {
-      await plusBtn.click();
+    const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
+    if (await grouperBtn.isVisible().catch(() => false)) {
+      await grouperBtn.click();
       await page.waitForTimeout(200);
 
-      const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
-      if (await grouperBtn.isVisible().catch(() => false)) {
-        await grouperBtn.click();
-        await page.waitForTimeout(200);
+      await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
 
-        await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
+      // Click on second bar to complete grouping
+      await clickCanvas(page, 110, 90);
+      await page.waitForTimeout(400);
 
-        // Click on second bar to complete grouping
-        // The duplicate appears below, try clicking there
-        await clickCanvas(page, 110, 90);
-        await page.waitForTimeout(400);
-
-        await page.screenshot({ path: shot('50-bars-grouped.png'), fullPage: true });
-      }
+      await page.screenshot({ path: shot('50-bars-grouped.png'), fullPage: true });
     }
   });
 
@@ -1782,51 +1775,29 @@ test.describe('Visual audit — full flow', () => {
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
 
-    // Open "Plus" submenu to find "Diviser"
-    const plusBtn = ctxActions.locator('button:has-text("Plus")');
-    if (await plusBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await plusBtn.click();
+    // Click "Fraction" (now at first level)
+    const fractionBtn = ctxActions.locator('button:has-text("Fraction")');
+    if (await fractionBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fractionBtn.click();
       await page.waitForTimeout(200);
 
-      // Divide into 3 parts
-      const div3 = ctxActions.locator('button:has-text("3")').first();
+      // Choose 1/3 division
+      const div3 = ctxActions.locator('button:has-text("1/3")');
       if (await div3.isVisible().catch(() => false)) {
         await div3.click();
         await page.waitForTimeout(300);
       }
     }
 
-    // Re-select the bar to color parts
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
-
-    // Click on the bar twice to color 2 parts (click on left third, then middle)
+    // Bar stays selected — click on the bar to color 2 parts
     const svg = page.locator('[data-testid="canvas-svg"]');
     const box = await svg.boundingBox();
     if (box) {
       const pxPerMm = box.width / 500;
-      // Click on the bar at different x positions to color parts
       await page.mouse.click(box.x + 145 * pxPerMm, box.y + 100 * pxPerMm);
       await page.waitForTimeout(200);
       await page.mouse.click(box.x + 160 * pxPerMm, box.y + 100 * pxPerMm);
       await page.waitForTimeout(200);
-    }
-
-    // Re-select and look for "Fraction" button
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
-
-    // Open Plus submenu again
-    const plusBtn2 = ctxActions.locator('button:has-text("Plus")');
-    if (await plusBtn2.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await plusBtn2.click();
-      await page.waitForTimeout(200);
-    }
-
-    const fractionBtn = ctxActions.locator('button:has-text("Fraction")');
-    if (await fractionBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await fractionBtn.click();
-      await page.waitForTimeout(300);
     }
 
     // Deselect to see result
