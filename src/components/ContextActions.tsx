@@ -19,6 +19,8 @@ interface ContextActionsProps {
   onDuplicateBar: (id: string, count: number) => void;
   onChangeColor: (id: string, couleur: CouleurPiece) => void;
   onDuplicateJetons: (id: string, count: number) => void;
+  freeJetonCount?: number;
+  onRepartirJetons?: (groupCount: number) => void;
   onEditPiece: (id: string, changes: Record<string, unknown>) => void;
   onStartEqualizing: (id: string) => void;
   onStartGrouping: (id: string) => void;
@@ -41,6 +43,8 @@ export function ContextActions({
   onDuplicateBar,
   onChangeColor,
   onDuplicateJetons,
+  freeJetonCount = 0,
+  onRepartirJetons,
   onEditPiece,
   onStartEqualizing,
   onStartGrouping,
@@ -57,6 +61,9 @@ export function ContextActions({
   // Template submenu for reponse pieces
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
 
+  // Jeton répartir submenu state
+  const [showRepartir, setShowRepartir] = useState(false);
+
   // DroiteNumerique submenu state
   const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur'>('none');
 
@@ -67,6 +74,7 @@ export function ContextActions({
   useEffect(() => {
     setBarSubmenu('none');
     setShowTemplateOptions(false);
+    setShowRepartir(false);
     setDroiteSubmenu('none');
     setTableauSubmenu('none');
   }, [piece.id]);
@@ -311,6 +319,19 @@ export function ContextActions({
           ))}
           <CtxBtn onClick={() => onDuplicateJetons(piece.id, 3)}>=3</CtxBtn>
           <CtxBtn onClick={() => onDuplicateJetons(piece.id, 5)}>=5</CtxBtn>
+          {freeJetonCount >= 2 && onRepartirJetons && !showRepartir && (
+            <CtxBtn onClick={() => setShowRepartir(true)}>Répartir</CtxBtn>
+          )}
+          {showRepartir && onRepartirJetons && (
+            <>
+              <CtxBtn onClick={() => setShowRepartir(false)} back>←</CtxBtn>
+              {[2, 3, 4, 5, 6].filter(k => k <= freeJetonCount).map(k => (
+                <CtxBtn key={k} onClick={() => { onRepartirJetons(k); setShowRepartir(false); }}>
+                  {k} groupes
+                </CtxBtn>
+              ))}
+            </>
+          )}
         </>
       )}
 

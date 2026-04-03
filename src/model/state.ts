@@ -1,5 +1,6 @@
 import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Reponse } from './types';
-import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM } from './types';
+import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM, CANVAS_WIDTH_MM } from './types';
+import { generateId } from './id';
 import { createUndoManager, pushState, undo as undoFn, redo as redoFn } from './undo';
 
 // === Initial state ===
@@ -35,6 +36,7 @@ export type Action =
   | { type: 'CLEAR_PIECES' } // recommencer
   | { type: 'ARRANGE_PIECES'; moves: Array<{ id: string; x: number; y: number }> }
   | { type: 'UNGROUP_BARRES'; groupId: string }
+  | { type: 'REPARTIR_JETONS'; jetonIds: string[]; groupCount: number; startX: number; startY: number }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'RESTORE'; undoManager: UndoManager };
@@ -308,6 +310,84 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
             : p
         ),
       };
+
+    case 'REPARTIR_JETONS': {
+      const { jetonIds, groupCount, startX: rawStartX, startY } = action;
+      if (jetonIds.length === 0 || groupCount < 2) return state;
+
+      const perGroup = Math.floor(jetonIds.length / groupCount);
+      const remainder = jetonIds.length % groupCount;
+      const perRow = Math.min(perGroup, 5);
+      const rows = perGroup > 0 ? Math.ceil(perGroup / perRow) : 1;
+      const boiteW = Math.max(60, perRow * 10 + 16);
+      const boiteH = Math.max(40, rows * 10 + 20);
+      const gap = 10;
+      const maxRowWidth = CANVAS_WIDTH_MM - 30;
+      // Clamp startX so at least one boîte fits
+      const startX = Math.min(rawStartX, maxRowWidth - boiteW);
+
+      // Create K boîtes
+      const newBoites: Piece[] = [];
+      for (let i = 0; i < groupCount; i++) {
+        let bx = startX + i * (boiteW + gap);
+        let by = startY;
+        // Wrap to next row if exceeds canvas
+        if (bx + boiteW > maxRowWidth) {
+          const perLine = Math.floor((maxRowWidth - startX) / (boiteW + gap));
+          const row = Math.floor(i / Math.max(1, perLine));
+          const col = i % Math.max(1, perLine);
+          bx = startX + col * (boiteW + gap);
+          by = startY + row * (boiteH + gap);
+        }
+        newBoites.push({
+          id: generateId(),
+          type: 'boite',
+          x: bx, y: by,
+          locked: false,
+          width: boiteW, height: boiteH,
+          label: `Groupe ${i + 1}`, value: '',
+          couleur: 'bleu' as const,
+        } as Boite);
+      }
+
+      // Distribute jetons into boîtes
+      let pieces = [...state.pieces];
+      let assigned = 0;
+      for (let gi = 0; gi < groupCount; gi++) {
+        const boite = newBoites[gi] as Boite;
+        for (let ji = 0; ji < perGroup; ji++) {
+          const idx = pieces.findIndex(p => p.id === jetonIds[assigned]);
+          if (idx >= 0) {
+            const col = ji % perRow;
+            const row = Math.floor(ji / perRow);
+            pieces[idx] = {
+              ...pieces[idx],
+              x: boite.x + 8 + col * 10,
+              y: boite.y + 16 + row * 10,
+              parentId: boite.id,
+            } as Piece;
+          }
+          assigned++;
+        }
+      }
+
+      // Remainder jetons — place below last boîte, free (avoids horizontal overflow)
+      const lastBoite = newBoites[newBoites.length - 1] as Boite;
+      for (let ri = 0; ri < remainder; ri++) {
+        const idx = pieces.findIndex(p => p.id === jetonIds[assigned]);
+        if (idx >= 0) {
+          pieces[idx] = {
+            ...pieces[idx],
+            x: lastBoite.x + ri * 10,
+            y: lastBoite.y + lastBoite.height + gap,
+            parentId: null,
+          } as Piece;
+        }
+        assigned++;
+      }
+
+      return autoResizeBoite({ ...state, pieces: [...pieces, ...newBoites] });
+    }
 
     case 'ARRANGE_PIECES':
       return {

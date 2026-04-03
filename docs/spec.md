@@ -856,7 +856,7 @@ Toutes les fonctionnalités décrites dans les sections 1 à 16 sont implément�
 
 | Feature | Notes |
 |---|---|
-| **Pièce « Groupe / Paquet »** | Regrouper des jetons en paquets égaux — modélise la division-partage et la multiplication-groupement. La barre couvre la comparaison/proportionnalité mais pas le sens « groupement » de la multiplication |
+| **Action « Répartir en groupes égaux »** | Action contextuelle sur un ensemble de jetons (pas une nouvelle pièce). L'enfant entre le nombre total et le nombre de groupes (ou la taille des groupes). L'outil crée les boîtes et y place les jetons — compensation motrice, pas cognitive. Si le partage est inégal, le reste est affiché visuellement (jetons libres). La Boîte existante couvre le besoin de contenant ; cette action automatise le geste répétitif de placement qui pénalise les enfants TDC. Vocabulaire PFEQ : « groupes égaux », pas « paquets ». |
 | **Grandeurs décimales et fractions** | Barres avec valeurs 0.5, 1/4, etc. Fin 2e cycle / 3e cycle. Étend la barre au-delà des entiers |
 | **Tableau de données** | Statistique/probabilité 3e cycle. *Implémentation de base disponible (type, rendu, édition cellule).* |
 | **Diagramme en arbre** | Probabilité 3e cycle |

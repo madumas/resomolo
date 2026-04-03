@@ -542,6 +542,24 @@ export function Canvas({
     onSelectPiece(null);
   }, [pieces, dispatch, onSelectPiece]);
 
+  // Répartir jetons en groupes égaux
+  const freeJetonCount = pieces.filter(p => p.type === 'jeton' && !(p as any).parentId).length;
+  const handleRepartirJetons = useCallback((groupCount: number) => {
+    const freeJetons = pieces.filter(p => p.type === 'jeton' && !(p as any).parentId);
+    if (freeJetons.length < 2) return;
+    const maxY = Math.max(...freeJetons.map(p => p.y));
+    const minX = Math.min(...freeJetons.map(p => p.x));
+    const startPos = snapToGrid(minX, maxY + 20);
+    dispatch({
+      type: 'REPARTIR_JETONS',
+      jetonIds: freeJetons.map(p => p.id),
+      groupCount,
+      startX: startPos.x,
+      startY: startPos.y,
+    });
+    onSelectPiece(null);
+  }, [pieces, dispatch, onSelectPiece]);
+
   // Duplicate bar
   const handleDuplicateBar = useCallback((id: string, count: number) => {
     const source = pieces.find(p => p.id === id);
@@ -1046,6 +1064,8 @@ export function Canvas({
           onDuplicateBar={handleDuplicateBar}
           onChangeColor={handleChangeColor}
           onDuplicateJetons={handleDuplicateJetons}
+          freeJetonCount={freeJetonCount}
+          onRepartirJetons={handleRepartirJetons}
           onEditPiece={handleEditPiece}
           onStartEqualizing={handleStartEqualizing}
           onStartGrouping={handleStartGrouping}
