@@ -108,10 +108,12 @@ function autoResizeBoite(state: ModelisationState): ModelisationState {
     const minY = Math.min(...children.map(c => c.y)) - padding;
     const maxY = Math.max(...children.map(c => c.y)) + padding;
 
-    const newWidth = Math.max(boite.width, maxX - minX);
-    const newHeight = Math.max(boite.height, maxY - minY);
-    const newX = Math.min(boite.x, minX);
-    const newY = Math.min(boite.y, minY);
+    // Resize to fit children exactly (can shrink when jetons are removed)
+    const DEFAULT_WIDTH = 60, DEFAULT_HEIGHT = 40;
+    const newWidth = Math.max(DEFAULT_WIDTH, maxX - minX);
+    const newHeight = Math.max(DEFAULT_HEIGHT, maxY - minY);
+    const newX = minX;
+    const newY = minY;
 
     if (newWidth !== boite.width || newHeight !== boite.height || newX !== boite.x || newY !== boite.y) {
       changed = true;
@@ -206,8 +208,8 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
         }
       }
 
-      // MOVE_PIECE (final): update jeton parentId based on boîte containment
-      if (action.type === 'MOVE_PIECE' && movedPiece.type === 'jeton') {
+      // Update jeton parentId based on boîte containment (both live and final)
+      if ((action.type === 'MOVE_PIECE' || action.type === 'MOVE_PIECE_LIVE') && movedPiece.type === 'jeton') {
         const currentParentId = (movedPiece as Jeton).parentId;
         // If jeton was in a boîte and moved, detach it first (user is pulling it out)
         // Then check if it landed in a (different) boîte
