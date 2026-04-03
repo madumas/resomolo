@@ -40,19 +40,42 @@ export function loadEmergencySave(): UndoManager | null {
   }
 }
 
+/** Migrate pieces from older versions (add missing fields with defaults). */
+function migratePieces(pieces: any[]): any[] {
+  return pieces.map(p => {
+    if (p.type === 'barre' && p.showFraction === undefined) {
+      return { ...p, showFraction: false };
+    }
+    return p;
+  });
+}
+
+function migrateUndoManager(um: any): any {
+  if (um?.current?.pieces) {
+    um.current.pieces = migratePieces(um.current.pieces);
+  }
+  if (um?.past) {
+    um.past = um.past.map((s: any) => ({ ...s, pieces: migratePieces(s.pieces || []) }));
+  }
+  if (um?.future) {
+    um.future = um.future.map((s: any) => ({ ...s, pieces: migratePieces(s.pieces || []) }));
+  }
+  return um;
+}
+
 function parseStoredData(raw: string): UndoManager | null {
   const parsed = JSON.parse(raw);
   // Versioned format: { version, data }
   if (parsed && typeof parsed.version === 'number') {
     const um = parsed.data;
     if (um && um.current && Array.isArray(um.current.pieces)) {
-      return um as UndoManager;
+      return migrateUndoManager(um) as UndoManager;
     }
     return null;
   }
   // Legacy unversioned format (v0): direct UndoManager
   if (parsed && parsed.current && Array.isArray(parsed.current.pieces)) {
-    return parsed as UndoManager;
+    return migrateUndoManager(parsed) as UndoManager;
   }
   return null;
 }
