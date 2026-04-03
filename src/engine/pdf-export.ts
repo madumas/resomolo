@@ -18,8 +18,8 @@ export async function exportModelisationAsPdf(
     img.src = url;
   });
 
-  // 2. Draw to canvas at high resolution for print quality (300 DPI on A4 landscape ≈ 3508×2480)
-  const targetWidth = 3508; // 297mm at 300dpi
+  // 2. Draw to canvas at high resolution for print quality (300 DPI on Letter landscape ≈ 3300×2550)
+  const targetWidth = 3300; // 279mm (11") at 300dpi
   const scale = Math.max(4, Math.ceil(targetWidth / img.naturalWidth));
   const canvas = document.createElement('canvas');
   canvas.width = img.naturalWidth * scale;
@@ -31,7 +31,7 @@ export async function exportModelisationAsPdf(
   URL.revokeObjectURL(url);
 
   // 3. Create PDF (landscape A4)
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pageW = pdf.internal.pageSize.getWidth();   // 297mm
   const pageH = pdf.internal.pageSize.getHeight();  // 210mm
   const margin = 10;
