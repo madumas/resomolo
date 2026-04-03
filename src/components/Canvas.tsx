@@ -213,8 +213,8 @@ export function Canvas({
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
       }
-      // Tableau direct cell edit — click on selected tableau edits the clicked cell
-      if (isTableau(hitPiece) && hitPiece.id === selectedPieceId) {
+      // Tableau direct cell edit — ANY click on a tableau edits the clicked cell
+      if (isTableau(hitPiece)) {
         const relX = pos.x - hitPiece.x;
         const relY = pos.y - hitPiece.y;
         const col = Math.floor(relX / TABLEAU_CELL_W);
