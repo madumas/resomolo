@@ -18,8 +18,9 @@ export async function exportModelisationAsPdf(
     img.src = url;
   });
 
-  // 2. Draw to canvas at 2x for quality
-  const scale = 2;
+  // 2. Draw to canvas at high resolution for print quality (300 DPI on A4 landscape ≈ 3508×2480)
+  const targetWidth = 3508; // 297mm at 300dpi
+  const scale = Math.max(4, Math.ceil(targetWidth / img.naturalWidth));
   const canvas = document.createElement('canvas');
   canvas.width = img.naturalWidth * scale;
   canvas.height = img.naturalHeight * scale;
