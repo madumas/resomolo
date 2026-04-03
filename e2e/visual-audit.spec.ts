@@ -1272,4 +1272,288 @@ test.describe('Visual audit — full flow', () => {
       await page.screenshot({ path: shot('72-saturated-context-actions.png'), fullPage: true });
     }
   });
+
+  test('40 — Dyslexia profile: OpenDyslexic + large text + spacing', async ({ page }) => {
+    await openSettings(page);
+
+    // Select OpenDyslexic font
+    const fontBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("OpenDyslexic")');
+    if (await fontBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fontBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Select large text (1.5×)
+    const textBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("1.5×")');
+    if (await textBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await textBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Select max letter spacing
+    const spacingBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("Aéré")').last();
+    if (await spacingBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await spacingBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await closeSettings(page);
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('73-dyslexia-profile.png'), fullPage: true });
+
+    // Verify toolbar labels are still visible and not truncated
+    await expect(page.locator('[data-testid="tool-jeton"]')).toBeVisible();
+    await expect(page.locator('[data-testid="tool-barre"]')).toBeVisible();
+  });
+
+  test('41 — Tablet 768px + Aide maximale profile', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await navigateAndReady(page);
+
+    await openSettings(page);
+    const maxBtn = page.locator('button:has-text("Aide maximale")');
+    if (await maxBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await maxBtn.click();
+      await page.waitForTimeout(200);
+    }
+    await closeSettings(page);
+
+    await page.screenshot({ path: shot('74-tablet-aide-max.png'), fullPage: true });
+
+    // Place a barre and check context actions fit in viewport
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    await selectTool(page, 'barre'); // toggle off
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      const box = await ctxActions.boundingBox();
+      if (box) {
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(768);
+      }
+      await page.screenshot({ path: shot('75-tablet-aide-max-ctx.png'), fullPage: true });
+    }
+  });
+
+  test('42 — Droite numérique: Max=100 Pas=1 (saturation)', async ({ page }) => {
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    await selectTool(page, 'droiteNumerique'); // toggle off
+    await clickCanvas(page, 180, 120);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      // Change Max to 100
+      const maxBtn = ctxActions.locator('button:has-text("Max:")');
+      if (await maxBtn.isVisible().catch(() => false)) {
+        await maxBtn.click();
+        await page.waitForTimeout(200);
+        const val100 = ctxActions.locator('button:has-text("100")');
+        if (await val100.isVisible().catch(() => false)) {
+          await val100.click();
+          await page.waitForTimeout(300);
+        }
+      }
+
+      // Re-select to get context actions back
+      await clickCanvas(page, 180, 120);
+      await page.waitForTimeout(400);
+
+      // Change Pas to 1
+      const pasBtn = ctxActions.locator('button:has-text("Pas:")');
+      if (await pasBtn.isVisible().catch(() => false)) {
+        await pasBtn.click();
+        await page.waitForTimeout(200);
+        const val1 = ctxActions.locator('button:has-text("1")').first();
+        if (await val1.isVisible().catch(() => false)) {
+          await val1.click();
+          await page.waitForTimeout(300);
+        }
+      }
+    }
+
+    // Deselect to see result
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('76-droite-100-pas1.png'), fullPage: true });
+  });
+
+  test('43 — Droite numérique: Min=5 (non-zero start)', async ({ page }) => {
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    await selectTool(page, 'droiteNumerique'); // toggle off
+    await clickCanvas(page, 180, 120);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      // Change Min to 5
+      const minBtn = ctxActions.locator('button:has-text("Min:")');
+      if (await minBtn.isVisible().catch(() => false)) {
+        await minBtn.click();
+        await page.waitForTimeout(200);
+        const val5 = ctxActions.locator('button:has-text("5")').first();
+        if (await val5.isVisible().catch(() => false)) {
+          await val5.click();
+          await page.waitForTimeout(300);
+        }
+      }
+    }
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('77-droite-min5.png'), fullPage: true });
+
+    // Verify first tick label is 5, not 0
+    const texts = page.locator('[data-testid="canvas-svg"] text');
+    const allTexts = await texts.allTextContents();
+    expect(allTexts.some(t => t.trim() === '5')).toBe(true);
+    expect(allTexts.filter(t => t.trim() === '0').length).toBe(0);
+  });
+
+  test('44 — Tool cancel with Escape: error tolerance', async ({ page }) => {
+    // Select Calcul tool
+    await selectTool(page, 'calcul');
+    await page.waitForTimeout(200);
+
+    // Verify status bar shows Calcul instruction
+    const statusBar = page.locator('[data-testid="status-bar"]');
+    const text1 = await statusBar.innerText();
+    expect(text1.toLowerCase()).toContain('calcul');
+
+    await page.screenshot({ path: shot('78-tool-selected-calcul.png'), fullPage: true });
+
+    // Press Escape to cancel
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    // Verify status bar returns to neutral
+    const text2 = await statusBar.innerText();
+    expect(text2.toLowerCase()).not.toContain('calcul');
+
+    // Select Barre instead
+    await selectTool(page, 'barre');
+    await page.waitForTimeout(200);
+
+    const text3 = await statusBar.innerText();
+    expect(text3.toLowerCase()).toContain('barre');
+
+    await page.screenshot({ path: shot('78-tool-cancel-escape.png'), fullPage: true });
+  });
+
+  test('45 — Two zones occupied: modélisation + calcul/réponse', async ({ page }) => {
+    // Place modélisation pieces in top zone
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 50, 90);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 80, 90);
+    await page.waitForTimeout(200);
+
+    // Place calcul in bottom zone
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 100, 200);
+    await page.waitForTimeout(300);
+    const editor1 = page.locator('[data-testid="inline-editor"]');
+    if (await editor1.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await editor1.fill('3 + 5 = 8');
+      await editor1.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Place réponse below
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 100, 190);
+    await page.waitForTimeout(300);
+    const editor2 = page.locator('[data-testid="inline-editor"]');
+    if (await editor2.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await editor2.fill('Il y a 8 pommes.');
+      await editor2.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Deselect
+    await selectTool(page, 'reponse');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('79-two-zones-occupied.png'), fullPage: true });
+  });
+
+  test('46 — Mobile portrait 375px', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await navigateAndReady(page);
+
+    await page.screenshot({ path: shot('80-mobile-portrait.png'), fullPage: true });
+
+    // Place a piece
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(300);
+
+    // Try to select it for context actions
+    await selectTool(page, 'jeton'); // toggle off
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('81-mobile-portrait-ctx.png'), fullPage: true });
+  });
+
+  test('47 — Relance question visible in status bar', async ({ page }) => {
+    test.setTimeout(60_000);
+
+    // Load a problem
+    await openProblemSelector(page);
+    const prob = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button').nth(1);
+    if (await prob.isVisible().catch(() => false)) {
+      await prob.click();
+      await page.waitForTimeout(500);
+    }
+    await dismissOverlays(page);
+    await page.waitForTimeout(300);
+
+    // Set relance delay to minimum via settings
+    await openSettings(page);
+    const timerInput = page.locator('[role="dialog"][aria-label="Paramètres"] input[type="number"]').first();
+    if (await timerInput.isVisible().catch(() => false)) {
+      await timerInput.fill('3');
+      await timerInput.press('Tab');
+      await page.waitForTimeout(200);
+    }
+    await closeSettings(page);
+
+    // Place a piece then wait for inactivity relance
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'barre'); // deselect tool
+    await page.keyboard.press('Escape'); // deselect piece
+    await page.waitForTimeout(200);
+
+    // Wait for inactivity relance (3s delay + buffer)
+    await page.waitForTimeout(5000);
+
+    const statusBar = page.locator('[data-testid="status-bar"]');
+    const statusText = await statusBar.innerText();
+
+    await page.screenshot({ path: shot('82-relance-question-visible.png'), fullPage: true });
+
+    // The relance should show a question or encouragement (not just the neutral message)
+    expect(statusText.length).toBeGreaterThan(20);
+  });
 });
