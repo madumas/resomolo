@@ -1807,57 +1807,50 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('91-barre-fraction-label.png'), fullPage: true });
   });
 
-  test('53 — Groupe: placement, config, naming', async ({ page }) => {
-    // Select Groupe tool
-    await selectTool(page, 'groupe');
-    await clickCanvas(page, 150, 120);
+  test('53 — Boîte: valeur, couleur, auto-resize with jetons', async ({ page }) => {
+    // Place a boîte
+    await selectTool(page, 'boite');
+    await clickCanvas(page, 150, 100);
     await page.waitForTimeout(400);
+    await selectTool(page, 'boite'); // toggle off
 
-    await page.screenshot({ path: shot('92-groupe-placed.png'), fullPage: true });
-
-    // Deselect tool, select the group
-    await selectTool(page, 'groupe');
-    await clickCanvas(page, 165, 127);
+    // Select boîte, set Valeur
+    await clickCanvas(page, 165, 120);
     await page.waitForTimeout(400);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      // Change count to 5
-      const btn5 = ctxActions.locator('button:has-text("×5")');
-      if (await btn5.isVisible().catch(() => false)) {
-        await btn5.click();
+    const valeurBtn = ctxActions.locator('button:has-text("Valeur")');
+    if (await valeurBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await valeurBtn.click();
+      await page.waitForTimeout(300);
+      const editor = page.locator('[data-testid="inline-editor"]');
+      if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await editor.fill('12');
+        await editor.press('Enter');
         await page.waitForTimeout(300);
-      }
-
-      await page.screenshot({ path: shot('93-groupe-5-elements.png'), fullPage: true });
-
-      // Re-select and click Nommer
-      await clickCanvas(page, 165, 127);
-      await page.waitForTimeout(400);
-
-      const nommerBtn = ctxActions.locator('button:has-text("Nommer")');
-      if (await nommerBtn.isVisible().catch(() => false)) {
-        await nommerBtn.click();
-        await page.waitForTimeout(300);
-
-        const editor = page.locator('[data-testid="inline-editor"]');
-        if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await editor.fill('Sacs');
-          await editor.press('Enter');
-          await page.waitForTimeout(300);
-        }
       }
     }
 
-    // Deselect
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await page.screenshot({ path: shot('92-boite-with-value.png'), fullPage: true });
 
-    await page.screenshot({ path: shot('94-groupe-named.png'), fullPage: true });
+    // Change colour to rouge
+    await clickCanvas(page, 165, 120);
+    await page.waitForTimeout(400);
+    const rougeBtn = ctxActions.locator('button[aria-label="Couleur rouge"]');
+    if (await rougeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await rougeBtn.click();
+      await page.waitForTimeout(200);
+    }
 
-    // Verify the group piece exists on canvas (ellipse element)
-    const groupEllipses = page.locator('[data-testid="canvas-svg"] ellipse');
-    expect(await groupEllipses.count()).toBeGreaterThanOrEqual(1);
+    // Place several jetons inside to trigger auto-resize
+    await selectTool(page, 'jeton');
+    for (let i = 0; i < 5; i++) {
+      await clickCanvas(page, 155 + i * 8, 115);
+      await page.waitForTimeout(150);
+    }
+    await selectTool(page, 'jeton'); // toggle off
+
+    await page.screenshot({ path: shot('93-boite-color-autoresize.png'), fullPage: true });
   });
 
   // ────────────────────────────────────────────────────────
