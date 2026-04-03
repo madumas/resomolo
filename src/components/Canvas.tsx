@@ -904,6 +904,8 @@ export function Canvas({
         // data-edit-target attributes: pieceId for direct text, pieceId-label/value for bar fields.
         const editTargetId = piece.type === 'barre'
           ? `${piece.id}-${editingBarField || 'label'}`
+          : piece.type === 'tableau' && fieldKey.startsWith('cells-')
+          ? `${piece.id}-${fieldKey.replace('cells-', '')}`
           : piece.id;
         const targetEl = svgEl.querySelector(`[data-edit-target="${editTargetId}"]`);
         const targetRect = targetEl?.getBoundingClientRect();
