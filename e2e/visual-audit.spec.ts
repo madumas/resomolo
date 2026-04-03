@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import {
   clickCanvas,
+  selectPieceAt,
   selectTool,
   getStatusText,
   dismissOverlays,
@@ -71,23 +72,20 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, then click bar to select it
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 130, 87);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 130, 87);
 
     await page.screenshot({ path: shot('06-bar-selected-context-actions.png'), fullPage: true });
 
-    // Screenshot context actions if visible
+    // Screenshot context actions
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      await ctxActions.screenshot({ path: shot('07-context-actions-detail.png') });
+    await ctxActions.screenshot({ path: shot('07-context-actions-detail.png') });
 
-      const ctxBox = await ctxActions.boundingBox();
-      const canvasBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
-      if (ctxBox && canvasBox) {
-        expect(ctxBox.x).toBeGreaterThanOrEqual(0);
-        expect(ctxBox.y).toBeGreaterThanOrEqual(0);
-        expect(ctxBox.x + ctxBox.width).toBeLessThanOrEqual(canvasBox.x + canvasBox.width + 50);
-      }
+    const ctxBox = await ctxActions.boundingBox();
+    const canvasBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
+    if (ctxBox && canvasBox) {
+      expect(ctxBox.x).toBeGreaterThanOrEqual(0);
+      expect(ctxBox.y).toBeGreaterThanOrEqual(0);
+      expect(ctxBox.x + ctxBox.width).toBeLessThanOrEqual(canvasBox.x + canvasBox.width + 50);
     }
   });
 
@@ -99,39 +97,33 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the bar
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 80, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 80, 67);
 
     // Open Taille submenu (bar context actions now use submenus)
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
-    if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click({ force: true });
-      await page.waitForTimeout(200);
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click({ force: true });
+    await page.waitForTimeout(200);
 
-      // Click 3× in the Taille submenu (force: context actions may overlap status bar)
-      const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
-      if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click({ force: true });
-        await page.waitForTimeout(200);
-        await page.screenshot({ path: shot('08-bar-3x.png'), fullPage: true });
-      }
-    }
+    // Click 3× in the Taille submenu (force: context actions may overlap status bar)
+    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    await expect(btn3x).toBeVisible({ timeout: 2000 });
+    await btn3x.click({ force: true });
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: shot('08-bar-3x.png'), fullPage: true });
 
     // Re-select bar after resize (context actions reappear)
-    await clickCanvas(page, 80, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 80, 67);
 
     // Test Copier (in Plus… submenu)
     const plusBtnCopy = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    if (await plusBtnCopy.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await plusBtnCopy.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(plusBtnCopy).toBeVisible({ timeout: 2000 });
+    await plusBtnCopy.click();
+    await page.waitForTimeout(200);
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
-    if (await btnCopy.isVisible().catch(() => false)) {
-      await btnCopy.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(btnCopy).toBeVisible({ timeout: 2000 });
+    await btnCopy.click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('09-bars-duplicated-aligned.png'), fullPage: true });
   });
@@ -220,14 +212,12 @@ test.describe('Visual audit — full flow', () => {
 
     // Step 2: Copier la barre
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 80, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 80, 67);
 
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
-    if (await btnCopy.isVisible().catch(() => false)) {
-      await btnCopy.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(btnCopy).toBeVisible({ timeout: 2000 });
+    await btnCopy.click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('16-bars-placed.png'), fullPage: true });
 
@@ -334,31 +324,27 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the bar
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 110, 87);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 87);
 
     // Click "Nommer" in context actions
     const nommerBtn = page.locator('[data-testid="context-actions"] button:has-text("Nommer")');
-    if (await nommerBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await nommerBtn.click();
-      await page.waitForTimeout(200);
+    await expect(nommerBtn).toBeVisible({ timeout: 2000 });
+    await nommerBtn.click();
+    await page.waitForTimeout(200);
 
-      const editor = page.locator('[data-testid="inline-editor"]');
-      if (await editor.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await editor.fill('Théo');
-        await editor.press('Enter');
-        await page.waitForTimeout(300);
-      }
-    }
+    const editor = page.locator('[data-testid="inline-editor"]');
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('Théo');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('23-bar-labeled.png'), fullPage: true });
 
     // Verify label if bar was labeled
     const label = page.locator('[data-testid="bar-label"]');
-    if (await label.isVisible().catch(() => false)) {
-      const labelText = await label.textContent();
-      expect(labelText).toBe('Théo');
-    }
+    await expect.soft(label).toBeVisible({ timeout: 2000 });
+    const labelText = await label.textContent();
+    expect(labelText).toBe('Théo');
   });
 
   test('12 — problem selection updates status bar', async ({ page }) => {
@@ -410,17 +396,14 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, click on the droite to see context actions
     await selectTool(page, 'droiteNumerique'); // toggle off
-    await clickCanvas(page, 280, 150);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 280, 150);
 
     // Verify context actions show Min/Max/Pas buttons
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      await expect(ctxActions.locator('button:has-text("Min:")')).toBeVisible({ timeout: 2000 });
-      await expect(ctxActions.locator('button:has-text("Max:")')).toBeVisible({ timeout: 2000 });
-      await expect(ctxActions.locator('button:has-text("Pas:")')).toBeVisible({ timeout: 2000 });
-      await ctxActions.screenshot({ path: shot('27-droite-context-actions.png') });
-    }
+    await expect(ctxActions.locator('button:has-text("Min:")')).toBeVisible({ timeout: 2000 });
+    await expect(ctxActions.locator('button:has-text("Max:")')).toBeVisible({ timeout: 2000 });
+    await expect(ctxActions.locator('button:has-text("Pas:")')).toBeVisible({ timeout: 2000 });
+    await ctxActions.screenshot({ path: shot('27-droite-context-actions.png') });
   });
 
   test('15 — Division posée: open and interact', async ({ page }) => {
@@ -437,28 +420,25 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the calcul piece
     await selectTool(page, 'calcul'); // toggle off
-    await clickCanvas(page, 200, 200);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 200, 200);
 
     // Click "Division posée" in context actions
     const divBtn = page.locator('[data-testid="context-actions"] button:has-text("Division posée")');
-    if (await divBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await divBtn.click();
-      await page.waitForTimeout(400);
+    await expect(divBtn).toBeVisible({ timeout: 2000 });
+    await divBtn.click();
+    await page.waitForTimeout(400);
 
-      // Verify DivisionCalc overlay opens (look for the "Division posée" heading)
-      const divHeading = page.locator('text=Division posée').first();
-      await expect(divHeading).toBeVisible({ timeout: 3000 });
+    // Verify DivisionCalc overlay opens (look for the "Division posée" heading)
+    const divHeading = page.locator('text=Division posée').first();
+    await expect(divHeading).toBeVisible({ timeout: 3000 });
 
-      await page.screenshot({ path: shot('28-division-posee-overlay.png'), fullPage: true });
+    await page.screenshot({ path: shot('28-division-posee-overlay.png'), fullPage: true });
 
-      // Close it by clicking Annuler
-      const cancelBtn = page.locator('button:has-text("Annuler")').first();
-      if (await cancelBtn.isVisible().catch(() => false)) {
-        await cancelBtn.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    // Close it by clicking Annuler
+    const cancelBtn = page.locator('button:has-text("Annuler")').first();
+    await expect(cancelBtn).toBeVisible({ timeout: 2000 });
+    await cancelBtn.click();
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('29-after-division-cancel.png'), fullPage: true });
   });
@@ -477,26 +457,23 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the réponse piece
     await selectTool(page, 'reponse'); // toggle off
-    await clickCanvas(page, 200, 150);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 200, 150);
 
     // Look for "Phrase à trous" button in context actions
     const templateBtn = page.locator('[data-testid="context-actions"] button:has-text("Phrase à trous")');
-    if (await templateBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await templateBtn.click();
-      await page.waitForTimeout(300);
+    await expect(templateBtn).toBeVisible({ timeout: 2000 });
+    await templateBtn.click();
+    await page.waitForTimeout(300);
 
-      await page.screenshot({ path: shot('30-template-submenu.png'), fullPage: true });
+    await page.screenshot({ path: shot('30-template-submenu.png'), fullPage: true });
 
-      // Select "Il en reste..." template
-      const resteBtn = page.locator('[data-testid="context-actions"] button:has-text("Il en reste...")');
-      if (await resteBtn.isVisible().catch(() => false)) {
-        await resteBtn.click();
-        await page.waitForTimeout(300);
-      }
+    // Select "Il en reste..." template
+    const resteBtn = page.locator('[data-testid="context-actions"] button:has-text("Il en reste...")');
+    await expect(resteBtn).toBeVisible({ timeout: 2000 });
+    await resteBtn.click();
+    await page.waitForTimeout(300);
 
-      await page.screenshot({ path: shot('31-template-applied.png'), fullPage: true });
-    }
+    await page.screenshot({ path: shot('31-template-applied.png'), fullPage: true });
   });
 
   test('17 — TTS button visible in problem zone', async ({ page }) => {
@@ -530,8 +507,8 @@ test.describe('Visual audit — full flow', () => {
 
     // Look for the speaker/TTS button
     const speakerBtn = page.locator('button[aria-label="Lire à voix haute"]');
-    if (await speakerBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await expect(speakerBtn).toBeVisible();
+    await expect.soft(speakerBtn).toBeVisible({ timeout: 2000 });
+    if (await speakerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await page.screenshot({ path: shot('32-tts-button-visible.png'), fullPage: true });
 
       // Click it (won't actually speak in headless, but should not crash)
@@ -586,8 +563,8 @@ test.describe('Visual audit — full flow', () => {
 
     // Look for sentence counter "1 / 3"
     const counter = page.locator('text=1 / 3');
-    if (await counter.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await expect(counter).toBeVisible();
+    await expect.soft(counter).toBeVisible({ timeout: 2000 });
+    if (await counter.isVisible({ timeout: 500 }).catch(() => false)) {
 
       // Click "Suivant" to advance to sentence 2
       const suivantBtn = page.locator('button:has-text("Suivant")');
@@ -755,58 +732,50 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the bar
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
 
     // Open Taille submenu, click 2×
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
-    if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click({ force: true });
-      await page.waitForTimeout(200);
-      const btn2x = page.locator('[data-testid="context-actions"] button:has-text("2×")');
-      if (await btn2x.isVisible().catch(() => false)) {
-        await btn2x.click({ force: true });
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click({ force: true });
+    await page.waitForTimeout(200);
+    const btn2x = page.locator('[data-testid="context-actions"] button:has-text("2×")');
+    await expect(btn2x).toBeVisible({ timeout: 2000 });
+    await btn2x.click({ force: true });
+    await page.waitForTimeout(200);
 
     // Re-select bar to get context actions again
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
 
     // Duplicate (Copier)
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
-    if (await btnCopy.isVisible().catch(() => false)) {
-      await btnCopy.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(btnCopy).toBeVisible({ timeout: 2000 });
+    await btnCopy.click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('48-bars-before-grouping.png'), fullPage: true });
 
     // Select the first bar, open Plus… submenu, click Grouper
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
 
     // Open Plus… submenu first
     const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    if (await plusBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await plusBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(plusBtn).toBeVisible({ timeout: 2000 });
+    await plusBtn.click();
+    await page.waitForTimeout(200);
 
     const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
-    if (await grouperBtn.isVisible().catch(() => false)) {
-      await grouperBtn.click();
-      await page.waitForTimeout(200);
+    await expect(grouperBtn).toBeVisible({ timeout: 2000 });
+    await grouperBtn.click();
+    await page.waitForTimeout(200);
 
-      await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
+    await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
 
-      // Click on second bar to complete grouping
-      await clickCanvas(page, 110, 90);
-      await page.waitForTimeout(400);
+    // Click on second bar to complete grouping
+    await clickCanvas(page, 110, 90);
+    await page.waitForTimeout(400);
 
-      await page.screenshot({ path: shot('50-bars-grouped.png'), fullPage: true });
-    }
+    await page.screenshot({ path: shot('50-bars-grouped.png'), fullPage: true });
   });
 
   test('26 — Boîte: placement, naming, jetons inside', async ({ page }) => {
@@ -829,25 +798,20 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, click on the boîte to select it
     await selectTool(page, 'boite'); // toggle off
-    await clickCanvas(page, 160, 140);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 160, 140);
 
     // Check context actions for "Nommer"
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      const nommerBtn = ctxActions.locator('button:has-text("Nommer")');
-      if (await nommerBtn.isVisible().catch(() => false)) {
-        await nommerBtn.click();
-        await page.waitForTimeout(300);
+    const nommerBtn = ctxActions.locator('button:has-text("Nommer")');
+    await expect(nommerBtn).toBeVisible({ timeout: 2000 });
+    await nommerBtn.click();
+    await page.waitForTimeout(300);
 
-        const editor = page.locator('[data-testid="inline-editor"]');
-        if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await editor.fill('Pommes');
-          await editor.press('Enter');
-          await page.waitForTimeout(300);
-        }
-      }
-    }
+    const editor = page.locator('[data-testid="inline-editor"]');
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('Pommes');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     // Place jetons inside the boîte
     await selectTool(page, 'jeton');
@@ -929,28 +893,25 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the calcul piece
     await selectTool(page, 'calcul'); // toggle off
-    await clickCanvas(page, 200, 150);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 200, 150);
 
     // Click "En colonnes" in context actions
     const colBtn = page.locator('[data-testid="context-actions"] button:has-text("En colonnes")');
-    if (await colBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await colBtn.click();
-      await page.waitForTimeout(400);
+    await expect(colBtn).toBeVisible({ timeout: 2000 });
+    await colBtn.click();
+    await page.waitForTimeout(400);
 
-      // Verify ColumnCalc overlay opens
-      const colHeading = page.locator('text=Calcul en colonnes').first();
-      await expect(colHeading).toBeVisible({ timeout: 3000 });
+    // Verify ColumnCalc overlay opens
+    const colHeading = page.locator('text=Calcul en colonnes').first();
+    await expect(colHeading).toBeVisible({ timeout: 3000 });
 
-      await page.screenshot({ path: shot('56-colonnes-overlay.png'), fullPage: true });
+    await page.screenshot({ path: shot('56-colonnes-overlay.png'), fullPage: true });
 
-      // Close it
-      const cancelBtn = page.locator('button:has-text("Annuler")').first();
-      if (await cancelBtn.isVisible().catch(() => false)) {
-        await cancelBtn.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    // Close it
+    const cancelBtn = page.locator('button:has-text("Annuler")').first();
+    await expect(cancelBtn).toBeVisible({ timeout: 2000 });
+    await cancelBtn.click();
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('57-after-colonnes-cancel.png'), fullPage: true });
   });
@@ -1008,7 +969,8 @@ test.describe('Visual audit — full flow', () => {
 
     // Open "Partager" menu in action bar
     const partagerBtn = page.locator('[data-testid="action-bar"] button[aria-label="Partager"]');
-    if (await partagerBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await expect.soft(partagerBtn).toBeVisible({ timeout: 2000 });
+    if (await partagerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await partagerBtn.click();
       await page.waitForTimeout(300);
 
@@ -1043,19 +1005,16 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select piece
     await selectTool(page, 'barre');
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 100);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      await page.screenshot({ path: shot('61-tablet-context-actions.png'), fullPage: true });
+    await page.screenshot({ path: shot('61-tablet-context-actions.png'), fullPage: true });
 
-      // Verify context actions don't overflow viewport
-      const box = await ctxActions.boundingBox();
-      if (box) {
-        expect(box.x).toBeGreaterThanOrEqual(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(768);
-      }
+    // Verify context actions don't overflow viewport
+    const box = await ctxActions.boundingBox();
+    if (box) {
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(768);
     }
   });
 
@@ -1173,22 +1132,19 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select piece
     await selectTool(page, 'barre');
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 100);
 
     // Click "Nommer" in context actions
     const nommerBtn = page.locator('[data-testid="context-actions"] button:has-text("Nommer")');
-    if (await nommerBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await nommerBtn.click();
-      await page.waitForTimeout(300);
+    await expect(nommerBtn).toBeVisible({ timeout: 2000 });
+    await nommerBtn.click();
+    await page.waitForTimeout(300);
 
-      const editor = page.locator('[data-testid="inline-editor"]');
-      if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await editor.fill('Pommes de Léa');
-        await editor.press('Enter');
-        await page.waitForTimeout(300);
-      }
-    }
+    const editor = page.locator('[data-testid="inline-editor"]');
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('Pommes de Léa');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     // Click elsewhere to deselect
     await clickCanvas(page, 400, 50);
@@ -1208,35 +1164,28 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select the droite
     await selectTool(page, 'droiteNumerique');
-    await clickCanvas(page, 180, 120);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 180, 120);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      // Change Max to 20
-      const maxBtn = ctxActions.locator('button:has-text("Max:")');
-      if (await maxBtn.isVisible().catch(() => false)) {
-        await maxBtn.click();
-        await page.waitForTimeout(200);
-        const val20 = ctxActions.locator('button:has-text("20")');
-        if (await val20.isVisible().catch(() => false)) {
-          await val20.click();
-          await page.waitForTimeout(300);
-        }
-      }
+    // Change Max to 20
+    const maxBtn = ctxActions.locator('button:has-text("Max:")');
+    await expect(maxBtn).toBeVisible({ timeout: 2000 });
+    await maxBtn.click();
+    await page.waitForTimeout(200);
+    const val20 = ctxActions.locator('button:has-text("20")');
+    await expect(val20).toBeVisible({ timeout: 2000 });
+    await val20.click();
+    await page.waitForTimeout(300);
 
-      // Change Pas to 2
-      const pasBtn = ctxActions.locator('button:has-text("Pas:")');
-      if (await pasBtn.isVisible().catch(() => false)) {
-        await pasBtn.click();
-        await page.waitForTimeout(200);
-        const val2 = ctxActions.locator('button:has-text("2")');
-        if (await val2.isVisible().catch(() => false)) {
-          await val2.click();
-          await page.waitForTimeout(300);
-        }
-      }
-    }
+    // Change Pas to 2
+    const pasBtn = ctxActions.locator('button:has-text("Pas:")');
+    await expect(pasBtn).toBeVisible({ timeout: 2000 });
+    await pasBtn.click();
+    await page.waitForTimeout(200);
+    const val2 = ctxActions.locator('button:has-text("2")');
+    await expect(val2).toBeVisible({ timeout: 2000 });
+    await val2.click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('70-droite-max20-pas2.png'), fullPage: true });
 
@@ -1288,18 +1237,15 @@ test.describe('Visual audit — full flow', () => {
 
     // Verify watermarks still render (very dim)
     // Verify context actions still work on a piece
-    await clickCanvas(page, 30, 80); // click first jeton
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 30, 80); // click first jeton
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      const box = await ctxActions.boundingBox();
-      if (box) {
-        // Verify it doesn't overflow the viewport
-        expect(box.y).toBeGreaterThanOrEqual(0);
-      }
-      await page.screenshot({ path: shot('72-saturated-context-actions.png'), fullPage: true });
+    const box = await ctxActions.boundingBox();
+    if (box) {
+      // Verify it doesn't overflow the viewport
+      expect(box.y).toBeGreaterThanOrEqual(0);
     }
+    await page.screenshot({ path: shot('72-saturated-context-actions.png'), fullPage: true });
   });
 
   test('40 — Dyslexia profile: OpenDyslexic + large text + spacing', async ({ page }) => {
@@ -1356,18 +1302,15 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
 
     await selectTool(page, 'barre'); // toggle off
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 100);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      const box = await ctxActions.boundingBox();
-      if (box) {
-        expect(box.x).toBeGreaterThanOrEqual(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(768);
-      }
-      await page.screenshot({ path: shot('75-tablet-aide-max-ctx.png'), fullPage: true });
+    const box = await ctxActions.boundingBox();
+    if (box) {
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(768);
     }
+    await page.screenshot({ path: shot('75-tablet-aide-max-ctx.png'), fullPage: true });
   });
 
   test('42 — Droite numérique: Max=100 Pas=1 (saturation)', async ({ page }) => {
@@ -1376,39 +1319,31 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
 
     await selectTool(page, 'droiteNumerique'); // toggle off
-    await clickCanvas(page, 180, 120);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 180, 120);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      // Change Max to 100
-      const maxBtn = ctxActions.locator('button:has-text("Max:")');
-      if (await maxBtn.isVisible().catch(() => false)) {
-        await maxBtn.click();
-        await page.waitForTimeout(200);
-        const val100 = ctxActions.locator('button:has-text("100")');
-        if (await val100.isVisible().catch(() => false)) {
-          await val100.click();
-          await page.waitForTimeout(300);
-        }
-      }
+    // Change Max to 100
+    const maxBtn = ctxActions.locator('button:has-text("Max:")');
+    await expect(maxBtn).toBeVisible({ timeout: 2000 });
+    await maxBtn.click();
+    await page.waitForTimeout(200);
+    const val100 = ctxActions.locator('button:has-text("100")');
+    await expect(val100).toBeVisible({ timeout: 2000 });
+    await val100.click();
+    await page.waitForTimeout(300);
 
-      // Re-select to get context actions back
-      await clickCanvas(page, 180, 120);
-      await page.waitForTimeout(400);
+    // Re-select to get context actions back
+    await selectPieceAt(page, 180, 120);
 
-      // Change Pas to 1
-      const pasBtn = ctxActions.locator('button:has-text("Pas:")');
-      if (await pasBtn.isVisible().catch(() => false)) {
-        await pasBtn.click();
-        await page.waitForTimeout(200);
-        const val1 = ctxActions.locator('button:has-text("1")').first();
-        if (await val1.isVisible().catch(() => false)) {
-          await val1.click();
-          await page.waitForTimeout(300);
-        }
-      }
-    }
+    // Change Pas to 1
+    const pasBtn = ctxActions.locator('button:has-text("Pas:")');
+    await expect(pasBtn).toBeVisible({ timeout: 2000 });
+    await pasBtn.click();
+    await page.waitForTimeout(200);
+    const val1 = ctxActions.locator('button:has-text("1")').first();
+    await expect(val1).toBeVisible({ timeout: 2000 });
+    await val1.click();
+    await page.waitForTimeout(300);
 
     // Deselect to see result
     await page.keyboard.press('Escape');
@@ -1423,23 +1358,18 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
 
     await selectTool(page, 'droiteNumerique'); // toggle off
-    await clickCanvas(page, 180, 120);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 180, 120);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      // Change Min to 5
-      const minBtn = ctxActions.locator('button:has-text("Min:")');
-      if (await minBtn.isVisible().catch(() => false)) {
-        await minBtn.click();
-        await page.waitForTimeout(200);
-        const val5 = ctxActions.locator('button:has-text("5")').first();
-        if (await val5.isVisible().catch(() => false)) {
-          await val5.click();
-          await page.waitForTimeout(300);
-        }
-      }
-    }
+    // Change Min to 5
+    const minBtn = ctxActions.locator('button:has-text("Min:")');
+    await expect(minBtn).toBeVisible({ timeout: 2000 });
+    await minBtn.click();
+    await page.waitForTimeout(200);
+    const val5 = ctxActions.locator('button:has-text("5")').first();
+    await expect(val5).toBeVisible({ timeout: 2000 });
+    await val5.click();
+    await page.waitForTimeout(300);
 
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
@@ -1623,15 +1553,14 @@ test.describe('Visual audit — full flow', () => {
 
     // Verify context actions appear
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await page.screenshot({ path: shot('84-touch-context-actions.png'), fullPage: true });
+    await expect(ctxActions).toBeVisible({ timeout: 3000 });
+    await page.screenshot({ path: shot('84-touch-context-actions.png'), fullPage: true });
 
-      // Verify context actions have adequate touch targets
-      const firstBtn = ctxActions.locator('button').first();
-      const btnBox = await firstBtn.boundingBox();
-      if (btnBox) {
-        expect(btnBox.height).toBeGreaterThanOrEqual(44);
-      }
+    // Verify context actions have adequate touch targets
+    const firstBtn = ctxActions.locator('button').first();
+    const btnBox = await firstBtn.boundingBox();
+    if (btnBox) {
+      expect(btnBox.height).toBeGreaterThanOrEqual(44);
     }
 
     await context.close();
@@ -1707,13 +1636,10 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 100, 80);
     await page.waitForTimeout(400);
     await selectTool(page, 'barre');
-    await clickCanvas(page, 100, 80);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 100, 80);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    if (await ctxActions.isVisible().catch(() => false)) {
-      await page.screenshot({ path: shot('88-zoom-150-ctx.png'), fullPage: true });
-    }
+    await page.screenshot({ path: shot('88-zoom-150-ctx.png'), fullPage: true });
 
     // Reset zoom
     await page.evaluate(() => {
@@ -1768,24 +1694,21 @@ test.describe('Visual audit — full flow', () => {
 
     // Deselect tool, select piece → context actions
     await selectTool(page, 'barre');
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 100);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
 
     // Click "Fraction" (now at first level)
     const fractionBtn = ctxActions.locator('button:has-text("Fraction")');
-    if (await fractionBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await fractionBtn.click();
-      await page.waitForTimeout(200);
+    await expect(fractionBtn).toBeVisible({ timeout: 2000 });
+    await fractionBtn.click();
+    await page.waitForTimeout(200);
 
-      // Choose 1/3 division
-      const div3 = ctxActions.locator('button:has-text("1/3")');
-      if (await div3.isVisible().catch(() => false)) {
-        await div3.click();
-        await page.waitForTimeout(300);
-      }
-    }
+    // Choose 1/3 division
+    const div3 = ctxActions.locator('button:has-text("1/3")');
+    await expect(div3).toBeVisible({ timeout: 2000 });
+    await div3.click();
+    await page.waitForTimeout(300);
 
     // Bar stays selected — click on the bar to color 2 parts
     const svg = page.locator('[data-testid="canvas-svg"]');
@@ -1813,32 +1736,27 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'boite'); // toggle off
 
     // Select boîte, set Valeur
-    await clickCanvas(page, 165, 120);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 165, 120);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
     const valeurBtn = ctxActions.locator('button:has-text("Valeur")');
-    if (await valeurBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await valeurBtn.click();
-      await page.waitForTimeout(300);
-      const editor = page.locator('[data-testid="inline-editor"]');
-      if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await editor.fill('12');
-        await editor.press('Enter');
-        await page.waitForTimeout(300);
-      }
-    }
+    await expect(valeurBtn).toBeVisible({ timeout: 2000 });
+    await valeurBtn.click();
+    await page.waitForTimeout(300);
+    const editor = page.locator('[data-testid="inline-editor"]');
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('12');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('92-boite-with-value.png'), fullPage: true });
 
     // Change colour to rouge
-    await clickCanvas(page, 165, 120);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 165, 120);
     const rougeBtn = ctxActions.locator('button[aria-label="Couleur rouge"]');
-    if (await rougeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await rougeBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(rougeBtn).toBeVisible({ timeout: 2000 });
+    await rougeBtn.click();
+    await page.waitForTimeout(200);
 
     // Place several jetons inside to trigger auto-resize
     await selectTool(page, 'jeton');
@@ -1862,16 +1780,14 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'jeton'); // toggle off
 
     // Select jeton
-    await clickCanvas(page, 150, 100);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 100);
 
     // Click rouge color button in context actions
     const ctxActions = page.locator('[data-testid="context-actions"]');
     const rougeBtn = ctxActions.locator('button[aria-label="Couleur rouge"]');
-    if (await rougeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await rougeBtn.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(rougeBtn).toBeVisible({ timeout: 2000 });
+    await rougeBtn.click();
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('95-jeton-color-rouge.png'), fullPage: true });
   });
@@ -1897,43 +1813,50 @@ test.describe('Visual audit — full flow', () => {
 
     // Bleu (default pastille) — click "12"
     const word12 = pz.locator('span:has-text("12")').first();
-    if (await word12.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await expect.soft(word12).toBeVisible({ timeout: 2000 });
+    if (await word12.isVisible({ timeout: 500 }).catch(() => false)) {
       await word12.click();
       await page.waitForTimeout(300);
     }
 
     // Switch to orange pastille, then click "Combien"
     const orangeBtn = pz.locator('button:has-text("Question")');
-    if (await orangeBtn.isVisible().catch(() => false)) {
+    await expect.soft(orangeBtn).toBeVisible({ timeout: 2000 });
+    if (await orangeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await orangeBtn.click();
       await page.waitForTimeout(300);
     }
     const wordCombien = pz.locator('span:has-text("Combien")').first();
-    if (await wordCombien.isVisible().catch(() => false)) {
+    await expect.soft(wordCombien).toBeVisible({ timeout: 2000 });
+    if (await wordCombien.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordCombien.click();
       await page.waitForTimeout(300);
     }
 
     // Switch to vert pastille, then click "donne"
     const vertBtn = pz.locator('button:has-text("Contexte")');
-    if (await vertBtn.isVisible().catch(() => false)) {
+    await expect.soft(vertBtn).toBeVisible({ timeout: 2000 });
+    if (await vertBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await vertBtn.click();
       await page.waitForTimeout(300);
     }
     const wordDonne = pz.locator('span:has-text("donne")').first();
-    if (await wordDonne.isVisible().catch(() => false)) {
+    await expect.soft(wordDonne).toBeVisible({ timeout: 2000 });
+    if (await wordDonne.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordDonne.click();
       await page.waitForTimeout(300);
     }
 
     // Switch to gris pastille (superflu), then click "beau"
     const grisBtn = pz.locator('button:has-text("Superflu")');
-    if (await grisBtn.isVisible().catch(() => false)) {
+    await expect.soft(grisBtn).toBeVisible({ timeout: 2000 });
+    if (await grisBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await grisBtn.click();
       await page.waitForTimeout(300);
     }
     const wordBeau = pz.locator('span:has-text("beau")').first();
-    if (await wordBeau.isVisible().catch(() => false)) {
+    await expect.soft(wordBeau).toBeVisible({ timeout: 2000 });
+    if (await wordBeau.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordBeau.click();
       await page.waitForTimeout(300);
     }
@@ -1994,7 +1917,8 @@ test.describe('Visual audit — full flow', () => {
 
     // Click Ranger button
     const rangerBtn = page.locator('button[aria-label="Ranger"]');
-    if (await rangerBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await expect.soft(rangerBtn).toBeVisible({ timeout: 2000 });
+    if (await rangerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await rangerBtn.click();
       await page.waitForTimeout(600); // wait for animation
     }
@@ -2012,37 +1936,31 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'barre'); // toggle off
 
     // Resize first bar to 3×
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
-    if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click({ force: true });
-      await page.waitForTimeout(200);
-      const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
-      if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click({ force: true });
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click({ force: true });
+    await page.waitForTimeout(200);
+    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    await expect(btn3x).toBeVisible({ timeout: 2000 });
+    await btn3x.click({ force: true });
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
 
     // Select first bar, open Plus… submenu, click "Même taille"
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
     const plusBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    if (await plusBtn2.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await plusBtn2.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(plusBtn2).toBeVisible({ timeout: 2000 });
+    await plusBtn2.click();
+    await page.waitForTimeout(200);
     const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Même taille")');
-    if (await memeTailleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await memeTailleBtn.click();
-      await page.waitForTimeout(200);
-      // Click second bar to equalize
-      await clickCanvas(page, 110, 107);
-      await page.waitForTimeout(300);
-    }
+    await expect(memeTailleBtn).toBeVisible({ timeout: 2000 });
+    await memeTailleBtn.click();
+    await page.waitForTimeout(200);
+    // Click second bar to equalize
+    await clickCanvas(page, 110, 107);
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('105-bars-equalized.png'), fullPage: true });
   });
@@ -2059,18 +1977,15 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'barre'); // toggle off
 
     // Resize second bar to ½×
-    await clickCanvas(page, 110, 107);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 107);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
-    if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click({ force: true });
-      await page.waitForTimeout(200);
-      const btnHalf = page.locator('[data-testid="context-actions"] button:has-text("½×")');
-      if (await btnHalf.isVisible().catch(() => false)) {
-        await btnHalf.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click({ force: true });
+    await page.waitForTimeout(200);
+    const btnHalf = page.locator('[data-testid="context-actions"] button:has-text("½×")');
+    await expect(btnHalf).toBeVisible({ timeout: 2000 });
+    await btnHalf.click();
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('106-bar-half-vs-full.png'), fullPage: true });
   });
@@ -2082,18 +1997,15 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'barre'); // toggle off
 
     // Select bar, open Fraction submenu, divide into 4
-    await clickCanvas(page, 130, 107);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 130, 107);
     const fractionBtn = page.locator('[data-testid="context-actions"] button:has-text("Fraction")');
-    if (await fractionBtn.isVisible().catch(() => false)) {
-      await fractionBtn.click();
-      await page.waitForTimeout(200);
-      const div4 = page.locator('[data-testid="context-actions"] button').filter({ hasText: /^4$/ });
-      if (await div4.isVisible().catch(() => false)) {
-        await div4.click();
-        await page.waitForTimeout(300);
-      }
-    }
+    await expect(fractionBtn).toBeVisible({ timeout: 2000 });
+    await fractionBtn.click();
+    await page.waitForTimeout(200);
+    const div4 = page.locator('[data-testid="context-actions"] button').filter({ hasText: /^4$/ });
+    await expect(div4).toBeVisible({ timeout: 2000 });
+    await div4.click();
+    await page.waitForTimeout(300);
 
     // Deselect to see the fraction labels above each part
     await page.keyboard.press('Escape');
@@ -2119,18 +2031,15 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('108-before-repartir.png'), fullPage: true });
 
     // Select a jeton, click Répartir → 3 groupes
-    await clickCanvas(page, 150, 60);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 60);
     const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
-    if (await repartirBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await repartirBtn.click();
-      await page.waitForTimeout(200);
-      const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
-      if (await btn3.isVisible().catch(() => false)) {
-        await btn3.click();
-        await page.waitForTimeout(400);
-      }
-    }
+    await expect(repartirBtn).toBeVisible({ timeout: 2000 });
+    await repartirBtn.click();
+    await page.waitForTimeout(200);
+    const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
+    await expect(btn3).toBeVisible({ timeout: 2000 });
+    await btn3.click();
+    await page.waitForTimeout(400);
 
     await page.screenshot({ path: shot('109-after-repartir-3-groups.png'), fullPage: true });
   });
@@ -2230,15 +2139,13 @@ test.describe('Visual audit — full flow', () => {
 
     // Change width via context actions
     const largeurBtn = page.locator('[data-testid="context-actions"] button:has-text("Largeur")');
-    if (await largeurBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await largeurBtn.click();
-      await page.waitForTimeout(200);
-      const btn300 = page.locator('[data-testid="context-actions"] button:has-text("300")');
-      if (await btn300.isVisible().catch(() => false)) {
-        await btn300.click();
-        await page.waitForTimeout(300);
-      }
-    }
+    await expect(largeurBtn).toBeVisible({ timeout: 2000 });
+    await largeurBtn.click();
+    await page.waitForTimeout(200);
+    const btn300 = page.locator('[data-testid="context-actions"] button:has-text("300")');
+    await expect(btn300).toBeVisible({ timeout: 2000 });
+    await btn300.click();
+    await page.waitForTimeout(300);
 
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
@@ -2323,23 +2230,20 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'tableau'); // toggle off
 
     // Select tableau
-    await clickCanvas(page, 160, 130);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 160, 130);
 
     // Click "Lignes" in context actions
     const lignesBtn = page.locator('[data-testid="context-actions"] button:has-text("Lignes")');
-    if (await lignesBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await lignesBtn.click();
-      await page.waitForTimeout(200);
+    await expect(lignesBtn).toBeVisible({ timeout: 2000 });
+    await lignesBtn.click();
+    await page.waitForTimeout(200);
 
-      // Hover over "5" to show preview
-      const btn5 = page.locator('[data-testid="context-actions"] button:has-text("5")');
-      if (await btn5.isVisible().catch(() => false)) {
-        await btn5.hover();
-        await page.waitForTimeout(300);
-        await page.screenshot({ path: shot('120-tableau-preview-5-rows.png'), fullPage: true });
-      }
-    }
+    // Hover over "5" to show preview
+    const btn5 = page.locator('[data-testid="context-actions"] button:has-text("5")');
+    await expect(btn5).toBeVisible({ timeout: 2000 });
+    await btn5.hover();
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: shot('120-tableau-preview-5-rows.png'), fullPage: true });
   });
 
   test('71 — High contrast mode', async ({ page }) => {
@@ -2392,19 +2296,22 @@ test.describe('Visual audit — full flow', () => {
     // Highlight "12" in bleu — target within problem zone
     const pz = page.locator('[data-testid="problem-zone"]');
     const word12 = pz.locator('span:has-text("12")').first();
-    if (await word12.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await expect.soft(word12).toBeVisible({ timeout: 2000 });
+    if (await word12.isVisible({ timeout: 500 }).catch(() => false)) {
       await word12.click();
       await page.waitForTimeout(300);
     }
 
     // Also highlight "donne" in orange
     const orangeBtn = pz.locator('button:has-text("Question")');
-    if (await orangeBtn.isVisible().catch(() => false)) {
+    await expect.soft(orangeBtn).toBeVisible({ timeout: 2000 });
+    if (await orangeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await orangeBtn.click();
       await page.waitForTimeout(300);
     }
     const wordCombien = pz.locator('span:has-text("Combien")').first();
-    if (await wordCombien.isVisible().catch(() => false)) {
+    await expect.soft(wordCombien).toBeVisible({ timeout: 2000 });
+    if (await wordCombien.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordCombien.click();
       await page.waitForTimeout(300);
     }
@@ -2551,7 +2458,8 @@ test.describe('Visual audit — full flow', () => {
     // Enable TTS
     await openSettings(page);
     const ttsToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
-    if (await ttsToggle.isVisible().catch(() => false)) await ttsToggle.click();
+    await expect.soft(ttsToggle).toBeVisible({ timeout: 2000 });
+    if (await ttsToggle.isVisible({ timeout: 500 }).catch(() => false)) await ttsToggle.click();
     await closeSettings(page);
 
     // Click speaker button
@@ -2574,32 +2482,26 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 60);
     await page.waitForTimeout(300);
     await selectTool(page, 'barre'); // off
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
-    if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click({ force: true });
-      await page.waitForTimeout(200);
-      const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
-      if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click({ force: true });
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click({ force: true });
+    await page.waitForTimeout(200);
+    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    await expect(btn3x).toBeVisible({ timeout: 2000 });
+    await btn3x.click({ force: true });
+    await page.waitForTimeout(200);
 
     // Copier via Plus submenu
-    await clickCanvas(page, 110, 67);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 110, 67);
     const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    if (await plusBtn.isVisible().catch(() => false)) {
-      await plusBtn.click();
-      await page.waitForTimeout(200);
-      const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
-      if (await copyBtn.isVisible().catch(() => false)) {
-        await copyBtn.click();
-        await page.waitForTimeout(300);
-      }
-    }
+    await expect(plusBtn).toBeVisible({ timeout: 2000 });
+    await plusBtn.click();
+    await page.waitForTimeout(200);
+    const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
+    await expect(copyBtn).toBeVisible({ timeout: 2000 });
+    await copyBtn.click();
+    await page.waitForTimeout(300);
 
     // Calcul
     await selectTool(page, 'calcul');
@@ -2641,18 +2543,15 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'jeton'); // off
 
     // Répartir 7 jetons en 3 groupes → 3×2 + 1 reste
-    await clickCanvas(page, 150, 60);
-    await page.waitForTimeout(400);
+    await selectPieceAt(page, 150, 60);
     const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
-    if (await repartirBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await repartirBtn.click();
-      await page.waitForTimeout(200);
-      const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
-      if (await btn3.isVisible().catch(() => false)) {
-        await btn3.click();
-        await page.waitForTimeout(400);
-      }
-    }
+    await expect(repartirBtn).toBeVisible({ timeout: 2000 });
+    await repartirBtn.click();
+    await page.waitForTimeout(200);
+    const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
+    await expect(btn3).toBeVisible({ timeout: 2000 });
+    await btn3.click();
+    await page.waitForTimeout(400);
 
     await page.screenshot({ path: shot('132-repartir-reste-visible.png'), fullPage: true });
   });
@@ -2864,19 +2763,22 @@ test.describe('Visual audit — full flow', () => {
 
     // Highlight "24" in bleu (default)
     const word24 = page.locator('span:has-text("24")').first();
-    if (await word24.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await expect.soft(word24).toBeVisible({ timeout: 2000 });
+    if (await word24.isVisible({ timeout: 500 }).catch(() => false)) {
       await word24.click();
       await page.waitForTimeout(400);
     }
 
     // Switch to orange, highlight "donne"
     const orangeBtn = page.locator('button:has-text("Question")');
-    if (await orangeBtn.isVisible().catch(() => false)) {
+    await expect.soft(orangeBtn).toBeVisible({ timeout: 2000 });
+    if (await orangeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await orangeBtn.click();
       await page.waitForTimeout(300);
     }
     const wordDonne = page.locator('span:has-text("donne")').first();
-    if (await wordDonne.isVisible().catch(() => false)) {
+    await expect.soft(wordDonne).toBeVisible({ timeout: 2000 });
+    if (await wordDonne.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordDonne.click();
       await page.waitForTimeout(400);
     }

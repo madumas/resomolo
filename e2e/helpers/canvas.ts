@@ -53,6 +53,24 @@ export async function waitForStatus(page: Page, text: string | RegExp): Promise<
 }
 
 /**
+ * Click on a piece at mm coordinates and assert context actions appear.
+ * Retries once with a slight offset if the first click misses.
+ */
+export async function selectPieceAt(page: Page, xMm: number, yMm: number): Promise<void> {
+  await clickCanvas(page, xMm, yMm);
+  await page.waitForTimeout(300);
+
+  const ctx = page.locator('[data-testid="context-actions"]');
+  if (await ctx.isVisible({ timeout: 500 }).catch(() => false)) return;
+
+  // Retry with slight offset (piece may be slightly off)
+  await clickCanvas(page, xMm + 5, yMm + 3);
+  await page.waitForTimeout(300);
+
+  await expect(ctx).toBeVisible({ timeout: 2000 });
+}
+
+/**
  * Select a tool by clicking its toolbar button.
  * Auto-expands the toolbar if the tool is hidden (simplified mode).
  */
