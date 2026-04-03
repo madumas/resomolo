@@ -16,7 +16,7 @@ export function Logo({ height = 32, brand = 'reso' }: { height?: number; brand?:
       role="img"
       style={{
         display: 'inline-flex',
-        alignItems: 'baseline',
+        alignItems: 'center',
         height,
         fontFamily: "'Avenir Next', 'Segoe UI', system-ui, sans-serif",
         fontSize,
