@@ -133,10 +133,10 @@ export function Canvas({
         const row = Math.floor(relY / TABLEAU_CELL_H);
         if (row >= 0 && row < editingPiece.rows && col >= 0 && col < editingPiece.cols) {
           // Close current editor, then immediately reopen on the new cell
-          setTableauEditCell({ row, col });
+          const targetCell = { row, col };
           onStopEdit();
-          // Use setTimeout to let React process the stop, then reopen
           setTimeout(() => {
+            setTableauEditCell(targetCell);
             setEditingBarField('label');
             onStartEdit(editingPiece.id);
           }, 0);
