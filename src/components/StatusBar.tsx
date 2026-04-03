@@ -4,6 +4,7 @@ import { STATUS_BAR_HEIGHT, STATUS_BAR_BG, UI_PRIMARY, UI_BORDER, UI_TEXT_SECOND
 interface StatusBarProps {
   message: string;
   variant?: 'default' | 'relance';
+  onCancel?: () => void;
   showJetonQuantity?: boolean;
   jetonQuantity?: number;
   onJetonQuantityChange?: (n: number) => void;
@@ -15,6 +16,7 @@ interface StatusBarProps {
 export function StatusBar({
   message,
   variant = 'default',
+  onCancel,
   showJetonQuantity,
   jetonQuantity = 1,
   onJetonQuantityChange,
@@ -37,6 +39,25 @@ export function StatusBar({
       gap: 12,
     }}>
       <StatusMessage message={message} variant={variant} />
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          style={{
+            padding: '4px 12px',
+            fontSize: 12,
+            fontWeight: 600,
+            background: '#fff',
+            border: `1px solid ${UI_BORDER}`,
+            borderRadius: 4,
+            color: UI_TEXT_SECONDARY,
+            cursor: 'pointer',
+            minHeight: MIN_BUTTON_SIZE_PX,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ✕ Annuler
+        </button>
+      )}
       {showJetonQuantity && onJetonQuantityChange && (
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {[1, 3, 5, 10].map(n => (

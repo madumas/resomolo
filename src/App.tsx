@@ -531,6 +531,12 @@ export default function App() {
       <StatusBar
         message={statusMessage}
         variant={statusVariant}
+        onCancel={(activeTool || deleteMode || equalizingFromId || groupingBarId) ? () => {
+          if (deleteMode) { setDeleteMode(false); setDeleteConfirmId(null); }
+          else if (equalizingFromId) setEqualizingFromId(null);
+          else if (groupingBarId) setGroupingBarId(null);
+          else if (activeTool) { setActiveTool(null); setArrowFromId(null); }
+        } : undefined}
         showJetonQuantity={activeTool === 'jeton'}
         jetonQuantity={jetonQuantity}
         onJetonQuantityChange={setJetonQuantity}
