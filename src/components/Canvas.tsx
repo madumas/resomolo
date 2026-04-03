@@ -1543,35 +1543,55 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
       style={{ position: 'absolute', left, top, zIndex: 20 }}
       onPointerDown={e => e.stopPropagation()}
     >
-      <input
-        ref={inputRef}
-        data-testid="inline-editor"
-        type="text"
-        value={value}
-        placeholder={placeholder}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') { commit(); e.stopPropagation(); }
-          if (e.key === 'Escape') { onCancel(); e.stopPropagation(); }
-        }}
-        onBlur={e => {
-          // Don't commit if clicking on operator buttons
-          if (e.relatedTarget && (e.relatedTarget as HTMLElement).dataset?.operatorBtn) return;
-          commit();
-        }}
-        style={{
-          minWidth: 200,
-          height: Math.max(28, fontSize * 1.8),
-          border: `2px solid #7028e0`,
-          borderRadius: 6,
-          padding: '2px 6px',
-          fontSize: Math.round(fontSize),
-          fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
-          background: '#fff',
-          outline: 'none',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        }}
-      />
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+        <input
+          ref={inputRef}
+          data-testid="inline-editor"
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { commit(); e.stopPropagation(); }
+            if (e.key === 'Escape') { onCancel(); e.stopPropagation(); }
+          }}
+          onBlur={e => {
+            // Don't commit if clicking on operator buttons or clear button
+            if (e.relatedTarget && ((e.relatedTarget as HTMLElement).dataset?.operatorBtn || (e.relatedTarget as HTMLElement).dataset?.clearBtn)) return;
+            commit();
+          }}
+          style={{
+            minWidth: 200,
+            height: Math.max(28, fontSize * 1.8),
+            border: `2px solid #7028e0`,
+            borderRadius: 6,
+            padding: '2px 28px 2px 6px',
+            fontSize: Math.round(fontSize),
+            fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
+            background: '#fff',
+            outline: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        />
+        {value && (
+          <button
+            data-clear-btn="true"
+            tabIndex={-1}
+            onPointerDown={e => e.preventDefault()}
+            onClick={() => { setValue(''); inputRef.current?.focus(); }}
+            style={{
+              position: 'absolute', right: 4,
+              width: 22, height: 22, borderRadius: '50%',
+              background: '#D5D0E0', border: 'none',
+              cursor: 'pointer', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 700, lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
       {/* Operator buttons for Calcul */}
       {isCalcul && (
         <div style={{
