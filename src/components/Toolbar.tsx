@@ -25,6 +25,9 @@ const SIMPLE_TOOLS: ToolDef[] = [
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
   { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  // Calculer — essentiels à chaque problème
+  { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
+  { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
   // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
