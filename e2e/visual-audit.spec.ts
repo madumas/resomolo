@@ -1859,4 +1859,516 @@ test.describe('Visual audit — full flow', () => {
     const groupEllipses = page.locator('[data-testid="canvas-svg"] ellipse');
     expect(await groupEllipses.count()).toBeGreaterThanOrEqual(1);
   });
+
+  // ────────────────────────────────────────────────────────
+  // Coverage gaps — MVP, v1.x, v2 (54–71)
+  // ────────────────────────────────────────────────────────
+
+  test('54 — Jeton color change via context actions', async ({ page }) => {
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'jeton'); // toggle off
+
+    // Select jeton
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Click rouge color button in context actions
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    const rougeBtn = ctxActions.locator('button[aria-label="Couleur rouge"]');
+    if (await rougeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await rougeBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('95-jeton-color-rouge.png'), fullPage: true });
+  });
+
+  test('55 — Jeton counter by color', async ({ page }) => {
+    // Place jetons of different colors
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 120, 80);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 140, 80);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // toggle off
+
+    // Counter should show "3" at bottom-left
+    await page.screenshot({ path: shot('96-jeton-counter.png'), fullPage: true });
+  });
+
+  test('56 — Surlignage 3 couleurs + superflu', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes rouges. Elle en donne 5 à Marc. Il fait beau. Combien lui en reste-t-il?'));
+
+    // Click on "12" (données — bleu, default)
+    const word12 = page.locator('text=12').first();
+    if (await word12.isVisible().catch(() => false)) {
+      await word12.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Switch to orange pastille, click "Combien"
+    const orangePastille = page.locator('button:has-text("Question")');
+    if (await orangePastille.isVisible().catch(() => false)) {
+      await orangePastille.click();
+      await page.waitForTimeout(100);
+    }
+    const wordCombien = page.locator('text=Combien').first();
+    if (await wordCombien.isVisible().catch(() => false)) {
+      await wordCombien.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Switch to vert pastille, click "donne"
+    const vertPastille = page.locator('button:has-text("Contexte")');
+    if (await vertPastille.isVisible().catch(() => false)) {
+      await vertPastille.click();
+      await page.waitForTimeout(100);
+    }
+    const wordDonne = page.locator('text=donne').first();
+    if (await wordDonne.isVisible().catch(() => false)) {
+      await wordDonne.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Switch to gris pastille (superflu), click "beau"
+    const grisPastille = page.locator('button:has-text("Superflu")');
+    if (await grisPastille.isVisible().catch(() => false)) {
+      await grisPastille.click();
+      await page.waitForTimeout(100);
+    }
+    const wordBeau = page.locator('text=beau').first();
+    if (await wordBeau.isVisible().catch(() => false)) {
+      await wordBeau.click();
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('97-surlignage-4-couleurs.png'), fullPage: true });
+  });
+
+  test('57 — Problem zone compact/expand', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Un problème assez long pour tester le mode compact.'));
+
+    await page.screenshot({ path: shot('98-problem-expanded.png'), fullPage: true });
+
+    // Click to compact
+    const toggleBtn = page.locator('[data-testid="problem-zone"] button[aria-label="Réduire"]');
+    if (await toggleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await toggleBtn.click();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: shot('99-problem-compact.png'), fullPage: true });
+    }
+  });
+
+  test('58 — Mode essentiel ↔ complet switch', async ({ page }) => {
+    // Screenshot essentiel mode toolbar
+    await page.screenshot({ path: shot('100-mode-essentiel.png'), fullPage: true });
+
+    // Switch to complet
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    if (await modeSelector.isVisible().catch(() => false)) {
+      await modeSelector.click();
+      await page.waitForTimeout(200);
+      const completOption = page.locator('[data-testid="mode-option-complet"]');
+      if (await completOption.isVisible().catch(() => false)) {
+        await completOption.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await page.screenshot({ path: shot('101-mode-complet.png'), fullPage: true });
+  });
+
+  test('59 — Ranger button', async ({ page }) => {
+    // Place several pieces in messy positions
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 300, 180);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 50, 30);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 400, 50);
+    await page.waitForTimeout(300);
+    const editor = page.locator('[data-testid="inline-editor"]');
+    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await editor.fill('5 + 3');
+      await editor.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'calcul'); // deselect
+
+    await page.screenshot({ path: shot('102-before-ranger.png'), fullPage: true });
+
+    // Click Ranger button
+    const rangerBtn = page.locator('button[aria-label="Ranger"]');
+    if (await rangerBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await rangerBtn.click();
+      await page.waitForTimeout(600); // wait for animation
+    }
+
+    await page.screenshot({ path: shot('103-after-ranger.png'), fullPage: true });
+  });
+
+  test('60 — Barre equaliser (Même taille)', async ({ page }) => {
+    // Place two bars of different sizes
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 80, 60);
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 80, 100);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // toggle off
+
+    // Resize first bar to 3×
+    await clickCanvas(page, 110, 67);
+    await page.waitForTimeout(400);
+    const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
+    if (await tailleBtn.isVisible().catch(() => false)) {
+      await tailleBtn.click();
+      await page.waitForTimeout(200);
+      const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+      if (await btn3x.isVisible().catch(() => false)) {
+        await btn3x.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
+
+    // Select first bar, click "Même taille"
+    await clickCanvas(page, 110, 67);
+    await page.waitForTimeout(400);
+    const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Même taille")');
+    if (await memeTailleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await memeTailleBtn.click();
+      await page.waitForTimeout(200);
+      // Click second bar to equalize
+      await clickCanvas(page, 110, 107);
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('105-bars-equalized.png'), fullPage: true });
+  });
+
+  test('61 — Barres fractionnaires ½× et ¾×', async ({ page }) => {
+    // Place a bar 1×
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 80, 60);
+    await page.waitForTimeout(300);
+
+    // Place a second bar below
+    await clickCanvas(page, 80, 100);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // toggle off
+
+    // Resize second bar to ½×
+    await clickCanvas(page, 110, 107);
+    await page.waitForTimeout(400);
+    const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
+    if (await tailleBtn.isVisible().catch(() => false)) {
+      await tailleBtn.click();
+      await page.waitForTimeout(200);
+      const btnHalf = page.locator('[data-testid="context-actions"] button:has-text("½×")');
+      if (await btnHalf.isVisible().catch(() => false)) {
+        await btnHalf.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await page.screenshot({ path: shot('106-bar-half-vs-full.png'), fullPage: true });
+  });
+
+  test('62 — Barre étiquettes fraction par part', async ({ page }) => {
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 100);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // toggle off
+
+    // Select bar, open Fraction submenu, divide into 4
+    await clickCanvas(page, 130, 107);
+    await page.waitForTimeout(400);
+    const fractionBtn = page.locator('[data-testid="context-actions"] button:has-text("Fraction")');
+    if (await fractionBtn.isVisible().catch(() => false)) {
+      await fractionBtn.click();
+      await page.waitForTimeout(200);
+      const div4 = page.locator('[data-testid="context-actions"] button').filter({ hasText: /^4$/ });
+      if (await div4.isVisible().catch(() => false)) {
+        await div4.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // Deselect to see the fraction labels above each part
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('107-bar-part-labels.png'), fullPage: true });
+  });
+
+  test('63 — Répartir jetons en groupes égaux', async ({ page }) => {
+    // Place 6 jetons
+    await selectTool(page, 'jeton');
+    const qty5Btn = page.locator('[data-testid="status-bar"] button[aria-label="Quantité: 5"]');
+    if (await qty5Btn.isVisible().catch(() => false)) await qty5Btn.click();
+    await clickCanvas(page, 150, 60);
+    await page.waitForTimeout(300);
+    // Place 1 more
+    const qty1Btn = page.locator('[data-testid="status-bar"] button[aria-label="Quantité: 1"]');
+    if (await qty1Btn.isVisible().catch(() => false)) await qty1Btn.click();
+    await clickCanvas(page, 200, 60);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // toggle off
+
+    await page.screenshot({ path: shot('108-before-repartir.png'), fullPage: true });
+
+    // Select a jeton, click Répartir → 3 groupes
+    await clickCanvas(page, 150, 60);
+    await page.waitForTimeout(400);
+    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
+    if (await repartirBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await repartirBtn.click();
+      await page.waitForTimeout(200);
+      const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
+      if (await btn3.isVisible().catch(() => false)) {
+        await btn3.click();
+        await page.waitForTimeout(400);
+      }
+    }
+
+    await page.screenshot({ path: shot('109-after-repartir-3-groups.png'), fullPage: true });
+  });
+
+  test('64 — Deux réponses numérotées', async ({ page }) => {
+    // Place first réponse
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 100, 100);
+    await page.waitForTimeout(500);
+    const ed1 = page.locator('[data-testid="inline-editor"]');
+    if (await ed1.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed1.fill('15 pages');
+      await ed1.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Place second réponse
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 100, 160);
+    await page.waitForTimeout(500);
+    const ed2 = page.locator('[data-testid="inline-editor"]');
+    if (await ed2.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed2.fill('45 pages');
+      await ed2.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('110-two-reponses.png'), fullPage: true });
+  });
+
+  test('65 — Tableau: keyboard nav + row/col highlight', async ({ page }) => {
+    // Switch to complet mode for tableau tool
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    if (await modeSelector.isVisible().catch(() => false)) {
+      await modeSelector.click();
+      await page.waitForTimeout(200);
+      const completOption = page.locator('[data-testid="mode-option-complet"]');
+      if (await completOption.isVisible().catch(() => false)) {
+        await completOption.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // Place tableau
+    await selectTool(page, 'tableau');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'tableau'); // toggle off
+
+    // Click on tableau to enter edit mode
+    await clickCanvas(page, 160, 130);
+    await page.waitForTimeout(500);
+
+    // Type in a cell and press Tab
+    await page.keyboard.type('Nom');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    await page.keyboard.type('Score');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    await page.keyboard.type('Alice');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    await page.keyboard.type('85');
+
+    await page.screenshot({ path: shot('111-tableau-editing-highlight.png'), fullPage: true });
+
+    // Escape to exit
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: shot('112-tableau-after-edit.png'), fullPage: true });
+  });
+
+  test('66 — Droite numérique: markers with labels + width change', async ({ page }) => {
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 120);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique'); // toggle off
+
+    // Select droite, click on it to add markers
+    await clickCanvas(page, 270, 120);
+    await page.waitForTimeout(300);
+
+    // Click at different positions to add markers
+    const svg = page.locator('[data-testid="canvas-svg"]');
+    const box = await svg.boundingBox();
+    if (box) {
+      const pxPerMm = box.width / 500;
+      // Add marker at ~30% (value 3)
+      await page.mouse.click(box.x + 300 * pxPerMm, box.y + 120 * pxPerMm);
+      await page.waitForTimeout(200);
+      // Add marker at ~70% (value 7)
+      await page.mouse.click(box.x + 380 * pxPerMm, box.y + 120 * pxPerMm);
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('113-droite-markers-labels.png'), fullPage: true });
+
+    // Change width via context actions
+    const largeurBtn = page.locator('[data-testid="context-actions"] button:has-text("Largeur")');
+    if (await largeurBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await largeurBtn.click();
+      await page.waitForTimeout(200);
+      const btn300 = page.locator('[data-testid="context-actions"] button:has-text("300")');
+      if (await btn300.isVisible().catch(() => false)) {
+        await btn300.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: shot('114-droite-width-300.png'), fullPage: true });
+  });
+
+  test('67 — Locked piece with padlock icon', async ({ page }) => {
+    // Load a problem with locked scaffolding via URL
+    // Use ?s= with a compressed state containing locked bars
+    // Simpler: place a bar, then test locked via .modelivite import is complex
+    // Instead, verify the locked visual via direct state manipulation
+    await page.evaluate(() => {
+      const event = new CustomEvent('test-inject-piece', { detail: {
+        id: 'locked1', type: 'barre', x: 100, y: 100, locked: true,
+        couleur: 'bleu', sizeMultiplier: 2, label: 'Théo', value: '',
+        divisions: null, coloredParts: [], showFraction: false,
+        groupId: null, groupLabel: null,
+      }});
+      window.dispatchEvent(event);
+    });
+    await page.waitForTimeout(500);
+
+    // Fallback: just screenshot whatever is on canvas with a note
+    await page.screenshot({ path: shot('115-locked-piece-padlock.png'), fullPage: true });
+  });
+
+  test('68 — Letter spacing setting', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Texte pour tester espacement des lettres.'));
+
+    await openSettings(page);
+
+    // Find letter spacing option and change it
+    const spacingBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("0,1 em")');
+    if (await spacingBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await spacingBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('116-letter-spacing-settings.png'), fullPage: true });
+    await closeSettings(page);
+    await page.screenshot({ path: shot('117-letter-spacing-applied.png'), fullPage: true });
+  });
+
+  test('69 — Token counter toggle in settings', async ({ page }) => {
+    // Place jetons so counter is visible
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 120, 80);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // toggle off
+
+    await page.screenshot({ path: shot('118-counter-visible.png'), fullPage: true });
+
+    // Disable counter in settings
+    await openSettings(page);
+    const counterToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Compteur de jetons').locator('..').locator('button:has-text("Activé")');
+    if (await counterToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await counterToggle.click();
+      await page.waitForTimeout(200);
+    }
+    await closeSettings(page);
+
+    await page.screenshot({ path: shot('119-counter-hidden.png'), fullPage: true });
+  });
+
+  test('70 — Tableau dimension preview on hover', async ({ page }) => {
+    // Switch to complet mode
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    if (await modeSelector.isVisible().catch(() => false)) {
+      await modeSelector.click();
+      await page.waitForTimeout(200);
+      const completOption = page.locator('[data-testid="mode-option-complet"]');
+      if (await completOption.isVisible().catch(() => false)) {
+        await completOption.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // Place tableau
+    await selectTool(page, 'tableau');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'tableau'); // toggle off
+
+    // Select tableau
+    await clickCanvas(page, 160, 130);
+    await page.waitForTimeout(400);
+
+    // Click "Lignes" in context actions
+    const lignesBtn = page.locator('[data-testid="context-actions"] button:has-text("Lignes")');
+    if (await lignesBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await lignesBtn.click();
+      await page.waitForTimeout(200);
+
+      // Hover over "5" to show preview
+      const btn5 = page.locator('[data-testid="context-actions"] button:has-text("5")');
+      if (await btn5.isVisible().catch(() => false)) {
+        await btn5.hover();
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: shot('120-tableau-preview-5-rows.png'), fullPage: true });
+      }
+    }
+  });
+
+  test('71 — High contrast mode', async ({ page }) => {
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre');
+
+    // Enable high contrast
+    await openSettings(page);
+    const contrastToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Contraste élevé').locator('..').locator('button:has-text("Désactivé")');
+    if (await contrastToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await contrastToggle.click();
+      await page.waitForTimeout(200);
+    }
+    await closeSettings(page);
+
+    await page.screenshot({ path: shot('121-high-contrast.png'), fullPage: true });
+  });
 });
