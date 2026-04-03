@@ -103,6 +103,8 @@ export function Canvas({
   const [columnCalcPieceId, setColumnCalcPieceId] = useState<string | null>(null);
   const [divisionCalcPieceId, setDivisionCalcPieceId] = useState<string | null>(null);
   const [tableauEditorPieceId, setTableauEditorPieceId] = useState<string | null>(null);
+  const [tableauPreviewRows, setTableauPreviewRows] = useState<number | null>(null);
+  const [tableauPreviewCols, setTableauPreviewCols] = useState<number | null>(null);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [isArranging, setIsArranging] = useState(false);
@@ -740,6 +742,8 @@ export function Canvas({
               piece={piece as Tableau}
               isSelected={piece.id === selectedPieceId}
               isEditing={tableauEditorPieceId === piece.id}
+              previewRows={piece.id === selectedPieceId ? tableauPreviewRows : undefined}
+              previewCols={piece.id === selectedPieceId ? tableauPreviewCols : undefined}
             />
           </g>
         ))}
@@ -1013,6 +1017,7 @@ export function Canvas({
           onStartEqualizing={handleStartEqualizing}
           onStartGrouping={handleStartGrouping}
           onUngroup={handleUngroup}
+          onTableauPreview={(rows, cols) => { setTableauPreviewRows(rows); setTableauPreviewCols(cols); }}
           onDismiss={() => onSelectPiece(null)}
         />
       )}
@@ -1640,12 +1645,16 @@ function getReponseWidth(piece: Reponse): number {
 const TABLEAU_CELL_W = 12; // mm
 const TABLEAU_CELL_H = 10; // mm
 
-function TableauPiece({ piece, isSelected, isEditing }: {
+function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols }: {
   piece: Tableau; isSelected: boolean;
   isEditing?: boolean;
+  previewRows?: number | null;
+  previewCols?: number | null;
 }) {
   const tw = piece.cols * TABLEAU_CELL_W;
   const th = piece.rows * TABLEAU_CELL_H;
+  const pRows = previewRows ?? piece.rows;
+  const pCols = previewCols ?? piece.cols;
   return (
     <g>
       {/* Outer border */}
@@ -1675,6 +1684,30 @@ function TableauPiece({ piece, isSelected, isEditing }: {
           </g>
         );
       }))}
+      {/* Preview: added rows */}
+      {previewRows != null && previewRows > piece.rows && Array.from({ length: previewRows - piece.rows }, (_, i) => (
+        <rect key={`pr-${i}`} x={piece.x} y={piece.y + (piece.rows + i) * TABLEAU_CELL_H}
+          width={tw} height={TABLEAU_CELL_H} rx={0}
+          fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="3 2" />
+      ))}
+      {/* Preview: removed rows */}
+      {previewRows != null && previewRows < piece.rows && Array.from({ length: piece.rows - previewRows }, (_, i) => (
+        <rect key={`dr-${i}`} x={piece.x} y={piece.y + (previewRows + i) * TABLEAU_CELL_H}
+          width={tw} height={TABLEAU_CELL_H} rx={0}
+          fill="rgba(200, 40, 40, 0.15)" stroke="#C82828" strokeWidth={0.5} strokeDasharray="3 2" />
+      ))}
+      {/* Preview: added cols */}
+      {previewCols != null && previewCols > piece.cols && Array.from({ length: previewCols - piece.cols }, (_, i) => (
+        <rect key={`pc-${i}`} x={piece.x + (piece.cols + i) * TABLEAU_CELL_W} y={piece.y}
+          width={TABLEAU_CELL_W} height={th} rx={0}
+          fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={0.5} strokeDasharray="3 2" />
+      ))}
+      {/* Preview: removed cols */}
+      {previewCols != null && previewCols < piece.cols && Array.from({ length: piece.cols - previewCols }, (_, i) => (
+        <rect key={`dc-${i}`} x={piece.x + (previewCols + i) * TABLEAU_CELL_W} y={piece.y}
+          width={TABLEAU_CELL_W} height={th} rx={0}
+          fill="rgba(200, 40, 40, 0.15)" stroke="#C82828" strokeWidth={0.5} strokeDasharray="3 2" />
+      ))}
       {/* Selection highlight */}
       {isSelected && (
         <rect x={piece.x - 1} y={piece.y - 1} width={tw + 2} height={th + 2} rx={2}
