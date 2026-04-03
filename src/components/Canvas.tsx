@@ -1,4 +1,5 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
+import { useCellUndo } from '../hooks/useCellUndo';
 import { useContainerSize } from '../hooks/useContainerSize';
 import { pointerToMm, snapToGrid, calculateViewBoxHeight } from '../engine/coordinates';
 import { snapBarAlignment } from '../engine/snap';
@@ -103,6 +104,7 @@ export function Canvas({
   const [columnCalcPieceId, setColumnCalcPieceId] = useState<string | null>(null);
   const [divisionCalcPieceId, setDivisionCalcPieceId] = useState<string | null>(null);
   const [tableauEditorPieceId, setTableauEditorPieceId] = useState<string | null>(null);
+  const tableauUndo = useCellUndo(20);
   const [tableauPreviewRows, setTableauPreviewRows] = useState<number | null>(null);
   const [tableauPreviewCols, setTableauPreviewCols] = useState<number | null>(null);
 
@@ -1153,6 +1155,8 @@ export function Canvas({
               onBlur={e => {
                 const val = e.target.value;
                 if (val !== t.cells[ri][ci]) {
+                  // Push to undo stack before committing
+                  tableauUndo.push(`${ri}-${ci}`, t.cells[ri][ci]);
                   const newCells = t.cells.map((r, rri) => rri === ri ? r.map((c, cci) => cci === ci ? val : c) : [...r]);
                   dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
                 }
@@ -1161,8 +1165,18 @@ export function Canvas({
                 if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
                   e.preventDefault();
                   e.stopPropagation();
-                  // Restore cell to its last saved value
-                  (e.target as HTMLInputElement).value = t.cells[ri][ci];
+                  // Multi-level undo: pop from stack, restore cell, focus it
+                  const entry = tableauUndo.pop();
+                  if (entry) {
+                    const [ur, uc] = entry.cellId.split('-').map(Number);
+                    const newCells = t.cells.map((r, rri) => rri === ur ? r.map((c, cci) => cci === uc ? entry.prevValue : c) : [...r]);
+                    dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
+                    // Focus the restored cell
+                    setTimeout(() => {
+                      const input = document.querySelector<HTMLInputElement>(`[data-tableau-cell="${ur}-${uc}"]`);
+                      if (input) { input.value = entry.prevValue; input.focus(); }
+                    }, 50);
+                  }
                 }
               }}
               onPointerDown={e => e.stopPropagation()}
