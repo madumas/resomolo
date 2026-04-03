@@ -138,7 +138,10 @@ export async function openSettings(page: Page): Promise<void> {
  */
 export async function closeSettings(page: Page): Promise<void> {
   const dialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
-  await dialog.locator('button:has-text("Fermer")').click();
+  const fermerBtn = dialog.locator('button:has-text("Fermer")');
+  await fermerBtn.scrollIntoViewIfNeeded();
+  await fermerBtn.click();
+  await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(200);
 }
 

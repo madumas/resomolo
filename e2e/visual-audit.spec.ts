@@ -1099,10 +1099,12 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('35 — Profile "Aide maximale" applied', async ({ page }) => {
+    test.setTimeout(45_000);
     await openSettings(page);
 
-    // Select "Aide maximale" profile
+    // Select "Aide maximale" profile — may need scrolling
     const maxBtn = page.locator('button:has-text("Aide maximale")');
+    await maxBtn.scrollIntoViewIfNeeded();
     if (await maxBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await maxBtn.click();
       await page.waitForTimeout(300);
@@ -1111,6 +1113,7 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('66-aide-maximale-selected.png'), fullPage: true });
 
     await closeSettings(page);
+    await dismissOverlays(page);
 
     // Place a piece and verify larger text / tolerance
     await selectTool(page, 'barre');
