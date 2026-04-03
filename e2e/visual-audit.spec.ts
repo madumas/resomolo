@@ -2885,16 +2885,27 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('88 — Surlignage visible vérifié', async ({ page }) => {
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
-    // Expand problem zone by clicking on it
-    // Click on the problem text to expand the zone if collapsed
-    const problemText = page.locator('text=Marc').first();
-    if (await problemText.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await problemText.click();
+    // Navigate directly — don't use navigateAndReady to avoid dismissOverlays clearing the problem
+    await page.goto('/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
+    await page.waitForSelector('[data-testid="canvas-svg"]');
+    await page.waitForTimeout(1000);
+    // Dismiss guide only (not problem selector)
+    const guideBtn = page.locator('button:has-text("Compris")');
+    if (await guideBtn.isVisible({ timeout: 1000 }).catch(() => false)) await guideBtn.click();
+    await page.waitForTimeout(500);
+    // Skip tutorial if visible
+    const skipBtn = page.locator('button:has-text("Passer")');
+    if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) await skipBtn.click();
+    await page.waitForTimeout(500);
+
+    // Expand problem zone — click on the problem text
+    const marcText = page.locator('text=Marc').first();
+    if (await marcText.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await marcText.click();
       await page.waitForTimeout(500);
     }
 
-    // Highlight "24" in bleu (default) — look for the word span
+    // Highlight "24" in bleu (default)
     const word24 = page.locator('span:has-text("24")').first();
     if (await word24.isVisible({ timeout: 3000 }).catch(() => false)) {
       await word24.click();
@@ -2917,13 +2928,16 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('89 — Dyslexie avec contenu rempli', async ({ page }) => {
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Théo a 5 pommes. Il en mange 2.'));
-    // Expand problem zone by clicking the text
-    const problemText = page.locator('text=Théo').first();
-    if (await problemText.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await problemText.click();
-      await page.waitForTimeout(300);
-    }
+    // Navigate directly to preserve ?probleme=
+    await page.goto('/?probleme=' + encodeURIComponent('Théo a 5 pommes. Il en mange 2.'));
+    await page.waitForSelector('[data-testid="canvas-svg"]');
+    await page.waitForTimeout(1000);
+    const guideBtn = page.locator('button:has-text("Compris")');
+    if (await guideBtn.isVisible({ timeout: 1000 }).catch(() => false)) await guideBtn.click();
+    await page.waitForTimeout(500);
+    const skipBtn = page.locator('button:has-text("Passer")');
+    if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) await skipBtn.click();
+    await page.waitForTimeout(500);
 
     // Enable OpenDyslexic
     await openSettings(page);

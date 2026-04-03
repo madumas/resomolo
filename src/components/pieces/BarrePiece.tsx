@@ -94,7 +94,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
         opacity={hasValue ? 1 : 0.5}
         data-edit-target={`${piece.id}-value`}
       >
-        {hasValue ? piece.value : (!hasLabel ? formatMultiplier(piece.sizeMultiplier) : ' ')}
+        {hasValue ? piece.value : (!hasLabel && !piece.divisions ? formatMultiplier(piece.sizeMultiplier) : ' ')}
       </text>
       {/* Fraction label (stacked notation) — auto when showFraction + colored parts */}
       {piece.showFraction && piece.divisions && piece.coloredParts.length > 0 && (
