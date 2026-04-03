@@ -3,7 +3,7 @@ export interface ProblemPreset {
   title: string;
   text: string;
   cycle: 2 | 3;
-  category: 'addition' | 'soustraction' | 'multiplication' | 'division' | 'multi-etapes' | 'comparaison' | 'partage';
+  category: 'addition' | 'soustraction' | 'multiplication' | 'division' | 'multi-etapes' | 'comparaison' | 'partage' | 'fraction' | 'statistique' | 'probabilite';
   difficulty: 1 | 2 | 3;
 }
 
@@ -156,14 +156,6 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     difficulty: 3,
   },
   {
-    id: 'c3-prop-3',
-    title: 'Ouvriers et clôture',
-    text: '4 ouvriers construisent une clôture en 6 jours. Combien de jours faudrait-il à 3 ouvriers?',
-    cycle: 3,
-    category: 'multiplication',
-    difficulty: 3,
-  },
-  {
     id: 'c3-pct-3',
     title: 'Chandail en solde',
     text: 'Un chandail coûte 40 $. Il est en solde à 25 % de rabais. Quel est le prix en solde?',
@@ -216,13 +208,13 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     difficulty: 2,
   },
 
-  // ── Cycle 3, Fractions (difficulty 2) ──
+  // ── Cycle 3, Fractions ──
   {
     id: 'c3-frac-add',
     title: 'Addition de fractions',
     text: 'Marie mange 2/8 d\'une pizza. Léo mange 3/8 de la même pizza. Quelle fraction de la pizza ont-ils mangée ensemble?',
     cycle: 3,
-    category: 'addition',
+    category: 'fraction',
     difficulty: 2,
   },
   {
@@ -230,7 +222,73 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     title: 'Fraction d\'un tout',
     text: 'Un réservoir plein contient 12 litres d\'eau. Il est rempli aux 3/4. Combien de litres contient-il?',
     cycle: 3,
-    category: 'multiplication',
+    category: 'fraction',
+    difficulty: 2,
+  },
+  {
+    id: 'c2-frac-comp',
+    title: 'Comparaison de fractions',
+    text: 'Marie a mangé 2/3 de sa tablette de chocolat. Léo a mangé 3/4 de la sienne. Les deux tablettes sont identiques. Qui a mangé le plus de chocolat?',
+    cycle: 2,
+    category: 'fraction',
+    difficulty: 2,
+  },
+  {
+    id: 'c2-frac-ens',
+    title: 'Fraction d\'un ensemble',
+    text: 'Il y a 24 billes dans un sac. Le tiers des billes sont rouges. Combien y a-t-il de billes rouges?',
+    cycle: 2,
+    category: 'fraction',
+    difficulty: 1,
+  },
+  {
+    id: 'c3-frac-diff',
+    title: 'Différence de fractions',
+    text: 'Samuel a bu 3/4 de son verre de jus. Émilie a bu 1/4 du sien. Les deux verres sont identiques. Quelle fraction de plus Samuel a-t-il bu?',
+    cycle: 3,
+    category: 'fraction',
+    difficulty: 2,
+  },
+  // ── Cycle 3, Statistique ──
+  {
+    id: 'c3-stat-tableau',
+    title: 'Températures de la semaine',
+    text: 'Voici les températures de lundi à vendredi : 12°C, 15°C, 9°C, 14°C, 10°C. Quel est l\'écart entre la journée la plus chaude et la plus froide?',
+    cycle: 3,
+    category: 'statistique',
+    difficulty: 1,
+  },
+  {
+    id: 'c3-stat-moyenne',
+    title: 'Moyenne des notes',
+    text: 'Les notes de Léa en mathématiques sont : 78, 85 et 92. Quelle est la moyenne de ses notes?',
+    cycle: 3,
+    category: 'statistique',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-stat-diag',
+    title: 'Vente de jus',
+    text: 'Lundi, on a vendu 12 jus. Mardi, 18. Mercredi, 9. Jeudi, 15. Vendredi, 21. Combien de jus ont été vendus en tout? Quel jour a-t-on vendu le plus?',
+    cycle: 3,
+    category: 'statistique',
+    difficulty: 2,
+  },
+  // ── Cycle 3, Probabilité ──
+  {
+    id: 'c3-prob-simple',
+    title: 'Billes dans le sac',
+    text: 'Un sac contient 3 billes rouges et 5 billes bleues. Tu piges une bille sans regarder. Est-il plus probable de piger une bille rouge ou bleue? Explique.',
+    cycle: 3,
+    category: 'probabilite',
+    difficulty: 1,
+  },
+  {
+    id: 'c3-prob-denomb',
+    title: 'Choix de collation',
+    text: 'À la cafétéria, il y a 3 choix de sandwich (jambon, poulet, végé) et 2 choix de boisson (jus, lait). Combien de combinaisons sandwich-boisson différentes sont possibles?',
+    cycle: 3,
+    category: 'probabilite',
     difficulty: 2,
   },
 ];

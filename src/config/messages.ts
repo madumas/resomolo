@@ -9,6 +9,7 @@ export const TOOL_MESSAGES: Record<NonNullable<ToolType>, string> = {
   reponse: 'Réponse — Clique pour placer ta réponse',
   droiteNumerique: 'Droite numérique — Clique pour placer une droite numérique',
   groupe: 'Groupe — Clique pour placer un groupe',
+  tableau: 'Tableau — Clique pour placer un tableau',
   fleche: 'Flèche — Clique sur la pièce de départ',
   deplacer: 'Déplacer — Clique sur une pièce pour la prendre',
 };

@@ -5,8 +5,8 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Groupe } from '../model/types';
-import { isBarre, isDroiteNumerique } from '../model/types';
+import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Groupe, Tableau } from '../model/types';
+import { isBarre, isDroiteNumerique, isTableau } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor } from '../config/theme';
@@ -1141,6 +1141,8 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
       return <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />;
     case 'groupe':
       return <GroupePiece piece={piece as Groupe} isSelected={isSelected} />;
+    case 'tableau':
+      return <TableauPiece piece={piece as Tableau} isSelected={isSelected} />;
     case 'fleche':
       return null; // arrows are rendered in a separate layer above
     default:
@@ -1529,6 +1531,50 @@ function getReponseWidth(piece: Reponse): number {
 
 // === Hit test ===
 
+const TABLEAU_CELL_W = 12; // mm
+const TABLEAU_CELL_H = 10; // mm
+
+function TableauPiece({ piece, isSelected }: { piece: Tableau; isSelected: boolean }) {
+  const tw = piece.cols * TABLEAU_CELL_W;
+  const th = piece.rows * TABLEAU_CELL_H;
+  return (
+    <g>
+      {/* Outer border */}
+      <rect x={piece.x} y={piece.y} width={tw} height={th} rx={1}
+        fill="#fff" stroke={isSelected ? '#7028e0' : '#D5D0E0'} strokeWidth={isSelected ? 1 : 0.5} />
+      {/* Header row background */}
+      {piece.headerRow && (
+        <rect x={piece.x} y={piece.y} width={tw} height={TABLEAU_CELL_H} rx={1}
+          fill="#F2F0F8" />
+      )}
+      {/* Cell borders + text */}
+      {piece.cells.map((row, ri) => row.map((cell, ci) => {
+        const cx = piece.x + ci * TABLEAU_CELL_W;
+        const cy = piece.y + ri * TABLEAU_CELL_H;
+        return (
+          <g key={`${ri}-${ci}`}>
+            <rect x={cx} y={cy} width={TABLEAU_CELL_W} height={TABLEAU_CELL_H}
+              fill="none" stroke="#D5D0E0" strokeWidth={0.3} />
+            <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
+              fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
+              fill="#1E1A2E"
+              data-edit-target={`${piece.id}-${ri}-${ci}`}>
+              {cell || (ri === 0 && piece.headerRow ? '—' : '')}
+            </text>
+          </g>
+        );
+      }))}
+      {/* Selection highlight */}
+      {isSelected && (
+        <rect x={piece.x - 1} y={piece.y - 1} width={tw + 2} height={th + 2} rx={2}
+          fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
+      )}
+    </g>
+  );
+}
+
 function GroupePiece({ piece, isSelected }: { piece: Groupe; isSelected: boolean }) {
   const gw = Math.max(25, piece.count * 6 + 10);
   const gh = 15;
@@ -1615,6 +1661,13 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       return pos.x >= g.x - p && pos.x <= g.x + gw + p &&
              pos.y >= g.y - p && pos.y <= g.y + gh + p;
     }
+    case 'tableau': {
+      const t = piece as Tableau;
+      const tw = t.cols * TABLEAU_CELL_W;
+      const th = t.rows * TABLEAU_CELL_H;
+      return pos.x >= t.x - p && pos.x <= t.x + tw + p &&
+             pos.y >= t.y - p && pos.y <= t.y + th + p;
+    }
     case 'fleche': {
       const fleche = piece as Fleche;
       const from = pieces.find(p => p.id === fleche.fromId);
@@ -1648,6 +1701,7 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
     case 'groupe': return { x: piece.x + Math.max(25, (piece as Groupe).count * 6 + 10) / 2, y: piece.y + 7.5 };
+    case 'tableau': return { x: piece.x + (piece as Tableau).cols * TABLEAU_CELL_W / 2, y: piece.y + (piece as Tableau).rows * TABLEAU_CELL_H / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -1664,6 +1718,7 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 4 + 8); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
     case 'groupe': bx = piece.x; by = piece.y; bw = Math.max(25, (piece as Groupe).count * 6 + 10); bh = 15; break;
+    case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
     default: return { x: piece.x, y: piece.y };
   }
   // Clamp target to the edge of the bounding box
@@ -1701,6 +1756,9 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'groupe':
       return { id, type: 'groupe', x: pos.x, y: pos.y, locked: false,
         count: 3, label: '', couleur: 'bleu' };
+    case 'tableau':
+      return { id, type: 'tableau', x: pos.x, y: pos.y, locked: false,
+        rows: 2, cols: 3, cells: Array.from({ length: 2 }, () => Array(3).fill('')), headerRow: true };
     case 'fleche':
       return null; // fleche uses two-click placement, not createPiece
     case 'deplacer':

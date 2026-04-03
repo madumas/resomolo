@@ -5,7 +5,7 @@ import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY }
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
-import { JetonIcon, BarreIcon, DroiteNumeriqueIcon, CalculIcon, ReponseIcon, BoiteIcon, GroupeIcon, EtiquetteIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
+import { JetonIcon, BarreIcon, DroiteNumeriqueIcon, CalculIcon, ReponseIcon, BoiteIcon, GroupeIcon, TableauIcon, EtiquetteIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -37,6 +37,7 @@ const ALL_TOOLS: ToolDef[] = [
   { type: 'groupe', label: 'Groupe', Icon: GroupeIcon },
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
+  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
   { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
   { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },

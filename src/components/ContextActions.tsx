@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
-import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isGroupe } from '../model/types';
+import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isGroupe, isTableau } from '../model/types';
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
@@ -396,6 +396,36 @@ export function ContextActions({
         </>
       )}
 
+      {/* Tableau: rows/cols +/- */}
+      {isTableau(piece) && (
+        <>
+          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Éditer cellule</CtxBtn>
+          {piece.rows < 4 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows + 1, cells: [...piece.cells, Array(piece.cols).fill('')] })}>
+              + Ligne
+            </CtxBtn>
+          )}
+          {piece.rows > 2 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows - 1, cells: piece.cells.slice(0, -1) })}>
+              − Ligne
+            </CtxBtn>
+          )}
+          {piece.cols < 4 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols + 1, cells: piece.cells.map(r => [...r, '']) })}>
+              + Colonne
+            </CtxBtn>
+          )}
+          {piece.cols > 2 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols - 1, cells: piece.cells.map(r => r.slice(0, -1)) })}>
+              − Colonne
+            </CtxBtn>
+          )}
+          <CtxBtn active={piece.headerRow} onClick={() => onEditPiece(piece.id, { headerRow: !piece.headerRow })}>
+            En-tête
+          </CtxBtn>
+        </>
+      )}
+
       {/* Delete is now in ActionBar, not here */}
     </div>
   );
@@ -482,6 +512,9 @@ function getPieceBoundsScreen(
   } else if (isGroupe(piece)) {
     w = Math.max(25, piece.count * 6 + 10);
     h = 15;
+  } else if (isTableau(piece)) {
+    w = piece.cols * 12;
+    h = piece.rows * 10;
   } else if (piece.type === 'fleche') {
     // For arrows, find the rendered SVG element and use its bounding box
     const el = svg.querySelector(`[data-piece-id="${piece.id}"]`);

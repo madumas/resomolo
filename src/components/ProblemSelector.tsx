@@ -10,11 +10,13 @@ interface ProblemSelectorProps {
 
 type CycleFilter = 2 | 3 | 'all';
 type DifficultyFilter = 1 | 2 | 3 | 'all';
-type CategoryFilter = 'all' | 'additif' | 'multiplicatif' | 'complexe';
+type CategoryFilter = 'all' | 'additif' | 'multiplicatif' | 'fractions' | 'stats-proba' | 'complexe';
 
 const CATEGORY_GROUPS: Record<Exclude<CategoryFilter, 'all'>, string[]> = {
   additif: ['addition', 'soustraction'],
   multiplicatif: ['multiplication', 'division', 'comparaison'],
+  fractions: ['fraction'],
+  'stats-proba': ['statistique', 'probabilite'],
   complexe: ['multi-etapes', 'partage'],
 };
 
@@ -152,6 +154,8 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                 { value: 'all' as CategoryFilter, label: 'Tous' },
                 { value: 'additif' as CategoryFilter, label: 'Additif' },
                 { value: 'multiplicatif' as CategoryFilter, label: 'Multiplicatif' },
+                { value: 'fractions' as CategoryFilter, label: 'Fractions' },
+                { value: 'stats-proba' as CategoryFilter, label: 'Stats/Proba' },
                 { value: 'complexe' as CategoryFilter, label: 'Multi-étapes' },
               ]).map(opt => (
                 <button

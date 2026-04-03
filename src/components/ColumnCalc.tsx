@@ -22,7 +22,7 @@ interface ColumnCalcProps {
   onCancel: () => void;
 }
 
-const OPERATORS = ['+', '−', '×'];
+const OPERATORS = ['+', '−', '×', '÷'];
 const NUM_COLS = 6; // 6 columns for intermediate results
 const CELL = 48;
 const GAP = 4;

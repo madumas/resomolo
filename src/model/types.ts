@@ -1,6 +1,6 @@
 // === Piece types ===
 
-export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'groupe';
+export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'groupe' | 'tableau';
 
 export type CouleurPiece = 'bleu' | 'rouge' | 'vert' | 'jaune';
 
@@ -80,7 +80,15 @@ export interface Groupe extends PieceBase {
   couleur: CouleurPiece;
 }
 
-export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Groupe;
+export interface Tableau extends PieceBase {
+  type: 'tableau';
+  rows: number;            // 2-4
+  cols: number;            // 2-4
+  cells: string[][];       // rows × cols
+  headerRow: boolean;      // first row styled as header
+}
+
+export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Groupe | Tableau;
 
 // Type guards
 export function isJeton(p: Piece): p is Jeton { return p.type === 'jeton'; }
@@ -89,6 +97,7 @@ export function isBoite(p: Piece): p is Boite { return p.type === 'boite'; }
 export function isFleche(p: Piece): p is Fleche { return p.type === 'fleche'; }
 export function isDroiteNumerique(p: Piece): p is DroiteNumerique { return p.type === 'droiteNumerique'; }
 export function isGroupe(p: Piece): p is Groupe { return p.type === 'groupe'; }
+export function isTableau(p: Piece): p is Tableau { return p.type === 'tableau'; }
 
 // === Highlights ===
 
@@ -102,7 +111,7 @@ export interface Highlight {
 
 // === Tool ===
 
-export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'groupe' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
+export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'groupe' | 'tableau' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
 
 // === State ===
 

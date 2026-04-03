@@ -85,6 +85,19 @@ export function GroupeIcon() {
   );
 }
 
+/** Tableau: 3×3 grid */
+export function TableauIcon() {
+  return (
+    <svg {...S}>
+      <rect x="3" y="3" width="14" height="14" rx="1" stroke={stroke} strokeWidth="2" fill="none" />
+      <line x1="3" y1="8" x2="17" y2="8" stroke={stroke} strokeWidth="1.5" />
+      <line x1="3" y1="12" x2="17" y2="12" stroke={stroke} strokeWidth="1" />
+      <line x1="8" y1="3" x2="8" y2="17" stroke={stroke} strokeWidth="1" />
+      <line x1="13" y1="3" x2="13" y2="17" stroke={stroke} strokeWidth="1" />
+    </svg>
+  );
+}
+
 /** Étiquette: letter A */
 export function EtiquetteIcon() {
   return (
