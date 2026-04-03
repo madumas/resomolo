@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { onSnap } from '../engine/sound';
 
 export interface ColumnCalcData {
   op1: string[];
@@ -149,6 +150,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     applyValueToCell(lastModified.cellId, lastModified.prevValue);
     focusCell(lastModified.cellId);
     setLastModified(null);
+    onSnap();
   };
 
   // Change decimal position: shift digits so the comma adds/removes places on the RIGHT
@@ -176,6 +178,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       setIntermediates(prev => prev.map(r => shiftRow(r)));
     }
     setDecimalPosition(newDecPos);
+    setLastModified(null);
   };
 
   const handleCellChange = (
@@ -449,6 +452,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
               setOp2(newOp2);
               setCarry(emptyRow());
               setIntermediates([emptyRow()]);
+              setLastModified(null);
             }}
             title="Échanger les deux nombres"
             style={{

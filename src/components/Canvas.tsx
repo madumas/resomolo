@@ -155,9 +155,10 @@ export function Canvas({
     // If editing, commit current value (blur triggers commit) then close
     if (editingPieceId) {
       if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
-        document.activeElement.blur(); // triggers onBlur → commit()
+        document.activeElement.blur(); // blur triggers commit -> onCommit -> onStopEdit
+      } else {
+        onStopEdit(); // only call directly if no input was focused
       }
-      onStopEdit();
       return;
     }
 
@@ -1174,11 +1175,7 @@ export function Canvas({
                     const [ur, uc] = entry.cellId.split('-').map(Number);
                     const newCells = t.cells.map((r, rri) => rri === ur ? r.map((c, cci) => cci === uc ? entry.prevValue : c) : [...r]);
                     dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
-                    // Focus the restored cell
-                    setTimeout(() => {
-                      const input = document.querySelector<HTMLInputElement>(`[data-tableau-cell="${ur}-${uc}"]`);
-                      if (input) { input.value = entry.prevValue; input.focus(); }
-                    }, 50);
+                    // Input will remount with correct defaultValue via key change
                   }
                 }
               }}

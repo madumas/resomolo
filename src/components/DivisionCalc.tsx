@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { onSnap } from '../engine/sound';
 
 export interface DivisionCalcData {
   type: 'division';
@@ -109,10 +110,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         return copy;
       });
     } else {
-      const col = parseInt(parts[parts.length - 1]);
-      if (rowName === 'dividend') setDividend(prev => { const n = [...prev]; n[col] = value; return n; });
-      else if (rowName === 'divisor') setDivisor(prev => { const n = [...prev]; n[col] = value; return n; });
-      else if (rowName === 'quotient') setQuotient(prev => { const n = [...prev]; n[col] = value; return n; });
+      if (rowName === 'remainder') {
+        setRemainder(value);
+      } else {
+        const col = parseInt(parts[parts.length - 1]);
+        if (rowName === 'dividend') setDividend(prev => { const n = [...prev]; n[col] = value; return n; });
+        else if (rowName === 'divisor') setDivisor(prev => { const n = [...prev]; n[col] = value; return n; });
+        else if (rowName === 'quotient') setQuotient(prev => { const n = [...prev]; n[col] = value; return n; });
+      }
     }
   };
 
@@ -121,6 +126,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     applyValueToCell(lastModified.cellId, lastModified.prevValue);
     focusCell(lastModified.cellId);
     setLastModified(null);
+    onSnap();
   };
 
   const handleCellChange = (
@@ -163,6 +169,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   const handleRemainderChange = (value: string) => {
+    setLastModified({ cellId: 'remainder', prevValue: remainder });
     const digit = value.replace(/[^0-9]/g, '').slice(0, 2);
     setRemainder(digit);
   };
