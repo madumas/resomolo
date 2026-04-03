@@ -17,7 +17,7 @@ import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
-import { onPlace, onSnap } from '../engine/sound';
+import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
 import { createSmoothingState, smooth } from '../engine/smoothing';
 import type { SmoothingState } from '../engine/smoothing';
@@ -449,6 +449,7 @@ export function Canvas({
           });
           if (nearbyPiece) {
             piece.attachedTo = nearbyPiece.id;
+            onAttach();
           }
         }
         dispatch({ type: 'PLACE_PIECE', piece });

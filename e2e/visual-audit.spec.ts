@@ -143,11 +143,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const calcEditor = page.locator('[data-testid="inline-editor"]');
-    if (await calcEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await calcEditor.fill('45 / 3 = 15');
-      await calcEditor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(calcEditor).toBeVisible({ timeout: 3000 });
+    await calcEditor.fill('45 / 3 = 15');
+    await calcEditor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('10-calcul-placed.png'), fullPage: true });
 
@@ -157,11 +156,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const repEditor = page.locator('[data-testid="inline-editor"]');
-    if (await repEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await repEditor.fill('Theo a lu 15 pages');
-      await repEditor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(repEditor).toBeVisible({ timeout: 3000 });
+    await repEditor.fill('Theo a lu 15 pages');
+    await repEditor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('11-reponse-placed.png'), fullPage: true });
   });
@@ -239,11 +237,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const calcEd = page.locator('[data-testid="inline-editor"]');
-    if (await calcEd.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await calcEd.fill('45 / 3 = 15');
-      await calcEd.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(calcEd).toBeVisible({ timeout: 3000 });
+    await calcEd.fill('45 / 3 = 15');
+    await calcEd.press('Enter');
+    await page.waitForTimeout(300);
 
     // Step 4: Place réponse
     await selectTool(page, 'reponse');
@@ -251,11 +248,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const repEd = page.locator('[data-testid="inline-editor"]');
-    if (await repEd.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await repEd.fill('Theo a lu 15 pages');
-      await repEd.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(repEd).toBeVisible({ timeout: 3000 });
+    await repEd.fill('Theo a lu 15 pages');
+    await repEd.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('17-complete-modelisation.png'), fullPage: true });
   });
@@ -302,11 +298,10 @@ test.describe('Visual audit — full flow', () => {
 
     // Screenshot the confirm dialog
     const confirmDialog = page.locator('[data-testid="confirm-dialog"]');
-    if (await confirmDialog.isVisible().catch(() => false)) {
-      await confirmDialog.screenshot({ path: shot('20b-confirm-dialog.png') });
-      await page.locator('[data-testid="confirm-dialog-confirm"]').click();
-      await page.waitForTimeout(300);
-    }
+    await expect(confirmDialog).toBeVisible({ timeout: 3000 });
+    await confirmDialog.screenshot({ path: shot('20b-confirm-dialog.png') });
+    await page.locator('[data-testid="confirm-dialog-confirm"]').click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('21-after-recommencer.png'), fullPage: true });
   });
@@ -435,11 +430,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const calcEditor = page.locator('[data-testid="inline-editor"]');
-    if (await calcEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await calcEditor.fill('84 / 7');
-      await calcEditor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(calcEditor).toBeVisible({ timeout: 3000 });
+    await calcEditor.fill('84 / 7');
+    await calcEditor.press('Enter');
+    await page.waitForTimeout(300);
 
     // Deselect tool, select the calcul piece
     await selectTool(page, 'calcul'); // toggle off
@@ -476,11 +470,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const repEditor = page.locator('[data-testid="inline-editor"]');
-    if (await repEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await repEditor.fill('test');
-      await repEditor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(repEditor).toBeVisible({ timeout: 3000 });
+    await repEditor.fill('test');
+    await repEditor.press('Enter');
+    await page.waitForTimeout(300);
 
     // Deselect tool, select the réponse piece
     await selectTool(page, 'reponse'); // toggle off
@@ -716,22 +709,20 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
 
     const ed1 = page.locator('[data-testid="inline-editor"]');
-    if (await ed1.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await ed1.fill('A');
-      await ed1.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed1).toBeVisible({ timeout: 3000 });
+    await ed1.fill('A');
+    await ed1.press('Enter');
+    await page.waitForTimeout(200);
 
     await selectTool(page, 'calcul');
     await clickCanvas(page, 300, 80);
     await page.waitForTimeout(400);
 
     const ed2 = page.locator('[data-testid="inline-editor"]');
-    if (await ed2.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await ed2.fill('B');
-      await ed2.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed2).toBeVisible({ timeout: 3000 });
+    await ed2.fill('B');
+    await ed2.press('Enter');
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('46-two-calculs-before-arrow.png'), fullPage: true });
 
@@ -739,10 +730,9 @@ test.describe('Visual audit — full flow', () => {
     await page.locator('[data-testid="mode-selector"]').click();
     await page.waitForTimeout(200);
     const completOption = page.locator('[data-testid="mode-option-complet"]');
-    if (await completOption.isVisible().catch(() => false)) {
-      await completOption.click();
-      await page.waitForTimeout(200);
-    }
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     // Select Flèche tool
     await selectTool(page, 'fleche');
@@ -886,11 +876,10 @@ test.describe('Visual audit — full flow', () => {
 
     // Fill the etiquette text
     const editor = page.locator('[data-testid="inline-editor"]');
-    if (await editor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await editor.fill('12 pommes');
-      await editor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(editor).toBeVisible({ timeout: 3000 });
+    await editor.fill('12 pommes');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('53-etiquette-placed.png'), fullPage: true });
 
@@ -933,11 +922,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const calcEditor = page.locator('[data-testid="inline-editor"]');
-    if (await calcEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await calcEditor.fill('34 x 12');
-      await calcEditor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(calcEditor).toBeVisible({ timeout: 3000 });
+    await calcEditor.fill('34 x 12');
+    await calcEditor.press('Enter');
+    await page.waitForTimeout(300);
 
     // Deselect tool, select the calcul piece
     await selectTool(page, 'calcul'); // toggle off
@@ -1117,10 +1105,9 @@ test.describe('Visual audit — full flow', () => {
     // Select "Aide maximale" profile — may need scrolling
     const maxBtn = page.locator('button:has-text("Aide maximale")');
     await maxBtn.scrollIntoViewIfNeeded();
-    if (await maxBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await maxBtn.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(maxBtn).toBeVisible({ timeout: 2000 });
+    await maxBtn.click();
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('66-aide-maximale-selected.png'), fullPage: true });
 
@@ -1279,20 +1266,18 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 100, 180);
     await page.waitForTimeout(300);
     const editor1 = page.locator('[data-testid="inline-editor"]');
-    if (await editor1.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await editor1.fill('5 + 3 = 8');
-      await editor1.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor1).toBeVisible({ timeout: 1000 });
+    await editor1.fill('5 + 3 = 8');
+    await editor1.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'reponse');
     await clickCanvas(page, 250, 180);
     await page.waitForTimeout(300);
     const editor2 = page.locator('[data-testid="inline-editor"]');
-    if (await editor2.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await editor2.fill('Il y a 8 pommes');
-      await editor2.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor2).toBeVisible({ timeout: 1000 });
+    await editor2.fill('Il y a 8 pommes');
+    await editor2.press('Enter');
+    await page.waitForTimeout(200);
 
     // Deselect everything
     await selectTool(page, 'reponse');
@@ -1514,22 +1499,20 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 100, 200);
     await page.waitForTimeout(300);
     const editor1 = page.locator('[data-testid="inline-editor"]');
-    if (await editor1.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await editor1.fill('3 + 5 = 8');
-      await editor1.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor1).toBeVisible({ timeout: 1000 });
+    await editor1.fill('3 + 5 = 8');
+    await editor1.press('Enter');
+    await page.waitForTimeout(200);
 
     // Place réponse below
     await selectTool(page, 'reponse');
     await clickCanvas(page, 100, 190);
     await page.waitForTimeout(300);
     const editor2 = page.locator('[data-testid="inline-editor"]');
-    if (await editor2.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await editor2.fill('Il y a 8 pommes.');
-      await editor2.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor2).toBeVisible({ timeout: 1000 });
+    await editor2.fill('Il y a 8 pommes.');
+    await editor2.press('Enter');
+    await page.waitForTimeout(200);
 
     // Deselect
     await selectTool(page, 'reponse');
@@ -1978,15 +1961,13 @@ test.describe('Visual audit — full flow', () => {
 
     // Switch to complet
     const modeSelector = page.locator('[data-testid="mode-selector"]');
-    if (await modeSelector.isVisible().catch(() => false)) {
-      await modeSelector.click();
-      await page.waitForTimeout(200);
-      const completOption = page.locator('[data-testid="mode-option-complet"]');
-      if (await completOption.isVisible().catch(() => false)) {
-        await completOption.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(modeSelector).toBeVisible({ timeout: 3000 });
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('101-mode-complet.png'), fullPage: true });
   });
@@ -2003,11 +1984,10 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 400, 50);
     await page.waitForTimeout(300);
     const editor = page.locator('[data-testid="inline-editor"]');
-    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await editor.fill('5 + 3');
-      await editor.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('5 + 3');
+    await editor.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'calcul'); // deselect
 
     await page.screenshot({ path: shot('102-before-ranger.png'), fullPage: true });
@@ -2161,22 +2141,20 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 100, 100);
     await page.waitForTimeout(500);
     const ed1 = page.locator('[data-testid="inline-editor"]');
-    if (await ed1.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed1.fill('15 pages');
-      await ed1.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed1).toBeVisible({ timeout: 2000 });
+    await ed1.fill('15 pages');
+    await ed1.press('Enter');
+    await page.waitForTimeout(200);
 
     // Place second réponse
     await selectTool(page, 'reponse');
     await clickCanvas(page, 100, 160);
     await page.waitForTimeout(500);
     const ed2 = page.locator('[data-testid="inline-editor"]');
-    if (await ed2.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed2.fill('45 pages');
-      await ed2.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed2).toBeVisible({ timeout: 2000 });
+    await ed2.fill('45 pages');
+    await ed2.press('Enter');
+    await page.waitForTimeout(200);
 
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
@@ -2187,15 +2165,13 @@ test.describe('Visual audit — full flow', () => {
   test('65 — Tableau: keyboard nav + row/col highlight', async ({ page }) => {
     // Switch to complet mode for tableau tool
     const modeSelector = page.locator('[data-testid="mode-selector"]');
-    if (await modeSelector.isVisible().catch(() => false)) {
-      await modeSelector.click();
-      await page.waitForTimeout(200);
-      const completOption = page.locator('[data-testid="mode-option-complet"]');
-      if (await completOption.isVisible().catch(() => false)) {
-        await completOption.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(modeSelector).toBeVisible({ timeout: 3000 });
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     // Place tableau
     await selectTool(page, 'tableau');
@@ -2332,15 +2308,13 @@ test.describe('Visual audit — full flow', () => {
   test('70 — Tableau dimension preview on hover', async ({ page }) => {
     // Switch to complet mode
     const modeSelector = page.locator('[data-testid="mode-selector"]');
-    if (await modeSelector.isVisible().catch(() => false)) {
-      await modeSelector.click();
-      await page.waitForTimeout(200);
-      const completOption = page.locator('[data-testid="mode-option-complet"]');
-      if (await completOption.isVisible().catch(() => false)) {
-        await completOption.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(modeSelector).toBeVisible({ timeout: 3000 });
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     // Place tableau
     await selectTool(page, 'tableau');
@@ -2483,38 +2457,34 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 100, 160);
     await page.waitForTimeout(400);
     const ed1 = page.locator('[data-testid="inline-editor"]');
-    if (await ed1.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed1.fill('5 + 3 = 8');
-      await ed1.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed1).toBeVisible({ timeout: 2000 });
+    await ed1.fill('5 + 3 = 8');
+    await ed1.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'calcul');
     await clickCanvas(page, 250, 160);
     await page.waitForTimeout(400);
     const ed2 = page.locator('[data-testid="inline-editor"]');
-    if (await ed2.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed2.fill('12 - 5 = 7');
-      await ed2.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed2).toBeVisible({ timeout: 2000 });
+    await ed2.fill('12 - 5 = 7');
+    await ed2.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'reponse');
     await clickCanvas(page, 100, 185);
     await page.waitForTimeout(400);
     const ed3 = page.locator('[data-testid="inline-editor"]');
-    if (await ed3.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed3.fill('Il reste 7 pommes');
-      await ed3.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed3).toBeVisible({ timeout: 2000 });
+    await ed3.fill('Il reste 7 pommes');
+    await ed3.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'reponse');
     await clickCanvas(page, 250, 185);
     await page.waitForTimeout(400);
     const ed4 = page.locator('[data-testid="inline-editor"]');
-    if (await ed4.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed4.fill('Léa a 7 pommes');
-      await ed4.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed4).toBeVisible({ timeout: 2000 });
+    await ed4.fill('Léa a 7 pommes');
+    await ed4.press('Enter');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
@@ -2567,11 +2537,10 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('128-mobile-paysage-editeur.png'), fullPage: true });
 
     const editor = page.locator('[data-testid="inline-editor"]');
-    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await editor.fill('3 + 4');
-      await editor.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('3 + 4');
+    await editor.press('Enter');
+    await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('129-mobile-paysage-apres.png'), fullPage: true });
   });
@@ -2637,22 +2606,20 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 140);
     await page.waitForTimeout(400);
     const calcEd = page.locator('[data-testid="inline-editor"]');
-    if (await calcEd.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await calcEd.fill('45 / 3 = 15');
-      await calcEd.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(calcEd).toBeVisible({ timeout: 2000 });
+    await calcEd.fill('45 / 3 = 15');
+    await calcEd.press('Enter');
+    await page.waitForTimeout(200);
 
     // Réponse
     await selectTool(page, 'reponse');
     await clickCanvas(page, 80, 180);
     await page.waitForTimeout(400);
     const repEd = page.locator('[data-testid="inline-editor"]');
-    if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await repEd.fill('Théo a lu 15 pages');
-      await repEd.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(repEd).toBeVisible({ timeout: 2000 });
+    await repEd.fill('Théo a lu 15 pages');
+    await repEd.press('Enter');
+    await page.waitForTimeout(200);
 
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
@@ -2706,11 +2673,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const editor = page.locator('[data-testid="inline-editor"]');
-    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await editor.fill('abc pas un nombre');
-      await editor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('abc pas un nombre');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('134-saisie-invalide.png'), fullPage: true });
   });
@@ -2745,11 +2711,10 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(500);
 
     const editor = page.locator('[data-testid="inline-editor"]');
-    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await editor.fill('3.5 + 2.5 = 6');
-      await editor.press('Enter');
-      await page.waitForTimeout(300);
-    }
+    await expect(editor).toBeVisible({ timeout: 2000 });
+    await editor.fill('3.5 + 2.5 = 6');
+    await editor.press('Enter');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('136-decimaux-calcul.png'), fullPage: true });
   });
@@ -2757,15 +2722,13 @@ test.describe('Visual audit — full flow', () => {
   test('85 — Combinaison barre + tableau', async ({ page }) => {
     // Switch to complet mode
     const modeSelector = page.locator('[data-testid="mode-selector"]');
-    if (await modeSelector.isVisible().catch(() => false)) {
-      await modeSelector.click();
-      await page.waitForTimeout(200);
-      const completOption = page.locator('[data-testid="mode-option-complet"]');
-      if (await completOption.isVisible().catch(() => false)) {
-        await completOption.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(modeSelector).toBeVisible({ timeout: 3000 });
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
@@ -2782,15 +2745,13 @@ test.describe('Visual audit — full flow', () => {
     test.setTimeout(60_000);
     // Switch to complet mode
     const modeSelector = page.locator('[data-testid="mode-selector"]');
-    if (await modeSelector.isVisible().catch(() => false)) {
-      await modeSelector.click();
-      await page.waitForTimeout(200);
-      const completOption = page.locator('[data-testid="mode-option-complet"]');
-      if (await completOption.isVisible().catch(() => false)) {
-        await completOption.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await expect(modeSelector).toBeVisible({ timeout: 3000 });
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 3000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     await selectTool(page, 'jeton');
     await clickCanvas(page, 50, 40);
@@ -2808,29 +2769,26 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 50, 150);
     await page.waitForTimeout(400);
     const ed = page.locator('[data-testid="inline-editor"]');
-    if (await ed.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed.fill('5 + 3 = 8');
-      await ed.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed).toBeVisible({ timeout: 2000 });
+    await ed.fill('5 + 3 = 8');
+    await ed.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'reponse');
     await clickCanvas(page, 250, 150);
     await page.waitForTimeout(400);
     const repEd = page.locator('[data-testid="inline-editor"]');
-    if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await repEd.fill('8 billes');
-      await repEd.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(repEd).toBeVisible({ timeout: 2000 });
+    await repEd.fill('8 billes');
+    await repEd.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'etiquette');
     await clickCanvas(page, 300, 110);
     await page.waitForTimeout(400);
     const etEd = page.locator('[data-testid="inline-editor"]');
-    if (await etEd.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await etEd.fill('Note');
-      await etEd.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(etEd).toBeVisible({ timeout: 2000 });
+    await etEd.fill('Note');
+    await etEd.press('Enter');
+    await page.waitForTimeout(200);
     await selectTool(page, 'tableau');
     await clickCanvas(page, 350, 50);
     await page.waitForTimeout(300);
@@ -2873,11 +2831,10 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 130);
     await page.waitForTimeout(400);
     const ed = page.locator('[data-testid="inline-editor"]');
-    if (await ed.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ed.fill('5 + 3 = 8');
-      await ed.press('Enter');
-      await page.waitForTimeout(200);
-    }
+    await expect(ed).toBeVisible({ timeout: 2000 });
+    await ed.fill('5 + 3 = 8');
+    await ed.press('Enter');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 

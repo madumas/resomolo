@@ -55,6 +55,31 @@ export function soundUndo() {
   play(400, 35, 'sine', 0.06);
 }
 
+// Attach — étiquette→pièce or flèche→pièce (ascending triangle)
+export function soundAttach() {
+  play(550, 40, 'triangle', 0.08);
+  setTimeout(() => play(700, 30, 'triangle', 0.06), 20);
+}
+
+// Subdivide — bar divided into parts (V shape: high→low→high)
+export function soundSubdivide() {
+  play(800, 25, 'sine', 0.08);
+  setTimeout(() => play(600, 25, 'sine', 0.06), 25);
+  setTimeout(() => play(800, 20, 'sine', 0.05), 50);
+}
+
+// Acknowledge — response written (flat, very soft, NOT evaluative)
+export function soundAcknowledge() {
+  play(500, 25, 'sine', 0.04);
+}
+
+// Distribute — jetons distributed into groups (3 micropulses)
+export function soundDistribute() {
+  play(600, 20, 'sine', 0.06);
+  setTimeout(() => play(600, 20, 'sine', 0.05), 22);
+  setTimeout(() => play(600, 20, 'sine', 0.04), 44);
+}
+
 // Haptic — vibration on supported devices
 export function haptic(ms = 30) {
   try {
@@ -97,4 +122,20 @@ export function onDelete() {
 
 export function onUndoSound() {
   if (mode === 'full') { soundUndo(); }
+}
+
+export function onAttach() {
+  if (mode === 'full') { soundAttach(); haptic(20); }
+}
+
+export function onSubdivide() {
+  if (mode === 'full') { soundSubdivide(); haptic(15); setTimeout(() => haptic(15), 35); }
+}
+
+export function onAcknowledge() {
+  if (mode === 'full') { soundAcknowledge(); }
+}
+
+export function onDistribute() {
+  if (mode === 'full') { soundDistribute(); }
 }
