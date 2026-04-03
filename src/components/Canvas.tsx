@@ -1157,6 +1157,14 @@ export function Canvas({
                   dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
                 }
               }}
+              onKeyDown={e => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Restore cell to its last saved value
+                  (e.target as HTMLInputElement).value = t.cells[ri][ci];
+                }
+              }}
               onPointerDown={e => e.stopPropagation()}
               style={{
                 position: 'absolute', left, top, width: w, height: h,
