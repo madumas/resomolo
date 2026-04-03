@@ -68,9 +68,9 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
         const mx = x + ((val - min) / (max - min)) * width;
         return (
           <g key={i}>
-            <circle cx={mx} cy={y} r={2.5}
-              fill="#185FA5" stroke="#fff" strokeWidth={0.5} />
-            <text x={mx} y={y - 5} textAnchor="middle" fontSize={3.5} fontWeight={600} fill="#185FA5">
+            <circle cx={mx} cy={y} r={4}
+              fill="#185FA5" stroke="#fff" strokeWidth={0.7} />
+            <text x={mx} y={y - 6} textAnchor="middle" fontSize={4.5} fontWeight={600} fill="#185FA5">
               {val}
             </text>
           </g>

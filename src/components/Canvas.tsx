@@ -50,6 +50,7 @@ interface CanvasProps {
   onSetGroupingBarId?: (id: string | null) => void;
   showSuggestedZones?: boolean;
   showTokenCounter?: boolean;
+  highContrast?: boolean;
 }
 
 type InteractionMode =
@@ -98,6 +99,7 @@ export function Canvas({
   onSetGroupingBarId,
   showSuggestedZones,
   showTokenCounter,
+  highContrast,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -798,7 +800,7 @@ export function Canvas({
         {/* Render boîtes first (background), then everything else on top */}
         {pieces.filter(p => p.type === 'boite').map(piece => (
           <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
-            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} />
+            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} />
           </g>
         ))}
 
@@ -826,7 +828,7 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity: isMoving ? 0.6 : 1, transition: 'opacity 0.1s' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} />
             </g>
           );
         })}
@@ -1401,20 +1403,21 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
   reponseIds?: string[];
+  highContrast?: boolean;
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
     case 'barre':
-      inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} />; break;
+      inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'jeton':
-      inner = <JetonPiece piece={piece} isSelected={isSelected} />; break;
+      inner = <JetonPiece piece={piece} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'boite':
-      inner = <BoitePiece piece={piece} isSelected={isSelected} />; break;
+      inner = <BoitePiece piece={piece} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'etiquette':
       inner = <EtiquettePiece piece={piece} isSelected={isSelected} />; break;
     case 'calcul':
@@ -1441,9 +1444,9 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds }: {
   );
 }
 
-function JetonPiece({ piece, isSelected }: { piece: Piece & { type: 'jeton' }; isSelected: boolean }) {
+function JetonPiece({ piece, isSelected, highContrast }: { piece: Piece & { type: 'jeton' }; isSelected: boolean; highContrast?: boolean }) {
   const r = 4;
-  const color = getPieceColor(piece.couleur);
+  const color = getPieceColor(piece.couleur, highContrast);
   return (
     <circle
       cx={piece.x}
@@ -1481,8 +1484,8 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
   );
 }
 
-function BoitePiece({ piece, isSelected }: { piece: Boite; isSelected: boolean }) {
-  const color = getPieceColor(piece.couleur);
+function BoitePiece({ piece, isSelected, highContrast }: { piece: Boite; isSelected: boolean; highContrast?: boolean }) {
+  const color = getPieceColor(piece.couleur, highContrast);
   const fillColor = getPieceFillColor(piece.couleur);
   return (
     <g>

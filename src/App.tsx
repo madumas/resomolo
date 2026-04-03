@@ -605,6 +605,7 @@ export default function App() {
           onSetGroupingBarId={setGroupingBarId}
           showSuggestedZones={appReady && settings.showSuggestedZones}
           showTokenCounter={settings.showTokenCounter}
+          highContrast={settings.highContrast}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>

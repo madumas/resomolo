@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { UI_PRIMARY, UI_DESTRUCTIVE, UI_SURFACE, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { UI_PRIMARY, UI_SURFACE, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 
 export interface ConfirmDialogProps {
@@ -79,7 +79,7 @@ export function ConfirmDialog({
               padding: '0 12px',
               border: 'none',
               borderRadius: 4,
-              background: UI_DESTRUCTIVE,
+              background: '#6B7280',
               color: '#FFFFFF',
               cursor: 'pointer',
               fontSize: 13,

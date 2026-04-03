@@ -78,3 +78,35 @@ svg g.piece-new {
 :-webkit-full-screen [data-testid="canvas-svg"] {
   height: 100vh !important;
 }
+
+/* Mobile responsive — small screens */
+@media (max-width: 480px) {
+  [data-testid="toolbar"] {
+    padding: 4px 6px !important;
+    gap: 4px !important;
+    min-height: 52px !important;
+  }
+  [data-testid="toolbar"] button {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 4px !important;
+    font-size: 10px !important;
+  }
+  [data-testid="toolbar"] .tool-label {
+    display: none !important;
+  }
+  [data-testid="action-bar"] {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+  }
+  [data-testid="action-bar"] button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+  [data-testid="logo-text"] {
+    display: none !important;
+  }
+}

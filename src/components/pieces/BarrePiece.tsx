@@ -30,13 +30,15 @@ interface BarrePieceProps {
   piece: Barre;
   referenceUnitMm: number;
   isSelected: boolean;
+  highContrast?: boolean;
 }
 
-export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePieceProps) {
+export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }: BarrePieceProps) {
   const w = piece.sizeMultiplier * referenceUnitMm;
   const h = BAR_HEIGHT_MM;
-  const color = getPieceColor(piece.couleur);
+  const color = getPieceColor(piece.couleur, highContrast);
   const fill = getPieceFillColor(piece.couleur);
+  const sw = highContrast ? 1.5 : (isSelected ? 1 : 0.5); // strokeWidth multiplied in high contrast
   const hasLabel = piece.label.length > 0;
   const hasValue = piece.value.length > 0;
 
@@ -63,7 +65,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
         rx={1.5}
         fill={fill}
         stroke={piece.locked ? '#9CA3AF' : color}
-        strokeWidth={isSelected ? 1 : 0.5}
+        strokeWidth={sw}
       />
       {/* Colored subdivision parts */}
       {piece.divisions && piece.coloredParts && piece.coloredParts.map(partIdx => {

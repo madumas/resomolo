@@ -213,13 +213,7 @@ export function ContextActions({
             </CtxBtn>
           )}
           {!piece.locked && (
-            <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
-          )}
-          {!piece.locked && (
-            <CtxBtn onClick={() => onStartEqualizing(piece.id)}>Même taille</CtxBtn>
-          )}
-          {!piece.locked && !piece.groupId && (
-            <CtxBtn onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
+            <CtxBtn onClick={() => setBarSubmenu('plus')}>Plus…</CtxBtn>
           )}
           {piece.groupId && (
             <CtxBtn onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
@@ -250,6 +244,17 @@ export function ContextActions({
               {f.label}
             </CtxBtn>
           ))}
+        </>
+      )}
+      {/* Barre — submenu Plus (Copier, Même taille, Grouper) */}
+      {isBarre(piece) && barSubmenu === 'plus' && (
+        <>
+          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
+          <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); setBarSubmenu('none'); }}>Copier</CtxBtn>
+          <CtxBtn onClick={() => { onStartEqualizing(piece.id); setBarSubmenu('none'); }}>Même taille</CtxBtn>
+          {!piece.groupId && (
+            <CtxBtn onClick={() => { onStartGrouping(piece.id); setBarSubmenu('none'); }}>Grouper</CtxBtn>
+          )}
         </>
       )}
       {/* Barre — submenu Fraction */}
