@@ -52,12 +52,18 @@ function detectDecimalPosition(num: string | undefined): number | null {
 }
 
 function rowToNumWithDecimal(row: Row, decPos: number | null): string {
-  const raw = row.join('').replace(/^0+/, '') || '0';
-  if (decPos === null || decPos === 0) return raw;
-  // Pad raw if shorter than decPos (e.g. "5" with decPos=2 → "0,05")
-  const padded = raw.padStart(decPos + 1, '0');
-  const intPart = padded.slice(0, -decPos) || '0';
-  const decPart = padded.slice(-decPos);
+  if (decPos === null || decPos === 0) {
+    return row.join('').replace(/^0+/, '') || '0';
+  }
+  // Split row into integer cells and decimal cells based on grid position
+  const intCells = row.slice(0, NUM_COLS - decPos);
+  const decCells = row.slice(NUM_COLS - decPos);
+  const intPart = intCells.join('').replace(/^0+/, '') || '0';
+  const decPart = decCells.join('');
+  // If no decimal digits entered, return integer only
+  if (!decPart || decPart.replace(/0/g, '') === '') {
+    return intPart;
+  }
   return `${intPart},${decPart}`;
 }
 
