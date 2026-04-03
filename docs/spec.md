@@ -858,16 +858,45 @@ Outils pour l'adulte qui prépare et accompagne.
 
 ### v2 — Écosystème complet
 
+#### Nouvelles pièces et mathématiques
+
 | Feature | Notes |
 |---|---|
-| Vue portfolio chronologique | Historique des modélisations par élève |
-| Annotations privées de l'adulte | Notes par slot |
-| Export groupé de slots | Pour l'enseignant |
-| Tableau de données | Statistique/probabilité 3e cycle |
-| Diagramme en arbre | Probabilité 3e cycle |
-| Rappel de fatigue | Comme TraceVite |
-| Mode « focus » | Masque pièces existantes — réduit les distractions |
-| Comparaison côte à côte | Deux modélisations en parallèle — flexibilité cognitive |
+| **Pièce « Groupe / Paquet »** | Regrouper des jetons en paquets égaux — modélise la division-partage et la multiplication-groupement. La barre couvre la comparaison/proportionnalité mais pas le sens « groupement » de la multiplication |
+| **Grandeurs décimales et fractions** | Barres avec valeurs 0.5, 1/4, etc. Fin 2e cycle / 3e cycle. Étend la barre au-delà des entiers |
+| **Tableau de données** | Statistique/probabilité 3e cycle |
+| **Diagramme en arbre** | Probabilité 3e cycle |
+| **Deux réponses par problème** | Problèmes à 2 questions (fréquent 3e cycle). Deux pièces Réponse distinctes avec numérotation |
+| **Problèmes avec donnée superflue** | L'enfant doit sélectionner les données pertinentes — le surlignage rend cet exercice explicite |
+
+#### Accessibilité et cognition
+
+| Feature | Notes |
+|---|---|
+| **Navigation clavier complète** | Tab entre pièces, flèches pour déplacer, Enter pour actions contextuelles. Roving tabindex sur le canvas SVG. Pour enfants utilisant clavier externe ou contacteur |
+| **Indicateur de progression visuel** | Breadcrumb discret : lire → surligner → modéliser → calculer → répondre. Soutient la planification (fonctions exécutives) sans imposer une séquence |
+| **Mode « focus »** | Masque les pièces existantes — réduit les distractions |
+| **Rappel flottant de l'énoncé** | Quand le canvas est grand, l'énoncé sort du viewport. Bulle ancrée ou panneau latéral rappelant la question |
+| **Rappel de fatigue** | Comme GéoMolo |
+
+#### Infrastructure parent / enseignant
+
+| Feature | Notes |
+|---|---|
+| **Vue portfolio chronologique** | Historique des modélisations par élève avec vignettes miniatures SVG |
+| **Vignettes dans le slot manager** | Aperçu miniature de chaque modélisation sauvegardée — aide la mémoire épisodique |
+| **Annotations privées de l'adulte** | Notes par slot, invisibles pour l'enfant |
+| **Export groupé de slots** | Pour l'enseignant ou le parent |
+| **Mode parent vs mode enfant** | Le parent configure (settings, problèmes), l'enfant utilise (interface simplifiée sans accès aux paramètres). Verrouillage par code simple |
+| **Comparaison côte à côte** | Deux modélisations en parallèle — flexibilité cognitive |
+
+#### Écosystème
+
+| Feature | Notes |
+|---|---|
+| **Banque de problèmes communautaire** | Les parents partagent leurs problèmes via URL, on agrège les meilleurs. Modération par votes |
+| **Multi-langue** | Anglais (hors-QC), potentiellement communautés autochtones |
+| **Suite AlloMolo** | StyloMolo (production écrite), ChronoMolo (timer/séquenceur de tâches) — même philosophie d'accessibilité |
 
 ### Jamais
 
