@@ -84,6 +84,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     ?? savedData?.decimalPosition
     ?? null;
   const [decimalPosition, setDecimalPosition] = useState<number | null>(initialDecPos);
+  const [swapping, setSwapping] = useState(false);
   const cellRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   // Auto-adjust number of intermediate lines based on op2 digits (for multiplication)
@@ -239,6 +240,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         Calcul en colonnes
       </div>
 
+      {/* Swap visibility + handler (multiplication only, both operands have digits) */}
+
       {/* Carry row */}
       <div style={{ display: 'flex', gap: GAP, marginBottom: 4, marginLeft: CELL + GAP }}>
         {carry.map((d, col) => (
@@ -262,7 +265,10 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       </div>
 
       {/* Operand 1 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center',
+        transform: swapping ? `translateY(${CELL + GAP + 48 + GAP}px)` : 'none',
+        transition: 'transform 250ms ease',
+      }}>
         <div style={{ width: CELL, height: CELL }} />
         {op1.map((d, col) => (
           <React.Fragment key={`op1-${col}`}>
@@ -276,8 +282,44 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         ))}
       </div>
 
+      {/* Swap button (multiplication only, both operands have digits) */}
+      {operator === '×' && op1.some(d => d !== '') && op2.some(d => d !== '') && (
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: GAP }}>
+          <button
+            onClick={() => {
+              setSwapping(true);
+              setTimeout(() => {
+                const newOp1 = [...op2];
+                const newOp2 = [...op1];
+                setOp1(newOp1);
+                setOp2(newOp2);
+                setCarry(emptyRow());
+                setIntermediates([emptyRow()]);
+                setSwapping(false);
+              }, 250);
+            }}
+            title="Échanger les deux nombres"
+            style={{
+              width: 48, height: 48,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 1,
+              background: '#F3F0FA', border: '1px solid #D5D0E0',
+              borderRadius: 8, cursor: 'pointer',
+              color: '#55506A',
+            }}
+          >
+            <span style={{ fontSize: 16, lineHeight: 1 }}>↕</span>
+            <span style={{ fontSize: 9 }}>Inverser</span>
+          </button>
+        </div>
+      )}
+
       {/* Operator + Operand 2 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center',
+        transform: swapping ? `translateY(-${CELL + GAP + 48 + GAP}px)` : 'none',
+        transition: 'transform 250ms ease',
+      }}>
         <select value={operator} onChange={e => setOperator(e.target.value)}
           style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', fontFamily: 'monospace' }}>
           {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}

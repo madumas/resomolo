@@ -62,7 +62,6 @@ export function ContextActions({
 
   // Tableau submenu state + preview
   const [tableauSubmenu, setTableauSubmenu] = useState<'none' | 'lignes' | 'colonnes'>('none');
-  const [tableauPreview, setTableauPreview] = useState<number | null>(null); // previewed value in submenu
 
   // Reset submenus when piece changes
   useEffect(() => {
@@ -70,7 +69,6 @@ export function ContextActions({
     setShowTemplateOptions(false);
     setDroiteSubmenu('none');
     setTableauSubmenu('none');
-    setTableauPreview(null);
   }, [piece.id]);
 
   // Convert piece bounding box from SVG mm to screen px
@@ -398,13 +396,13 @@ export function ContextActions({
       {/* Tableau — premier niveau */}
       {isTableau(piece) && tableauSubmenu === 'none' && (
         <>
-          <CtxBtn onClick={() => { setTableauSubmenu('lignes'); setTableauPreview(null); }}>
+          <CtxBtn onClick={() => { setTableauSubmenu('lignes'); }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}>
               <line x1="1" y1="3" x2="13" y2="3" /><line x1="1" y1="7" x2="13" y2="7" /><line x1="1" y1="11" x2="13" y2="11" />
             </svg>
             Lignes {piece.rows}
           </CtxBtn>
-          <CtxBtn onClick={() => { setTableauSubmenu('colonnes'); setTableauPreview(null); }}>
+          <CtxBtn onClick={() => { setTableauSubmenu('colonnes'); }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}>
               <line x1="3" y1="1" x2="3" y2="13" /><line x1="7" y1="1" x2="7" y2="13" /><line x1="11" y1="1" x2="11" y2="13" />
             </svg>
@@ -415,54 +413,40 @@ export function ContextActions({
           </CtxBtn>
         </>
       )}
-      {/* Tableau — sous-menu Lignes (sélection directe, clic = preview, re-clic = confirmer) */}
+      {/* Tableau — sous-menu Lignes (sélection directe, 1 clic = applique) */}
       {isTableau(piece) && tableauSubmenu === 'lignes' && (
         <>
-          <CtxBtn onClick={() => { setTableauSubmenu('none'); setTableauPreview(null); onTableauPreview?.(null, null); }} back>←</CtxBtn>
+          <CtxBtn onClick={() => { setTableauSubmenu('none'); onTableauPreview?.(null, null); }} back>←</CtxBtn>
           {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
             <CtxBtn key={n}
-              active={tableauPreview === n || (tableauPreview === null && piece.rows === n)}
+              active={piece.rows === n}
               onClick={() => {
-                if (tableauPreview === n) {
-                  // Confirm: apply the change
-                  const newCells = n > piece.rows
-                    ? [...piece.cells, ...Array.from({ length: n - piece.rows }, () => Array(piece.cols).fill(''))]
-                    : piece.cells.slice(0, n);
-                  onEditPiece(piece.id, { rows: n, cells: newCells });
-                  setTableauPreview(null);
-                  setTableauSubmenu('none');
-                  onTableauPreview?.(null, null);
-                } else {
-                  // Preview: show what it would look like
-                  setTableauPreview(n);
-                  onTableauPreview?.(n, null);
-                }
+                const newCells = n > piece.rows
+                  ? [...piece.cells, ...Array.from({ length: n - piece.rows }, () => Array(piece.cols).fill(''))]
+                  : piece.cells.slice(0, n);
+                onEditPiece(piece.id, { rows: n, cells: newCells });
+                setTableauSubmenu('none');
+                onTableauPreview?.(null, null);
               }}>
               {n}
             </CtxBtn>
           ))}
         </>
       )}
-      {/* Tableau — sous-menu Colonnes */}
+      {/* Tableau — sous-menu Colonnes (sélection directe, 1 clic = applique) */}
       {isTableau(piece) && tableauSubmenu === 'colonnes' && (
         <>
-          <CtxBtn onClick={() => { setTableauSubmenu('none'); setTableauPreview(null); onTableauPreview?.(null, null); }} back>←</CtxBtn>
+          <CtxBtn onClick={() => { setTableauSubmenu('none'); onTableauPreview?.(null, null); }} back>←</CtxBtn>
           {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
             <CtxBtn key={n}
-              active={tableauPreview === n || (tableauPreview === null && piece.cols === n)}
+              active={piece.cols === n}
               onClick={() => {
-                if (tableauPreview === n) {
-                  const newCells = n > piece.cols
-                    ? piece.cells.map(r => [...r, ...Array(n - piece.cols).fill('')])
-                    : piece.cells.map(r => r.slice(0, n));
-                  onEditPiece(piece.id, { cols: n, cells: newCells });
-                  setTableauPreview(null);
-                  setTableauSubmenu('none');
-                  onTableauPreview?.(null, null);
-                } else {
-                  setTableauPreview(n);
-                  onTableauPreview?.(null, n);
-                }
+                const newCells = n > piece.cols
+                  ? piece.cells.map(r => [...r, ...Array(n - piece.cols).fill('')])
+                  : piece.cells.map(r => r.slice(0, n));
+                onEditPiece(piece.id, { cols: n, cells: newCells });
+                setTableauSubmenu('none');
+                onTableauPreview?.(null, null);
               }}>
               {n}
             </CtxBtn>
