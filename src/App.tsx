@@ -119,21 +119,14 @@ export default function App() {
   const slotManager = useSlotManager({ undoManager, dispatch });
 
   const handleUndo = useCallback(() => {
-    // Force blur on active input — commits pending edits (tableau cells, inline editors)
-    if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
-      document.activeElement.blur();
-    }
-    // Small delay to let the blur dispatch complete before undoing
-    setTimeout(() => {
-      setUndoManager(prev => {
-        if (!canUndo(prev)) return prev;
-        onUndoSound();
-        return undo(prev);
-      });
-      setSelectedPieceId(null);
-      setEditingPieceId(null);
-      setDeleteConfirmId(null);
-    }, 50);
+    setUndoManager(prev => {
+      if (!canUndo(prev)) return prev;
+      onUndoSound();
+      return undo(prev);
+    });
+    setSelectedPieceId(null);
+    setEditingPieceId(null);
+    setDeleteConfirmId(null);
   }, []);
 
   const handleRedo = useCallback(() => {

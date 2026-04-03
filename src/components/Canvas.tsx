@@ -1147,7 +1147,7 @@ export function Canvas({
           const h = botRight.y - topLeft.y;
           return (
             <input
-              key={`ti-${t.rows}-${t.cols}-${ri}-${ci}`}
+              key={`ti-${t.rows}-${t.cols}-${ri}-${ci}-${t.cells[ri][ci]}`}
               type="text"
               data-tableau-cell={`${ri}-${ci}`}
               defaultValue={t.cells[ri][ci]}
