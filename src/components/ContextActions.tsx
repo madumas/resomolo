@@ -391,22 +391,26 @@ export function ContextActions({
       {isTableau(piece) && (
         <>
           <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center' }}>
-            Clique sur une cellule pour écrire
+            {piece.rows}×{piece.cols} — clique pour écrire
           </span>
-          <CtxBtn onClick={() => onEditPiece(piece.id, { rows: Math.min(4, piece.rows + 1), cells: [...piece.cells, Array(piece.cols).fill('')] })}>
-            {piece.rows}×{piece.cols} + ligne
-          </CtxBtn>
-          <CtxBtn onClick={() => onEditPiece(piece.id, { cols: Math.min(4, piece.cols + 1), cells: piece.cells.map(r => [...r, '']) })}>
-            {piece.rows}×{piece.cols} + col.
-          </CtxBtn>
-          {(piece.rows > 2 || piece.cols > 2) && (
-            <CtxBtn onClick={() => {
-              if (piece.cols > piece.rows && piece.cols > 2)
-                onEditPiece(piece.id, { cols: piece.cols - 1, cells: piece.cells.map(r => r.slice(0, -1)) });
-              else if (piece.rows > 2)
-                onEditPiece(piece.id, { rows: piece.rows - 1, cells: piece.cells.slice(0, -1) });
-            }}>
-              Réduire
+          {piece.rows < 6 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows + 1, cells: [...piece.cells, Array(piece.cols).fill('')] })}>
+              + Ligne
+            </CtxBtn>
+          )}
+          {piece.cols < 6 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols + 1, cells: piece.cells.map(r => [...r, '']) })}>
+              + Colonne
+            </CtxBtn>
+          )}
+          {piece.rows > 2 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows - 1, cells: piece.cells.slice(0, -1) })}>
+              − Ligne
+            </CtxBtn>
+          )}
+          {piece.cols > 2 && (
+            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols - 1, cells: piece.cells.map(r => r.slice(0, -1)) })}>
+              − Colonne
             </CtxBtn>
           )}
           <CtxBtn active={piece.headerRow} onClick={() => onEditPiece(piece.id, { headerRow: !piece.headerRow })}>

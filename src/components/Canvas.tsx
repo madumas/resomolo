@@ -1092,7 +1092,7 @@ export function Canvas({
           const h = botRight.y - topLeft.y;
           return (
             <input
-              key={`ti-${ri}-${ci}`}
+              key={`ti-${t.rows}-${t.cols}-${ri}-${ci}`}
               type="text"
               defaultValue={t.cells[ri][ci]}
               placeholder={ri === 0 && t.headerRow ? '…' : ''}
