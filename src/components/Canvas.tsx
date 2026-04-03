@@ -1896,7 +1896,7 @@ function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols, 
               fill="none" stroke={isEditing ? '#B0A0D0' : '#D5D0E0'} strokeWidth={isEditing ? 0.4 : 0.3} />
             <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={(cell || '').length > 5 ? Math.max(2, TABLEAU_CELL_W / ((cell || '').length * 0.55)) : (ri === 0 && piece.headerRow ? 4 : 3.5)}
+              fontSize={(cell || '').length > 4 ? Math.max(3, TABLEAU_CELL_W / ((cell || '').length * 0.5)) : (ri === 0 && piece.headerRow ? 6 : 5.5)}
               fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
               fill={isEditing ? 'transparent' : '#1E1A2E'}
               data-edit-target={`${piece.id}-${ri}-${ci}`}>
