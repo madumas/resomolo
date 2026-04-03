@@ -733,24 +733,16 @@ export function Canvas({
         })}
 
         {/* Tableaux — rendered separately for in-place editing */}
-        {pieces.filter(p => p.type === 'tableau').map(piece => {
-          const t = piece as Tableau;
-          const editing = tableauEditorPieceId === piece.id;
-          return (
-            <g key={piece.id} data-piece-id={piece.id}
-              className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
-              <TableauPiece
-                piece={t}
-                isSelected={piece.id === selectedPieceId}
-                isEditing={editing}
-                onCellChange={(row, col, value) => {
-                  const newCells = t.cells.map((r, ri) => ri === row ? r.map((c, ci) => ci === col ? value : c) : [...r]);
-                  dispatch({ type: 'EDIT_PIECE', id: piece.id, changes: { cells: newCells } });
-                }}
-              />
-            </g>
-          );
-        })}
+        {pieces.filter(p => p.type === 'tableau').map(piece => (
+          <g key={piece.id} data-piece-id={piece.id}
+            className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
+            <TableauPiece
+              piece={piece as Tableau}
+              isSelected={piece.id === selectedPieceId}
+              isEditing={tableauEditorPieceId === piece.id}
+            />
+          </g>
+        ))}
 
         {/* Group brackets */}
         {(() => {
@@ -1079,6 +1071,51 @@ export function Canvas({
             onCancel={() => setDivisionCalcPieceId(null)}
           />
         );
+      })()}
+
+      {/* Tableau cell inputs overlay — HTML positioned over SVG cells */}
+      {tableauEditorPieceId && (() => {
+        const piece = pieces.find(p => p.id === tableauEditorPieceId);
+        if (!piece || piece.type !== 'tableau') return null;
+        const t = piece as Tableau;
+        const ctm = svgRef.current?.getScreenCTM();
+        const canvasRect = svgRef.current?.parentElement?.getBoundingClientRect();
+        if (!ctm || !canvasRect) return null;
+        return t.cells.map((row, ri) => row.map((_, ci) => {
+          const svgX = t.x + ci * TABLEAU_CELL_W;
+          const svgY = t.y + ri * TABLEAU_CELL_H;
+          const topLeft = new DOMPoint(svgX, svgY).matrixTransform(ctm);
+          const botRight = new DOMPoint(svgX + TABLEAU_CELL_W, svgY + TABLEAU_CELL_H).matrixTransform(ctm);
+          const left = topLeft.x - canvasRect.left;
+          const top = topLeft.y - canvasRect.top;
+          const w = botRight.x - topLeft.x;
+          const h = botRight.y - topLeft.y;
+          return (
+            <input
+              key={`ti-${ri}-${ci}`}
+              type="text"
+              defaultValue={t.cells[ri][ci]}
+              placeholder={ri === 0 && t.headerRow ? '…' : ''}
+              onBlur={e => {
+                const val = e.target.value;
+                if (val !== t.cells[ri][ci]) {
+                  const newCells = t.cells.map((r, rri) => rri === ri ? r.map((c, cci) => cci === ci ? val : c) : [...r]);
+                  dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
+                }
+              }}
+              onPointerDown={e => e.stopPropagation()}
+              style={{
+                position: 'absolute', left, top, width: w, height: h,
+                border: '1px solid #B0A0D0', borderRadius: 2,
+                textAlign: 'center', fontSize: 13,
+                background: ri === 0 && t.headerRow ? '#F2F0F8' : '#fff',
+                fontWeight: ri === 0 && t.headerRow ? 600 : 400,
+                outline: 'none', padding: 0, zIndex: 15,
+                boxSizing: 'border-box',
+              }}
+            />
+          );
+        }));
       })()}
 
       {/* Jeton counter by color — supports dyscalculia */}
@@ -1580,10 +1617,9 @@ function getReponseWidth(piece: Reponse): number {
 const TABLEAU_CELL_W = 12; // mm
 const TABLEAU_CELL_H = 10; // mm
 
-function TableauPiece({ piece, isSelected, isEditing, onCellChange }: {
+function TableauPiece({ piece, isSelected, isEditing }: {
   piece: Tableau; isSelected: boolean;
   isEditing?: boolean;
-  onCellChange?: (row: number, col: number, value: string) => void;
 }) {
   const tw = piece.cols * TABLEAU_CELL_W;
   const th = piece.rows * TABLEAU_CELL_H;
@@ -1597,7 +1633,7 @@ function TableauPiece({ piece, isSelected, isEditing, onCellChange }: {
         <rect x={piece.x} y={piece.y} width={tw} height={TABLEAU_CELL_H} rx={1}
           fill="#F2F0F8" />
       )}
-      {/* Cell borders + text (or input when editing) */}
+      {/* Cell borders + text */}
       {piece.cells.map((row, ri) => row.map((cell, ci) => {
         const cx = piece.x + ci * TABLEAU_CELL_W;
         const cy = piece.y + ri * TABLEAU_CELL_H;
@@ -1605,35 +1641,14 @@ function TableauPiece({ piece, isSelected, isEditing, onCellChange }: {
           <g key={`${ri}-${ci}`}>
             <rect x={cx} y={cy} width={TABLEAU_CELL_W} height={TABLEAU_CELL_H}
               fill="none" stroke={isEditing ? '#B0A0D0' : '#D5D0E0'} strokeWidth={isEditing ? 0.4 : 0.3} />
-            {isEditing ? (
-              <foreignObject x={cx + 0.3} y={cy + 0.3} width={TABLEAU_CELL_W - 0.6} height={TABLEAU_CELL_H - 0.6}>
-                <input
-                  type="text"
-                  defaultValue={cell}
-                  placeholder={ri === 0 && piece.headerRow ? '…' : ''}
-                  onBlur={e => onCellChange?.(ri, ci, e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
-                  }}
-                  style={{
-                    width: '100%', height: '100%', border: 'none', outline: 'none',
-                    textAlign: 'center', fontSize: '3.5px', padding: 0, margin: 0,
-                    background: ri === 0 && piece.headerRow ? '#F2F0F8' : 'transparent',
-                    fontWeight: ri === 0 && piece.headerRow ? 600 : 400,
-                    fontFamily: 'inherit', boxSizing: 'border-box',
-                  }}
-                />
-              </foreignObject>
-            ) : (
-              <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
-                textAnchor="middle" dominantBaseline="central"
-                fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
-                fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
-                fill="#1E1A2E"
-                data-edit-target={`${piece.id}-${ri}-${ci}`}>
-                {cell || (ri === 0 && piece.headerRow ? '—' : '')}
-              </text>
-            )}
+            <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
+              fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
+              fill={isEditing ? 'transparent' : '#1E1A2E'}
+              data-edit-target={`${piece.id}-${ri}-${ci}`}>
+              {cell || (ri === 0 && piece.headerRow ? '—' : '')}
+            </text>
           </g>
         );
       }))}
