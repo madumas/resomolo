@@ -211,6 +211,9 @@ export default function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        // Let inputs/textareas handle their own Ctrl+Z (native undo)
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         e.preventDefault();
         if (e.shiftKey) handleRedo();
         else handleUndo();
