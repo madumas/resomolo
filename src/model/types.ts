@@ -1,6 +1,6 @@
 // === Piece types ===
 
-export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique';
+export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'groupe';
 
 export type CouleurPiece = 'bleu' | 'rouge' | 'vert' | 'jaune';
 
@@ -26,6 +26,7 @@ export interface Barre extends PieceBase {
   value: string; // e.g. "45", "?" — displayed inside the bar
   divisions: number | null;       // number of subdivisions, null = none
   coloredParts: number[];         // indices of colored parts (for fractions)
+  showFraction: boolean;          // show fraction label below bar
   groupId: string | null;         // group bracket id
   groupLabel: string | null;      // label displayed under group bracket
 }
@@ -72,7 +73,14 @@ export interface DroiteNumerique extends PieceBase {
   width: number;         // width in mm (default 200)
 }
 
-export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique;
+export interface Groupe extends PieceBase {
+  type: 'groupe';
+  count: number;           // number of elements in the group (2-6)
+  label: string;           // e.g. "Sacs", "Rangées"
+  couleur: CouleurPiece;
+}
+
+export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Groupe;
 
 // Type guards
 export function isJeton(p: Piece): p is Jeton { return p.type === 'jeton'; }
@@ -80,6 +88,7 @@ export function isBarre(p: Piece): p is Barre { return p.type === 'barre'; }
 export function isBoite(p: Piece): p is Boite { return p.type === 'boite'; }
 export function isFleche(p: Piece): p is Fleche { return p.type === 'fleche'; }
 export function isDroiteNumerique(p: Piece): p is DroiteNumerique { return p.type === 'droiteNumerique'; }
+export function isGroupe(p: Piece): p is Groupe { return p.type === 'groupe'; }
 
 // === Highlights ===
 
@@ -93,7 +102,7 @@ export interface Highlight {
 
 // === Tool ===
 
-export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
+export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'groupe' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
 
 // === State ===
 

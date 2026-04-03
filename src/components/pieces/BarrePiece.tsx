@@ -70,6 +70,37 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
       >
         {hasValue ? piece.value : (!hasLabel ? `${piece.sizeMultiplier}×` : ' ')}
       </text>
+      {/* Fraction label (stacked notation) — shown on demand */}
+      {piece.showFraction && piece.divisions && piece.coloredParts.length > 0 && (
+        <g>
+          <text
+            x={piece.x + w / 2}
+            y={piece.y + h + 5}
+            textAnchor="middle"
+            fontSize={5}
+            fill="#55506A"
+          >
+            {piece.coloredParts.length}
+          </text>
+          <line
+            x1={piece.x + w / 2 - 4}
+            y1={piece.y + h + 6.5}
+            x2={piece.x + w / 2 + 4}
+            y2={piece.y + h + 6.5}
+            stroke="#55506A"
+            strokeWidth={0.5}
+          />
+          <text
+            x={piece.x + w / 2}
+            y={piece.y + h + 11}
+            textAnchor="middle"
+            fontSize={5}
+            fill="#55506A"
+          >
+            {piece.divisions}
+          </text>
+        </g>
+      )}
       {/* Selection highlight */}
       {isSelected && (
         <rect

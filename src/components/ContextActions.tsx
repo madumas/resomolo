@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
-import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique } from '../model/types';
+import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isGroupe } from '../model/types';
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
@@ -243,8 +243,17 @@ export function ContextActions({
               )}
               {/* Remove subdivisions */}
               {piece.divisions && (
-                <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [] }); setBarSubmenu('none'); }}>
+                <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [], showFraction: false }); setBarSubmenu('none'); }}>
                   Effacer divisions
+                </CtxBtn>
+              )}
+              {/* Fraction label toggle */}
+              {piece.divisions && piece.coloredParts.length > 0 && (
+                <CtxBtn
+                  active={piece.showFraction}
+                  onClick={() => onEditPiece(piece.id, { showFraction: !piece.showFraction })}
+                >
+                  Fraction
                 </CtxBtn>
               )}
               {/* Même taille (Égaliser) */}
@@ -370,6 +379,31 @@ export function ContextActions({
         </>
       )}
 
+      {/* Groupe: count presets + nommer + couleur */}
+      {isGroupe(piece) && (
+        <>
+          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>
+            Nommer
+          </CtxBtn>
+          {[2, 3, 4, 5, 6].map(n => (
+            <CtxBtn key={n} active={piece.count === n} onClick={() => onEditPiece(piece.id, { count: n })}>
+              ×{n}
+            </CtxBtn>
+          ))}
+          {/* Color buttons */}
+          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
+            <button key={c} onClick={() => onEditPiece(piece.id, { couleur: c })}
+              style={{
+                minWidth: 44, minHeight: 44, borderRadius: '50%',
+                background: getPieceColor(c),
+                border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
+                cursor: 'pointer', opacity: piece.couleur === c ? 1 : 0.5,
+              }}
+            />
+          ))}
+        </>
+      )}
+
       {/* Delete is now in ActionBar, not here */}
     </div>
   );
@@ -453,6 +487,9 @@ function getPieceBoundsScreen(
     w = piece.width;
     h = 20;
     y -= 10; // selection highlight extends above the line
+  } else if (isGroupe(piece)) {
+    w = Math.max(25, piece.count * 6 + 10);
+    h = 15;
   } else if (piece.type === 'fleche') {
     // For arrows, find the rendered SVG element and use its bounding box
     const el = svg.querySelector(`[data-piece-id="${piece.id}"]`);

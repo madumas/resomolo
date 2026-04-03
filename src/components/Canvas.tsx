@@ -5,8 +5,8 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique } from '../model/types';
-import { isBarre, isDroiteNumerique } from '../model/types';
+import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Groupe } from '../model/types';
+import { isBarre, isDroiteNumerique, isGroupe } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor } from '../config/theme';
@@ -1138,6 +1138,8 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
       return <ReponsePiece piece={piece} isSelected={isSelected} />;
     case 'droiteNumerique':
       return <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />;
+    case 'groupe':
+      return <GroupePiece piece={piece as Groupe} isSelected={isSelected} />;
     case 'fleche':
       return null; // arrows are rendered in a separate layer above
     default:
@@ -1525,6 +1527,48 @@ function getReponseWidth(piece: Reponse): number {
 
 // === Hit test ===
 
+function GroupePiece({ piece, isSelected }: { piece: Groupe; isSelected: boolean }) {
+  const gw = Math.max(25, piece.count * 6 + 10);
+  const gh = 15;
+  const color = getPieceColor(piece.couleur);
+  return (
+    <g>
+      {/* Label above */}
+      {piece.label && (
+        <text x={piece.x + gw / 2} y={piece.y - 3} textAnchor="middle" fontSize={4.5} fill="#55506A"
+          data-edit-target={piece.id}>
+          {piece.label}
+        </text>
+      )}
+      {/* Oval container */}
+      <ellipse
+        cx={piece.x + gw / 2} cy={piece.y + gh / 2}
+        rx={gw / 2} ry={gh / 2}
+        fill="rgba(150, 150, 170, 0.06)"
+        stroke="#9898A8"
+        strokeWidth={isSelected ? 1 : 0.5}
+        strokeDasharray="3 2"
+      />
+      {/* Miniature dots inside */}
+      {Array.from({ length: piece.count }, (_, i) => {
+        const cx = piece.x + 5 + i * 5 + (gw - (piece.count * 5 + 5)) / 2;
+        return <circle key={i} cx={cx} cy={piece.y + gh / 2} r={2} fill={color} fillOpacity={0.6} />;
+      })}
+      {/* Count label if no text label */}
+      {!piece.label && (
+        <text x={piece.x + gw / 2} y={piece.y + gh + 4} textAnchor="middle" fontSize={4} fill="#55506A">
+          ×{piece.count}
+        </text>
+      )}
+      {/* Selection highlight */}
+      {isSelected && (
+        <rect x={piece.x - 1} y={piece.y - 1} width={gw + 2} height={gh + 2} rx={gh / 2}
+          fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
+      )}
+    </g>
+  );
+}
+
 function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, padding = 0, jetonPadding = 0, pieces: Piece[] = []): boolean {
   const p = padding; // additive padding (mm) for tolerance profiles
   switch (piece.type) {
@@ -1562,6 +1606,13 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       return pos.x >= piece.x - p && pos.x <= piece.x + w + p &&
              pos.y >= piece.y - 10 - p && pos.y <= piece.y + 12 + p;
     }
+    case 'groupe': {
+      const g = piece as Groupe;
+      const gw = Math.max(25, g.count * 6 + 10);
+      const gh = 15;
+      return pos.x >= g.x - p && pos.x <= g.x + gw + p &&
+             pos.y >= g.y - p && pos.y <= g.y + gh + p;
+    }
     case 'fleche': {
       const fleche = piece as Fleche;
       const from = pieces.find(p => p.id === fleche.fromId);
@@ -1594,6 +1645,7 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'reponse': return { x: piece.x + getReponseWidth(piece) / 2, y: piece.y + 11 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
+    case 'groupe': return { x: piece.x + Math.max(25, (piece as Groupe).count * 6 + 10) / 2, y: piece.y + 7.5 };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -1609,6 +1661,7 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 22; break;
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 4 + 8); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
+    case 'groupe': bx = piece.x; by = piece.y; bw = Math.max(25, (piece as Groupe).count * 6 + 10); bh = 15; break;
     default: return { x: piece.x, y: piece.y };
   }
   // Clamp target to the edge of the bounding box
@@ -1631,7 +1684,7 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'jeton':
       return { id, type: 'jeton', x: pos.x, y: pos.y, locked: false, couleur: 'bleu', parentId: null };
     case 'barre':
-      return { id, type: 'barre', x: pos.x, y: pos.y, locked: false, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], groupId: null, groupLabel: null };
+      return { id, type: 'barre', x: pos.x, y: pos.y, locked: false, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], showFraction: false, groupId: null, groupLabel: null };
     case 'boite':
       return { id, type: 'boite', x: pos.x, y: pos.y, locked: false, width: 60, height: 40, label: '' };
     case 'etiquette':
@@ -1643,6 +1696,9 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'droiteNumerique':
       return { id, type: 'droiteNumerique', x: pos.x, y: pos.y, locked: false,
         min: 0, max: 10, step: 1, markers: [], width: 200 };
+    case 'groupe':
+      return { id, type: 'groupe', x: pos.x, y: pos.y, locked: false,
+        count: 3, label: '', couleur: 'bleu' };
     case 'fleche':
       return null; // fleche uses two-click placement, not createPiece
     case 'deplacer':

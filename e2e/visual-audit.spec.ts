@@ -1768,4 +1768,124 @@ test.describe('Visual audit — full flow', () => {
     const statusText = await statusBar.innerText();
     expect(statusText.length).toBeGreaterThan(5);
   });
+
+  test('52 — Barre fraction label: subdivide, color, show fraction', async ({ page }) => {
+    // Place a barre
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Deselect tool, select piece → context actions
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+
+    // Open "Plus" submenu to find "Diviser"
+    const plusBtn = ctxActions.locator('button:has-text("Plus")');
+    if (await plusBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await plusBtn.click();
+      await page.waitForTimeout(200);
+
+      // Divide into 3 parts
+      const div3 = ctxActions.locator('button:has-text("3")').first();
+      if (await div3.isVisible().catch(() => false)) {
+        await div3.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // Re-select the bar to color parts
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Click on the bar twice to color 2 parts (click on left third, then middle)
+    const svg = page.locator('[data-testid="canvas-svg"]');
+    const box = await svg.boundingBox();
+    if (box) {
+      const pxPerMm = box.width / 500;
+      // Click on the bar at different x positions to color parts
+      await page.mouse.click(box.x + 145 * pxPerMm, box.y + 100 * pxPerMm);
+      await page.waitForTimeout(200);
+      await page.mouse.click(box.x + 160 * pxPerMm, box.y + 100 * pxPerMm);
+      await page.waitForTimeout(200);
+    }
+
+    // Re-select and look for "Fraction" button
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    // Open Plus submenu again
+    const plusBtn2 = ctxActions.locator('button:has-text("Plus")');
+    if (await plusBtn2.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await plusBtn2.click();
+      await page.waitForTimeout(200);
+    }
+
+    const fractionBtn = ctxActions.locator('button:has-text("Fraction")');
+    if (await fractionBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fractionBtn.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Deselect to see result
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('91-barre-fraction-label.png'), fullPage: true });
+  });
+
+  test('53 — Groupe: placement, config, naming', async ({ page }) => {
+    // Select Groupe tool
+    await selectTool(page, 'groupe');
+    await clickCanvas(page, 150, 120);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('92-groupe-placed.png'), fullPage: true });
+
+    // Deselect tool, select the group
+    await selectTool(page, 'groupe');
+    await clickCanvas(page, 165, 127);
+    await page.waitForTimeout(400);
+
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible().catch(() => false)) {
+      // Change count to 5
+      const btn5 = ctxActions.locator('button:has-text("×5")');
+      if (await btn5.isVisible().catch(() => false)) {
+        await btn5.click();
+        await page.waitForTimeout(300);
+      }
+
+      await page.screenshot({ path: shot('93-groupe-5-elements.png'), fullPage: true });
+
+      // Re-select and click Nommer
+      await clickCanvas(page, 165, 127);
+      await page.waitForTimeout(400);
+
+      const nommerBtn = ctxActions.locator('button:has-text("Nommer")');
+      if (await nommerBtn.isVisible().catch(() => false)) {
+        await nommerBtn.click();
+        await page.waitForTimeout(300);
+
+        const editor = page.locator('[data-testid="inline-editor"]');
+        if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await editor.fill('Sacs');
+          await editor.press('Enter');
+          await page.waitForTimeout(300);
+        }
+      }
+    }
+
+    // Deselect
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('94-groupe-named.png'), fullPage: true });
+
+    // Verify the group piece exists on canvas (ellipse element)
+    const groupEllipses = page.locator('[data-testid="canvas-svg"] ellipse');
+    expect(await groupEllipses.count()).toBeGreaterThanOrEqual(1);
+  });
 });
