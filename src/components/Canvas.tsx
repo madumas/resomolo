@@ -1403,21 +1403,12 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
   }, []);
 
   const committed = useRef(false);
-  const valueRef = useRef(initialValue);
-  valueRef.current = value; // keep ref in sync for cleanup commit
-  const commitRef = useRef<() => void>();
 
   const commit = () => {
-    if (committed.current) return; // prevent double commit
+    if (committed.current) return;
     committed.current = true;
     onCommit(value);
   };
-  commitRef.current = commit;
-
-  // Commit on unmount (when handlePointerDown calls onStopEdit before blur fires)
-  useEffect(() => {
-    return () => { if (!committed.current) commitRef.current?.(); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const insertSymbol = (sym: string) => {
     const input = inputRef.current;
