@@ -27,6 +27,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
   const safeStep = Math.max(0.1, step);
   const numTicks = Math.floor((max - min) / safeStep) + 1;
   const tickSpacing = numTicks > 1 ? width / (numTicks - 1) : width;
+  const labelEvery = numTicks > 50 ? 10 : numTicks > 20 ? 5 : 1;
   const h = 20; // total height including labels
 
   return (
@@ -52,10 +53,12 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
         return (
           <g key={i}>
             <line x1={tx} y1={y - 3} x2={tx} y2={y + 3}
-              stroke="#55506A" strokeWidth={0.5} />
-            <text x={tx} y={y + 8} textAnchor="middle" fontSize={4} fill="#55506A">
-              {val}
-            </text>
+              stroke="#55506A" strokeWidth={i % labelEvery === 0 ? 0.7 : 0.3} />
+            {i % labelEvery === 0 && (
+              <text x={tx} y={y + 8} textAnchor="middle" fontSize={4} fill="#55506A">
+                {val}
+              </text>
+            )}
           </g>
         );
       })}

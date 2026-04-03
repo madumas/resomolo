@@ -84,24 +84,32 @@ export async function countPieces(page: Page, selector: string): Promise<number>
  * 3. ProblemSelector (select "Problème libre" or Escape)
  */
 export async function dismissOverlays(page: Page): Promise<void> {
-  // 1. Adult guide
-  const guide = page.locator('[role="dialog"][aria-label="Guide accompagnateur"]');
-  if (await guide.isVisible().catch(() => false)) {
-    await page.getByRole('button', { name: 'Compris — commencer' }).click({ timeout: 3000 });
-    await page.waitForTimeout(400);
+  // 1. Adult guide — click "Compris — commencer"
+  for (let i = 0; i < 3; i++) {
+    const guideBtn = page.locator('button:has-text("Compris")');
+    if (await guideBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await guideBtn.click();
+      await page.waitForTimeout(500);
+    }
   }
 
-  // 2. Tutorial skip
-  const skipBtn = page.locator('[data-testid="status-bar"] button:has-text("Passer")');
-  if (await skipBtn.isVisible().catch(() => false)) {
-    await skipBtn.click();
-    await page.waitForTimeout(400);
+  // 2. Tutorial skip — click "Passer" button in status bar
+  for (let i = 0; i < 3; i++) {
+    const skipBtn = page.locator('button:has-text("Passer")');
+    if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await skipBtn.click();
+      await page.waitForTimeout(500);
+    }
   }
 
-  // 3. Problem selector — pick "Problème libre" (blank canvas) or press Escape
-  const problemSelector = page.locator('text=Problème libre');
-  if (await problemSelector.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await problemSelector.click();
+  // 3. Problem selector — pick "Problème libre" button or press Escape
+  const libreBtn = page.locator('button:has-text("Problème libre")');
+  if (await libreBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await libreBtn.click();
+    await page.waitForTimeout(300);
+  } else {
+    // Try Escape to close any remaining dialog
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
   }
 }
@@ -147,7 +155,7 @@ export async function openProblemSelector(page: Page): Promise<void> {
  * Open the Slot Manager by clicking "Modélisations" button.
  */
 export async function openSlotManager(page: Page): Promise<void> {
-  await page.locator('[data-testid="action-bar"] button:has-text("Modélisations")').click();
-  await page.waitForSelector('[role="dialog"][aria-label="Mes modélisations"]', { timeout: 3000 });
+  await page.locator('[data-testid="action-bar"] button:has-text("Mes travaux")').click();
+  await page.waitForSelector('[role="dialog"][aria-label="Mes travaux"]', { timeout: 3000 });
   await page.waitForTimeout(200);
 }

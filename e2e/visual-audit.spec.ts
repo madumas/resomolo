@@ -39,11 +39,17 @@ test.describe('Visual audit — full flow', () => {
     await page.goto('/');
     await page.evaluate(() => {
       indexedDB.deleteDatabase('keyval-store');
+      localStorage.clear();
     });
     await page.reload();
     await page.waitForSelector('[data-testid="canvas-svg"]');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
     await dismissOverlays(page);
+    // Extra wait + retry — ensure all overlays are truly gone
+    await page.waitForTimeout(500);
+    await dismissOverlays(page);
+    // Verify toolbar is accessible
+    await page.waitForSelector('[data-testid="toolbar"]', { state: 'visible', timeout: 5000 });
   });
 
   test('01 — initial state: toolbar, status bar, action bar', async ({ page }) => {
@@ -1555,5 +1561,58 @@ test.describe('Visual audit — full flow', () => {
 
     // The relance should show a question or encouragement (not just the neutral message)
     expect(statusText.length).toBeGreaterThan(20);
+  });
+
+  test('48 — Touch interaction: tap to place and select', async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 768, height: 1024 },
+      hasTouch: true,
+    });
+    const page = await context.newPage();
+
+    // Clear storage for fresh state, then dismiss overlays
+    await page.goto('/');
+    await page.evaluate(() => { indexedDB.deleteDatabase('keyval-store'); });
+    await page.reload();
+    await page.waitForSelector('[data-testid="canvas-svg"]');
+    await page.waitForTimeout(300);
+    await dismissOverlays(page);
+
+    // Select Barre tool (click works in touch mode for toolbar)
+    await selectTool(page, 'barre');
+
+    // Tap on canvas to place a barre (touchscreen for real touch)
+    const svg = page.locator('[data-testid="canvas-svg"]');
+    const box = await svg.boundingBox();
+    if (box) {
+      await page.touchscreen.tap(box.x + 200, box.y + 150);
+      await page.waitForTimeout(400);
+    }
+
+    await page.screenshot({ path: shot('83-touch-barre-placed.png'), fullPage: true });
+
+    // Deselect tool, then tap on barre to select it
+    await selectTool(page, 'barre'); // toggle off
+    await page.waitForTimeout(200);
+
+    if (box) {
+      await page.touchscreen.tap(box.x + 200, box.y + 150);
+      await page.waitForTimeout(400);
+    }
+
+    // Verify context actions appear
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    if (await ctxActions.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await page.screenshot({ path: shot('84-touch-context-actions.png'), fullPage: true });
+
+      // Verify context actions have adequate touch targets
+      const firstBtn = ctxActions.locator('button').first();
+      const btnBox = await firstBtn.boundingBox();
+      if (btnBox) {
+        expect(btnBox.height).toBeGreaterThanOrEqual(44);
+      }
+    }
+
+    await context.close();
   });
 });
