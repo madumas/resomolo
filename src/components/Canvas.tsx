@@ -120,19 +120,25 @@ export function Canvas({
     if (now - lastClickTime.current < tol.clickDebounceMs) return;
     lastClickTime.current = now;
 
-    // If editing, commit and close — but for tableau, pre-compute the next cell target
+    // If editing, commit and close — but for tableau, immediately reopen on clicked cell
     if (editingPieceId) {
-      if (svgRef.current) {
-        const editingPiece = pieces.find(p => p.id === editingPieceId);
-        if (editingPiece && isTableau(editingPiece)) {
-          const clickPos = pointerToMm(e, svgRef.current);
-          const relX = clickPos.x - editingPiece.x;
-          const relY = clickPos.y - editingPiece.y;
-          const col = Math.floor(relX / TABLEAU_CELL_W);
-          const row = Math.floor(relY / TABLEAU_CELL_H);
-          if (row >= 0 && row < editingPiece.rows && col >= 0 && col < editingPiece.cols) {
-            tableauEditCellRef.current = { row, col };
-          }
+      const editingPiece = pieces.find(p => p.id === editingPieceId);
+      if (editingPiece && isTableau(editingPiece) && svgRef.current) {
+        const clickPos = pointerToMm(e, svgRef.current);
+        const relX = clickPos.x - editingPiece.x;
+        const relY = clickPos.y - editingPiece.y;
+        const col = Math.floor(relX / TABLEAU_CELL_W);
+        const row = Math.floor(relY / TABLEAU_CELL_H);
+        if (row >= 0 && row < editingPiece.rows && col >= 0 && col < editingPiece.cols) {
+          // Close current editor, then immediately reopen on the new cell
+          tableauEditCellRef.current = { row, col };
+          onStopEdit();
+          // Use setTimeout to let React process the stop, then reopen
+          setTimeout(() => {
+            setEditingBarField('label');
+            onStartEdit(editingPiece.id);
+          }, 0);
+          return;
         }
       }
       onStopEdit();
