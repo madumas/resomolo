@@ -6,7 +6,7 @@ import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
 import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Groupe } from '../model/types';
-import { isBarre, isDroiteNumerique, isGroupe } from '../model/types';
+import { isBarre, isDroiteNumerique } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor } from '../config/theme';
@@ -509,6 +509,7 @@ export function Canvas({
         value: '', // don't copy value — each bar gets its own
         divisions: null,
         coloredParts: [],
+        showFraction: false,
         groupId: null,
         groupLabel: null,
       });

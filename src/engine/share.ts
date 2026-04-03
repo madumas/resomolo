@@ -72,7 +72,7 @@ function expandPiece(m: MinPiece): Piece {
     case 'barre':
       return { ...base, type: 'barre', couleur: (m.c as any) ?? 'bleu', sizeMultiplier: m.sm ?? 1,
         label: m.l ?? '', value: m.v ?? '', divisions: m.dv ?? null, coloredParts: m.cp ?? [],
-        groupId: m.gi ?? null, groupLabel: m.gl ?? null };
+        showFraction: false, groupId: m.gi ?? null, groupLabel: m.gl ?? null };
     case 'calcul':
       return { ...base, type: 'calcul', expression: m.ex ?? '', columnData: m.cd };
     case 'reponse':

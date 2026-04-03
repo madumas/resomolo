@@ -3,7 +3,7 @@ import { computeArrangement } from '../arrange';
 import type { Barre, Jeton, Calcul, Reponse } from '../../model/types';
 
 function makeBarre(id: string, x = 0, y = 0, locked = false): Barre {
-  return { id, type: 'barre', x, y, locked, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], groupId: null, groupLabel: null };
+  return { id, type: 'barre', x, y, locked, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], showFraction: false, groupId: null, groupLabel: null };
 }
 function makeJeton(id: string, x = 0, y = 0, locked = false): Jeton {
   return { id, type: 'jeton', x, y, locked, couleur: 'bleu', parentId: null };

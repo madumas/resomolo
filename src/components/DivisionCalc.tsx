@@ -67,13 +67,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
 
   useEffect(() => {
     setTimeout(() => {
-      // Focus first divisor cell if empty, otherwise first quotient cell
-      const hasData = divisor.some(d => d !== '');
+      // If saved data exists, focus quotient (continuing work)
+      // Otherwise focus rightmost dividend cell (start entering dividend)
+      const hasData = savedData && (savedData.dividend.some(d => d !== '') || savedData.divisor.some(d => d !== ''));
       if (hasData) {
         const ref = cellRefs.current.get(`quotient-0`);
         ref?.focus();
       } else {
-        const ref = cellRefs.current.get(`divisor-0`);
+        const ref = cellRefs.current.get(`dividend-${DIV_COLS - 1}`);
         ref?.focus();
       }
     }, 50);
@@ -132,8 +133,9 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   // Build the ordered list of all row names for vertical navigation
+  // Quebec crochet: dividend on top-left, steps below; divisor top-right, quotient below
   const allRowNames = (): string[] => {
-    const rows: string[] = ['quotient', 'divisor', 'dividend'];
+    const rows: string[] = ['dividend', 'divisor', 'quotient'];
     for (let i = 0; i < steps.length; i++) {
       rows.push(`step${i}-product`);
       rows.push(`step${i}-remainder`);
@@ -229,11 +231,10 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   // Width calculations
-  const divisorWidth = DIVISOR_COLS * (CELL + GAP) - GAP;
   const dividendWidth = DIV_COLS * (CELL + GAP) - GAP;
   const bracketWidth = 3; // vertical bar thickness
   const bracketGap = 8;   // gap around bracket
-  const totalDividendAreaLeft = divisorWidth + bracketGap + bracketWidth + bracketGap;
+  const minusColWidth = CELL / 2; // width for the "−" sign column
 
   return (
     <div
@@ -247,168 +248,148 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
       onPointerDown={e => e.stopPropagation()}
     >
       <div style={{ fontSize: 13, color: '#7028e0', fontWeight: 600, marginBottom: 10 }}>
-        Division posée
+        Division à crochet
       </div>
 
-      {/* Quotient row + remainder */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: 0, alignItems: 'center' }}>
-        {/* Spacer for divisor + bracket area */}
-        <div style={{ width: totalDividendAreaLeft, flexShrink: 0 }} />
-        {quotient.map((d, col) => (
-          <CellInput
-            key={`quotient-${col}`}
-            cellId={`quotient-${col}`}
-            refCb={el => setCellRef(`quotient-${col}`, el)}
-            value={d}
-            onChange={v => handleCellChange(quotient, setQuotient, 'quotient', col, v)}
-            onKeyDown={e => handleKeyDown('quotient', col, e)}
-            bold
-            colIdx={col}
-          />
-        ))}
-        {/* Remainder label and input */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4,
-        }}>
-          <span style={{ fontSize: 16, fontWeight: 600, color: '#6B7280', fontFamily: 'monospace' }}>R</span>
-          <input
-            ref={el => setCellRef('remainder', el)}
-            data-cell="remainder"
-            type="text" inputMode="decimal" maxLength={2}
-            value={remainder}
-            onChange={e => handleRemainderChange(e.target.value)}
-            onKeyDown={handleRemainderKeyDown}
-            onFocus={e => e.target.select()}
-            style={{
-              width: CELL * 1.2, height: CELL, fontSize: 28,
-              fontWeight: 700, textAlign: 'center',
-              border: '2px solid #D5D0E0', borderRadius: 6,
-              fontFamily: "'Consolas', 'Courier New', monospace",
-              outline: 'none', background: '#FAFCFF',
-            }}
-          />
-        </div>
-      </div>
+      {/* Two-column layout: LEFT (dividend + steps) | bracket | RIGHT (divisor + quotient) */}
+      <div style={{ display: 'flex', gap: 0 }}>
 
-      {/* Horizontal bar (top of crochet) */}
-      <div style={{ display: 'flex', alignItems: 'stretch', marginBottom: 0 }}>
-        <div style={{ width: totalDividendAreaLeft, flexShrink: 0 }} />
-        <div style={{
-          flex: 1,
-          borderTop: '3px solid #1E1A2E',
-          height: 0,
-          marginTop: GAP,
-          marginBottom: GAP,
-        }} />
-      </div>
+        {/* LEFT ZONE: dividend + subtraction steps */}
+        <div>
+          {/* Dividend row */}
+          <div style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
+            {dividend.map((d, col) => (
+              <CellInput
+                key={`dividend-${col}`}
+                cellId={`dividend-${col}`}
+                refCb={el => setCellRef(`dividend-${col}`, el)}
+                value={d}
+                onChange={v => handleCellChange(dividend, setDividend, 'dividend', col, v)}
+                onKeyDown={e => handleKeyDown('dividend', col, e)}
+                colIdx={col}
+              />
+            ))}
+          </div>
 
-      {/* Divisor | Dividend row */}
-      <div style={{ display: 'flex', gap: 0, alignItems: 'center' }}>
-        {/* Divisor cells */}
-        <div style={{ display: 'flex', gap: GAP }}>
-          {divisor.map((d, col) => (
-            <CellInput
-              key={`divisor-${col}`}
-              cellId={`divisor-${col}`}
-              refCb={el => setCellRef(`divisor-${col}`, el)}
-              value={d}
-              onChange={v => handleCellChange(divisor, setDivisor, 'divisor', col, v)}
-              onKeyDown={e => handleKeyDown('divisor', col, e, DIVISOR_COLS)}
-              colIdx={col}
-            />
+          {/* Steps (products + remainders) */}
+          {steps.map((step, stepIdx) => (
+            <div key={`step-${stepIdx}`}>
+              {/* Product with "−" sign */}
+              <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
+                <div style={{ width: minusColWidth, textAlign: 'center', fontSize: 18, color: '#55506A', fontFamily: 'monospace', fontWeight: 600, flexShrink: 0 }}>−</div>
+                {step.product.map((d, col) => (
+                  <CellInput
+                    key={`step${stepIdx}-product-${col}`}
+                    cellId={`step${stepIdx}-product-${col}`}
+                    refCb={el => setCellRef(`step${stepIdx}-product-${col}`, el)}
+                    value={d}
+                    onChange={v => handleCellChange(step.product, null, `step${stepIdx}-product`, col, v, stepIdx, 'product')}
+                    onKeyDown={e => handleKeyDown(`step${stepIdx}-product`, col, e)}
+                    colIdx={col}
+                  />
+                ))}
+              </div>
+
+              {/* Separator line */}
+              <div style={{ borderTop: '1px solid #9CA3AF', marginLeft: minusColWidth + GAP, width: dividendWidth, marginTop: GAP, marginBottom: GAP }} />
+
+              {/* Partial remainder */}
+              <div style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
+                <div style={{ width: minusColWidth, flexShrink: 0 }} /> {/* spacer for "−" column */}
+                {step.partialRemainder.map((d, col) => (
+                  <CellInput
+                    key={`step${stepIdx}-remainder-${col}`}
+                    cellId={`step${stepIdx}-remainder-${col}`}
+                    refCb={el => setCellRef(`step${stepIdx}-remainder-${col}`, el)}
+                    value={d}
+                    onChange={v => handleCellChange(step.partialRemainder, null, `step${stepIdx}-remainder`, col, v, stepIdx, 'partialRemainder')}
+                    onKeyDown={e => handleKeyDown(`step${stepIdx}-remainder`, col, e)}
+                    colIdx={col}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
+
+          {/* Add/remove step buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {steps.length < MAX_STEPS && (
+              <button onClick={addStep} style={addStepBtnStyle}>
+                + Ajouter une étape
+              </button>
+            )}
+            {steps.length > 1 && (
+              <button onClick={removeStep} style={{ ...addStepBtnStyle, color: '#9CA3AF', borderColor: '#D5D0E0' }}>
+                − Retirer
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Vertical bracket bar */}
+        {/* BRACKET: vertical bar */}
         <div style={{
           width: bracketWidth,
-          alignSelf: 'stretch',
           background: '#1E1A2E',
           marginLeft: bracketGap,
           marginRight: bracketGap,
           borderRadius: 1,
+          alignSelf: 'stretch',
         }} />
 
-        {/* Dividend cells */}
-        <div style={{ display: 'flex', gap: GAP }}>
-          {dividend.map((d, col) => (
-            <CellInput
-              key={`dividend-${col}`}
-              cellId={`dividend-${col}`}
-              refCb={el => setCellRef(`dividend-${col}`, el)}
-              value={d}
-              onChange={v => handleCellChange(dividend, setDividend, 'dividend', col, v)}
-              onKeyDown={e => handleKeyDown('dividend', col, e)}
-              colIdx={col}
+        {/* RIGHT ZONE: divisor + horizontal bar + quotient */}
+        <div>
+          {/* Divisor */}
+          <div style={{ display: 'flex', gap: GAP, marginBottom: 0 }}>
+            {divisor.map((d, col) => (
+              <CellInput
+                key={`divisor-${col}`}
+                cellId={`divisor-${col}`}
+                refCb={el => setCellRef(`divisor-${col}`, el)}
+                value={d}
+                onChange={v => handleCellChange(divisor, setDivisor, 'divisor', col, v)}
+                onKeyDown={e => handleKeyDown('divisor', col, e, DIVISOR_COLS)}
+                colIdx={col}
+              />
+            ))}
+          </div>
+
+          {/* Horizontal bar (top of bracket, under divisor, above quotient) */}
+          <div style={{ borderTop: '3px solid #1E1A2E', marginTop: GAP, marginBottom: GAP }} />
+
+          {/* Quotient + R + remainder */}
+          <div style={{ display: 'flex', gap: GAP, alignItems: 'center' }}>
+            {quotient.map((d, col) => (
+              <CellInput
+                key={`quotient-${col}`}
+                cellId={`quotient-${col}`}
+                refCb={el => setCellRef(`quotient-${col}`, el)}
+                value={d}
+                onChange={v => handleCellChange(quotient, setQuotient, 'quotient', col, v)}
+                onKeyDown={e => handleKeyDown('quotient', col, e)}
+                bold
+                colIdx={col}
+              />
+            ))}
+            {/* Remainder label and input */}
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#55506A', marginLeft: 8, fontFamily: 'monospace' }}>R</span>
+            <input
+              ref={el => setCellRef('remainder', el)}
+              data-cell="remainder"
+              type="text" inputMode="decimal" maxLength={2}
+              value={remainder}
+              onChange={e => handleRemainderChange(e.target.value)}
+              onKeyDown={handleRemainderKeyDown}
+              onFocus={e => e.target.select()}
+              style={{
+                width: CELL * 1.2, height: CELL, fontSize: 28,
+                fontWeight: 700, textAlign: 'center',
+                border: '2px solid #D5D0E0', borderRadius: 6,
+                fontFamily: "'Consolas', 'Courier New', monospace",
+                outline: 'none', background: '#FAFCFF',
+              }}
             />
-          ))}
-        </div>
-      </div>
-
-      {/* Steps */}
-      {steps.map((step, stepIdx) => (
-        <div key={`step-${stepIdx}`}>
-          {/* Subtraction line: "−" label + product cells */}
-          <div style={{ display: 'flex', gap: 0, alignItems: 'center', marginTop: GAP * 2 }}>
-            <div style={{ width: totalDividendAreaLeft, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
-              <span style={{ fontSize: 22, color: '#55506A', fontFamily: 'monospace', fontWeight: 600 }}>−</span>
-            </div>
-            <div style={{ display: 'flex', gap: GAP }}>
-              {step.product.map((d, col) => (
-                <CellInput
-                  key={`step${stepIdx}-product-${col}`}
-                  cellId={`step${stepIdx}-product-${col}`}
-                  refCb={el => setCellRef(`step${stepIdx}-product-${col}`, el)}
-                  value={d}
-                  onChange={v => handleCellChange(step.product, null, `step${stepIdx}-product`, col, v, stepIdx, 'product')}
-                  onKeyDown={e => handleKeyDown(`step${stepIdx}-product`, col, e)}
-                  colIdx={col}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Separator line */}
-          <div style={{ display: 'flex', marginTop: GAP, marginBottom: GAP }}>
-            <div style={{ width: totalDividendAreaLeft, flexShrink: 0 }} />
-            <div style={{
-              width: dividendWidth,
-              borderTop: '1px solid #9CA3AF',
-            }} />
-          </div>
-
-          {/* Partial remainder row */}
-          <div style={{ display: 'flex', gap: 0, alignItems: 'center' }}>
-            <div style={{ width: totalDividendAreaLeft, flexShrink: 0 }} />
-            <div style={{ display: 'flex', gap: GAP }}>
-              {step.partialRemainder.map((d, col) => (
-                <CellInput
-                  key={`step${stepIdx}-remainder-${col}`}
-                  cellId={`step${stepIdx}-remainder-${col}`}
-                  refCb={el => setCellRef(`step${stepIdx}-remainder-${col}`, el)}
-                  value={d}
-                  onChange={v => handleCellChange(step.partialRemainder, null, `step${stepIdx}-remainder`, col, v, stepIdx, 'partialRemainder')}
-                  onKeyDown={e => handleKeyDown(`step${stepIdx}-remainder`, col, e)}
-                  colIdx={col}
-                />
-              ))}
-            </div>
           </div>
         </div>
-      ))}
-
-      {/* Add/remove step buttons */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 12, marginLeft: totalDividendAreaLeft }}>
-        {steps.length < MAX_STEPS && (
-          <button onClick={addStep} style={addStepBtnStyle}>
-            + Ajouter une étape
-          </button>
-        )}
-        {steps.length > 1 && (
-          <button onClick={removeStep} style={{ ...addStepBtnStyle, color: '#9CA3AF', borderColor: '#D5D0E0' }}>
-            − Retirer
-          </button>
-        )}
       </div>
 
       {/* Buttons */}

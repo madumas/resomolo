@@ -12,7 +12,7 @@ function makeJeton(overrides: Partial<Jeton> = {}): Jeton {
 }
 
 function makeBarre(overrides: Partial<Barre> = {}): Barre {
-  return { id: 'b1', type: 'barre', x: 100, y: 100, locked: false, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], groupId: null, groupLabel: null, ...overrides };
+  return { id: 'b1', type: 'barre', x: 100, y: 100, locked: false, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], showFraction: false, groupId: null, groupLabel: null, ...overrides };
 }
 
 function makeFleche(overrides: Partial<Fleche> = {}): Fleche {
