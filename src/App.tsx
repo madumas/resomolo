@@ -207,10 +207,10 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [pieces.length]);
 
-  // Keyboard (gated by settings.keyboardShortcutsEnabled for undo/redo)
+  // Keyboard — Ctrl+Z/Cmd+Z always active (universal), Escape always active
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && settings.keyboardShortcutsEnabled) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
         e.preventDefault();
         if (e.shiftKey) handleRedo();
         else handleUndo();
@@ -239,7 +239,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, equalizingFromId, groupingBarId, deleteMode, handleUndo, handleRedo, settings.keyboardShortcutsEnabled]);
+  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, equalizingFromId, groupingBarId, deleteMode, handleUndo, handleRedo]);
 
   // Relance timer — sequential questions (P0-2, P0-3)
   useEffect(() => {
