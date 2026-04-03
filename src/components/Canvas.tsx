@@ -105,6 +105,32 @@ export function Canvas({
   const [tableauEditorPieceId, setTableauEditorPieceId] = useState<string | null>(null);
   const [tableauPreviewRows, setTableauPreviewRows] = useState<number | null>(null);
   const [tableauPreviewCols, setTableauPreviewCols] = useState<number | null>(null);
+
+  // Commit all tableau input values before closing the editor
+  const closeTableauEditor = useCallback(() => {
+    if (!tableauEditorPieceId) return;
+    const piece = pieces.find(p => p.id === tableauEditorPieceId);
+    if (piece && piece.type === 'tableau') {
+      const t = piece as Tableau;
+      // Read current values from all live inputs
+      const container = svgRef.current?.parentElement;
+      if (container) {
+        const inputs = container.querySelectorAll<HTMLInputElement>('input[data-tableau-cell]');
+        if (inputs.length > 0) {
+          const newCells = t.cells.map(r => [...r]);
+          inputs.forEach(input => {
+            const [rowStr, colStr] = (input.dataset.tableauCell || '').split('-');
+            const row = parseInt(rowStr), col = parseInt(colStr);
+            if (!isNaN(row) && !isNaN(col) && row < newCells.length && col < newCells[row].length) {
+              newCells[row][col] = input.value;
+            }
+          });
+          dispatch({ type: 'EDIT_PIECE', id: tableauEditorPieceId, changes: { cells: newCells } });
+        }
+      }
+    }
+    setTableauEditorPieceId(null);
+  }, [tableauEditorPieceId, pieces, dispatch]);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [isArranging, setIsArranging] = useState(false);
@@ -171,7 +197,7 @@ export function Canvas({
     if (hitPiece) {
       // Delete mode — handle delete click
       if (deleteMode) {
-        if (tableauEditorPieceId) setTableauEditorPieceId(null);
+        if (tableauEditorPieceId) closeTableauEditor();
         onDeleteClick(hitPiece.id);
         return;
       }
@@ -271,7 +297,7 @@ export function Canvas({
         onStartEdit(hitPiece.id);
         return;
       }
-      if (tableauEditorPieceId) setTableauEditorPieceId(null);
+      if (tableauEditorPieceId) closeTableauEditor();
       onSelectPiece(hitPiece.id);
       return;
     }
@@ -384,14 +410,14 @@ export function Canvas({
       }
     } else {
       // No tool active, click on empty space — deselect
-      if (tableauEditorPieceId) setTableauEditorPieceId(null);
+      if (tableauEditorPieceId) closeTableauEditor();
       onSelectPiece(null);
     }
   }, [pieces, activeTool, referenceUnitMm, dispatch, onSelectPiece, onSetTool, mode, tol,
       editingPieceId, deleteMode, jetonQuantity, onStartEdit, onStopEdit, onDeleteClick,
       arrowFromId, onSetArrowFrom, onArrowCreated,
       equalizingFromId, onSetEqualizingFromId, groupingBarId, onSetGroupingBarId, selectedPieceId,
-      tableauEditorPieceId]);
+      tableauEditorPieceId, closeTableauEditor]);
 
   // Pointer move for pick-up/put-down + hover hit-test for cursor
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
@@ -1121,6 +1147,7 @@ export function Canvas({
             <input
               key={`ti-${t.rows}-${t.cols}-${ri}-${ci}`}
               type="text"
+              data-tableau-cell={`${ri}-${ci}`}
               defaultValue={t.cells[ri][ci]}
               placeholder={ri === 0 && t.headerRow ? '…' : ''}
               onBlur={e => {
