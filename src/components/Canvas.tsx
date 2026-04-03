@@ -216,8 +216,8 @@ export function Canvas({
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
       }
-      // Tableau — toggle in-place editing
-      if (isTableau(hitPiece) && !deleteMode) {
+      // Tableau — toggle in-place editing (only when no tool is active)
+      if (isTableau(hitPiece) && !deleteMode && !activeTool) {
         if (tableauEditorPieceId === hitPiece.id) {
           return; // already editing
         }
