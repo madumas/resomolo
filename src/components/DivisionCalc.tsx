@@ -63,6 +63,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   const [quotient, setQuotient] = useState<Row>(savedData?.quotient || emptyRow(DIV_COLS));
   const [remainder, setRemainder] = useState(savedData?.remainder || '');
   const [steps, setSteps] = useState<DivisionStep[]>(savedData?.steps || [emptyStep()]);
+  const [lastModified, setLastModified] = useState<{ cellId: string; prevValue: string } | null>(null);
   const cellRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   useEffect(() => {
@@ -90,6 +91,38 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     el?.focus();
   };
 
+  const applyValueToCell = (cellId: string, value: string) => {
+    const parts = cellId.split('-');
+    const rowName = parts[0];
+    // Handle step cells like "step0-product-4" or "step0-remainder-3"
+    if (rowName.startsWith('step')) {
+      const stepIdx = parseInt(rowName.replace('step', ''));
+      const field = parts[1] as 'product' | 'remainder';
+      const col = parseInt(parts[parts.length - 1]);
+      const stepField = field === 'remainder' ? 'partialRemainder' : 'product';
+      setSteps(prev => {
+        const copy = prev.map(s => ({
+          product: [...s.product],
+          partialRemainder: [...s.partialRemainder],
+        }));
+        if (copy[stepIdx]) copy[stepIdx][stepField][col] = value;
+        return copy;
+      });
+    } else {
+      const col = parseInt(parts[parts.length - 1]);
+      if (rowName === 'dividend') setDividend(prev => { const n = [...prev]; n[col] = value; return n; });
+      else if (rowName === 'divisor') setDivisor(prev => { const n = [...prev]; n[col] = value; return n; });
+      else if (rowName === 'quotient') setQuotient(prev => { const n = [...prev]; n[col] = value; return n; });
+    }
+  };
+
+  const handleOups = () => {
+    if (!lastModified) return;
+    applyValueToCell(lastModified.cellId, lastModified.prevValue);
+    focusCell(lastModified.cellId);
+    setLastModified(null);
+  };
+
   const handleCellChange = (
     row: Row,
     setRow: ((r: Row) => void) | null,
@@ -99,6 +132,8 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     stepIdx?: number,
     stepField?: 'product' | 'partialRemainder',
   ) => {
+    // Save previous value for undo
+    setLastModified({ cellId: `${rowName}-${col}`, prevValue: row[col] });
     const normalized = value.replace(/,/g, '.');
     const digit = normalized.replace(/[^0-9]/g, '').slice(-1);
     const next = [...row];
@@ -144,6 +179,12 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   const handleKeyDown = (rowName: string, col: number, e: React.KeyboardEvent, maxCols?: number) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOups();
+      return;
+    }
     const cols = maxCols || (rowName === 'divisor' ? DIVISOR_COLS : DIV_COLS);
 
     if (e.key === 'ArrowRight') {
@@ -172,6 +213,12 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   const handleRemainderKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOups();
+      return;
+    }
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
     if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
     if (e.key === 'ArrowLeft') {
@@ -394,7 +441,24 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
 
       {/* Buttons */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
-        <button onClick={onCancel} style={btnStyle}>Annuler</button>
+        <button
+          onClick={handleOups}
+          disabled={!lastModified}
+          title="Effacer la dernière modification"
+          style={{
+            minWidth: 48, minHeight: 48, borderRadius: 8,
+            background: lastModified ? '#F3F0FA' : '#F5F5F5',
+            border: `1px solid ${lastModified ? '#D5D0E0' : '#E5E5E5'}`,
+            cursor: lastModified ? 'pointer' : 'default',
+            color: lastModified ? '#55506A' : '#CCCCCC',
+            display: 'flex', flexDirection: 'column' as const,
+            alignItems: 'center', justifyContent: 'center', gap: 1,
+          }}
+        >
+          <span style={{ fontSize: 16 }}>↶</span>
+          <span style={{ fontSize: 9 }}>Oups</span>
+        </button>
+        <button onClick={onCancel} style={btnStyle}>Fermer</button>
         <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
       </div>
     </div>

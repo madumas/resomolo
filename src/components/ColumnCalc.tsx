@@ -79,12 +79,12 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     savedData?.intermediates || [emptyRow()]
   );
   const [operator, setOperator] = useState(savedData?.operator || initialOperator || '+');
+  const [lastModified, setLastModified] = useState<{ cellId: string; prevValue: string } | null>(null);
   const initialDecPos = detectDecimalPosition(initialOp1)
     ?? detectDecimalPosition(initialOp2)
     ?? savedData?.decimalPosition
     ?? null;
   const [decimalPosition, setDecimalPosition] = useState<number | null>(initialDecPos);
-  const [swapping, setSwapping] = useState(false);
   const cellRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   // Auto-adjust number of intermediate lines based on op2 digits (for multiplication)
@@ -120,6 +120,31 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     else cellRefs.current.delete(key);
   }, []);
 
+  const applyValueToCell = (cellId: string, value: string) => {
+    const parts = cellId.split('-');
+    const rowName = parts[0];
+    const col = parseInt(parts[parts.length - 1]);
+    if (rowName === 'op1') setOp1(prev => { const n = [...prev]; n[col] = value; return n; });
+    else if (rowName === 'op2') setOp2(prev => { const n = [...prev]; n[col] = value; return n; });
+    else if (rowName === 'result') setResult(prev => { const n = [...prev]; n[col] = value; return n; });
+    else if (rowName === 'carry') setCarry(prev => { const n = [...prev]; n[col] = value; return n; });
+    else if (rowName.startsWith('int')) {
+      const intIdx = parseInt(rowName.replace('int', ''));
+      setIntermediates(prev => {
+        const copy = prev.map(r => [...r]);
+        if (copy[intIdx]) copy[intIdx][col] = value;
+        return copy;
+      });
+    }
+  };
+
+  const handleOups = () => {
+    if (!lastModified) return;
+    applyValueToCell(lastModified.cellId, lastModified.prevValue);
+    focusCell(lastModified.cellId);
+    setLastModified(null);
+  };
+
   const handleCellChange = (
     row: Row,
     setRow: ((r: Row) => void) | null,
@@ -128,6 +153,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     value: string,
     intIdx?: number,
   ) => {
+    // Save previous value for undo
+    setLastModified({ cellId: `${rowName}-${col}`, prevValue: row[col] });
     // Accept comma as decimal separator — convert to dot internally
     const normalized = value.replace(/,/g, '.');
     const digit = normalized.replace(/[^0-9]/g, '').slice(-1);
@@ -171,6 +198,12 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   };
 
   const handleKeyDown = (rowName: string, col: number, e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleOups();
+      return;
+    }
     if (e.key === 'ArrowRight') {
       e.preventDefault();
       if (col < NUM_COLS - 1) focusCell(`${rowName}-${col + 1}`);
@@ -265,10 +298,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       </div>
 
       {/* Operand 1 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center',
-        transform: swapping ? `translateY(${CELL + GAP + 48 + GAP}px)` : 'none',
-        transition: 'transform 250ms ease',
-      }}>
+      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
         <div style={{ width: CELL, height: CELL }} />
         {op1.map((d, col) => (
           <React.Fragment key={`op1-${col}`}>
@@ -282,44 +312,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         ))}
       </div>
 
-      {/* Swap button (multiplication only, both operands have digits) */}
-      {operator === '×' && op1.some(d => d !== '') && op2.some(d => d !== '') && (
-        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: GAP }}>
-          <button
-            onClick={() => {
-              setSwapping(true);
-              setTimeout(() => {
-                const newOp1 = [...op2];
-                const newOp2 = [...op1];
-                setOp1(newOp1);
-                setOp2(newOp2);
-                setCarry(emptyRow());
-                setIntermediates([emptyRow()]);
-                setSwapping(false);
-              }, 250);
-            }}
-            title="Échanger les deux nombres"
-            style={{
-              width: 48, height: 48,
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 1,
-              background: '#F3F0FA', border: '1px solid #D5D0E0',
-              borderRadius: 8, cursor: 'pointer',
-              color: '#55506A',
-            }}
-          >
-            <span style={{ fontSize: 16, lineHeight: 1 }}>↕</span>
-            <span style={{ fontSize: 9 }}>Inverser</span>
-          </button>
-        </div>
-      )}
-
       {/* Operator + Operand 2 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center',
-        transform: swapping ? `translateY(-${CELL + GAP + 48 + GAP}px)` : 'none',
-        transition: 'transform 250ms ease',
-      }}>
+      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
         <select value={operator} onChange={e => setOperator(e.target.value)}
           style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', fontFamily: 'monospace' }}>
           {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
@@ -400,8 +394,50 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       </div>
 
       {/* Buttons */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
-        <button onClick={onCancel} style={btnStyle}>Annuler</button>
+      <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <button
+          onClick={handleOups}
+          disabled={!lastModified}
+          title="Effacer la dernière modification"
+          style={{
+            minWidth: 48, minHeight: 48, borderRadius: 8,
+            background: lastModified ? '#F3F0FA' : '#F5F5F5',
+            border: `1px solid ${lastModified ? '#D5D0E0' : '#E5E5E5'}`,
+            cursor: lastModified ? 'pointer' : 'default',
+            color: lastModified ? '#55506A' : '#CCCCCC',
+            display: 'flex', flexDirection: 'column' as const,
+            alignItems: 'center', justifyContent: 'center', gap: 1,
+          }}
+        >
+          <span style={{ fontSize: 16 }}>↶</span>
+          <span style={{ fontSize: 9 }}>Oups</span>
+        </button>
+        {/* Swap button — multiplication only, both operands have digits */}
+        {operator === '×' && op1.some(d => d !== '') && op2.some(d => d !== '') && (
+          <button
+            onClick={() => {
+              const newOp1 = [...op2];
+              const newOp2 = [...op1];
+              setOp1(newOp1);
+              setOp2(newOp2);
+              setCarry(emptyRow());
+              setIntermediates([emptyRow()]);
+            }}
+            title="Échanger les deux nombres"
+            style={{
+              minWidth: 48, minHeight: 48, borderRadius: 8,
+              background: '#F3F0FA', border: '1px solid #D5D0E0',
+              cursor: 'pointer', color: '#55506A',
+              display: 'flex', flexDirection: 'column' as const,
+              alignItems: 'center', justifyContent: 'center', gap: 1,
+            }}
+          >
+            <span style={{ fontSize: 16, lineHeight: 1 }}>↕</span>
+            <span style={{ fontSize: 9 }}>Inverser</span>
+          </button>
+        )}
+        <div style={{ flex: 1 }} />
+        <button onClick={onCancel} style={btnStyle}>Fermer</button>
         <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
       </div>
     </div>
