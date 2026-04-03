@@ -4,6 +4,7 @@ import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau } fro
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
+import { onSubdivide } from '../engine/sound';
 
 interface ContextActionsProps {
   piece: Piece;
@@ -285,6 +286,7 @@ export function ContextActions({
               {[2, 3, 4, 5, 6, 8, 10, 12].map(n => (
                 <CtxBtn key={n} onClick={() => {
                   onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
+                  onSubdivide();
                   setBarSubmenu('none');
                 }}>
                   {n}
@@ -296,25 +298,25 @@ export function ContextActions({
               </span>
               <CtxBtn onClick={() => {
                 onEditPiece(piece.id, { divisions: 3, coloredParts: [0, 1], showFraction: true });
-                setBarSubmenu('none');
+                onSubdivide(); setBarSubmenu('none');
               }}>
                 2/3
               </CtxBtn>
               <CtxBtn onClick={() => {
                 onEditPiece(piece.id, { divisions: 4, coloredParts: [0, 1, 2], showFraction: true });
-                setBarSubmenu('none');
+                onSubdivide(); setBarSubmenu('none');
               }}>
                 3/4
               </CtxBtn>
               <CtxBtn onClick={() => {
                 onEditPiece(piece.id, { divisions: 5, coloredParts: [0, 1], showFraction: true });
-                setBarSubmenu('none');
+                onSubdivide(); setBarSubmenu('none');
               }}>
                 2/5
               </CtxBtn>
               <CtxBtn onClick={() => {
                 onEditPiece(piece.id, { divisions: 8, coloredParts: [0, 1, 2], showFraction: true });
-                setBarSubmenu('none');
+                onSubdivide(); setBarSubmenu('none');
               }}>
                 3/8
               </CtxBtn>

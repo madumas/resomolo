@@ -7,6 +7,10 @@ import {
   onSnap,
   onDelete,
   onUndoSound,
+  onAttach,
+  onSubdivide,
+  onAcknowledge,
+  onDistribute,
 } from '../sound';
 
 describe('sound mode logic', () => {
@@ -32,6 +36,10 @@ describe('sound mode logic', () => {
     expect(() => onSnap()).not.toThrow();
     expect(() => onDelete()).not.toThrow();
     expect(() => onUndoSound()).not.toThrow();
+    expect(() => onAttach()).not.toThrow();
+    expect(() => onSubdivide()).not.toThrow();
+    expect(() => onAcknowledge()).not.toThrow();
+    expect(() => onDistribute()).not.toThrow();
   });
 
   test('dispatchers do not throw in off mode', () => {
@@ -40,6 +48,10 @@ describe('sound mode logic', () => {
     expect(() => onSnap()).not.toThrow();
     expect(() => onDelete()).not.toThrow();
     expect(() => onUndoSound()).not.toThrow();
+    expect(() => onAttach()).not.toThrow();
+    expect(() => onSubdivide()).not.toThrow();
+    expect(() => onAcknowledge()).not.toThrow();
+    expect(() => onDistribute()).not.toThrow();
   });
 
   test('dispatchers do not throw in reduced mode', () => {
@@ -48,6 +60,10 @@ describe('sound mode logic', () => {
     expect(() => onSnap()).not.toThrow();
     expect(() => onDelete()).not.toThrow();
     expect(() => onUndoSound()).not.toThrow();
+    expect(() => onAttach()).not.toThrow();
+    expect(() => onSubdivide()).not.toThrow();
+    expect(() => onAcknowledge()).not.toThrow();
+    expect(() => onDistribute()).not.toThrow();
   });
 
   // Reset mode after tests

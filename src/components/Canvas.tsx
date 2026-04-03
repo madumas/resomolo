@@ -338,6 +338,7 @@ export function Canvas({
           };
           dispatch({ type: 'PLACE_PIECE', piece: arrow });
           onPlace();
+          onAttach();
           onArrowCreated?.();
           onSetTool(null);
         }
@@ -606,6 +607,7 @@ export function Canvas({
       startX: startPos.x,
       startY: startPos.y,
     });
+    onDistribute();
     onSelectPiece(null);
   }, [pieces, dispatch, onSelectPiece]);
 
@@ -1092,6 +1094,7 @@ export function Canvas({
             fontSize={svgFontSizeMm * mmToPx}
             onCommit={(value) => {
               dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
+              if (piece.type === 'reponse' && value.length > 0) onAcknowledge();
               onStopEdit();
             }}
             onCancel={onStopEdit}
