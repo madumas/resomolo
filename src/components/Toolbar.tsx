@@ -90,7 +90,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         <button
           onClick={() => setShowAbout(true)}
           aria-label="À propos de RésoMolo"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}
         >
           <Logo height={32} />
         </button>
