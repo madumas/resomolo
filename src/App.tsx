@@ -578,7 +578,14 @@ export default function App() {
           onSelectPiece={id => { setSelectedPieceId(id); setEditingPieceId(null); setDeleteConfirmId(null); }}
           onSetTool={handleSelectTool}
           onStartEdit={id => { setSelectedPieceId(id); setEditingPieceId(id); }}
-          onStopEdit={() => { setEditingPieceId(null); setSelectedPieceId(null); }}
+          onStopEdit={() => {
+            const editedPiece = pieces.find(p => p.id === editingPieceId);
+            setEditingPieceId(null);
+            // Keep tableau selected so the child can click another cell without re-selecting
+            if (!editedPiece || editedPiece.type !== 'tableau') {
+              setSelectedPieceId(null);
+            }
+          }}
           onDeleteClick={handleDeleteClick}
           arrowFromId={arrowFromId}
           onSetArrowFrom={setArrowFromId}
