@@ -21,7 +21,7 @@ export interface Jeton extends PieceBase {
 export interface Barre extends PieceBase {
   type: 'barre';
   couleur: CouleurPiece;
-  sizeMultiplier: number; // 1-10 (relative to referenceUnitMm)
+  sizeMultiplier: number; // 0.25-10 (relative to referenceUnitMm, supports fractions)
   label: string; // e.g. "Théo" — displayed to the left of the bar
   value: string; // e.g. "45", "?" — displayed inside the bar
   divisions: number | null;       // number of subdivisions, null = none

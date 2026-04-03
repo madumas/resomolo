@@ -208,13 +208,27 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
 
       // MOVE_PIECE (final): update jeton parentId based on boîte containment
       if (action.type === 'MOVE_PIECE' && movedPiece.type === 'jeton') {
-        const boite = pieces.find(p =>
-          p.type === 'boite' && p.id !== action.id &&
+        const currentParentId = (movedPiece as Jeton).parentId;
+        // If jeton was in a boîte and moved, detach it first (user is pulling it out)
+        // Then check if it landed in a (different) boîte
+        const landedInBoite = pieces.find(p =>
+          p.type === 'boite' && p.id !== action.id && p.id !== currentParentId &&
           action.x >= p.x && action.x <= p.x + (p as Boite).width &&
           action.y >= p.y && action.y <= p.y + (p as Boite).height
         );
-        const newParentId = boite ? boite.id : null;
-        if (newParentId !== (movedPiece as Jeton).parentId) {
+        // If moved outside current parent boîte, detach
+        let newParentId: string | null = currentParentId;
+        if (currentParentId) {
+          const parentBoite = pieces.find(p => p.id === currentParentId) as Boite | undefined;
+          if (parentBoite) {
+            const inside = action.x >= parentBoite.x && action.x <= parentBoite.x + parentBoite.width &&
+                           action.y >= parentBoite.y && action.y <= parentBoite.y + parentBoite.height;
+            if (!inside) newParentId = null; // detach — jeton pulled out
+          }
+        }
+        // If landed in a new boîte, attach to it
+        if (landedInBoite) newParentId = landedInBoite.id;
+        if (newParentId !== currentParentId) {
           pieces = pieces.map(p =>
             p.id === action.id ? { ...p, parentId: newParentId } as Piece : p
           );

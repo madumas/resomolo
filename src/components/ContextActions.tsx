@@ -236,6 +236,20 @@ export function ContextActions({
               {n}×
             </CtxBtn>
           ))}
+          <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '4px 0' }} />
+          {([
+            { value: 0.25, label: '¼×' },
+            { value: 1/3,  label: '⅓×' },
+            { value: 0.5,  label: '½×' },
+            { value: 2/3,  label: '⅔×' },
+            { value: 0.75, label: '¾×' },
+            { value: 1.5,  label: '1½×' },
+          ] as const).map(f => (
+            <CtxBtn key={f.label} active={Math.abs(piece.sizeMultiplier - f.value) < 0.001}
+              onClick={() => { onResizeBar(piece.id, f.value); setBarSubmenu('none'); }}>
+              {f.label}
+            </CtxBtn>
+          ))}
         </>
       )}
       {/* Barre — submenu Fraction */}
@@ -460,6 +474,8 @@ export function ContextActions({
           {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
             <CtxBtn key={n}
               active={piece.rows === n}
+              onPointerEnter={() => onTableauPreview?.(n, null)}
+              onPointerLeave={() => onTableauPreview?.(null, null)}
               onClick={() => {
                 const newCells = n > piece.rows
                   ? [...piece.cells, ...Array.from({ length: n - piece.rows }, () => Array(piece.cols).fill(''))]
@@ -480,6 +496,8 @@ export function ContextActions({
           {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
             <CtxBtn key={n}
               active={piece.cols === n}
+              onPointerEnter={() => onTableauPreview?.(null, n)}
+              onPointerLeave={() => onTableauPreview?.(null, null)}
               onClick={() => {
                 const newCells = n > piece.cols
                   ? piece.cells.map(r => [...r, ...Array(n - piece.cols).fill('')])
@@ -499,16 +517,20 @@ export function ContextActions({
   );
 }
 
-function CtxBtn({ children, onClick, active, destructive, back }: {
+function CtxBtn({ children, onClick, active, destructive, back, onPointerEnter, onPointerLeave }: {
   children: React.ReactNode;
   onClick: () => void;
   active?: boolean;
   destructive?: boolean;
   back?: boolean;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
 }) {
   return (
     <button
       onClick={onClick}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
         fontSize: back ? 14 : 12,

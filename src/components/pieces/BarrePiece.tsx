@@ -2,6 +2,30 @@ import type { Barre } from '../../model/types';
 import { BAR_HEIGHT_MM } from '../../model/types';
 import { getPieceColor, getPieceFillColor } from '../../config/theme';
 
+const FRAC_MAP: Record<string, string> = {
+  '0.25': '¼', '0.5': '½', '0.75': '¾',
+};
+
+function formatMultiplier(n: number): string {
+  // Exact Unicode fractions
+  const key = n.toString();
+  if (FRAC_MAP[key]) return `${FRAC_MAP[key]}×`;
+  // Tiers (avoid float comparison issues)
+  if (Math.abs(n - 1/3) < 0.001) return '⅓×';
+  if (Math.abs(n - 2/3) < 0.001) return '⅔×';
+  // Mixed number (1.5 → "1½×")
+  const int = Math.floor(n);
+  const frac = n - int;
+  if (frac > 0.001) {
+    const fracKey = frac.toFixed(2).replace(/0+$/, '');
+    if (FRAC_MAP[fracKey]) return `${int}${FRAC_MAP[fracKey]}×`;
+  }
+  // Integer or fallback
+  if (Number.isInteger(n)) return `${n}×`;
+  return `${n.toString().replace('.', ',')}×`;
+}
+
+
 interface BarrePieceProps {
   piece: Barre;
   referenceUnitMm: number;
@@ -68,7 +92,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
         opacity={hasValue ? 1 : 0.5}
         data-edit-target={`${piece.id}-value`}
       >
-        {hasValue ? piece.value : (!hasLabel ? `${piece.sizeMultiplier}×` : ' ')}
+        {hasValue ? piece.value : (!hasLabel ? formatMultiplier(piece.sizeMultiplier) : ' ')}
       </text>
       {/* Fraction label (stacked notation) — auto when showFraction + colored parts */}
       {piece.showFraction && piece.divisions && piece.coloredParts.length > 0 && (
@@ -100,6 +124,19 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
             {piece.divisions}
           </text>
         </g>
+      )}
+      {/* Part labels under each subdivision when showFraction */}
+      {piece.showFraction && piece.divisions && piece.divisions > 1 && (
+        Array.from({ length: piece.divisions }, (_, i) => {
+          const partW = w / piece.divisions!;
+          const partX = piece.x + partW * i + partW / 2;
+          return (
+            <text key={`pl-${i}`} x={partX} y={piece.y - 3}
+              textAnchor="middle" fontSize={3} fill="#9CA3AF">
+              {i + 1}/{piece.divisions}
+            </text>
+          );
+        })
       )}
       {/* Selection highlight */}
       {isSelected && (

@@ -16,7 +16,7 @@ function makeBarre(overrides: Partial<Barre> = {}): Barre {
     divisions: null,
     coloredParts: [],
     showFraction: false,
-    groupId: null,
+       groupId: null,
     groupLabel: null,
     ...overrides,
   };

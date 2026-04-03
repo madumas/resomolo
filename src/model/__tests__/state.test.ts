@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialAppState, appReducer } from '../state';
 import type { Action, AppState } from '../state';
-import type { Jeton, Barre, Fleche, Etiquette, Boite, ModelisationState } from '../types';
+import type { Jeton, Barre, Fleche, Etiquette, Boite, Tableau, ModelisationState } from '../types';
 import { REFERENCE_UNIT_MM } from '../types';
 // pushState imported via appReducer tests indirectly
 
@@ -417,6 +417,256 @@ describe('appReducer', () => {
       expect(currentModel(app).pieces[0].id).toBe('b99');
       expect(app.selectedPieceId).toBeNull();
       expect(app.editingPieceId).toBeNull();
+    });
+  });
+
+  // === REPARTIR_JETONS ===
+
+  describe('REPARTIR_JETONS', () => {
+    it('distributes N jetons into K groups evenly', () => {
+      let app = freshApp();
+      // Place 6 free jetons
+      for (let i = 0; i < 6; i++) {
+        app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: `j${i}`, x: 50 + i * 10, y: 50 }) });
+      }
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS',
+        jetonIds: ['j0', 'j1', 'j2', 'j3', 'j4', 'j5'],
+        groupCount: 3,
+        startX: 50, startY: 100,
+      });
+
+      const pieces = currentModel(app).pieces;
+      const boites = pieces.filter(p => p.type === 'boite') as Boite[];
+      const jetons = pieces.filter(p => p.type === 'jeton') as Jeton[];
+      expect(boites).toHaveLength(3);
+      expect(jetons).toHaveLength(6);
+      // Each boîte has 2 jetons
+      for (const boite of boites) {
+        const children = jetons.filter(j => j.parentId === boite.id);
+        expect(children).toHaveLength(2);
+      }
+    });
+
+    it('handles remainder — extra jetons stay free', () => {
+      let app = freshApp();
+      for (let i = 0; i < 7; i++) {
+        app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: `j${i}`, x: 50 + i * 10, y: 50 }) });
+      }
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS',
+        jetonIds: ['j0', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6'],
+        groupCount: 3,
+        startX: 50, startY: 100,
+      });
+
+      const pieces = currentModel(app).pieces;
+      const boites = pieces.filter(p => p.type === 'boite') as Boite[];
+      const jetons = pieces.filter(p => p.type === 'jeton') as Jeton[];
+      expect(boites).toHaveLength(3);
+      // 3 groups of 2 = 6 assigned, 1 free
+      const assigned = jetons.filter(j => j.parentId !== null);
+      const free = jetons.filter(j => j.parentId === null);
+      expect(assigned).toHaveLength(6);
+      expect(free).toHaveLength(1);
+    });
+
+    it('guards: does nothing with 0 jetons', () => {
+      let app = freshApp();
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS', jetonIds: [], groupCount: 3, startX: 50, startY: 100,
+      });
+      expect(currentModel(app).pieces).toHaveLength(0);
+    });
+
+    it('guards: does nothing with groupCount < 2', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: 'j1' }) });
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS', jetonIds: ['j1'], groupCount: 1, startX: 50, startY: 100,
+      });
+      expect(currentModel(app).pieces.filter(p => p.type === 'boite')).toHaveLength(0);
+    });
+
+    it('preserves jeton colors', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: 'j1', couleur: 'rouge' }) });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: 'j2', couleur: 'vert' }) });
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS', jetonIds: ['j1', 'j2'], groupCount: 2, startX: 50, startY: 100,
+      });
+
+      const j1 = currentModel(app).pieces.find(p => p.id === 'j1') as Jeton;
+      const j2 = currentModel(app).pieces.find(p => p.id === 'j2') as Jeton;
+      expect(j1.couleur).toBe('rouge');
+      expect(j2.couleur).toBe('vert');
+    });
+
+    it('labels boîtes Groupe 1, Groupe 2, etc.', () => {
+      let app = freshApp();
+      for (let i = 0; i < 4; i++) {
+        app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: `j${i}`, x: 50, y: 50 }) });
+      }
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS', jetonIds: ['j0', 'j1', 'j2', 'j3'], groupCount: 2, startX: 50, startY: 100,
+      });
+
+      const boites = currentModel(app).pieces.filter(p => p.type === 'boite') as Boite[];
+      expect(boites[0].label).toBe('Groupe 1');
+      expect(boites[1].label).toBe('Groupe 2');
+    });
+
+    it('is undoable in a single step', () => {
+      let app = freshApp();
+      for (let i = 0; i < 4; i++) {
+        app = dispatch(app, { type: 'PLACE_PIECE', piece: makeJeton({ id: `j${i}`, x: 50, y: 50 }) });
+      }
+      const beforeRepartir = currentModel(app).pieces.length;
+      app = dispatch(app, {
+        type: 'REPARTIR_JETONS', jetonIds: ['j0', 'j1', 'j2', 'j3'], groupCount: 2, startX: 50, startY: 100,
+      });
+      expect(currentModel(app).pieces.filter(p => p.type === 'boite')).toHaveLength(2);
+
+      // Undo — boîtes gone, jetons back to original positions
+      app = dispatch(app, { type: 'UNDO' });
+      expect(currentModel(app).pieces).toHaveLength(beforeRepartir);
+      expect(currentModel(app).pieces.filter(p => p.type === 'boite')).toHaveLength(0);
+      const j0 = currentModel(app).pieces.find(p => p.id === 'j0') as Jeton;
+      expect(j0.parentId).toBeNull();
+    });
+  });
+
+  // === Fractional bar sizes ===
+
+  describe('Fractional bar sizes', () => {
+    it('accepts fractional sizeMultiplier', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b1', sizeMultiplier: 0.5 }) });
+      const bar = currentModel(app).pieces[0] as Barre;
+      expect(bar.sizeMultiplier).toBe(0.5);
+    });
+
+    it('auto-scales with fractional multiplier (large bar triggers scale)', () => {
+      let app = freshApp();
+      // A 10× bar at default 60mm = 600mm > 470mm → triggers auto-scale
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b1', sizeMultiplier: 10 }) });
+      const ref1 = currentModel(app).referenceUnitMm;
+      expect(ref1).toBeLessThan(REFERENCE_UNIT_MM);
+
+      // A 0.5× bar doesn't affect auto-scale (it's small)
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b2', sizeMultiplier: 0.5 }) });
+      expect(currentModel(app).referenceUnitMm).toBe(ref1);
+    });
+
+    it('resizing to fractional value via EDIT_PIECE works', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b1', sizeMultiplier: 1 }) });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: 'b1', changes: { sizeMultiplier: 0.75 } });
+      const bar = currentModel(app).pieces[0] as Barre;
+      expect(bar.sizeMultiplier).toBe(0.75);
+    });
+
+    it('fractional bar with subdivisions and colored parts', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({
+        id: 'b1', sizeMultiplier: 0.5, divisions: 4, coloredParts: [0, 1, 2], showFraction: true,
+      }) });
+      const bar = currentModel(app).pieces[0] as Barre;
+      expect(bar.sizeMultiplier).toBe(0.5);
+      expect(bar.divisions).toBe(4);
+      expect(bar.coloredParts).toEqual([0, 1, 2]);
+      expect(bar.showFraction).toBe(true);
+    });
+
+    it('duplicate bar preserves fractional size', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b1', sizeMultiplier: 0.25 }) });
+      // Simulate duplicate: place a second barre with same multiplier
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'b2', sizeMultiplier: 0.25, y: 120 }) });
+      const bars = currentModel(app).pieces.filter(p => p.type === 'barre') as Barre[];
+      expect(bars).toHaveLength(2);
+      expect(bars[0].sizeMultiplier).toBe(0.25);
+      expect(bars[1].sizeMultiplier).toBe(0.25);
+    });
+  });
+
+  // === Tableau piece ===
+
+  describe('Tableau piece', () => {
+    function makeTableau(overrides: Partial<Tableau> = {}): Tableau {
+      return {
+        id: 't1', type: 'tableau', x: 100, y: 100, locked: false,
+        rows: 3, cols: 2,
+        cells: [['En-tête 1', 'En-tête 2'], ['A', 'B'], ['C', 'D']],
+        headerRow: true,
+        ...overrides,
+      };
+    }
+
+    it('places a tableau', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      const t = currentModel(app).pieces[0] as Tableau;
+      expect(t.type).toBe('tableau');
+      expect(t.rows).toBe(3);
+      expect(t.cols).toBe(2);
+      expect(t.cells).toHaveLength(3);
+      expect(t.headerRow).toBe(true);
+    });
+
+    it('edits tableau cells', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau() });
+      const newCells = [['X', 'Y'], ['1', '2'], ['3', '4']];
+      app = dispatch(app, { type: 'EDIT_PIECE', id: 't1', changes: { cells: newCells } });
+      const t = currentModel(app).pieces[0] as Tableau;
+      expect(t.cells[0][0]).toBe('X');
+      expect(t.cells[2][1]).toBe('4');
+    });
+
+    it('edits tableau dimensions', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau() });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: 't1', changes: {
+        rows: 4, cols: 3,
+        cells: [['A', 'B', 'C'], ['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']],
+      } });
+      const t = currentModel(app).pieces[0] as Tableau;
+      expect(t.rows).toBe(4);
+      expect(t.cols).toBe(3);
+      expect(t.cells).toHaveLength(4);
+      expect(t.cells[0]).toHaveLength(3);
+    });
+
+    it('moves a tableau', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau() });
+      app = dispatch(app, { type: 'MOVE_PIECE', id: 't1', x: 200, y: 300 });
+      const t = currentModel(app).pieces[0] as Tableau;
+      expect(t.x).toBe(200);
+      expect(t.y).toBe(300);
+    });
+
+    it('deletes tableau and cascades to attached étiquettes', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau({ id: 't1' }) });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeEtiquette({ id: 'e1', attachedTo: 't1' }) });
+      expect(currentModel(app).pieces).toHaveLength(2);
+
+      app = dispatch(app, { type: 'DELETE_PIECE', id: 't1' });
+      expect(currentModel(app).pieces).toHaveLength(0);
+    });
+
+    it('undo restores deleted tableau', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeTableau() });
+      app = dispatch(app, { type: 'DELETE_PIECE', id: 't1' });
+      expect(currentModel(app).pieces).toHaveLength(0);
+
+      app = dispatch(app, { type: 'UNDO' });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect((currentModel(app).pieces[0] as Tableau).type).toBe('tableau');
     });
   });
 });

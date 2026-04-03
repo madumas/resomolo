@@ -134,7 +134,45 @@ export function Canvas({
       }
     }
     setTableauEditorPieceId(null);
+    setActiveCellRC(null);
   }, [tableauEditorPieceId, pieces, dispatch]);
+
+  // Tableau keyboard navigation helpers
+  const [activeCellRC, setActiveCellRC] = useState<{ row: number; col: number } | null>(null);
+
+  const focusTableauCell = useCallback((row: number, col: number) => {
+    const el = containerRef.current?.querySelector(
+      `input[data-tableau-cell="${row}-${col}"]`
+    ) as HTMLInputElement | null;
+    el?.focus();
+  }, []);
+
+  // Track which cell was clicked to focus it after overlay mounts
+  const tableauClickedCell = useRef<{ row: number; col: number } | null>(null);
+
+  // Auto-focus clicked cell (or first empty cell) when entering tableau edit mode
+  useEffect(() => {
+    if (!tableauEditorPieceId) { setActiveCellRC(null); return; }
+    const t = pieces.find(p => p.id === tableauEditorPieceId) as Tableau | undefined;
+    if (!t) return;
+    const clicked = tableauClickedCell.current;
+    tableauClickedCell.current = null;
+    setTimeout(() => {
+      // Priority: focus the cell that was clicked
+      if (clicked && clicked.row < t.rows && clicked.col < t.cols) {
+        focusTableauCell(clicked.row, clicked.col);
+        return;
+      }
+      // Fallback: first empty cell
+      for (let r = 0; r < t.rows; r++) {
+        for (let c = 0; c < t.cols; c++) {
+          if (!t.cells[r][c]) { focusTableauCell(r, c); return; }
+        }
+      }
+      focusTableauCell(0, 0);
+    }, 50);
+  }, [tableauEditorPieceId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [isArranging, setIsArranging] = useState(false);
@@ -252,9 +290,15 @@ export function Canvas({
       }
       // Tableau — toggle in-place editing (only when no tool is active)
       if (isTableau(hitPiece) && !deleteMode && !activeTool) {
+        // Calculate which cell was clicked
+        const clickedCol = Math.floor((pos.x - hitPiece.x) / TABLEAU_CELL_W);
+        const clickedRow = Math.floor((pos.y - hitPiece.y) / TABLEAU_CELL_H);
         if (tableauEditorPieceId === hitPiece.id) {
-          return; // already editing
+          // Already editing — focus the clicked cell directly
+          focusTableauCell(clickedRow, clickedCol);
+          return;
         }
+        tableauClickedCell.current = { row: clickedRow, col: clickedCol };
         setTableauEditorPieceId(hitPiece.id);
         onSelectPiece(hitPiece.id);
         return;
@@ -580,7 +624,7 @@ export function Canvas({
         divisions: null,
         coloredParts: [],
         showFraction: false,
-        groupId: null,
+               groupId: null,
         groupLabel: null,
       });
     }
@@ -796,6 +840,8 @@ export function Canvas({
               isEditing={tableauEditorPieceId === piece.id}
               previewRows={piece.id === selectedPieceId ? tableauPreviewRows : undefined}
               previewCols={piece.id === selectedPieceId ? tableauPreviewCols : undefined}
+              activeRow={tableauEditorPieceId === piece.id ? activeCellRC?.row ?? null : null}
+              activeCol={tableauEditorPieceId === piece.id ? activeCellRC?.col ?? null : null}
             />
           </g>
         ))}
@@ -1187,19 +1233,55 @@ export function Canvas({
                   dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
                 }
               }}
+              onFocus={() => setActiveCellRC({ row: ri, col: ci })}
               onKeyDown={e => {
+                // Ctrl+Z — cell undo
                 if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
                   e.preventDefault();
                   e.stopPropagation();
-                  // Multi-level undo: pop from stack, restore cell, focus it
                   const entry = tableauUndo.pop();
                   if (entry) {
                     const [ur, uc] = entry.cellId.split('-').map(Number);
                     const newCells = t.cells.map((r, rri) => rri === ur ? r.map((c, cci) => cci === uc ? entry.prevValue : c) : [...r]);
                     dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
-                    // Input will remount with correct defaultValue via key change
                   }
+                  return;
                 }
+                // Escape — exit tableau editing
+                if (e.key === 'Escape') { e.preventDefault(); closeTableauEditor(); return; }
+                // Shift+Tab — previous cell
+                if (e.key === 'Tab' && e.shiftKey) {
+                  e.preventDefault();
+                  let nc = ci - 1, nr = ri;
+                  if (nc < 0) { nc = t.cols - 1; nr--; }
+                  if (nr >= 0) focusTableauCell(nr, nc);
+                  else closeTableauEditor();
+                  return;
+                }
+                // Tab — next cell (right, then next row)
+                if (e.key === 'Tab') {
+                  e.preventDefault();
+                  let nc = ci + 1, nr = ri;
+                  if (nc >= t.cols) { nc = 0; nr++; }
+                  if (nr < t.rows) focusTableauCell(nr, nc);
+                  else closeTableauEditor();
+                  return;
+                }
+                // Enter — cell below (or next column first row)
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (ri + 1 < t.rows) focusTableauCell(ri + 1, ci);
+                  else if (ci + 1 < t.cols) focusTableauCell(0, ci + 1);
+                  return;
+                }
+                // Arrow keys — navigate when cursor at boundary
+                const input = e.target as HTMLInputElement;
+                const atStart = input.selectionStart === 0 && input.selectionEnd === 0;
+                const atEnd = input.selectionStart === input.value.length;
+                if (e.key === 'ArrowRight' && atEnd && ci < t.cols - 1) { e.preventDefault(); focusTableauCell(ri, ci + 1); }
+                if (e.key === 'ArrowLeft' && atStart && ci > 0) { e.preventDefault(); focusTableauCell(ri, ci - 1); }
+                if (e.key === 'ArrowDown' && ri < t.rows - 1) { e.preventDefault(); focusTableauCell(ri + 1, ci); }
+                if (e.key === 'ArrowUp' && ri > 0) { e.preventDefault(); focusTableauCell(ri - 1, ci); }
               }}
               onPointerDown={e => e.stopPropagation()}
               style={{
@@ -1765,17 +1847,18 @@ function getReponseWidth(piece: Reponse): number {
 // === Hit test ===
 
 const TABLEAU_CELL_W = 12; // mm
-const TABLEAU_CELL_H = 10; // mm
+const TABLEAU_CELL_H = 12; // mm (WCAG 2.5.5: 12mm ≈ 45px meets 44px minimum)
 
-function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols }: {
+function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols, activeRow, activeCol }: {
   piece: Tableau; isSelected: boolean;
   isEditing?: boolean;
   previewRows?: number | null;
   previewCols?: number | null;
+  activeRow?: number | null;
+  activeCol?: number | null;
 }) {
   const tw = piece.cols * TABLEAU_CELL_W;
   const th = piece.rows * TABLEAU_CELL_H;
-  void previewRows; void previewCols; // reserved for future grid preview
   return (
     <g>
       {/* Outer border */}
@@ -1785,6 +1868,17 @@ function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols }
       {piece.headerRow && (
         <rect x={piece.x} y={piece.y} width={tw} height={TABLEAU_CELL_H} rx={1}
           fill="#F2F0F8" />
+      )}
+      {/* Active row/column highlight for visuospatial orientation */}
+      {activeRow != null && (
+        <rect x={piece.x} y={piece.y + activeRow * TABLEAU_CELL_H}
+          width={tw} height={TABLEAU_CELL_H}
+          fill="rgba(112, 40, 224, 0.06)" />
+      )}
+      {activeCol != null && (
+        <rect x={piece.x + activeCol * TABLEAU_CELL_W} y={piece.y}
+          width={TABLEAU_CELL_W} height={th}
+          fill="rgba(112, 40, 224, 0.06)" />
       )}
       {/* Cell borders + text */}
       {piece.cells.map((row, ri) => row.map((cell, ci) => {
