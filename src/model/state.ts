@@ -103,17 +103,19 @@ function autoResizeBoite(state: ModelisationState): ModelisationState {
     if (children.length === 0) continue;
 
     const padding = 10; // mm
-    const minX = Math.min(...children.map(c => c.x)) - padding;
-    const maxX = Math.max(...children.map(c => c.x)) + padding;
-    const minY = Math.min(...children.map(c => c.y)) - padding;
-    const maxY = Math.max(...children.map(c => c.y)) + padding;
+    const childMinX = Math.min(...children.map(c => c.x)) - padding;
+    const childMaxX = Math.max(...children.map(c => c.x)) + padding;
+    const childMinY = Math.min(...children.map(c => c.y)) - padding;
+    const childMaxY = Math.max(...children.map(c => c.y)) + padding;
 
-    // Resize to fit children exactly (can shrink when jetons are removed)
+    // Keep the boîte position stable — only expand if children overflow
     const DEFAULT_WIDTH = 60, DEFAULT_HEIGHT = 40;
-    const newWidth = Math.max(DEFAULT_WIDTH, maxX - minX);
-    const newHeight = Math.max(DEFAULT_HEIGHT, maxY - minY);
-    const newX = minX;
-    const newY = minY;
+    const newX = Math.min(boite.x, childMinX);
+    const newY = Math.min(boite.y, childMinY);
+    const newRight = Math.max(boite.x + boite.width, childMaxX);
+    const newBottom = Math.max(boite.y + boite.height, childMaxY);
+    const newWidth = Math.max(DEFAULT_WIDTH, newRight - newX);
+    const newHeight = Math.max(DEFAULT_HEIGHT, newBottom - newY);
 
     if (newWidth !== boite.width || newHeight !== boite.height || newX !== boite.x || newY !== boite.y) {
       changed = true;
