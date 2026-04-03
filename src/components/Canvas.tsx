@@ -139,7 +139,7 @@ export function Canvas({
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
-    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, barre: 4, droiteNumerique: 4, fleche: 5, boite: 6 };
+    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, groupe: 3, barre: 4, droiteNumerique: 4, tableau: 5, fleche: 5, boite: 6 };
     const sortedPieces = [...pieces].sort((a, b) => (HIT_PRIORITY[a.type] ?? 9) - (HIT_PRIORITY[b.type] ?? 9));
 
     let hitPiece: Piece | null = null;
@@ -860,6 +860,24 @@ export function Canvas({
           placeholder = 'Texte de la flèche...';
           fieldKey = 'label';
           svgFontSizeMm = 4.5;
+        } else if (piece.type === 'groupe') {
+          initialValue = (piece as Groupe).label;
+          placeholder = 'Nom du groupe...';
+          fieldKey = 'label';
+          svgFontSizeMm = 4.5;
+        } else if (piece.type === 'tableau') {
+          // For tableau, edit the first empty cell or header
+          const t = piece as Tableau;
+          let targetRow = 0, targetCol = 0;
+          outer: for (let r = 0; r < t.rows; r++) {
+            for (let c = 0; c < t.cols; c++) {
+              if (!t.cells[r][c]) { targetRow = r; targetCol = c; break outer; }
+            }
+          }
+          initialValue = t.cells[targetRow][targetCol];
+          placeholder = targetRow === 0 && t.headerRow ? 'En-tête...' : 'Donnée...';
+          fieldKey = `cells-${targetRow}-${targetCol}`;
+          svgFontSizeMm = 4;
         } else {
           return null;
         }
@@ -921,7 +939,16 @@ export function Canvas({
             monospace={isCalcul}
             fontSize={svgFontSizeMm * mmToPx}
             onCommit={(value) => {
-              dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
+              if (fieldKey.startsWith('cells-')) {
+                // Tableau cell edit: fieldKey = "cells-row-col"
+                const [, rowStr, colStr] = fieldKey.split('-');
+                const row = parseInt(rowStr), col = parseInt(colStr);
+                const t = piece as Tableau;
+                const newCells = t.cells.map((r, ri) => ri === row ? r.map((c, ci) => ci === col ? value : c) : [...r]);
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { cells: newCells } });
+              } else {
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
+              }
               onStopEdit();
             }}
             onCancel={onStopEdit}

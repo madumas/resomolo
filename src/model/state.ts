@@ -84,6 +84,9 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
     case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) / 2, y: piece.y + 7 };
     case 'reponse': return { x: piece.x + getReponseWidthSimple(piece) / 2, y: piece.y + 11 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
+    case 'droiteNumerique': return { x: piece.x + (piece as any).width / 2, y: piece.y };
+    case 'groupe': return { x: piece.x + Math.max(25, (piece as any).count * 6 + 10) / 2, y: piece.y + 7.5 };
+    case 'tableau': return { x: piece.x + (piece as any).cols * 12 / 2, y: piece.y + (piece as any).rows * 10 / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }

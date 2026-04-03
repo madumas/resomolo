@@ -11,10 +11,17 @@ interface MinPiece {
   w?: number; h?: number; tx?: string; ex?: string;
   fi?: string; ti?: string; lk?: boolean;
   dv?: number; cp?: number[]; gi?: string; gl?: string;
+  sf?: boolean; // showFraction
   cd?: string; // columnData
   at?: string; // attachedTo
   pi?: string; // parentId
   tpl?: string; // template (reponse)
+  // DroiteNumerique
+  mn?: number; mx?: number; st?: number; mk?: number[]; wd?: number;
+  // Groupe
+  cnt?: number;
+  // Tableau
+  rw?: number; cl?: number; clz?: string[][]; hr?: boolean;
 }
 
 interface SharePayload {
@@ -37,6 +44,7 @@ function minifyPiece(p: Piece): MinPiece {
       if (p.value) m.v = p.value;
       if (p.divisions) m.dv = p.divisions;
       if (p.coloredParts?.length) m.cp = p.coloredParts;
+      if (p.showFraction) m.sf = true;
       if (p.groupId) m.gi = p.groupId;
       if (p.groupLabel) m.gl = p.groupLabel;
       break;
@@ -60,6 +68,19 @@ function minifyPiece(p: Piece): MinPiece {
       m.fi = p.fromId; m.ti = p.toId;
       if (p.label) m.l = p.label;
       break;
+    case 'droiteNumerique':
+      m.mn = p.min; m.mx = p.max; m.st = p.step; m.wd = p.width;
+      if (p.markers.length) m.mk = p.markers;
+      break;
+    case 'groupe':
+      m.cnt = p.count;
+      if (p.couleur !== 'bleu') m.c = p.couleur;
+      if (p.label) m.l = p.label;
+      break;
+    case 'tableau':
+      m.rw = p.rows; m.cl = p.cols; m.clz = p.cells;
+      if (!p.headerRow) m.hr = false;
+      break;
   }
   return m;
 }
@@ -72,7 +93,7 @@ function expandPiece(m: MinPiece): Piece {
     case 'barre':
       return { ...base, type: 'barre', couleur: (m.c as any) ?? 'bleu', sizeMultiplier: m.sm ?? 1,
         label: m.l ?? '', value: m.v ?? '', divisions: m.dv ?? null, coloredParts: m.cp ?? [],
-        showFraction: false, groupId: m.gi ?? null, groupLabel: m.gl ?? null };
+        showFraction: m.sf ?? false, groupId: m.gi ?? null, groupLabel: m.gl ?? null };
     case 'calcul':
       return { ...base, type: 'calcul', expression: m.ex ?? '', columnData: m.cd };
     case 'reponse':
@@ -83,6 +104,15 @@ function expandPiece(m: MinPiece): Piece {
       return { ...base, type: 'etiquette', text: m.tx ?? '', attachedTo: m.at ?? null };
     case 'fleche':
       return { ...base, type: 'fleche', fromId: m.fi ?? '', toId: m.ti ?? '', label: m.l ?? '' };
+    case 'droiteNumerique':
+      return { ...base, type: 'droiteNumerique', min: m.mn ?? 0, max: m.mx ?? 10, step: m.st ?? 1,
+        markers: m.mk ?? [], width: m.wd ?? 200 };
+    case 'groupe':
+      return { ...base, type: 'groupe', count: m.cnt ?? 3, couleur: (m.c as any) ?? 'bleu', label: m.l ?? '' };
+    case 'tableau':
+      return { ...base, type: 'tableau', rows: m.rw ?? 2, cols: m.cl ?? 3,
+        cells: m.clz ?? Array.from({ length: m.rw ?? 2 }, () => Array(m.cl ?? 3).fill('')),
+        headerRow: m.hr ?? true };
     default:
       return { ...base, type: 'jeton', couleur: 'bleu', parentId: null };
   }
