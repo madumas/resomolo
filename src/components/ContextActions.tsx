@@ -50,7 +50,7 @@ export function ContextActions({
   const [showDivideOptions, setShowDivideOptions] = useState(false);
 
   // 2.2: Submenu state for bar context actions (reduces cognitive overload)
-  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'plus'>('none');
+  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'plus' | 'fraction'>('none');
 
   // Template submenu for reponse pieces
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
@@ -186,6 +186,11 @@ export function ContextActions({
                 </CtxBtn>
               )}
               {!piece.locked && (
+                <CtxBtn onClick={() => setBarSubmenu('fraction')}>
+                  Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : '▸'}
+                </CtxBtn>
+              )}
+              {!piece.locked && (
                 <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>
                   Copier
                 </CtxBtn>
@@ -213,6 +218,37 @@ export function ContextActions({
                   {n}×
                 </CtxBtn>
               ))}
+            </>
+          )}
+
+          {/* Fraction submenu: divide presets → stays selected for coloring */}
+          {barSubmenu === 'fraction' && (
+            <>
+              <CtxBtn onClick={() => setBarSubmenu('none')} back>
+                ←
+              </CtxBtn>
+              {piece.divisions ? (
+                <>
+                  <CtxBtn onClick={() => { onEditPiece(piece.id, { divisions: null, coloredParts: [], showFraction: false }); setBarSubmenu('none'); }}>
+                    Effacer
+                  </CtxBtn>
+                  <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '0 4px' }}>
+                    Clique sur la barre pour colorer
+                  </span>
+                </>
+              ) : (
+                <>
+                  {[2, 3, 4, 6].map(n => (
+                    <CtxBtn key={n} onClick={() => {
+                      onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
+                      setBarSubmenu('none');
+                      // Bar stays selected — child can click parts to color them
+                    }}>
+                      1/{n}
+                    </CtxBtn>
+                  ))}
+                </>
+              )}
             </>
           )}
 

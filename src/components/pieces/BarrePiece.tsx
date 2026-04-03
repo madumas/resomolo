@@ -70,7 +70,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
       >
         {hasValue ? piece.value : (!hasLabel ? `${piece.sizeMultiplier}×` : ' ')}
       </text>
-      {/* Fraction label (stacked notation) — shown on demand */}
+      {/* Fraction label (stacked notation) — auto when showFraction + colored parts */}
       {piece.showFraction && piece.divisions && piece.coloredParts.length > 0 && (
         <g>
           <text
