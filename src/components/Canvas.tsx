@@ -752,7 +752,6 @@ export function Canvas({
         {deleteConfirmId && (() => {
           const piece = pieces.find(p => p.id === deleteConfirmId);
           if (!piece) return null;
-          const center = getPieceCenter(piece, referenceUnitMm);
           // Get approximate bounds
           let bx = piece.x - 2, by = piece.y - 2, bw = 20, bh = 14;
           if (isBarre(piece)) { bw = piece.sizeMultiplier * referenceUnitMm + 4; bh = BAR_HEIGHT_MM + 4; }
@@ -1653,8 +1652,7 @@ function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols }
 }) {
   const tw = piece.cols * TABLEAU_CELL_W;
   const th = piece.rows * TABLEAU_CELL_H;
-  const pRows = previewRows ?? piece.rows;
-  const pCols = previewCols ?? piece.cols;
+  void previewRows; void previewCols; // reserved for future grid preview
   return (
     <g>
       {/* Outer border */}
