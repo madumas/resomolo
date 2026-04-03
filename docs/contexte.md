@@ -22,7 +22,7 @@ Pour l'enfant qui a de la difficulté avec la motricité fine, c'est pire : mêm
 
 **ModéliVite** donne à l'enfant des **pièces sémantiques** — des éléments visuels qu'il place par clics pour construire une représentation du problème. Pas un tutoriel. Pas un exerciseur. Un espace de travail libre avec des outils adaptés.
 
-L'analogie : TraceVite remplace la règle et le compas. ModéliVite remplace le crayon et la feuille blanche pour la modélisation de problèmes.
+L'analogie : GéoMolo remplace la règle et le compas. ModéliVite remplace le crayon et la feuille blanche pour la modélisation de problèmes.
 
 ## Principes fondamentaux
 
@@ -32,7 +32,7 @@ L'analogie : TraceVite remplace la règle et le compas. ModéliVite remplace le 
 
 3. **La modélisation EST la trace de raisonnement.** L'enseignant voit la pensée de l'enfant dans sa construction, pas juste la réponse finale.
 
-4. **Accessible à tous.** Mêmes principes que TraceVite : clic (pas drag), snap, grandes cibles, pas de geste de précision. Tout enfant qui bloque devant un problème en bénéficie.
+4. **Accessible à tous.** Mêmes principes que GéoMolo : clic (pas drag), snap, grandes cibles, pas de geste de précision. Tout enfant qui bloque devant un problème en bénéficie.
 
 5. **Aligné PFEQ.** Vocabulaire, types de problèmes, progression par cycles — tout correspond au programme québécois.
 
@@ -53,7 +53,7 @@ Dix pièces couvrant les 3 cycles du primaire :
 | **Calcul** | Zone d'opération évaluée (6 + 3 = 9), plaçable n'importe où | 1-2-3 |
 | **Réponse** | Encadré pour la réponse finale en phrase | 1-2-3 |
 
-## Liens avec TraceVite
+## Liens avec GéoMolo
 
 - Même philosophie : l'outil compense la motricité, le raisonnement reste celui de l'enfant
 - Même stack technique potentielle : React/TS, SVG, PWA, IndexedDB
@@ -68,4 +68,4 @@ Dix pièces couvrant les 3 cycles du primaire :
 
 ## Estimation de taille
 
-Projet comparable à TraceVite en complexité. Plus simple côté moteur géométrique (pas de calculs d'intersection, pas de détection de figures), plus complexe côté variété de pièces et interactions entre elles.
+Projet comparable à GéoMolo en complexité. Plus simple côté moteur géométrique (pas de calculs d'intersection, pas de détection de figures), plus complexe côté variété de pièces et interactions entre elles.

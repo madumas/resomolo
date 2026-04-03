@@ -4,7 +4,7 @@
 
 ModéliVite est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre. L'enfant fait le raisonnement; l'outil lui permet de le rendre visible.
 
-L'enfant ayant des difficultés motrices (Trouble Développemental de la Coordination) ne peut pas dessiner ses schémas sur papier. ModéliVite compense le geste moteur — pas le raisonnement. Comme TraceVite pour la géométrie, mais pour la résolution de problèmes.
+L'enfant ayant des difficultés motrices (Trouble Développemental de la Coordination) ne peut pas dessiner ses schémas sur papier. ModéliVite compense le geste moteur — pas le raisonnement. Comme GéoMolo pour la géométrie, mais pour la résolution de problèmes.
 
 L'outil est utile à tout enfant en difficulté en résolution de problèmes. L'enfant ayant des difficultés motrices en bénéficie le plus, mais la modélisation visuelle est une stratégie universelle qui aide aussi les enfants ayant des difficultés en math (construction du sens du nombre), en lecture (traduction texte → schéma), en attention (ancrage visuel de chaque étape contre l'oubli), ou de l'anxiété de performance (point de départ concret au lieu de la page blanche).
 
@@ -43,7 +43,7 @@ La construction de l'enfant est visible telle quelle — pas un rapport, pas une
 
 ### 3.5 Accessible à tous
 
-Mêmes principes que TraceVite : clic (pas drag obligatoire), snap et alignement automatique, grandes cibles (44×44px), pas de geste de précision, pas de right-click. L'accessibilité motrice est non négociable.
+Mêmes principes que GéoMolo : clic (pas drag obligatoire), snap et alignement automatique, grandes cibles (44×44px), pas de geste de précision, pas de right-click. L'accessibilité motrice est non négociable.
 
 Le double-clic est implémenté silencieusement comme raccourci pour éditer, mais n'est jamais présenté ni enseigné. Le bouton contextuel « Éditer » est le seul chemin documenté.
 
@@ -60,7 +60,7 @@ Vocabulaire, types de problèmes, modes de représentation — tout correspond a
 - vite-plugin-pwa pour Service Worker / offline
 - Pas de backend — tout est client-side, pas de comptes, pas de cloud
 
-Projet séparé de TraceVite. Même stack, code indépendant.
+Projet séparé de GéoMolo. Même stack, code indépendant.
 
 ## 5. Structure de l'interface
 
@@ -110,18 +110,18 @@ Bandeau en haut de l'espace de travail. Affiche l'énoncé du problème.
 
 Canvas SVG. Surface libre où l'enfant place ses pièces.
 
-- **Fond :** Blanc ou légèrement teinté (#FAFCFF comme TraceVite). Pas de grille visible par défaut (ce n'est pas un espace géométrique).
+- **Fond :** Blanc ou légèrement teinté (#FAFCFF comme GéoMolo). Pas de grille visible par défaut (ce n'est pas un espace géométrique).
 - **Système de coordonnées :** Un seul `<svg>` avec viewBox en millimètres (ex: `0 0 500 350`). Les coordonnées de toutes les pièces sont en mm. Le facteur d'échelle mm→px est implicite dans le ratio viewBox/taille DOM du SVG. Conversion clic→mm via `svgElement.getScreenCTM().inverse()`. Le seuil de drag (1,5mm physique) et les zones de snap sont convertis en mm du modèle à runtime via `physicalMm × viewBoxWidth / svgPhysicalWidthMm`.
 - **Grille invisible de snap :** Les pièces s'alignent sur une grille invisible de 5mm dans le système de coordonnées du modèle. L'enfant ne voit pas la grille mais ses pièces s'alignent proprement.
 - **Pas de pan ni de scroll.** Le canvas reste entièrement visible en tout temps. Justification accessibilité et UX-pédagogie : (1) un enfant ayant des difficultés motrices a besoin de voir l'ensemble de son modèle pour raisonner — un canvas navigable brise cette vue d'ensemble ; (2) la confusion entre « déplacer une pièce » et « déplacer le canvas » est un risque majeur pour cette population ; (3) les problèmes du primaire QC tiennent largement dans un viewport fixe bien organisé. Le bouton « Ranger » couvre le besoin de réorganisation spatiale. Si l'espace devient insuffisant, la solution est le dimensionnement responsive et l'auto-zoom adaptatif, pas le pan.
 - **Ranger :** Bouton flottant en bas à droite du canvas, à côté de Voir tout (icône grille/alignement). Réorganise les pièces existantes pour maximiser la lisibilité. Algorithme simple : barres alignées à gauche en haut, jetons/boîtes au milieu, calculs en bas, réponse tout en bas ; espacement uniforme (15mm vertical, 10mm horizontal) ; ordre relatif préservé au sein de chaque groupe. Ne déplace PAS les pièces verrouillées. **Animation lente (400-500ms, ease-out)** — chaque pièce glisse vers sa nouvelle position. Pas de téléportation. L'animation est critique : avec animation, c'est rassurant ; sans, c'est désorientant. Pas de confirmation modale — l'undo suffit comme filet (un Ctrl+Z et tout revient). Les flèches ne sont pas réarrangées — elles suivent leurs pièces attachées. Barre d'état après : « Pièces réorganisées ». Cible 44×44px.
-- **Sélection :** Clic sur une pièce pour la sélectionner. Actions contextuelles (déplacer, éditer, supprimer) via barre d'actions comme TraceVite.
+- **Sélection :** Clic sur une pièce pour la sélectionner. Actions contextuelles (déplacer, éditer, supprimer) via barre d'actions comme GéoMolo.
 
 ### 5.4 Barre d'outils (pièces)
 
 Une rangée de boutons, un par pièce. 44×44px minimum, 8px espacement. Icônes simples avec libellé texte dessous.
 
-**Disclosure progressive :** Par défaut, 5 pièces visibles — **Jeton, Barre, Boîte, Calcul, Réponse** — les pièces les plus intuitives et suffisantes pour 80% des problèmes du 2e cycle (incluant les groupes égaux qui nécessitent la Boîte). Un bouton « Plus de pièces » donne accès à **Étiquette, Flèche, Déplacer**. Ce patron reprend le mode Simplifié de TraceVite. L'adulte peut configurer la vue complète dans les paramètres.
+**Disclosure progressive :** Par défaut, 5 pièces visibles — **Jeton, Barre, Boîte, Calcul, Réponse** — les pièces les plus intuitives et suffisantes pour 80% des problèmes du 2e cycle (incluant les groupes égaux qui nécessitent la Boîte). Un bouton « Plus de pièces » donne accès à **Étiquette, Flèche, Déplacer**. Ce patron reprend le mode Simplifié de GéoMolo. L'adulte peut configurer la vue complète dans les paramètres.
 
 ```
 Mode essentiel (défaut):
@@ -139,7 +139,7 @@ La droite numérique, la grille de calcul et le tableau sont reportés (v2 — c
 
 ### 5.5 Barre d'état
 
-Comme TraceVite. Affiche l'outil actif et le geste attendu. Fournit des accusés de réception factuels au placement.
+Comme GéoMolo. Affiche l'outil actif et le geste attendu. Fournit des accusés de réception factuels au placement.
 
 - « Jeton — Clique pour placer un jeton »
 - « Barre — Clique pour placer une barre »
@@ -177,7 +177,7 @@ Comme TraceVite. Affiche l'outil actif et le geste attendu. Fournit des accusés
 
 **Interactions :**
 - Clic : placer un jeton (ou N jetons)
-- Sélection + Déplacer : pick-up / put-down (comme TraceVite)
+- Sélection + Déplacer : pick-up / put-down (comme GéoMolo)
 - Sélection + Supprimer : retirer le jeton
 
 ### 6.2 Boîte
@@ -322,7 +322,7 @@ Par défaut, mode expression (le plus simple).
 
 **Apparence :** Encadré léger, police monospace, fond blanc, bordure fine (#D1D5DB). Taille de texte 16px. En mode colonnes, cases de 10×12mm physiques (~38×46px CSS à 96dpi, ~54×64px à 135dpi Chromebook) avec bordure fine, espacement 2px. Suffisamment grandes pour un doigt ou un clic imprécis.
 
-**`inputmode="decimal"`** sur les champs de saisie (clavier numérique sur tablette). Repositionner le champ en haut du canvas quand le clavier virtuel est détecté (comme TraceVite).
+**`inputmode="decimal"`** sur les champs de saisie (clavier numérique sur tablette). Repositionner le champ en haut du canvas quand le clavier virtuel est détecté (comme GéoMolo).
 
 **Format :** Virgule française pour les décimaux (l'enfant peut taper un point, il sera affiché comme virgule).
 
@@ -354,14 +354,14 @@ Par défaut, mode expression (le plus simple).
 
 ### 7.1 Deux modes pour chaque action
 
-Comme TraceVite : chaque action qui pourrait nécessiter un drag a une alternative deux-clics.
+Comme GéoMolo : chaque action qui pourrait nécessiter un drag a une alternative deux-clics.
 
 - **Déplacer :** Sélectionner la pièce → bouton Déplacer → la pièce suit le curseur → clic pour déposer.
 - **Redimensionner (boîte) :** Clic sur la poignée → la poignée suit le curseur → clic pour fixer. Alternative drag disponible.
 
 ### 7.2 Sélection et actions contextuelles
 
-Clic sur une pièce = sélection. Une barre d'actions contextuelles apparaît près de la pièce sélectionnée (comme TraceVite `ContextActions`).
+Clic sur une pièce = sélection. Une barre d'actions contextuelles apparaît près de la pièce sélectionnée (comme GéoMolo `ContextActions`).
 
 Actions disponibles selon la pièce :
 
@@ -375,14 +375,14 @@ Actions disponibles selon la pièce :
 | Calcul | Éditer, En colonnes / En ligne, Déplacer, Supprimer |
 | Réponse | Éditer, Déplacer, Supprimer |
 
-Boutons 44×44px, espacement 8px. Suppression avec micro-confirmation (comme TraceVite) : le bouton passe en rouge et affiche « Sûr? » pendant 2s.
+Boutons 44×44px, espacement 8px. Suppression avec micro-confirmation (comme GéoMolo) : le bouton passe en rouge et affiche « Sûr? » pendant 2s.
 
 **Nombre de clics pour la barre :** Le flux « placer une barre, l'étiqueter, la dupliquer 2 fois, aligner » doit se faire en moins de 8 clics. Si c'est plus, l'interaction est trop lourde. Benchmark : sur papier, c'est 3 traits de crayon (mais imprécis). L'outil doit être plus lent que le papier mais produire un résultat infiniment plus propre.
 
 ### 7.3 Snap et alignement
 
 - **Grille invisible :** Pas de grille visible, mais les pièces se placent sur une grille de 5mm.
-- **Profils de tolérance :** Comme TraceVite — Normal, Large (×1,5 pour 8-9 ans), Très large (×2,0 pour difficultés motrices importantes). Configurable dans les paramètres. Les profils appliquent un multiplicateur (Normal: 1.0, Large: 1.5, Très large: 2.0) aux distances de snap, seuil de drag et padding de hit-test. Le debounce de clic est mis à l'échelle par √m (racine carrée du multiplicateur) pour éviter des délais excessifs. La grille de snap (5mm) n'est pas mise à l'échelle.
+- **Profils de tolérance :** Comme GéoMolo — Normal, Large (×1,5 pour 8-9 ans), Très large (×2,0 pour difficultés motrices importantes). Configurable dans les paramètres. Les profils appliquent un multiplicateur (Normal: 1.0, Large: 1.5, Très large: 2.0) aux distances de snap, seuil de drag et padding de hit-test. Le debounce de clic est mis à l'échelle par √m (racine carrée du multiplicateur) pour éviter des délais excessifs. La grille de snap (5mm) n'est pas mise à l'échelle.
 - **Alignement entre pièces :** Quand une pièce approche de l'alignement horizontal ou vertical avec une autre pièce, elle snape. Guides visuels temporaires (ligne pointillée fine) apparaissent pour montrer l'alignement. Seuil de déclenchement généreux.
 - **Barres : alignement gauche automatique.** Quand une barre est placée dans un rayon vertical de 15mm d'une autre barre, elle s'aligne à gauche sur celle-ci.
 - **Jetons dans boîte : alignement en rangées.** Les jetons placés dans une boîte s'organisent automatiquement en rangées.
@@ -390,7 +390,7 @@ Boutons 44×44px, espacement 8px. Suppression avec micro-confirmation (comme Tra
 
 ### 7.4 Escape = annulation
 
-Même hiérarchie que TraceVite :
+Même hiérarchie que GéoMolo :
 1. Fermer un dialogue ouvert
 2. Annuler l'action en cours (flèche à moitié créée, texte en édition, mode « Même taille » en attente)
 3. Désélectionner la pastille de surlignage active
@@ -407,7 +407,7 @@ Les actions irréversibles (Recommencer, Reset) déclenchent un dialogue de conf
 
 ### 7.7 Seuil de drag
 
-1,5mm physique (~8px CSS à 135dpi). Mouvement < 1,5mm depuis pointerdown = clic, pas drag. Comme TraceVite. Converti en CSS px à runtime via `devicePixelRatio`.
+1,5mm physique (~8px CSS à 135dpi). Mouvement < 1,5mm depuis pointerdown = clic, pas drag. Comme GéoMolo. Converti en CSS px à runtime via `devicePixelRatio`.
 
 ### 7.8 Debounce de clic
 
@@ -415,7 +415,7 @@ Les actions irréversibles (Recommencer, Reset) déclenchent un dialogue de conf
 
 ### 7.9 Pas de raccourcis clavier par défaut
 
-Comme TraceVite. Les raccourcis sont disponibles mais désactivés par défaut (activables dans les paramètres).
+Comme GéoMolo. Les raccourcis sont disponibles mais désactivés par défaut (activables dans les paramètres).
 
 ### 7.10 PointerEvent
 
@@ -423,7 +423,7 @@ Toutes les interactions canvas via PointerEvent (pas MouseEvent). Support stylus
 
 ### 7.11 Lissage du curseur
 
-Filtre de lissage optionnel (comme TraceVite `cursor smoothing filter`) pour lisser les mouvements tremblants pendant le déplacement de pièces. Filtre les micro-tremblements pour les enfants avec instabilité motrice. Utile pour les enfants ayant des difficultés motrices.
+Filtre de lissage optionnel (comme GéoMolo `cursor smoothing filter`) pour lisser les mouvements tremblants pendant le déplacement de pièces. Filtre les micro-tremblements pour les enfants avec instabilité motrice. Utile pour les enfants ayant des difficultés motrices.
 
 ## 8. Persistance
 
@@ -433,7 +433,7 @@ Sauvegarde automatique en IndexedDB (via idb-keyval) après chaque action, vers 
 
 ### 8.2 Slots
 
-Comme TraceVite. « Mes modélisations » — plusieurs emplacements nommés. L'enfant peut nommer chaque modélisation (« Problème p.34 », « Examen mardi », etc.). Chaque slot affiche sa date de création et de dernière modification dans le sélecteur.
+Comme GéoMolo. « Mes modélisations » — plusieurs emplacements nommés. L'enfant peut nommer chaque modélisation (« Problème p.34 », « Examen mardi », etc.). Chaque slot affiche sa date de création et de dernière modification dans le sélecteur.
 
 ### 8.3 Format de fichier
 
@@ -473,13 +473,13 @@ Structure :
 
 ### 8.5 Confirmation de fermeture
 
-`beforeunload` quand l'espace contient des pièces. Comme TraceVite.
+`beforeunload` quand l'espace contient des pièces. Comme GéoMolo.
 
 ## 9. Paramètres
 
 ### 9.1 Accessibilité
 
-- **Taille de texte :** 1× / 1,25× / 1,5× (comme TraceVite)
+- **Taille de texte :** 1× / 1,25× / 1,5× (comme GéoMolo)
 - **Raccourcis clavier :** Désactivés / Activés (défaut : désactivés)
 - **Contraste élevé :** Mode haut contraste (bordures plus épaisses, couleurs plus saturées)
 - **Tolérance de snap :** Normal / Large / Très large (défaut : Normal)
@@ -487,13 +487,13 @@ Structure :
 
 ### 9.2 Sons et feedback
 
-Trois modes, comme TraceVite (Web Audio API, 50ms synthétisé) :
+Trois modes, comme GéoMolo (Web Audio API, 50ms synthétisé) :
 
 - **Désactivés :** Silence total.
 - **Réduit (défaut) :** Son au placement d'une pièce + son de snap (quand une barre s'aligne sur une autre, quand une étiquette s'attache). Ces deux sons sont les plus importants : ils confirment que l'action est « en place » sans vérification visuelle. Compensation proprioceptive directe.
 - **Complet :** Tout ci-dessus + son d'attachement (étiquette → pièce, flèche → pièce), son de subdivision (barre divisée), son de validation (réponse écrite).
 
-**Feedback haptique :** Vibration 30ms (via `navigator.vibrate`) au placement de pièce et au snap, sur les appareils supportés. Compensation proprioceptive pour les tablettes tactiles. Même approche que TraceVite.
+**Feedback haptique :** Vibration 30ms (via `navigator.vibrate`) au placement de pièce et au snap, sur les appareils supportés. Compensation proprioceptive pour les tablettes tactiles. Même approche que GéoMolo.
 
 **Gain :** Curseur de volume (0-1).
 
@@ -531,10 +531,10 @@ Raccourcis pour configurer plusieurs paramètres d'un coup. L'enseignant sélect
 
 ### 10.1 Palette
 
-Même famille que TraceVite, adaptée au contexte :
+Même famille que GéoMolo, adaptée au contexte :
 
 - **Fond canvas :** #FAFCFF
-- **Pièces — bordures :** #185FA5 (bleu TraceVite)
+- **Pièces — bordures :** #185FA5 (bleu GéoMolo)
 - **Pièces — remplissage :** Variantes légères du bleu, semi-transparentes
 - **Étiquettes :** #1A2433 (texte foncé)
 - **Flèches :** #4A5568 (gris foncé)
@@ -556,7 +556,7 @@ Choix par action contextuelle sur la pièce sélectionnée.
 
 ### 10.3 Polices
 
-- **UI :** System font stack (comme TraceVite)
+- **UI :** System font stack (comme GéoMolo)
 - **Canvas :** 14px minimum. Ajustable via paramètre de taille de texte.
 - **Calcul :** Police monospace pour l'alignement des chiffres
 
@@ -672,7 +672,7 @@ Bouton « Photo » dans l'ActionBar (pas flottant sur le canvas — justificatio
 
 ### 14.1 Service Worker
 
-Comme TraceVite. PWA installable. Fonctionne offline après la première visite.
+Comme GéoMolo. PWA installable. Fonctionne offline après la première visite.
 
 ### 14.2 Dégradation gracieuse
 
@@ -779,7 +779,7 @@ interface UndoManager {
 }
 ```
 
-L'UndoManager est externe au state (pas récursif). Chaque action (sauf UNDO/REDO) pousse un snapshot complet dans `past`. Estimation mémoire : ~2 Ko par snapshot × 100 niveaux = ~200 Ko. Négligeable pour IndexedDB. Pattern copié de TraceVite.
+L'UndoManager est externe au state (pas récursif). Chaque action (sauf UNDO/REDO) pousse un snapshot complet dans `past`. Estimation mémoire : ~2 Ko par snapshot × 100 niveaux = ~200 Ko. Négligeable pour IndexedDB. Pattern copié de GéoMolo.
 
 ### 15.4 État du slot
 
@@ -817,7 +817,7 @@ Interface entièrement en français (Québec).
 Toutes les fonctionnalités décrites dans les sections 1 à 16 sont implémentées, incluant :
 - 7 pièces sémantiques (Jeton, Barre, Boîte, Étiquette, Flèche, Calcul, Réponse)
 - Barres: tailles 1-10×, copier, subdiviser, égaliser, grouper avec accolades
-- Slots « Mes modélisations » (UX TracéVite), import/export .modelivite
+- Slots « Mes modélisations » (UX GéoMolo), import/export .modelivite
 - 12 settings + 4 profils d'aide prédéfinis
 - Relances séquentielles (initiale + inactivité + relance métacognitive post-réponse)
 - Compteur de jetons par couleur, zones suggérées optionnelles
@@ -896,7 +896,7 @@ Outils pour l'adulte qui prépare et accompagne.
 |---|---|
 | **Banque de problèmes communautaire** | Les parents partagent leurs problèmes via URL, on agrège les meilleurs. Modération par votes |
 | **Multi-langue** | Anglais (hors-QC), potentiellement communautés autochtones |
-| **Suite AlloMolo** | StyloMolo (production écrite), ChronoMolo (timer/séquenceur de tâches) — même philosophie d'accessibilité |
+| **Suite AlloMolo** | Autres outils avec la même philosophie d'accessibilité (production écrite, timer/séquenceur) |
 
 ### Jamais
 

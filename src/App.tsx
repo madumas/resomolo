@@ -516,7 +516,7 @@ export default function App() {
       style={{ display: 'flex', flexDirection: 'column', height: '100%', zoom: settings.textScale !== 1 ? settings.textScale : undefined }}
       onContextMenu={e => e.preventDefault()}
     >
-      {/* Toolbar en haut — comme TraceVite */}
+      {/* Toolbar en haut — comme GéoMolo */}
       <Toolbar
         activeTool={activeTool}
         toolbarMode={settings.toolbarMode}
@@ -527,7 +527,7 @@ export default function App() {
         availablePieces={current.availablePieces}
       />
 
-      {/* Status bar — sous la toolbar, comme TracéVite */}
+      {/* Status bar — sous la toolbar, comme GéoMolo */}
       <StatusBar
         message={statusMessage}
         variant={statusVariant}
@@ -593,7 +593,7 @@ export default function App() {
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>
 
-      {/* Action bar en bas — comme TraceVite */}
+      {/* Action bar en bas — comme GéoMolo */}
       <ActionBar
         undoManager={undoManager}
         deleteMode={deleteMode}

@@ -44,13 +44,13 @@ export const COLORS = {
   reponseBorder: '#9898A8',
 } as const;
 
-// Layout — aligné TracéVite
+// Layout — aligné GéoMolo
 export const TOOLBAR_HEIGHT = 64;
 export const STATUS_BAR_HEIGHT = 44;
 export const STATUS_BAR_BG = '#EDE5F5';
 export const ACTION_BAR_HEIGHT = 56;
 
-// UI colors — exports nommés (alignés TracéVite)
+// UI colors — exports nommés (alignés GéoMolo)
 export const UI_BG = '#F6F4FA';
 export const UI_SURFACE = '#FFFFFF';
 export const UI_PRIMARY = '#7028e0';

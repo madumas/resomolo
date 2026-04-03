@@ -2,7 +2,7 @@ import type React from 'react';
 
 /**
  * SVG icons for toolbar tools — inline, 28×28 rendered (viewBox 20×20), stroke-based.
- * Shared pattern with TracéVite for visual consistency in RésoMolo.
+ * Shared pattern with GéoMolo for visual consistency in RésoMolo.
  */
 
 const S = {
@@ -103,7 +103,7 @@ export function DroiteNumeriqueIcon() {
   );
 }
 
-/** Déplacer: four-direction arrow cross — identical to TracéVite MoveIcon */
+/** Déplacer: four-direction arrow cross — identical to GéoMolo MoveIcon */
 export function DeplacerIcon() {
   return (
     <svg {...S}>
@@ -120,7 +120,7 @@ export function DeplacerIcon() {
 
 // --- ActionBar icons ---
 
-/** Undo: curved arrow left — identical to TracéVite */
+/** Undo: curved arrow left — identical to GéoMolo */
 export function UndoIcon() {
   return (
     <svg {...SA}>
@@ -130,7 +130,7 @@ export function UndoIcon() {
   );
 }
 
-/** Redo: curved arrow right — identical to TracéVite */
+/** Redo: curved arrow right — identical to GéoMolo */
 export function RedoIcon() {
   return (
     <svg {...SA}>
@@ -140,7 +140,7 @@ export function RedoIcon() {
   );
 }
 
-/** Delete: simplified trash can — identical to TracéVite */
+/** Delete: simplified trash can — identical to GéoMolo */
 export function DeleteIcon() {
   return (
     <svg {...SA}>
@@ -149,7 +149,7 @@ export function DeleteIcon() {
   );
 }
 
-/** Settings: 6-tooth gear — identical to TracéVite */
+/** Settings: 6-tooth gear — identical to GéoMolo */
 export function SettingsIcon() {
   const cx = 10, cy = 10, ro = 9, ri = 6.5, teeth = 6, hw = 15;
   const step = 360 / teeth;

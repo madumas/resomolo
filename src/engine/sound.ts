@@ -1,6 +1,6 @@
 /**
  * Sound engine — Web Audio API, synthesized, no audio files.
- * Same approach as TraceVite.
+ * Same approach as GéoMolo.
  *
  * 3 modes: 'off' | 'reduced' | 'full'
  * Reduced (default): placement + suppression only

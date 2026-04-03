@@ -179,7 +179,7 @@ export function ActionBar({
         <HelpIcon />
       </button>
 
-      {/* Fullscreen toggle — same position as GéoMolo/TracéVite */}
+      {/* Fullscreen toggle — same position as GéoMolo */}
       <FullscreenToggle />
     </div>
   );
