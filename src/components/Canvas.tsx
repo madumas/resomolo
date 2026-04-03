@@ -169,6 +169,7 @@ export function Canvas({
     if (hitPiece) {
       // Delete mode — handle delete click
       if (deleteMode) {
+        if (tableauEditorPieceId) setTableauEditorPieceId(null);
         onDeleteClick(hitPiece.id);
         return;
       }
@@ -213,11 +214,10 @@ export function Canvas({
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
       }
-      // Tableau — toggle in-place editing (foreignObject inputs inside SVG)
-      if (isTableau(hitPiece)) {
+      // Tableau — toggle in-place editing
+      if (isTableau(hitPiece) && !deleteMode) {
         if (tableauEditorPieceId === hitPiece.id) {
-          // Already editing — let the foreignObject inputs handle the click
-          return;
+          return; // already editing
         }
         setTableauEditorPieceId(hitPiece.id);
         onSelectPiece(hitPiece.id);
