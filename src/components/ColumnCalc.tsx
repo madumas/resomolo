@@ -145,6 +145,33 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     setLastModified(null);
   };
 
+  // Change decimal position: shift digits so the comma adds/removes places on the RIGHT
+  // e.g., "345,7" (decPos=1) → "345,70" (decPos=2): shift all rows left by 1, add 0 at right
+  // e.g., "34,57" (decPos=2) → "345,7" (decPos=1): shift all rows right by 1, drop rightmost
+  const changeDecimalPosition = (newDecPos: number | null) => {
+    const oldDecPos = decimalPosition ?? 0;
+    const newDec = newDecPos ?? 0;
+    const shift = newDec - oldDecPos; // positive = need more decimal places (shift left)
+
+    if (shift !== 0) {
+      const shiftRow = (row: Row): Row => {
+        if (shift > 0) {
+          // Adding decimal places: shift digits left, fill right with ''
+          return [...row.slice(shift), ...Array(shift).fill('')];
+        } else {
+          // Removing decimal places: shift digits right, fill left with ''
+          return [...Array(-shift).fill(''), ...row.slice(0, shift)];
+        }
+      };
+      setOp1(shiftRow);
+      setOp2(shiftRow);
+      setResult(shiftRow);
+      setCarry(shiftRow);
+      setIntermediates(prev => prev.map(r => shiftRow(r)));
+    }
+    setDecimalPosition(newDecPos);
+  };
+
   const handleCellChange = (
     row: Row,
     setRow: ((r: Row) => void) | null,
@@ -379,18 +406,12 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
 
       {/* Decimal mode buttons */}
       <div style={{ display: 'flex', gap: GAP, marginTop: 8 }}>
-        <button onClick={() => setDecimalPosition(null)}
-          style={{ ...decBtnStyle, ...(decimalPosition === null ? decBtnActiveStyle : {}) }}>
-          Entier
-        </button>
-        <button onClick={() => setDecimalPosition(1)}
-          style={{ ...decBtnStyle, ...(decimalPosition === 1 ? decBtnActiveStyle : {}) }}>
-          1 décimale
-        </button>
-        <button onClick={() => setDecimalPosition(2)}
-          style={{ ...decBtnStyle, ...(decimalPosition === 2 ? decBtnActiveStyle : {}) }}>
-          2 décimales
-        </button>
+        {([null, 1, 2] as const).map(dp => (
+          <button key={String(dp)} onClick={() => changeDecimalPosition(dp)}
+            style={{ ...decBtnStyle, ...(decimalPosition === dp ? decBtnActiveStyle : {}) }}>
+            {dp === null ? 'Entier' : dp === 1 ? '1 décimale' : '2 décimales'}
+          </button>
+        ))}
       </div>
 
       {/* Buttons */}
