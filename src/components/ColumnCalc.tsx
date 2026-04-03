@@ -208,13 +208,14 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     const n2 = decimalPosition !== null ? rowToNumWithDecimal(op2, decimalPosition) : rowToNum(op2);
     const res = decimalPosition !== null ? rowToNumWithDecimal(result, decimalPosition) : rowToNum(result);
     const op = operator === '−' ? '-' : operator === '×' ? '×' : operator;
-    const rawExpr = res && n1 !== '0' && n2 !== '0'
+    // I1 fix: detect zero including decimal zeros (e.g., "0,00")
+    const isZero = (s: string) => s.replace(/[,0]/g, '') === '';
+    const rawExpr = res && !isZero(res) && !isZero(n1) && !isZero(n2)
       ? `${n1} ${op} ${n2} = ${res}`
-      : n1 !== '0' && n2 !== '0'
+      : !isZero(n1) && !isZero(n2)
       ? `${n1} ${op} ${n2}`
       : '';
-    // French decimal format: replace dots with commas
-    const expr = rawExpr.replace(/\./g, ',');
+    const expr = rawExpr;
     const data: ColumnCalcData = {
       op1: [...op1], op2: [...op2], result: [...result],
       carry: [...carry], intermediates: intermediates.map(r => [...r]), operator,
