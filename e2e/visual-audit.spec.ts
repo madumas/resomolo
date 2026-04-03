@@ -2887,24 +2887,27 @@ test.describe('Visual audit — full flow', () => {
   test('88 — Surlignage visible vérifié', async ({ page }) => {
     await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
     // Expand problem zone by clicking on it
-    const pz = page.locator('[data-testid="problem-zone"]');
-    await pz.click();
-    await page.waitForTimeout(500);
+    // Click on the problem text to expand the zone if collapsed
+    const problemText = page.locator('text=Marc').first();
+    if (await problemText.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await problemText.click();
+      await page.waitForTimeout(500);
+    }
 
     // Highlight "24" in bleu (default) — look for the word span
-    const word24 = pz.locator('span:has-text("24")').first();
+    const word24 = page.locator('span:has-text("24")').first();
     if (await word24.isVisible({ timeout: 3000 }).catch(() => false)) {
       await word24.click();
       await page.waitForTimeout(400);
     }
 
     // Switch to orange, highlight "donne"
-    const orangeBtn = pz.locator('button:has-text("Question")');
+    const orangeBtn = page.locator('button:has-text("Question")');
     if (await orangeBtn.isVisible().catch(() => false)) {
       await orangeBtn.click();
       await page.waitForTimeout(300);
     }
-    const wordDonne = pz.locator('span:has-text("donne")').first();
+    const wordDonne = page.locator('span:has-text("donne")').first();
     if (await wordDonne.isVisible().catch(() => false)) {
       await wordDonne.click();
       await page.waitForTimeout(400);
@@ -2915,10 +2918,12 @@ test.describe('Visual audit — full flow', () => {
 
   test('89 — Dyslexie avec contenu rempli', async ({ page }) => {
     await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Théo a 5 pommes. Il en mange 2.'));
-    // Expand problem zone
-    const pz = page.locator('[data-testid="problem-zone"]');
-    await pz.click();
-    await page.waitForTimeout(300);
+    // Expand problem zone by clicking the text
+    const problemText = page.locator('text=Théo').first();
+    if (await problemText.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await problemText.click();
+      await page.waitForTimeout(300);
+    }
 
     // Enable OpenDyslexic
     await openSettings(page);

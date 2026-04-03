@@ -217,10 +217,13 @@ export function ContextActions({
               Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
             </CtxBtn>
           )}
-          {!piece.locked && !piece.groupId && (
-            <CtxBtn onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
-          )}
-          {/* Dégrouper toujours visible (disabled si pas groupée) — stabilité spatiale */}
+          {/* Grouper/Dégrouper toujours visibles (disabled quand pas applicable) — stabilité spatiale */}
+          <CtxBtn
+            onClick={() => !piece.groupId ? onStartGrouping(piece.id) : undefined}
+            disabled={!!piece.groupId || piece.locked}
+          >
+            Grouper
+          </CtxBtn>
           <CtxBtn
             onClick={() => piece.groupId ? onUngroup(piece.groupId) : undefined}
             disabled={!piece.groupId}
