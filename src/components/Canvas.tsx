@@ -1136,7 +1136,7 @@ export function Canvas({
         const ctm = svgRef.current?.getScreenCTM();
         const canvasRect = svgRef.current?.parentElement?.getBoundingClientRect();
         if (!ctm || !canvasRect) return null;
-        return t.cells.map((row, ri) => row.map((_, ci) => {
+        const inputs = t.cells.map((row, ri) => row.map((_, ci) => {
           const svgX = t.x + ci * TABLEAU_CELL_W;
           const svgY = t.y + ri * TABLEAU_CELL_H;
           const topLeft = new DOMPoint(svgX, svgY).matrixTransform(ctm);
@@ -1192,6 +1192,46 @@ export function Canvas({
             />
           );
         }));
+
+        // Floating undo button for tablet (no keyboard)
+        const undoBtn = tableauUndo.canUndo ? (() => {
+          const btnX = t.x + t.cols * TABLEAU_CELL_W;
+          const btnPt = new DOMPoint(btnX, t.y).matrixTransform(ctm!);
+          return (
+            <button
+              key="tableau-undo"
+              onClick={() => {
+                const entry = tableauUndo.pop();
+                if (!entry) return;
+                const [ur, uc] = entry.cellId.split('-').map(Number);
+                const newCells = t.cells.map((r, rri) => rri === ur ? r.map((c, cci) => cci === uc ? entry.prevValue : c) : [...r]);
+                dispatch({ type: 'EDIT_PIECE', id: t.id, changes: { cells: newCells } });
+                setTimeout(() => {
+                  const input = document.querySelector<HTMLInputElement>(`[data-tableau-cell="${ur}-${uc}"]`);
+                  if (input) { input.value = entry.prevValue; input.focus(); }
+                }, 50);
+              }}
+              onPointerDown={e => e.stopPropagation()}
+              title="Annuler la dernière modification"
+              style={{
+                position: 'absolute',
+                left: btnPt.x - canvasRect!.left + 8,
+                top: btnPt.y - canvasRect!.top,
+                width: 44, height: 44, borderRadius: 8,
+                background: '#F3F0FA', border: '1px solid #D5D0E0',
+                cursor: 'pointer', color: '#55506A',
+                display: 'flex', flexDirection: 'column' as const,
+                alignItems: 'center', justifyContent: 'center', gap: 1,
+                zIndex: 16,
+              }}
+            >
+              <span style={{ fontSize: 14 }}>↶</span>
+              <span style={{ fontSize: 8 }}>Oups</span>
+            </button>
+          );
+        })() : null;
+
+        return [...(Array.isArray(inputs) ? inputs.flat() : [inputs]), undoBtn];
       })()}
 
       {/* Jeton counter by color — supports dyscalculia */}

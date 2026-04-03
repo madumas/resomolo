@@ -19,25 +19,31 @@ interface ToolbarProps {
 
 type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
 
-// Mode Simplifié : 4 outils de base
+// Mode Simplifié : outils essentiels + Déplacer à la fin
 const SIMPLE_TOOLS: ToolDef[] = [
+  // Modéliser
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
   { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
 
-// Mode Complet : tous les outils
+// Mode Complet : groupé par fonction, Déplacer toujours dernier
 const ALL_TOOLS: ToolDef[] = [
+  // Modéliser
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
-  { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
   { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
+  // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
-  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
+  // Annoter
   { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
   { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
+  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
+  // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
 
@@ -89,7 +95,8 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           <Logo height={32} />
         </button>
         <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
-        {visibleTools.map(tool => (
+        {/* Tools except Déplacer */}
+        {visibleTools.filter(t => t.type !== 'deplacer').map(tool => (
           <ToolButton
             key={tool.type}
             tool={tool}
@@ -98,6 +105,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
           />
         ))}
+        {/* ⋯ button between tools and Déplacer */}
         {!isComplet && !showAll && (
           <button
             onClick={() => setShowMore(true)}
@@ -123,6 +131,13 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
           </button>
         )}
+        {/* Déplacer — toujours dernier */}
+        <ToolButton
+          tool={{ type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon }}
+          active={activeTool === 'deplacer'}
+          dimmed={!!dimmed && activeTool !== 'deplacer'}
+          onClick={() => onSelectTool(activeTool === 'deplacer' ? null : 'deplacer')}
+        />
       </div>
 
       {/* Zone droite : ModeSelector + Problèmes */}
