@@ -61,7 +61,6 @@ export function ContextActions({
   // Reset submenus when piece changes
   useEffect(() => {
     setBarSubmenu('none');
-    setShowDivideOptions(false);
     setShowTemplateOptions(false);
     setDroiteSubmenu('none');
   }, [piece.id]);
