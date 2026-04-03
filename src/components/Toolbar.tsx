@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
@@ -95,16 +95,26 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           <Logo height={32} />
         </button>
         <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
-        {/* Tools except Déplacer */}
-        {visibleTools.filter(t => t.type !== 'deplacer').map(tool => (
-          <ToolButton
-            key={tool.type}
-            tool={tool}
-            active={activeTool === tool.type}
-            dimmed={!!dimmed && activeTool !== tool.type}
-            onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
-          />
-        ))}
+        {/* Tools except Déplacer, with group separators in complete mode */}
+        {visibleTools.filter(t => t.type !== 'deplacer').map((tool, i, arr) => {
+          // Add separator between groups: after Droite/Boîte (modéliser), after Réponse (calculer)
+          const prevType = i > 0 ? arr[i - 1].type : null;
+          const needsSep = showAll && (
+            (tool.type === 'calcul' && prevType !== 'calcul') ||
+            (tool.type === 'etiquette' && prevType !== 'etiquette')
+          );
+          return (
+            <React.Fragment key={tool.type}>
+              {needsSep && <div style={{ width: 1, height: 28, background: UI_BORDER, flexShrink: 0, opacity: 0.5 }} />}
+              <ToolButton
+                tool={tool}
+                active={activeTool === tool.type}
+                dimmed={!!dimmed && activeTool !== tool.type}
+                onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
+              />
+            </React.Fragment>
+          );
+        })}
         {/* ⋯ button between tools and Déplacer */}
         {!isComplet && !showAll && (
           <button
@@ -131,16 +141,9 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
           </button>
         )}
-        {/* Déplacer — toujours dernier */}
-        <ToolButton
-          tool={{ type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon }}
-          active={activeTool === 'deplacer'}
-          dimmed={!!dimmed && activeTool !== 'deplacer'}
-          onClick={() => onSelectTool(activeTool === 'deplacer' ? null : 'deplacer')}
-        />
       </div>
 
-      {/* Zone droite : ModeSelector + Problèmes */}
+      {/* Zone droite : Déplacer (ancré) + ModeSelector + Problèmes */}
       <div style={{
         display: 'flex',
         padding: '0 8px',
@@ -150,6 +153,14 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         marginLeft: MIN_BUTTON_GAP_PX,
         height: '100%',
       }}>
+        {/* Déplacer — position fixe, ne bouge jamais */}
+        <ToolButton
+          tool={{ type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon }}
+          active={activeTool === 'deplacer'}
+          dimmed={!!dimmed && activeTool !== 'deplacer'}
+          onClick={() => onSelectTool(activeTool === 'deplacer' ? null : 'deplacer')}
+        />
+        <div style={{ width: 1, height: 40, background: UI_BORDER, flexShrink: 0 }} />
         <ModeSelector mode={toolbarMode} onChange={onModeChange} />
         <button
           onClick={onNewProblem}
