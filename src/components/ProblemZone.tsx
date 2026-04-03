@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Highlight, HighlightColor, Piece } from '../model/types';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
-import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
-import { ShareIcon, SpeakerIcon, StopCircleIcon } from './ToolIcons';
+import { SpeakerIcon, StopCircleIcon } from './ToolIcons';
 import { SharePanel } from './SharePanel';
 
 interface ProblemZoneProps {
@@ -11,7 +10,6 @@ interface ProblemZoneProps {
   pieces: Piece[];
   expanded: boolean;
   readOnly: boolean;
-  isSharedProblem?: boolean;
   onToggle: () => void;
   onHighlightAdd: (highlight: Highlight) => void;
   onHighlightRemove: (start: number, end: number) => void;
@@ -46,7 +44,6 @@ export function ProblemZone({
   pieces,
   expanded,
   readOnly: _readOnly,
-  isSharedProblem,
   onToggle,
   onHighlightAdd,
   onHighlightRemove,

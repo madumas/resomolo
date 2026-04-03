@@ -166,6 +166,7 @@ export interface Settings {
   dominantHand: DominantHand;
   problemAlwaysVisible: boolean;
   showSuggestedZones: boolean;    // 3.2: semi-transparent zone markers to guide placement
+  showTokenCounter: boolean;      // 9.3: jeton count by color in canvas bottom-left
   fontFamily: FontFamily;         // system, atkinson, opendyslexic
   letterSpacing: LetterSpacing;   // 0, 0.05, 0.1 (em)
   ttsEnabled: boolean;            // show/hide TTS button in ProblemZone
@@ -190,6 +191,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dominantHand: 'right',
   problemAlwaysVisible: false,
   showSuggestedZones: false,
+  showTokenCounter: true,
   fontFamily: 'system',
   letterSpacing: 0,
   ttsEnabled: true,

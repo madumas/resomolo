@@ -58,7 +58,7 @@ export function ContextActions({
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
 
   // DroiteNumerique submenu state
-  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas'>('none');
+  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur'>('none');
 
   // Tableau submenu state + preview
   const [tableauSubmenu, setTableauSubmenu] = useState<'none' | 'lignes' | 'colonnes'>('none');
@@ -335,6 +335,9 @@ export function ContextActions({
               <CtxBtn onClick={() => setDroiteSubmenu('pas')}>
                 Pas: {piece.step}
               </CtxBtn>
+              <CtxBtn onClick={() => setDroiteSubmenu('largeur')}>
+                Largeur
+              </CtxBtn>
               {piece.markers.length > 0 && (
                 <CtxBtn onClick={() => onEditPiece(piece.id, { markers: [] })}>
                   Effacer marqueurs
@@ -384,6 +387,22 @@ export function ContextActions({
                   key={n}
                   active={piece.step === n}
                   onClick={() => { onEditPiece(piece.id, { step: n }); setDroiteSubmenu('none'); }}
+                >
+                  {n}
+                </CtxBtn>
+              ))}
+            </>
+          )}
+          {droiteSubmenu === 'largeur' && (
+            <>
+              <CtxBtn onClick={() => setDroiteSubmenu('none')} back>
+                ←
+              </CtxBtn>
+              {[100, 150, 200, 300].map(n => (
+                <CtxBtn
+                  key={n}
+                  active={piece.width === n}
+                  onClick={() => { onEditPiece(piece.id, { width: n }); setDroiteSubmenu('none'); }}
                 >
                   {n}
                 </CtxBtn>

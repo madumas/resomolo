@@ -49,6 +49,7 @@ interface CanvasProps {
   groupingBarId?: string | null;
   onSetGroupingBarId?: (id: string | null) => void;
   showSuggestedZones?: boolean;
+  showTokenCounter?: boolean;
 }
 
 type InteractionMode =
@@ -96,6 +97,7 @@ export function Canvas({
   groupingBarId,
   onSetGroupingBarId,
   showSuggestedZones,
+  showTokenCounter,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -1196,7 +1198,7 @@ export function Canvas({
       })()}
 
       {/* Jeton counter by color — supports dyscalculia */}
-      {(() => {
+      {showTokenCounter && (() => {
         const jetons = pieces.filter(p => p.type === 'jeton');
         if (jetons.length === 0) return null;
         const counts: Record<string, number> = {};
@@ -1274,26 +1276,49 @@ export function Canvas({
 
 // === Piece rendering ===
 
+function LockedBadge({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <rect x={0} y={2} width={5} height={4} rx={0.5} fill="#9CA3AF" />
+      <path d="M1,2 V1 A1.5,1.5 0 0,1 4,1 V2" fill="none" stroke="#9CA3AF" strokeWidth={0.7} />
+    </g>
+  );
+}
+
+function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; y: number } {
+  switch (piece.type) {
+    case 'jeton': return { x: piece.x + 2, y: piece.y - 7 };
+    case 'barre': return { x: piece.x + piece.sizeMultiplier * referenceUnitMm - 6, y: piece.y - 8 };
+    case 'boite': return { x: piece.x + (piece as Boite).width - 6, y: piece.y - 2 };
+    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) - 6, y: piece.y - 12 };
+    case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) - 6, y: piece.y - 2 };
+    case 'reponse': return { x: piece.x + getReponseWidth(piece as Reponse) - 6, y: piece.y - 2 };
+    case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width - 4, y: piece.y - 14 };
+    default: return { x: piece.x, y: piece.y - 8 };
+  }
+}
+
 function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
 }) {
+  let inner: React.ReactElement | null;
   switch (piece.type) {
     case 'barre':
-      return <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} />;
+      inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} />; break;
     case 'jeton':
-      return <JetonPiece piece={piece} isSelected={isSelected} />;
+      inner = <JetonPiece piece={piece} isSelected={isSelected} />; break;
     case 'boite':
-      return <BoitePiece piece={piece} isSelected={isSelected} />;
+      inner = <BoitePiece piece={piece} isSelected={isSelected} />; break;
     case 'etiquette':
-      return <EtiquettePiece piece={piece} isSelected={isSelected} />;
+      inner = <EtiquettePiece piece={piece} isSelected={isSelected} />; break;
     case 'calcul':
-      return <CalculPiece piece={piece} isSelected={isSelected} />;
+      inner = <CalculPiece piece={piece} isSelected={isSelected} />; break;
     case 'reponse':
-      return <ReponsePiece piece={piece} isSelected={isSelected} />;
+      inner = <ReponsePiece piece={piece} isSelected={isSelected} />; break;
     case 'droiteNumerique':
-      return <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />;
+      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />; break;
     case 'tableau':
       return null; // rendered separately in Canvas to pass editing props
     case 'fleche':
@@ -1301,6 +1326,14 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
     default:
       return null;
   }
+  if (!piece.locked) return inner;
+  const pos = getLockedBadgePos(piece, referenceUnitMm);
+  return (
+    <>
+      {inner}
+      <LockedBadge x={pos.x} y={pos.y} />
+    </>
+  );
 }
 
 function JetonPiece({ piece, isSelected }: { piece: Piece & { type: 'jeton' }; isSelected: boolean }) {

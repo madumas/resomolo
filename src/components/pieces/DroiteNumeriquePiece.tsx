@@ -63,12 +63,17 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
         );
       })}
 
-      {/* Markers (child-placed dots) */}
+      {/* Markers (child-placed dots) with value labels */}
       {markers.map((val, i) => {
         const mx = x + ((val - min) / (max - min)) * width;
         return (
-          <circle key={i} cx={mx} cy={y} r={2.5}
-            fill="#185FA5" stroke="#fff" strokeWidth={0.5} />
+          <g key={i}>
+            <circle cx={mx} cy={y} r={2.5}
+              fill="#185FA5" stroke="#fff" strokeWidth={0.5} />
+            <text x={mx} y={y - 5} textAnchor="middle" fontSize={3.5} fontWeight={600} fill="#185FA5">
+              {val}
+            </text>
+          </g>
         );
       })}
     </g>

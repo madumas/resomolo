@@ -54,7 +54,6 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<Omit<ConfirmDialogProps, 'onCancel'> | null>(null);
   const [showSlotManager, setShowSlotManager] = useState(false);
-  const [isSharedProblem, setIsSharedProblem] = useState(false);
   const relanceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [showLabelNudge, setShowLabelNudge] = useState(false);
@@ -166,7 +165,6 @@ export default function App() {
           dispatch({ type: 'PLACE_PIECES', pieces: shared.pieces });
         }
         setProblemZoneActive(true);
-        setIsSharedProblem(true);
         window.history.replaceState({}, '', window.location.pathname);
       }
     })().then(() => setAppReady(true));
@@ -500,6 +498,8 @@ export default function App() {
     pieces.some(p => p.type === 'reponse' && 'text' in p && ((p as any).text?.length || 0) > 3)
   ) {
     statusMessage = 'Ta modélisation est complète! Relis le problème pour vérifier.';
+  } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'droiteNumerique') {
+    statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {
     statusMessage = 'Choisis une action, ou clique ailleurs pour désélectionner';
   } else {
@@ -555,7 +555,6 @@ export default function App() {
         pieces={pieces}
         expanded={settings.problemAlwaysVisible || problemExpanded}
         readOnly={current.problemeReadOnly}
-        isSharedProblem={isSharedProblem}
         onToggle={settings.problemAlwaysVisible ? () => {} : () => setProblemExpanded(e => !e)}
         onHighlightAdd={handleHighlightAdd}
         onHighlightRemove={handleHighlightRemove}
@@ -605,6 +604,7 @@ export default function App() {
           groupingBarId={groupingBarId}
           onSetGroupingBarId={setGroupingBarId}
           showSuggestedZones={appReady && settings.showSuggestedZones}
+          showTokenCounter={settings.showTokenCounter}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>

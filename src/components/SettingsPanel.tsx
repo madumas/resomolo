@@ -243,6 +243,14 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           />
         </SettingGroup>
 
+        {/* Token counter */}
+        <SettingGroup label="Compteur de jetons">
+          <ToggleBtn
+            active={settings.showTokenCounter}
+            onChange={on => update({ showTokenCounter: on })}
+          />
+        </SettingGroup>
+
         {/* Police */}
         <SettingGroup label="Police">
           <ButtonGroup<FontFamily>
