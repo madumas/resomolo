@@ -107,9 +107,7 @@ export function Canvas({
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
   const originalMovePos = useRef<{ x: number; y: number } | null>(null);
-  const [tableauEditCell, setTableauEditCell] = useState<{ row: number; col: number } | null>(null);
-  // Clear tableau cell target when editing stops
-  useEffect(() => { if (!editingPieceId) setTableauEditCell(null); }, [editingPieceId]);
+  const tableauEditCellRef = useRef<{ row: number; col: number } | null>(null);
   const moveOffset = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
@@ -220,7 +218,7 @@ export function Canvas({
         const col = Math.floor(relX / TABLEAU_CELL_W);
         const row = Math.floor(relY / TABLEAU_CELL_H);
         if (row >= 0 && row < hitPiece.rows && col >= 0 && col < hitPiece.cols) {
-          setTableauEditCell({ row, col });
+          tableauEditCellRef.current = { row, col };
           setEditingBarField('label');
           onStartEdit(hitPiece.id);
           return;
@@ -884,16 +882,17 @@ export function Canvas({
         } else if (piece.type === 'tableau') {
           // Edit the cell that was clicked (via tableauEditCellRef), or first empty cell
           const t = piece as Tableau;
-          let targetRow = tableauEditCell?.row ?? 0;
-          let targetCol = tableauEditCell?.col ?? 0;
-          if (!tableauEditCell) {
+          let targetRow = tableauEditCellRef.current?.row ?? 0;
+          let targetCol = tableauEditCellRef.current?.col ?? 0;
+          if (!tableauEditCellRef.current) {
             outer: for (let r = 0; r < t.rows; r++) {
               for (let c = 0; c < t.cols; c++) {
                 if (!t.cells[r][c]) { targetRow = r; targetCol = c; break outer; }
               }
             }
           }
-          // Note: tableauEditCell is consumed by being read; cleared when editing stops
+          // Ref consumed — clear after reading
+          tableauEditCellRef.current = null;
           initialValue = t.cells[targetRow][targetCol];
           placeholder = targetRow === 0 && t.headerRow ? 'En-tête...' : 'Donnée...';
           fieldKey = `cells-${targetRow}-${targetCol}`;
