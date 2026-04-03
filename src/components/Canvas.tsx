@@ -890,11 +890,19 @@ export function Canvas({
             const labelBar = bars.reduce((a, b) => a.y < b.y ? a : b);
             return (
               <g key={gid}>
+                {/* Bracket — U shape with center tick */}
                 <path d={`M${minX},${bracketY} L${minX},${bracketY + 4} L${maxRight},${bracketY + 4} L${maxRight},${bracketY}`}
-                  fill="none" stroke="#55506A" strokeWidth={0.5} />
-                {labelBar.groupLabel && (
-                  <text x={(minX + maxRight) / 2} y={bracketY + 9} textAnchor="middle" fontSize={4.5} fill="#1E1A2E">
+                  fill="none" stroke="#7028e0" strokeWidth={1.2} strokeLinecap="round" />
+                <line x1={(minX + maxRight) / 2} y1={bracketY + 4}
+                  x2={(minX + maxRight) / 2} y2={bracketY + 7}
+                  stroke="#7028e0" strokeWidth={1.2} strokeLinecap="round" />
+                {labelBar.groupLabel ? (
+                  <text x={(minX + maxRight) / 2} y={bracketY + 12} textAnchor="middle" fontSize={4.5} fontWeight={600} fill="#7028e0">
                     {labelBar.groupLabel}
+                  </text>
+                ) : (
+                  <text x={(minX + maxRight) / 2} y={bracketY + 12} textAnchor="middle" fontSize={3.5} fill="#9898A8">
+                    total
                   </text>
                 )}
               </g>

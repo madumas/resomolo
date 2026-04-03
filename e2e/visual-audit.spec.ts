@@ -2932,11 +2932,15 @@ test.describe('Visual audit — full flow', () => {
     await page.goto('/?probleme=' + encodeURIComponent('Théo a 5 pommes. Il en mange 2.'));
     await page.waitForSelector('[data-testid="canvas-svg"]');
     await page.waitForTimeout(1000);
+    // Dismiss overlays manually without clearing the problem
     const guideBtn = page.locator('button:has-text("Compris")');
     if (await guideBtn.isVisible({ timeout: 1000 }).catch(() => false)) await guideBtn.click();
     await page.waitForTimeout(500);
     const skipBtn = page.locator('button:has-text("Passer")');
     if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) await skipBtn.click();
+    await page.waitForTimeout(500);
+    // Close problem selector if it appeared (Escape instead of clicking Problème libre)
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
 
     // Enable OpenDyslexic
