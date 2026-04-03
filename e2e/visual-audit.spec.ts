@@ -647,13 +647,19 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('21 — PDF export button exists', async ({ page }) => {
-    // Verify "PDF" button in action bar
-    const pdfBtn = page.locator('[data-testid="action-bar"] button[aria-label="PDF"]');
-    await expect(pdfBtn).toBeVisible({ timeout: 3000 });
+    // Open "Partager" menu in action bar
+    const partagerBtn = page.locator('[data-testid="action-bar"] button[aria-label="Partager"]');
+    await expect(partagerBtn).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('41-pdf-button.png'), fullPage: true });
 
-    await pdfBtn.click();
+    await partagerBtn.click();
+    await page.waitForTimeout(300);
+
+    // Click "Document (PDF)" inside the Partager menu
+    const pdfOption = page.locator('button:has-text("PDF")');
+    await expect(pdfOption).toBeVisible({ timeout: 3000 });
+    await pdfOption.click();
     await page.waitForTimeout(500);
 
     await page.screenshot({ path: shot('42-after-pdf-click.png'), fullPage: true });
@@ -670,8 +676,8 @@ test.describe('Visual audit — full flow', () => {
   test('23 — Slot manager: create and switch', async ({ page }) => {
     await openSlotManager(page);
 
-    // Verify "Mes modélisations" title
-    await expect(page.locator('text=Mes modélisations')).toBeVisible({ timeout: 3000 });
+    // Verify "Mes travaux" heading inside the dialog
+    await expect(page.locator('[role="dialog"][aria-label="Mes travaux"] h2')).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('44-slot-manager.png'), fullPage: true });
 
@@ -685,13 +691,13 @@ test.describe('Visual audit — full flow', () => {
 
       // Reopen slot manager to verify the new slot exists
       await openSlotManager(page);
-      const slotEntries = page.locator('[role="dialog"][aria-label="Mes modélisations"]').locator('text=En cours');
+      const slotEntries = page.locator('[role="dialog"][aria-label="Mes travaux"]').locator('text=En cours');
       const slotCount = await slotEntries.count();
       expect(slotCount).toBeGreaterThanOrEqual(1);
     }
 
     // Close the slot manager
-    const closeBtn = page.locator('[role="dialog"][aria-label="Mes modélisations"] button:has-text("Fermer")');
+    const closeBtn = page.locator('[role="dialog"][aria-label="Mes travaux"] button:has-text("Fermer")');
     if (await closeBtn.isVisible().catch(() => false)) {
       await closeBtn.click();
       await page.waitForTimeout(200);
@@ -963,13 +969,19 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(300);
     await selectTool(page, 'barre'); // deselect
 
-    // Click Photo button in action bar
-    const photoBtn = page.locator('[data-testid="action-bar"] button:has-text("Photo")');
-    await expect(photoBtn).toBeVisible({ timeout: 3000 });
+    // Open "Partager" menu in action bar
+    const partagerBtn = page.locator('[data-testid="action-bar"] button[aria-label="Partager"]');
+    await expect(partagerBtn).toBeVisible({ timeout: 3000 });
+    await partagerBtn.click();
+    await page.waitForTimeout(300);
+
+    // Click "Photo (PNG)" inside the Partager menu
+    const photoOption = page.locator('button:has-text("Photo")');
+    await expect(photoOption).toBeVisible({ timeout: 3000 });
 
     // Listen for download event
     const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
-    await photoBtn.click();
+    await photoOption.click();
     const download = await downloadPromise;
 
     // Verify a download was triggered (PNG)
@@ -983,16 +995,34 @@ test.describe('Visual audit — full flow', () => {
   test('31 — Partage: link and QR generation', async ({ page }) => {
     // Load a problem first
     await openProblemSelector(page);
-    const firstProblem = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button').nth(1);
-    if (await firstProblem.isVisible().catch(() => false)) {
+    const problemDialog = page.locator('[role="dialog"][aria-label="Banque de problèmes"]');
+    const firstProblem = problemDialog.locator('button').nth(1);
+    if (await firstProblem.isVisible({ timeout: 3000 }).catch(() => false)) {
       await firstProblem.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Ensure the problem selector dialog is fully closed
+    if (await problemDialog.isVisible({ timeout: 500 }).catch(() => false)) {
+      const fermerBtn = problemDialog.locator('button:has-text("Fermer")');
+      if (await fermerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+        await fermerBtn.click();
+      } else {
+        await page.keyboard.press('Escape');
+      }
       await page.waitForTimeout(300);
     }
 
-    // Open problem zone share panel
-    const shareBtn = page.locator('button[aria-label="Partager"]');
-    if (await shareBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await shareBtn.click();
+    // Open "Partager" menu in action bar
+    const partagerBtn = page.locator('[data-testid="action-bar"] button[aria-label="Partager"]');
+    if (await partagerBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await partagerBtn.click();
+      await page.waitForTimeout(300);
+
+      // Click "Lien & QR code" inside the Partager menu
+      const lienOption = page.locator('button:has-text("Lien")');
+      await expect(lienOption).toBeVisible({ timeout: 3000 });
+      await lienOption.click();
       await page.waitForTimeout(400);
 
       // Verify share panel is visible with link input and QR
@@ -1002,7 +1032,7 @@ test.describe('Visual audit — full flow', () => {
       await page.screenshot({ path: shot('59-share-panel.png'), fullPage: true });
 
       // Verify copy button exists
-      const copyBtn = page.locator('button:has-text("Copier")');
+      const copyBtn = page.getByRole('button', { name: 'Copier', exact: true });
       await expect(copyBtn).toBeVisible({ timeout: 2000 });
     }
   });
@@ -1050,9 +1080,9 @@ test.describe('Visual audit — full flow', () => {
       await page.screenshot({ path: shot('62-toolbar-expanded.png'), fullPage: true });
     }
 
-    // Also verify the ActionBar has PDF and fullscreen buttons
-    const pdfBtn = page.locator('[data-testid="action-bar"] button[aria-label="PDF"]');
-    await expect(pdfBtn).toBeVisible({ timeout: 2000 });
+    // Also verify the ActionBar has Partager and fullscreen buttons
+    const partagerBtn = page.locator('[data-testid="action-bar"] button[aria-label="Partager"]');
+    await expect(partagerBtn).toBeVisible({ timeout: 2000 });
 
     await page.screenshot({ path: shot('63-actionbar-full.png'), fullPage: true });
   });
