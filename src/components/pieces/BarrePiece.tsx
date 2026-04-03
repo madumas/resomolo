@@ -132,7 +132,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected }: BarrePiecePro
           const partX = piece.x + partW * i + partW / 2;
           return (
             <text key={`pl-${i}`} x={partX} y={piece.y - 3}
-              textAnchor="middle" fontSize={3} fill="#9CA3AF">
+              textAnchor="middle" fontSize={4} fill="#55506A">
               {i + 1}/{piece.divisions}
             </text>
           );
