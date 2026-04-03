@@ -1288,7 +1288,7 @@ export function Canvas({
               style={{
                 position: 'absolute', left, top, width: w, height: h,
                 border: '1px solid #B0A0D0', borderRadius: 2,
-                textAlign: 'center', fontSize: Math.min(13, w / 5),
+                textAlign: 'center', fontSize: (ri === 0 && t.headerRow ? 6 : 5.5) / TABLEAU_CELL_H * h,
                 background: ri === 0 && t.headerRow ? '#F2F0F8' : '#fff',
                 fontWeight: ri === 0 && t.headerRow ? 600 : 400,
                 outline: 'none', padding: 0, zIndex: 15,
