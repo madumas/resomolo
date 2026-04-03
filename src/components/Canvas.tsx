@@ -14,7 +14,7 @@ import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
 import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
-import { TableauEditor } from './TableauEditor';
+// TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
 import { onPlace, onSnap } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
@@ -213,10 +213,14 @@ export function Canvas({
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
       }
-      // Tableau — open dedicated TableauEditor overlay (like ColumnCalc)
+      // Tableau — toggle in-place editing (foreignObject inputs inside SVG)
       if (isTableau(hitPiece)) {
+        if (tableauEditorPieceId === hitPiece.id) {
+          // Already editing — let the foreignObject inputs handle the click
+          return;
+        }
         setTableauEditorPieceId(hitPiece.id);
-        onSelectPiece(null);
+        onSelectPiece(hitPiece.id);
         return;
       }
       // Subdivision toggle — clicking on a subdivided bar that is already selected
@@ -265,6 +269,7 @@ export function Canvas({
         onStartEdit(hitPiece.id);
         return;
       }
+      if (tableauEditorPieceId) setTableauEditorPieceId(null);
       onSelectPiece(hitPiece.id);
       return;
     }
@@ -377,12 +382,14 @@ export function Canvas({
       }
     } else {
       // No tool active, click on empty space — deselect
+      if (tableauEditorPieceId) setTableauEditorPieceId(null);
       onSelectPiece(null);
     }
   }, [pieces, activeTool, referenceUnitMm, dispatch, onSelectPiece, onSetTool, mode, tol,
       editingPieceId, deleteMode, jetonQuantity, onStartEdit, onStopEdit, onDeleteClick,
       arrowFromId, onSetArrowFrom, onArrowCreated,
-      equalizingFromId, onSetEqualizingFromId, groupingBarId, onSetGroupingBarId, selectedPieceId]);
+      equalizingFromId, onSetEqualizingFromId, groupingBarId, onSetGroupingBarId, selectedPieceId,
+      tableauEditorPieceId]);
 
   // Pointer move for pick-up/put-down + hover hit-test for cursor
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
@@ -725,6 +732,26 @@ export function Canvas({
           );
         })}
 
+        {/* Tableaux — rendered separately for in-place editing */}
+        {pieces.filter(p => p.type === 'tableau').map(piece => {
+          const t = piece as Tableau;
+          const editing = tableauEditorPieceId === piece.id;
+          return (
+            <g key={piece.id} data-piece-id={piece.id}
+              className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
+              <TableauPiece
+                piece={t}
+                isSelected={piece.id === selectedPieceId}
+                isEditing={editing}
+                onCellChange={(row, col, value) => {
+                  const newCells = t.cells.map((r, ri) => ri === row ? r.map((c, ci) => ci === col ? value : c) : [...r]);
+                  dispatch({ type: 'EDIT_PIECE', id: piece.id, changes: { cells: newCells } });
+                }}
+              />
+            </g>
+          );
+        })}
+
         {/* Group brackets */}
         {(() => {
           const groups = new Map<string, Barre[]>();
@@ -1054,35 +1081,6 @@ export function Canvas({
         );
       })()}
 
-      {/* Tableau editor overlay */}
-      {tableauEditorPieceId && (() => {
-        const piece = pieces.find(p => p.id === tableauEditorPieceId);
-        if (!piece || piece.type !== 'tableau') return null;
-        const t = piece as Tableau;
-        const center = getPieceCenter(piece, referenceUnitMm);
-        const ctm = svgRef.current?.getScreenCTM();
-        const canvasRect = svgRef.current?.parentElement?.getBoundingClientRect();
-        const screenPt = ctm && canvasRect
-          ? new DOMPoint(center.x, center.y).matrixTransform(ctm)
-          : null;
-        const editorLeft = screenPt && canvasRect ? screenPt.x - canvasRect.left - 80 : 100;
-        return (
-          <TableauEditor
-            left={editorLeft}
-            top={8}
-            initialCells={t.cells}
-            rows={t.rows}
-            cols={t.cols}
-            headerRow={t.headerRow}
-            onCommit={(cells) => {
-              dispatch({ type: 'EDIT_PIECE', id: tableauEditorPieceId, changes: { cells } });
-              setTableauEditorPieceId(null);
-            }}
-            onCancel={() => setTableauEditorPieceId(null)}
-          />
-        );
-      })()}
-
       {/* Jeton counter by color — supports dyscalculia */}
       {(() => {
         const jetons = pieces.filter(p => p.type === 'jeton');
@@ -1183,7 +1181,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
     case 'droiteNumerique':
       return <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />;
     case 'tableau':
-      return <TableauPiece piece={piece as Tableau} isSelected={isSelected} />;
+      return null; // rendered separately in Canvas to pass editing props
     case 'fleche':
       return null; // arrows are rendered in a separate layer above
     default:
@@ -1591,35 +1589,60 @@ function getReponseWidth(piece: Reponse): number {
 const TABLEAU_CELL_W = 12; // mm
 const TABLEAU_CELL_H = 10; // mm
 
-function TableauPiece({ piece, isSelected }: { piece: Tableau; isSelected: boolean }) {
+function TableauPiece({ piece, isSelected, isEditing, onCellChange }: {
+  piece: Tableau; isSelected: boolean;
+  isEditing?: boolean;
+  onCellChange?: (row: number, col: number, value: string) => void;
+}) {
   const tw = piece.cols * TABLEAU_CELL_W;
   const th = piece.rows * TABLEAU_CELL_H;
   return (
     <g>
       {/* Outer border */}
       <rect x={piece.x} y={piece.y} width={tw} height={th} rx={1}
-        fill="#fff" stroke={isSelected ? '#7028e0' : '#D5D0E0'} strokeWidth={isSelected ? 1 : 0.5} />
+        fill="#fff" stroke={isSelected || isEditing ? '#7028e0' : '#D5D0E0'} strokeWidth={isSelected || isEditing ? 1 : 0.5} />
       {/* Header row background */}
       {piece.headerRow && (
         <rect x={piece.x} y={piece.y} width={tw} height={TABLEAU_CELL_H} rx={1}
           fill="#F2F0F8" />
       )}
-      {/* Cell borders + text */}
+      {/* Cell borders + text (or input when editing) */}
       {piece.cells.map((row, ri) => row.map((cell, ci) => {
         const cx = piece.x + ci * TABLEAU_CELL_W;
         const cy = piece.y + ri * TABLEAU_CELL_H;
         return (
           <g key={`${ri}-${ci}`}>
             <rect x={cx} y={cy} width={TABLEAU_CELL_W} height={TABLEAU_CELL_H}
-              fill="none" stroke="#D5D0E0" strokeWidth={0.3} />
-            <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
-              textAnchor="middle" dominantBaseline="central"
-              fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
-              fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
-              fill="#1E1A2E"
-              data-edit-target={`${piece.id}-${ri}-${ci}`}>
-              {cell || (ri === 0 && piece.headerRow ? '—' : '')}
-            </text>
+              fill="none" stroke={isEditing ? '#B0A0D0' : '#D5D0E0'} strokeWidth={isEditing ? 0.4 : 0.3} />
+            {isEditing ? (
+              <foreignObject x={cx + 0.3} y={cy + 0.3} width={TABLEAU_CELL_W - 0.6} height={TABLEAU_CELL_H - 0.6}>
+                <input
+                  type="text"
+                  defaultValue={cell}
+                  placeholder={ri === 0 && piece.headerRow ? '…' : ''}
+                  onBlur={e => onCellChange?.(ri, ci, e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
+                  }}
+                  style={{
+                    width: '100%', height: '100%', border: 'none', outline: 'none',
+                    textAlign: 'center', fontSize: '3.5px', padding: 0, margin: 0,
+                    background: ri === 0 && piece.headerRow ? '#F2F0F8' : 'transparent',
+                    fontWeight: ri === 0 && piece.headerRow ? 600 : 400,
+                    fontFamily: 'inherit', boxSizing: 'border-box',
+                  }}
+                />
+              </foreignObject>
+            ) : (
+              <text x={cx + TABLEAU_CELL_W / 2} y={cy + TABLEAU_CELL_H / 2}
+                textAnchor="middle" dominantBaseline="central"
+                fontSize={ri === 0 && piece.headerRow ? 4 : 3.5}
+                fontWeight={ri === 0 && piece.headerRow ? 600 : 400}
+                fill="#1E1A2E"
+                data-edit-target={`${piece.id}-${ri}-${ci}`}>
+                {cell || (ri === 0 && piece.headerRow ? '—' : '')}
+              </text>
+            )}
           </g>
         );
       }))}
