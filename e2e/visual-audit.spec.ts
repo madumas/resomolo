@@ -105,13 +105,13 @@ test.describe('Visual audit — full flow', () => {
     // Open Taille submenu (bar context actions now use submenus)
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click();
+      await tailleBtn.click({ force: true });
       await page.waitForTimeout(200);
 
-      // Click 3× in the Taille submenu
+      // Click 3× in the Taille submenu (force: context actions may overlap status bar)
       const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
       if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click();
+        await btn3x.click({ force: true });
         await page.waitForTimeout(200);
         await page.screenshot({ path: shot('08-bar-3x.png'), fullPage: true });
       }
@@ -761,11 +761,11 @@ test.describe('Visual audit — full flow', () => {
     // Open Taille submenu, click 2×
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click();
+      await tailleBtn.click({ force: true });
       await page.waitForTimeout(200);
       const btn2x = page.locator('[data-testid="context-actions"] button:has-text("2×")');
       if (await btn2x.isVisible().catch(() => false)) {
-        await btn2x.click();
+        await btn2x.click({ force: true });
         await page.waitForTimeout(200);
       }
     }
@@ -2016,11 +2016,11 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click();
+      await tailleBtn.click({ force: true });
       await page.waitForTimeout(200);
       const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
       if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click();
+        await btn3x.click({ force: true });
         await page.waitForTimeout(200);
       }
     }
@@ -2063,7 +2063,7 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click();
+      await tailleBtn.click({ force: true });
       await page.waitForTimeout(200);
       const btnHalf = page.locator('[data-testid="context-actions"] button:has-text("½×")');
       if (await btnHalf.isVisible().catch(() => false)) {
@@ -2578,11 +2578,11 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(400);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     if (await tailleBtn.isVisible().catch(() => false)) {
-      await tailleBtn.click();
+      await tailleBtn.click({ force: true });
       await page.waitForTimeout(200);
       const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
       if (await btn3x.isVisible().catch(() => false)) {
-        await btn3x.click();
+        await btn3x.click({ force: true });
         await page.waitForTimeout(200);
       }
     }
