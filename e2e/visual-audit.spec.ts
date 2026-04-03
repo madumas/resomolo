@@ -2364,4 +2364,423 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('121-high-contrast.png'), fullPage: true });
   });
+
+  // ────────────────────────────────────────────────────────
+  // Audit gap tests (72–86)
+  // ────────────────────────────────────────────────────────
+
+  test('72 — Profil dyslexie avec problème chargé + surlignage', async ({ page }) => {
+    // Load problem first
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes. Elle en donne 5. Combien en reste-t-il?'));
+
+    // Enable OpenDyslexic + letter spacing
+    await openSettings(page);
+    const odBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("OpenDyslexic")');
+    if (await odBtn.isVisible({ timeout: 2000 }).catch(() => false)) await odBtn.click();
+    const spBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("0,1 em")');
+    if (await spBtn.isVisible().catch(() => false)) await spBtn.click();
+    await closeSettings(page);
+
+    // Highlight "12" in bleu
+    const word12 = page.locator('text=12').first();
+    if (await word12.isVisible().catch(() => false)) await word12.click();
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('122-dyslexie-probleme-surligne.png'), fullPage: true });
+  });
+
+  test('73 — Contraste élevé avec contenu', async ({ page }) => {
+    // Enable high contrast
+    await openSettings(page);
+    const contrastToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Contraste élevé').locator('..').locator('button:has-text("Désactivé")');
+    if (await contrastToggle.isVisible({ timeout: 2000 }).catch(() => false)) await contrastToggle.click();
+    await closeSettings(page);
+
+    // Place a barre + jeton
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 100, 130);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // deselect
+
+    await page.screenshot({ path: shot('123-high-contrast-with-content.png'), fullPage: true });
+  });
+
+  test('74 — Canvas 15+ pièces lisibilité', async ({ page }) => {
+    test.setTimeout(60_000);
+    // Place many pieces
+    await selectTool(page, 'barre');
+    for (let i = 0; i < 5; i++) {
+      await clickCanvas(page, 80, 40 + i * 25);
+      await page.waitForTimeout(150);
+    }
+    await selectTool(page, 'jeton');
+    for (let i = 0; i < 5; i++) {
+      await clickCanvas(page, 300 + i * 15, 60);
+      await page.waitForTimeout(100);
+    }
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 100, 200);
+    await page.waitForTimeout(400);
+    const ed1 = page.locator('[data-testid="inline-editor"]');
+    if (await ed1.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed1.fill('5 + 3 = 8');
+      await ed1.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 100, 230);
+    await page.waitForTimeout(400);
+    const ed2 = page.locator('[data-testid="inline-editor"]');
+    if (await ed2.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed2.fill('12 - 5 = 7');
+      await ed2.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 100, 260);
+    await page.waitForTimeout(400);
+    const ed3 = page.locator('[data-testid="inline-editor"]');
+    if (await ed3.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed3.fill('Il reste 7 pommes');
+      await ed3.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 100, 290);
+    await page.waitForTimeout(400);
+    const ed4 = page.locator('[data-testid="inline-editor"]');
+    if (await ed4.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed4.fill('Léa a 7 pommes');
+      await ed4.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('124-canvas-15-pieces.png'), fullPage: true });
+  });
+
+  test('75 — Mode déplacer pick-up et put-down', async ({ page }) => {
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(300);
+
+    // Switch to déplacer, pick up
+    await selectTool(page, 'deplacer');
+    await clickCanvas(page, 130, 87);
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: shot('125-deplacer-pickup.png'), fullPage: true });
+
+    // Put down at new location
+    await clickCanvas(page, 300, 150);
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: shot('126-deplacer-putdown.png'), fullPage: true });
+  });
+
+  test('76 — Saisie manuelle de problème', async ({ page }) => {
+    // Click on problem zone to expand/edit
+    const problemZone = page.locator('[data-testid="problem-zone"]');
+    if (await problemZone.isVisible().catch(() => false)) {
+      await problemZone.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Find the editable area and type
+    const editable = page.locator('[data-testid="problem-zone"] [contenteditable], [data-testid="problem-zone"] textarea');
+    if (await editable.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await editable.fill('Marc a 24 billes. Il en perd 9. Combien lui en reste-t-il?');
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('127-saisie-manuelle-probleme.png'), fullPage: true });
+  });
+
+  test('77 — Mobile paysage avec éditeur ouvert', async ({ page }) => {
+    await page.setViewportSize({ width: 667, height: 375 });
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 150, 80);
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('128-mobile-paysage-editeur.png'), fullPage: true });
+
+    const editor = page.locator('[data-testid="inline-editor"]');
+    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await editor.fill('3 + 4');
+      await editor.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('129-mobile-paysage-apres.png'), fullPage: true });
+  });
+
+  test('78 — TTS surlignage mot à mot', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a douze pommes rouges.'));
+
+    // Enable TTS
+    await openSettings(page);
+    const ttsToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
+    if (await ttsToggle.isVisible().catch(() => false)) await ttsToggle.click();
+    await closeSettings(page);
+
+    // Click speaker button
+    const speakerBtn = page.locator('button[aria-label="Lire à voix haute"]');
+    if (await speakerBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await speakerBtn.click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.screenshot({ path: shot('130-tts-speaking.png'), fullPage: true });
+  });
+
+  test('79 — Problème 2 étapes complet', async ({ page }) => {
+    test.setTimeout(60_000);
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Camille a lu 3 fois plus de pages que Théo. Camille a lu 45 pages. Combien Théo a-t-il lu?'));
+    await dismissOverlays(page);
+
+    // Barre + resize 3×
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 80, 60);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // off
+    await clickCanvas(page, 110, 67);
+    await page.waitForTimeout(400);
+    const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
+    if (await tailleBtn.isVisible().catch(() => false)) {
+      await tailleBtn.click();
+      await page.waitForTimeout(200);
+      const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+      if (await btn3x.isVisible().catch(() => false)) {
+        await btn3x.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // Copier via Plus submenu
+    await clickCanvas(page, 110, 67);
+    await page.waitForTimeout(400);
+    const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
+    if (await plusBtn.isVisible().catch(() => false)) {
+      await plusBtn.click();
+      await page.waitForTimeout(200);
+      const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
+      if (await copyBtn.isVisible().catch(() => false)) {
+        await copyBtn.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // Calcul
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 80, 140);
+    await page.waitForTimeout(400);
+    const calcEd = page.locator('[data-testid="inline-editor"]');
+    if (await calcEd.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await calcEd.fill('45 / 3 = 15');
+      await calcEd.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Réponse
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 80, 180);
+    await page.waitForTimeout(400);
+    const repEd = page.locator('[data-testid="inline-editor"]');
+    if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await repEd.fill('Théo a lu 15 pages');
+      await repEd.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: shot('131-probleme-2-etapes-complet.png'), fullPage: true });
+  });
+
+  test('80 — Répartir avec reste visible', async ({ page }) => {
+    await selectTool(page, 'jeton');
+    const qty5 = page.locator('[data-testid="status-bar"] button[aria-label="Quantité: 5"]');
+    if (await qty5.isVisible().catch(() => false)) await qty5.click();
+    await clickCanvas(page, 150, 60);
+    await page.waitForTimeout(300);
+    const qty1 = page.locator('[data-testid="status-bar"] button[aria-label="Quantité: 1"]');
+    if (await qty1.isVisible().catch(() => false)) await qty1.click();
+    await clickCanvas(page, 210, 60);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 225, 60);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // off
+
+    // Répartir 7 jetons en 3 groupes → 3×2 + 1 reste
+    await clickCanvas(page, 150, 60);
+    await page.waitForTimeout(400);
+    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
+    if (await repartirBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await repartirBtn.click();
+      await page.waitForTimeout(200);
+      const btn3 = page.locator('[data-testid="context-actions"] button:has-text("3 groupes")');
+      if (await btn3.isVisible().catch(() => false)) {
+        await btn3.click();
+        await page.waitForTimeout(400);
+      }
+    }
+
+    await page.screenshot({ path: shot('132-repartir-reste-visible.png'), fullPage: true });
+  });
+
+  test('81 — Focus ring visible (Tab)', async ({ page }) => {
+    // Press Tab to focus first toolbar button
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('133-focus-ring.png'), fullPage: true });
+  });
+
+  test('82 — Saisie invalide pas de feedback punitif', async ({ page }) => {
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(500);
+
+    const editor = page.locator('[data-testid="inline-editor"]');
+    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await editor.fill('abc pas un nombre');
+      await editor.press('Enter');
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('134-saisie-invalide.png'), fullPage: true });
+  });
+
+  test('83 — Droite numérique marqueurs agrandis', async ({ page }) => {
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 120);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique'); // off
+
+    // Select and add markers
+    await clickCanvas(page, 270, 120);
+    await page.waitForTimeout(300);
+    const svg = page.locator('[data-testid="canvas-svg"]');
+    const box = await svg.boundingBox();
+    if (box) {
+      const pxPerMm = box.width / 500;
+      await page.mouse.click(box.x + 290 * pxPerMm, box.y + 120 * pxPerMm);
+      await page.waitForTimeout(150);
+      await page.mouse.click(box.x + 350 * pxPerMm, box.y + 120 * pxPerMm);
+      await page.waitForTimeout(150);
+      await page.mouse.click(box.x + 410 * pxPerMm, box.y + 120 * pxPerMm);
+      await page.waitForTimeout(150);
+    }
+
+    await page.screenshot({ path: shot('135-droite-marqueurs-gros.png'), fullPage: true });
+  });
+
+  test('84 — Nombres décimaux dans calcul', async ({ page }) => {
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(500);
+
+    const editor = page.locator('[data-testid="inline-editor"]');
+    if (await editor.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await editor.fill('3.5 + 2.5 = 6');
+      await editor.press('Enter');
+      await page.waitForTimeout(300);
+    }
+
+    await page.screenshot({ path: shot('136-decimaux-calcul.png'), fullPage: true });
+  });
+
+  test('85 — Combinaison barre + tableau', async ({ page }) => {
+    // Switch to complet mode
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    if (await modeSelector.isVisible().catch(() => false)) {
+      await modeSelector.click();
+      await page.waitForTimeout(200);
+      const completOption = page.locator('[data-testid="mode-option-complet"]');
+      if (await completOption.isVisible().catch(() => false)) {
+        await completOption.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 80, 60);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'tableau');
+    await clickCanvas(page, 250, 100);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'tableau'); // off
+
+    await page.screenshot({ path: shot('137-barre-plus-tableau.png'), fullPage: true });
+  });
+
+  test('86 — Toutes pièces simultanées (charge max)', async ({ page }) => {
+    test.setTimeout(60_000);
+    // Switch to complet mode
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    if (await modeSelector.isVisible().catch(() => false)) {
+      await modeSelector.click();
+      await page.waitForTimeout(200);
+      const completOption = page.locator('[data-testid="mode-option-complet"]');
+      if (await completOption.isVisible().catch(() => false)) {
+        await completOption.click();
+        await page.waitForTimeout(200);
+      }
+    }
+
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 50, 40);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 50, 70);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'boite');
+    await clickCanvas(page, 250, 50);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 50, 130);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 50, 180);
+    await page.waitForTimeout(400);
+    const ed = page.locator('[data-testid="inline-editor"]');
+    if (await ed.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed.fill('5 + 3 = 8');
+      await ed.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'reponse');
+    await clickCanvas(page, 50, 220);
+    await page.waitForTimeout(400);
+    const repEd = page.locator('[data-testid="inline-editor"]');
+    if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await repEd.fill('8 billes');
+      await repEd.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'etiquette');
+    await clickCanvas(page, 300, 130);
+    await page.waitForTimeout(400);
+    const etEd = page.locator('[data-testid="inline-editor"]');
+    if (await etEd.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await etEd.fill('Note');
+      await etEd.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await selectTool(page, 'tableau');
+    await clickCanvas(page, 300, 180);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'tableau'); // off
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('138-toutes-pieces.png'), fullPage: true });
+  });
 });
