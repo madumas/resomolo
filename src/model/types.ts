@@ -95,7 +95,7 @@ export function isTableau(p: Piece): p is Tableau { return p.type === 'tableau';
 
 // === Highlights ===
 
-export type HighlightColor = 'bleu' | 'orange' | 'vert';
+export type HighlightColor = 'bleu' | 'orange' | 'vert' | 'gris';
 
 export interface Highlight {
   start: number; // character index in problem text

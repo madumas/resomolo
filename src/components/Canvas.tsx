@@ -186,6 +186,7 @@ export function Canvas({
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
   const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
+  const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const now = Date.now();
@@ -407,8 +408,8 @@ export function Canvas({
         dispatch({ type: 'PLACE_PIECES', pieces: jetons });
         onPlace();
         onSetTool(null);
-      } else if (activeTool === 'reponse' && pieces.some(p => p.type === 'reponse')) {
-        // Réponse: only one allowed — select existing
+      } else if (activeTool === 'reponse' && pieces.filter(p => p.type === 'reponse').length >= 2) {
+        // Max 2 réponses — select first existing
         const existing = pieces.find(p => p.type === 'reponse');
         if (existing) {
           onSelectPiece(existing.id);
@@ -797,7 +798,7 @@ export function Canvas({
         {/* Render boîtes first (background), then everything else on top */}
         {pieces.filter(p => p.type === 'boite').map(piece => (
           <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
-            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} />
+            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} />
           </g>
         ))}
 
@@ -825,7 +826,7 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity: isMoving ? 0.6 : 1, transition: 'opacity 0.1s' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} />
             </g>
           );
         })}
@@ -1400,10 +1401,11 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
+  reponseIds?: string[];
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
@@ -1418,7 +1420,8 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
     case 'calcul':
       inner = <CalculPiece piece={piece} isSelected={isSelected} />; break;
     case 'reponse':
-      inner = <ReponsePiece piece={piece} isSelected={isSelected} />; break;
+      inner = <ReponsePiece piece={piece} isSelected={isSelected}
+        reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
       inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />; break;
     case 'tableau':
@@ -1543,10 +1546,13 @@ function CalculPiece({ piece, isSelected }: {
   );
 }
 
-function ReponsePiece({ piece, isSelected }: {
+function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
   piece: Piece & { type: 'reponse' };
   isSelected: boolean;
+  reponseIndex?: number;
+  totalReponses?: number;
 }) {
+  const numbered = (totalReponses ?? 0) > 1 && reponseIndex != null;
   const hasTemplate = !!piece.template;
 
   // For template mode: render the template with filled blanks
@@ -1588,7 +1594,7 @@ function ReponsePiece({ piece, isSelected }: {
           strokeWidth={isSelected ? 1 : 0.7}
         />
         <text x={piece.x + 4} y={piece.y + 6} fontSize={4} fill={COLORS.primary}>
-          Réponse (à trous)
+          {numbered ? `Réponse ${reponseIndex! + 1} (à trous)` : 'Réponse (à trous)'}
         </text>
         <text x={piece.x + 4} y={piece.y + 16} fontSize={5} data-edit-target={piece.id}>
           {segments.map((seg, i) => (
@@ -1618,7 +1624,7 @@ function ReponsePiece({ piece, isSelected }: {
         strokeWidth={isSelected ? 1 : 0.7}
       />
       <text x={piece.x + 4} y={piece.y + 6} fontSize={5} fill={COLORS.primary}>
-        Réponse
+        {numbered ? `Réponse ${reponseIndex! + 1}` : 'Réponse'}
       </text>
       <text x={piece.x + 4} y={piece.y + 16} fontSize={5} fill={piece.text ? COLORS.text : '#9CA3AF'}
         data-edit-target={piece.id}>
@@ -1846,7 +1852,7 @@ function getReponseWidth(piece: Reponse): number {
 
 // === Hit test ===
 
-const TABLEAU_CELL_W = 12; // mm
+const TABLEAU_CELL_W = 18; // mm — wider to fit text like "Lundi", "Température"
 const TABLEAU_CELL_H = 12; // mm (WCAG 2.5.5: 12mm ≈ 45px meets 44px minimum)
 
 function TableauPiece({ piece, isSelected, isEditing, previewRows, previewCols, activeRow, activeCol }: {

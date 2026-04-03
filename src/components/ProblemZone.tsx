@@ -34,9 +34,10 @@ const HIGHLIGHT_COLORS: Record<HighlightColor, { bg: string; border: string }> =
   bleu: { bg: '#C5D9F0', border: UI_PRIMARY },
   orange: { bg: '#F5D5C0', border: '#C24B22' },
   vert: { bg: '#C5E8D5', border: '#0B7285' },
+  gris: { bg: '#E5E7EB', border: '#6B7280' },
 };
 
-const PASTILLE_ORDER: HighlightColor[] = ['bleu', 'orange', 'vert'];
+const PASTILLE_ORDER: HighlightColor[] = ['bleu', 'orange', 'vert', 'gris'];
 
 export function ProblemZone({
   text,
@@ -243,7 +244,7 @@ export function ProblemZone({
         </span>
         <div style={{ display: 'flex', gap: 6 }}>
           {PASTILLE_ORDER.map(color => {
-            const label = color === 'bleu' ? 'Données' : color === 'orange' ? 'Question' : 'Contexte';
+            const label = color === 'bleu' ? 'Données' : color === 'orange' ? 'Question' : color === 'vert' ? 'Contexte' : 'Superflu';
             return (
               <button
                 key={color}
@@ -320,6 +321,8 @@ export function ProblemZone({
                       background: isBeingSpoken ? '#FEF3C7' : (highlight ? HIGHLIGHT_COLORS[highlight.color].bg : 'transparent'),
                       borderRadius: (highlight || isBeingSpoken) ? 3 : 0,
                       padding: (highlight || isBeingSpoken) ? '1px 2px' : 0,
+                      textDecoration: highlight?.color === 'gris' ? 'line-through' : 'none',
+                      opacity: highlight?.color === 'gris' ? 0.6 : 1,
                     }}>
                       {token.word}
                     </span>
@@ -371,6 +374,8 @@ export function ProblemZone({
                     background: isBeingSpoken ? '#FEF3C7' : (highlight ? HIGHLIGHT_COLORS[highlight.color].bg : 'transparent'),
                     borderRadius: (highlight || isBeingSpoken) ? 3 : 0,
                     padding: (highlight || isBeingSpoken) ? '1px 2px' : 0,
+                    textDecoration: highlight?.color === 'gris' ? 'line-through' : 'none',
+                    opacity: highlight?.color === 'gris' ? 0.6 : 1,
                     transition: 'background 0.15s',
                   }}
                 >
