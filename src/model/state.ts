@@ -239,8 +239,9 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
 
       let newState = { ...state, pieces };
 
-      // Auto-resize boîtes if the moved piece is a jeton (parented or just un-parented)
-      if (movedPiece.type === 'jeton') {
+      // Auto-resize boîtes only on final move (not during live drag — prevents
+      // feedback loop where boîte grows to follow jeton being pulled out)
+      if (action.type === 'MOVE_PIECE' && movedPiece.type === 'jeton') {
         newState = autoResizeBoite(newState);
       }
 
