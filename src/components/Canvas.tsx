@@ -227,7 +227,8 @@ export function Canvas({
     for (const piece of sortedPieces) {
       if (hitTest(piece, pos, referenceUnitMm, tol.hitTestPaddingMm, tol.jetonHitPaddingMm, pieces)) {
         // If a placement tool is active and we hit a boîte, skip it — place inside instead
-        if (activeTool && activeTool !== 'deplacer' && piece.type === 'boite') {
+        // Exception: fleche tool needs to target boîtes as arrow endpoints
+        if (activeTool && activeTool !== 'deplacer' && activeTool !== 'fleche' && piece.type === 'boite') {
           continue;
         }
         // Among same-priority pieces, pick the closest to click point
