@@ -1486,7 +1486,7 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
 
 function BoitePiece({ piece, isSelected, highContrast }: { piece: Boite; isSelected: boolean; highContrast?: boolean }) {
   const color = getPieceColor(piece.couleur, highContrast);
-  const fillColor = getPieceFillColor(piece.couleur);
+  const fillColor = getPieceFillColor(piece.couleur, highContrast);
   return (
     <g>
       {/* Label above */}

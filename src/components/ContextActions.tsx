@@ -56,7 +56,7 @@ export function ContextActions({
   // showDivideOptions removed — fraction submenu handles division presets
 
   // 2.2: Submenu state for bar context actions (reduces cognitive overload)
-  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'plus' | 'fraction'>('none');
+  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'fraction'>('none');
 
   // Template submenu for reponse pieces
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
@@ -197,9 +197,10 @@ export function ContextActions({
         </>
       )}
 
-      {/* Barre — actions stables, submenus inline */}
+      {/* Barre — 6 boutons, 2 lignes. Pas de "Plus…" */}
       {isBarre(piece) && barSubmenu === 'none' && (
         <>
+          {/* Ligne 1 : propriétés de la barre */}
           <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
           <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
           {!piece.locked && (
@@ -208,16 +209,24 @@ export function ContextActions({
             </CtxBtn>
           )}
           {!piece.locked && (
+            <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
+          )}
+          {/* Ligne 2 : structure */}
+          {!piece.locked && (
             <CtxBtn onClick={() => setBarSubmenu('fraction')}>
               Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
             </CtxBtn>
           )}
-          {!piece.locked && (
-            <CtxBtn onClick={() => setBarSubmenu('plus')}>Plus…</CtxBtn>
+          {!piece.locked && !piece.groupId && (
+            <CtxBtn onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
           )}
-          {piece.groupId && (
-            <CtxBtn onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
-          )}
+          {/* Dégrouper toujours visible (disabled si pas groupée) — stabilité spatiale */}
+          <CtxBtn
+            onClick={() => piece.groupId ? onUngroup(piece.groupId) : undefined}
+            disabled={!piece.groupId}
+          >
+            Dégrouper
+          </CtxBtn>
         </>
       )}
       {/* Barre — submenu Taille */}
@@ -244,19 +253,13 @@ export function ContextActions({
               {f.label}
             </CtxBtn>
           ))}
+          <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '4px 0' }} />
+          <CtxBtn onClick={() => { onStartEqualizing(piece.id); setBarSubmenu('none'); }}>
+            = une autre barre
+          </CtxBtn>
         </>
       )}
-      {/* Barre — submenu Plus (Copier, Même taille, Grouper) */}
-      {isBarre(piece) && barSubmenu === 'plus' && (
-        <>
-          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
-          <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); setBarSubmenu('none'); }}>Copier</CtxBtn>
-          <CtxBtn onClick={() => { onStartEqualizing(piece.id); setBarSubmenu('none'); }}>Même taille</CtxBtn>
-          {!piece.groupId && (
-            <CtxBtn onClick={() => { onStartGrouping(piece.id); setBarSubmenu('none'); }}>Grouper</CtxBtn>
-          )}
-        </>
-      )}
+      {/* submenu Plus supprimé — Copier et Grouper au premier niveau */}
       {/* Barre — submenu Fraction */}
       {isBarre(piece) && barSubmenu === 'fraction' && (
         <>
@@ -522,34 +525,37 @@ export function ContextActions({
   );
 }
 
-function CtxBtn({ children, onClick, active, destructive, back, onPointerEnter, onPointerLeave }: {
+function CtxBtn({ children, onClick, active, destructive, back, disabled, onPointerEnter, onPointerLeave }: {
   children: React.ReactNode;
   onClick: () => void;
   active?: boolean;
   destructive?: boolean;
   back?: boolean;
+  disabled?: boolean;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
+      disabled={disabled}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
         fontSize: back ? 14 : 12,
         borderRadius: 6,
-        background: back ? '#F3F4F6' : destructive ? '#FEE2E2' : active ? '#EBF0F9' : UI_BG,
-        border: `1px solid ${back ? '#D5D0E0' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_BORDER}`,
-        color: back ? '#6B7280' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_TEXT_SECONDARY,
-        cursor: 'pointer',
+        background: disabled ? '#F0F0F0' : back ? '#F3F4F6' : destructive ? '#FEE2E2' : active ? '#EBF0F9' : UI_BG,
+        border: `1px solid ${disabled ? '#E0E0E0' : back ? '#D5D0E0' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_BORDER}`,
+        color: disabled ? '#C0C0C0' : back ? '#6B7280' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_TEXT_SECONDARY,
+        cursor: disabled ? 'default' : 'pointer',
         whiteSpace: 'nowrap',
         minHeight: 44,
         minWidth: 44,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       {children}

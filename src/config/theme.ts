@@ -80,7 +80,16 @@ export function getPieceColor(couleur: string, highContrast = false): string {
   return COLORS[couleur as keyof typeof COLORS] || COLORS.bleu;
 }
 
-export function getPieceFillColor(couleur: string): string {
+export function getPieceFillColor(couleur: string, highContrast = false): string {
+  if (highContrast) {
+    const hcFills: Record<string, string> = {
+      bleu: 'rgba(13, 74, 138, 0.35)',
+      rouge: 'rgba(163, 60, 26, 0.35)',
+      vert: 'rgba(7, 94, 110, 0.35)',
+      jaune: 'rgba(139, 105, 20, 0.35)',
+    };
+    return hcFills[couleur] || hcFills.bleu;
+  }
   const key = `${couleur}Fill` as keyof typeof COLORS;
   return COLORS[key] || COLORS.bleuFill;
 }

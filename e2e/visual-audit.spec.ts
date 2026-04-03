@@ -1910,48 +1910,49 @@ test.describe('Visual audit — full flow', () => {
 
   test('56 — Surlignage 3 couleurs + superflu', async ({ page }) => {
     await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes rouges. Elle en donne 5 à Marc. Il fait beau. Combien lui en reste-t-il?'));
+    const pz = page.locator('[data-testid="problem-zone"]');
 
-    // Click on "12" (données — bleu, default)
-    const word12 = page.locator('text=12').first();
-    if (await word12.isVisible().catch(() => false)) {
+    // Bleu (default pastille) — click "12"
+    const word12 = pz.locator('span:has-text("12")').first();
+    if (await word12.isVisible({ timeout: 3000 }).catch(() => false)) {
       await word12.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
     }
 
-    // Switch to orange pastille, click "Combien"
-    const orangePastille = page.locator('button:has-text("Question")');
-    if (await orangePastille.isVisible().catch(() => false)) {
-      await orangePastille.click();
-      await page.waitForTimeout(100);
+    // Switch to orange pastille, then click "Combien"
+    const orangeBtn = pz.locator('button:has-text("Question")');
+    if (await orangeBtn.isVisible().catch(() => false)) {
+      await orangeBtn.click();
+      await page.waitForTimeout(300);
     }
-    const wordCombien = page.locator('text=Combien').first();
+    const wordCombien = pz.locator('span:has-text("Combien")').first();
     if (await wordCombien.isVisible().catch(() => false)) {
       await wordCombien.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
     }
 
-    // Switch to vert pastille, click "donne"
-    const vertPastille = page.locator('button:has-text("Contexte")');
-    if (await vertPastille.isVisible().catch(() => false)) {
-      await vertPastille.click();
-      await page.waitForTimeout(100);
+    // Switch to vert pastille, then click "donne"
+    const vertBtn = pz.locator('button:has-text("Contexte")');
+    if (await vertBtn.isVisible().catch(() => false)) {
+      await vertBtn.click();
+      await page.waitForTimeout(300);
     }
-    const wordDonne = page.locator('text=donne').first();
+    const wordDonne = pz.locator('span:has-text("donne")').first();
     if (await wordDonne.isVisible().catch(() => false)) {
       await wordDonne.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
     }
 
-    // Switch to gris pastille (superflu), click "beau"
-    const grisPastille = page.locator('button:has-text("Superflu")');
-    if (await grisPastille.isVisible().catch(() => false)) {
-      await grisPastille.click();
-      await page.waitForTimeout(100);
+    // Switch to gris pastille (superflu), then click "beau"
+    const grisBtn = pz.locator('button:has-text("Superflu")');
+    if (await grisBtn.isVisible().catch(() => false)) {
+      await grisBtn.click();
+      await page.waitForTimeout(300);
     }
-    const wordBeau = page.locator('text=beau').first();
+    const wordBeau = pz.locator('span:has-text("beau")').first();
     if (await wordBeau.isVisible().catch(() => false)) {
       await wordBeau.click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
     }
 
     await page.screenshot({ path: shot('97-surlignage-4-couleurs.png'), fullPage: true });
@@ -2368,19 +2369,28 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('71 — High contrast mode', async ({ page }) => {
+    // Enable high contrast FIRST
+    await openSettings(page);
+    const settingsDialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    const contrastSection = settingsDialog.locator('text=Contraste élevé').locator('..');
+    const toggleBtn = contrastSection.locator('button');
+    await toggleBtn.scrollIntoViewIfNeeded();
+    const textBefore = await toggleBtn.textContent();
+    await toggleBtn.click();
+    await page.waitForTimeout(200);
+    // Verify toggle actually changed
+    const textAfter = await toggleBtn.textContent();
+    expect(textAfter).not.toBe(textBefore);
+    await closeSettings(page);
+
+    // Place pieces — they should render with high-contrast colors
     await selectTool(page, 'barre');
     await clickCanvas(page, 100, 80);
     await page.waitForTimeout(300);
-    await selectTool(page, 'barre');
-
-    // Enable high contrast
-    await openSettings(page);
-    const contrastToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Contraste élevé').locator('..').locator('button:has-text("Désactivé")');
-    if (await contrastToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await contrastToggle.click();
-      await page.waitForTimeout(200);
-    }
-    await closeSettings(page);
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 100, 120);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton'); // deselect
 
     await page.screenshot({ path: shot('121-high-contrast.png'), fullPage: true });
   });
@@ -2395,33 +2405,61 @@ test.describe('Visual audit — full flow', () => {
 
     // Enable OpenDyslexic + letter spacing
     await openSettings(page);
-    const odBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("OpenDyslexic")');
+    const settingsDialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    const odBtn = settingsDialog.locator('button:has-text("OpenDyslexic")');
+    await odBtn.scrollIntoViewIfNeeded();
     if (await odBtn.isVisible({ timeout: 2000 }).catch(() => false)) await odBtn.click();
-    const spBtn = page.locator('[role="dialog"][aria-label="Paramètres"] button:has-text("0,1 em")');
+    await page.waitForTimeout(200);
+    const spBtn = settingsDialog.locator('button:has-text("0,1 em")');
     if (await spBtn.isVisible().catch(() => false)) await spBtn.click();
+    await page.waitForTimeout(200);
     await closeSettings(page);
 
-    // Highlight "12" in bleu
-    const word12 = page.locator('text=12').first();
-    if (await word12.isVisible().catch(() => false)) await word12.click();
-    await page.waitForTimeout(200);
+    // Highlight "12" in bleu — target within problem zone
+    const pz = page.locator('[data-testid="problem-zone"]');
+    const word12 = pz.locator('span:has-text("12")').first();
+    if (await word12.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await word12.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Also highlight "donne" in orange
+    const orangeBtn = pz.locator('button:has-text("Question")');
+    if (await orangeBtn.isVisible().catch(() => false)) {
+      await orangeBtn.click();
+      await page.waitForTimeout(300);
+    }
+    const wordCombien = pz.locator('span:has-text("Combien")').first();
+    if (await wordCombien.isVisible().catch(() => false)) {
+      await wordCombien.click();
+      await page.waitForTimeout(300);
+    }
 
     await page.screenshot({ path: shot('122-dyslexie-probleme-surligne.png'), fullPage: true });
   });
 
   test('73 — Contraste élevé avec contenu', async ({ page }) => {
-    // Enable high contrast
+    // Enable high contrast with robust toggle
     await openSettings(page);
-    const contrastToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Contraste élevé').locator('..').locator('button:has-text("Désactivé")');
-    if (await contrastToggle.isVisible({ timeout: 2000 }).catch(() => false)) await contrastToggle.click();
+    const settingsDialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    const contrastSection = settingsDialog.locator('text=Contraste élevé').locator('..');
+    const toggleBtn = contrastSection.locator('button');
+    await toggleBtn.scrollIntoViewIfNeeded();
+    const textBefore = await toggleBtn.textContent();
+    await toggleBtn.click();
+    await page.waitForTimeout(200);
+    expect(await toggleBtn.textContent()).not.toBe(textBefore);
     await closeSettings(page);
 
-    // Place a barre + jeton
+    // Place barre + boîte + jeton — all should show darker fills
     await selectTool(page, 'barre');
-    await clickCanvas(page, 100, 80);
+    await clickCanvas(page, 100, 60);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'boite');
+    await clickCanvas(page, 100, 110);
     await page.waitForTimeout(300);
     await selectTool(page, 'jeton');
-    await clickCanvas(page, 100, 130);
+    await clickCanvas(page, 120, 130);
     await page.waitForTimeout(200);
     await selectTool(page, 'jeton'); // deselect
 
@@ -2802,5 +2840,101 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('138-toutes-pieces.png'), fullPage: true });
+  });
+
+  test('87 — Contraste élevé canvas chargé', async ({ page }) => {
+    test.setTimeout(45_000);
+    // Enable high contrast
+    await openSettings(page);
+    const settingsDialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    const contrastSection = settingsDialog.locator('text=Contraste élevé').locator('..');
+    const toggleBtn = contrastSection.locator('button');
+    await toggleBtn.scrollIntoViewIfNeeded();
+    await toggleBtn.click();
+    await page.waitForTimeout(200);
+    await closeSettings(page);
+
+    // Place 3 barres, 3 jetons, 1 calcul — all high-contrast
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 80, 40);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 80, 65);
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 80, 90);
+    await page.waitForTimeout(200);
+    await selectTool(page, 'jeton');
+    await clickCanvas(page, 300, 50);
+    await page.waitForTimeout(150);
+    await clickCanvas(page, 320, 50);
+    await page.waitForTimeout(150);
+    await clickCanvas(page, 340, 50);
+    await page.waitForTimeout(150);
+    await selectTool(page, 'calcul');
+    await clickCanvas(page, 80, 130);
+    await page.waitForTimeout(400);
+    const ed = page.locator('[data-testid="inline-editor"]');
+    if (await ed.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await ed.fill('5 + 3 = 8');
+      await ed.press('Enter');
+      await page.waitForTimeout(200);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('139-high-contrast-canvas-charge.png'), fullPage: true });
+  });
+
+  test('88 — Surlignage visible vérifié', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
+    // Expand problem zone by clicking on it
+    const pz = page.locator('[data-testid="problem-zone"]');
+    await pz.click();
+    await page.waitForTimeout(500);
+
+    // Highlight "24" in bleu (default) — look for the word span
+    const word24 = pz.locator('span:has-text("24")').first();
+    if (await word24.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await word24.click();
+      await page.waitForTimeout(400);
+    }
+
+    // Switch to orange, highlight "donne"
+    const orangeBtn = pz.locator('button:has-text("Question")');
+    if (await orangeBtn.isVisible().catch(() => false)) {
+      await orangeBtn.click();
+      await page.waitForTimeout(300);
+    }
+    const wordDonne = pz.locator('span:has-text("donne")').first();
+    if (await wordDonne.isVisible().catch(() => false)) {
+      await wordDonne.click();
+      await page.waitForTimeout(400);
+    }
+
+    await page.screenshot({ path: shot('140-surlignage-verifie.png'), fullPage: true });
+  });
+
+  test('89 — Dyslexie avec contenu rempli', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Théo a 5 pommes. Il en mange 2.'));
+    // Expand problem zone
+    const pz = page.locator('[data-testid="problem-zone"]');
+    await pz.click();
+    await page.waitForTimeout(300);
+
+    // Enable OpenDyslexic
+    await openSettings(page);
+    const settingsDialog = page.locator('[role="dialog"][aria-label="Paramètres"]');
+    const odBtn = settingsDialog.locator('button:has-text("OpenDyslexic")');
+    await odBtn.scrollIntoViewIfNeeded();
+    if (await odBtn.isVisible({ timeout: 2000 }).catch(() => false)) await odBtn.click();
+    await page.waitForTimeout(200);
+    await closeSettings(page);
+
+    // Place a barre
+    await selectTool(page, 'barre');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(300);
+    await selectTool(page, 'barre'); // deselect
+
+    await page.screenshot({ path: shot('141-dyslexie-avec-contenu.png'), fullPage: true });
   });
 });

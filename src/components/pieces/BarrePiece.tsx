@@ -37,7 +37,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
   const w = piece.sizeMultiplier * referenceUnitMm;
   const h = BAR_HEIGHT_MM;
   const color = getPieceColor(piece.couleur, highContrast);
-  const fill = getPieceFillColor(piece.couleur);
+  const fill = getPieceFillColor(piece.couleur, highContrast);
   const sw = highContrast ? 1.5 : (isSelected ? 1 : 0.5); // strokeWidth multiplied in high contrast
   const hasLabel = piece.label.length > 0;
   const hasValue = piece.value.length > 0;
