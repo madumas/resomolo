@@ -2939,7 +2939,12 @@ test.describe('Visual audit — full flow', () => {
     const skipBtn = page.locator('button:has-text("Passer")');
     if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) await skipBtn.click();
     await page.waitForTimeout(500);
-    // Close problem selector if it appeared (Escape instead of clicking Problème libre)
+    // Close problem selector if it appeared
+    const fermerBanque = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button:has-text("Fermer")');
+    if (await fermerBanque.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await fermerBanque.click();
+      await page.waitForTimeout(300);
+    }
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
 
