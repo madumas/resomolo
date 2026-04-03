@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
-import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isGroupe, isTableau } from '../model/types';
+import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau } from '../model/types';
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
@@ -160,11 +160,27 @@ export function ContextActions({
         </CtxBtn>
       )}
 
-      {/* Boite: Nommer */}
+      {/* Boite: Nommer + Valeur + Couleur */}
       {isBoite(piece) && (
-        <CtxBtn onClick={() => onStartEditLabel(piece.id)}>
-          Nommer
-        </CtxBtn>
+        <>
+          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>
+            Nommer
+          </CtxBtn>
+          <CtxBtn onClick={() => onStartEditValue(piece.id)}>
+            Valeur
+          </CtxBtn>
+          {/* Color buttons */}
+          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
+            <button key={c} onClick={() => onEditPiece(piece.id, { couleur: c })}
+              style={{
+                minWidth: 44, minHeight: 44, borderRadius: '50%',
+                background: getPieceColor(c),
+                border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
+                cursor: 'pointer', opacity: piece.couleur === c ? 1 : 0.5,
+              }}
+            />
+          ))}
+        </>
       )}
 
       {/* Barre — actions stables, submenus inline */}
@@ -371,31 +387,6 @@ export function ContextActions({
         </>
       )}
 
-      {/* Groupe: count presets + nommer + couleur */}
-      {isGroupe(piece) && (
-        <>
-          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>
-            Nommer
-          </CtxBtn>
-          {[2, 3, 4, 5, 6].map(n => (
-            <CtxBtn key={n} active={piece.count === n} onClick={() => onEditPiece(piece.id, { count: n })}>
-              ×{n}
-            </CtxBtn>
-          ))}
-          {/* Color buttons */}
-          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
-            <button key={c} onClick={() => onEditPiece(piece.id, { couleur: c })}
-              style={{
-                minWidth: 44, minHeight: 44, borderRadius: '50%',
-                background: getPieceColor(c),
-                border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
-                cursor: 'pointer', opacity: piece.couleur === c ? 1 : 0.5,
-              }}
-            />
-          ))}
-        </>
-      )}
-
       {/* Tableau: rows/cols +/- */}
       {isTableau(piece) && (
         <>
@@ -509,9 +500,6 @@ function getPieceBoundsScreen(
     w = piece.width;
     h = 20;
     y -= 10; // selection highlight extends above the line
-  } else if (isGroupe(piece)) {
-    w = Math.max(25, piece.count * 6 + 10);
-    h = 15;
   } else if (isTableau(piece)) {
     w = piece.cols * 12;
     h = piece.rows * 10;

@@ -1,6 +1,6 @@
 // === Piece types ===
 
-export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'groupe' | 'tableau';
+export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'tableau';
 
 export type CouleurPiece = 'bleu' | 'rouge' | 'vert' | 'jaune';
 
@@ -49,6 +49,8 @@ export interface Boite extends PieceBase {
   width: number;
   height: number;
   label: string;
+  value: string;
+  couleur: CouleurPiece;
 }
 
 export interface Etiquette extends PieceBase {
@@ -73,13 +75,6 @@ export interface DroiteNumerique extends PieceBase {
   width: number;         // width in mm (default 200)
 }
 
-export interface Groupe extends PieceBase {
-  type: 'groupe';
-  count: number;           // number of elements in the group (2-6)
-  label: string;           // e.g. "Sacs", "Rangées"
-  couleur: CouleurPiece;
-}
-
 export interface Tableau extends PieceBase {
   type: 'tableau';
   rows: number;            // 2-4
@@ -88,7 +83,7 @@ export interface Tableau extends PieceBase {
   headerRow: boolean;      // first row styled as header
 }
 
-export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Groupe | Tableau;
+export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Tableau;
 
 // Type guards
 export function isJeton(p: Piece): p is Jeton { return p.type === 'jeton'; }
@@ -96,7 +91,6 @@ export function isBarre(p: Piece): p is Barre { return p.type === 'barre'; }
 export function isBoite(p: Piece): p is Boite { return p.type === 'boite'; }
 export function isFleche(p: Piece): p is Fleche { return p.type === 'fleche'; }
 export function isDroiteNumerique(p: Piece): p is DroiteNumerique { return p.type === 'droiteNumerique'; }
-export function isGroupe(p: Piece): p is Groupe { return p.type === 'groupe'; }
 export function isTableau(p: Piece): p is Tableau { return p.type === 'tableau'; }
 
 // === Highlights ===
@@ -111,7 +105,7 @@ export interface Highlight {
 
 // === Tool ===
 
-export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'groupe' | 'tableau' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
+export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'tableau' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
 
 // === State ===
 

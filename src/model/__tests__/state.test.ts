@@ -24,7 +24,7 @@ function makeEtiquette(overrides: Partial<Etiquette> = {}): Etiquette {
 }
 
 function makeBoite(overrides: Partial<Boite> = {}): Boite {
-  return { id: 'box1', type: 'boite', x: 50, y: 50, locked: false, width: 80, height: 60, label: '', ...overrides };
+  return { id: 'box1', type: 'boite', x: 50, y: 50, locked: false, width: 80, height: 60, label: '', value: '', couleur: 'bleu', ...overrides };
 }
 
 /** Dispatch an action through appReducer and return the new model state. */

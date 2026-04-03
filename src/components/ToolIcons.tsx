@@ -73,18 +73,6 @@ export function BoiteIcon() {
   );
 }
 
-/** Groupe: oval with dots inside */
-export function GroupeIcon() {
-  return (
-    <svg {...S}>
-      <ellipse cx="10" cy="10" rx="8" ry="6" stroke={stroke} strokeWidth="2" strokeDasharray="3 2" fill="none" />
-      <circle cx="6" cy="10" r="1.5" fill={stroke} />
-      <circle cx="10" cy="10" r="1.5" fill={stroke} />
-      <circle cx="14" cy="10" r="1.5" fill={stroke} />
-    </svg>
-  );
-}
-
 /** Tableau: 3×3 grid */
 export function TableauIcon() {
   return (

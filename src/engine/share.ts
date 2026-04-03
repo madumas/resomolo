@@ -18,8 +18,6 @@ interface MinPiece {
   tpl?: string; // template (reponse)
   // DroiteNumerique
   mn?: number; mx?: number; st?: number; mk?: number[]; wd?: number;
-  // Groupe
-  cnt?: number;
   // Tableau
   rw?: number; cl?: number; clz?: string[][]; hr?: boolean;
 }
@@ -59,6 +57,8 @@ function minifyPiece(p: Piece): MinPiece {
     case 'boite':
       m.w = p.width; m.h = p.height;
       if (p.label) m.l = p.label;
+      if (p.value) m.v = p.value;
+      if (p.couleur !== 'bleu') m.c = p.couleur;
       break;
     case 'etiquette':
       if (p.text) m.tx = p.text;
@@ -71,11 +71,6 @@ function minifyPiece(p: Piece): MinPiece {
     case 'droiteNumerique':
       m.mn = p.min; m.mx = p.max; m.st = p.step; m.wd = p.width;
       if (p.markers.length) m.mk = p.markers;
-      break;
-    case 'groupe':
-      m.cnt = p.count;
-      if (p.couleur !== 'bleu') m.c = p.couleur;
-      if (p.label) m.l = p.label;
       break;
     case 'tableau':
       m.rw = p.rows; m.cl = p.cols; m.clz = p.cells;
@@ -99,7 +94,7 @@ function expandPiece(m: MinPiece): Piece {
     case 'reponse':
       return { ...base, type: 'reponse', text: m.tx ?? '', template: m.tpl ?? null };
     case 'boite':
-      return { ...base, type: 'boite', width: m.w ?? 60, height: m.h ?? 40, label: m.l ?? '' };
+      return { ...base, type: 'boite', width: m.w ?? 60, height: m.h ?? 40, label: m.l ?? '', value: m.v ?? '', couleur: (m.c as any) ?? 'bleu' };
     case 'etiquette':
       return { ...base, type: 'etiquette', text: m.tx ?? '', attachedTo: m.at ?? null };
     case 'fleche':
@@ -107,8 +102,6 @@ function expandPiece(m: MinPiece): Piece {
     case 'droiteNumerique':
       return { ...base, type: 'droiteNumerique', min: m.mn ?? 0, max: m.mx ?? 10, step: m.st ?? 1,
         markers: m.mk ?? [], width: m.wd ?? 200 };
-    case 'groupe':
-      return { ...base, type: 'groupe', count: m.cnt ?? 3, couleur: (m.c as any) ?? 'bleu', label: m.l ?? '' };
     case 'tableau':
       return { ...base, type: 'tableau', rows: m.rw ?? 2, cols: m.cl ?? 3,
         cells: m.clz ?? Array.from({ length: m.rw ?? 2 }, () => Array(m.cl ?? 3).fill('')),

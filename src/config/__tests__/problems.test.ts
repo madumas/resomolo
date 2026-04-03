@@ -32,6 +32,9 @@ describe('Problem presets', () => {
       'multi-etapes',
       'comparaison',
       'partage',
+      'fraction',
+      'statistique',
+      'probabilite',
     ];
     PROBLEM_PRESETS.forEach(p => {
       expect(validCategories).toContain(p.category);

@@ -5,11 +5,11 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Groupe, Tableau } from '../model/types';
-import { isBarre, isDroiteNumerique, isTableau } from '../model/types';
+import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau } from '../model/types';
+import { isBarre, isDroiteNumerique } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
-import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor } from '../config/theme';
+import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
 import { ContextActions } from './ContextActions';
@@ -107,6 +107,7 @@ export function Canvas({
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
   const originalMovePos = useRef<{ x: number; y: number } | null>(null);
+  const tableauEditCellRef = useRef<{ row: number; col: number } | null>(null);
   const moveOffset = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
@@ -139,7 +140,7 @@ export function Canvas({
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
-    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, groupe: 3, barre: 4, droiteNumerique: 4, tableau: 5, fleche: 5, boite: 6 };
+    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, barre: 4, droiteNumerique: 4, tableau: 5, fleche: 5, boite: 6 };
     const sortedPieces = [...pieces].sort((a, b) => (HIT_PRIORITY[a.type] ?? 9) - (HIT_PRIORITY[b.type] ?? 9));
 
     let hitPiece: Piece | null = null;
@@ -209,6 +210,19 @@ export function Canvas({
         else markers.push(snapped2);
         dispatch({ type: 'EDIT_PIECE', id: hitPiece.id, changes: { markers } });
         return; // don't re-select
+      }
+      // Tableau direct cell edit — click on selected tableau edits the clicked cell
+      if (isTableau(hitPiece) && hitPiece.id === selectedPieceId) {
+        const relX = pos.x - hitPiece.x;
+        const relY = pos.y - hitPiece.y;
+        const col = Math.floor(relX / TABLEAU_CELL_W);
+        const row = Math.floor(relY / TABLEAU_CELL_H);
+        if (row >= 0 && row < hitPiece.rows && col >= 0 && col < hitPiece.cols) {
+          tableauEditCellRef.current = { row, col };
+          setEditingBarField('label');
+          onStartEdit(hitPiece.id);
+          return;
+        }
       }
       // Subdivision toggle — clicking on a subdivided bar that is already selected
       if (isBarre(hitPiece) && hitPiece.id === selectedPieceId && hitPiece.divisions) {
@@ -846,6 +860,11 @@ export function Canvas({
           initialValue = piece.label;
           placeholder = 'Nom (ex: Théo)';
           fieldKey = 'label';
+        } else if (piece.type === 'boite' && editingBarField === 'value') {
+          initialValue = piece.value;
+          placeholder = 'Nombre...';
+          fieldKey = 'value';
+          svgFontSizeMm = 8;
         } else if (piece.type === 'boite') {
           initialValue = piece.label;
           placeholder = 'Nom (ex: Ami 1)';
@@ -860,20 +879,19 @@ export function Canvas({
           placeholder = 'Texte de la flèche...';
           fieldKey = 'label';
           svgFontSizeMm = 4.5;
-        } else if (piece.type === 'groupe') {
-          initialValue = (piece as Groupe).label;
-          placeholder = 'Nom du groupe...';
-          fieldKey = 'label';
-          svgFontSizeMm = 4.5;
         } else if (piece.type === 'tableau') {
-          // For tableau, edit the first empty cell or header
+          // Edit the cell that was clicked (via tableauEditCellRef), or first empty cell
           const t = piece as Tableau;
-          let targetRow = 0, targetCol = 0;
-          outer: for (let r = 0; r < t.rows; r++) {
-            for (let c = 0; c < t.cols; c++) {
-              if (!t.cells[r][c]) { targetRow = r; targetCol = c; break outer; }
+          let targetRow = tableauEditCellRef.current?.row ?? 0;
+          let targetCol = tableauEditCellRef.current?.col ?? 0;
+          if (!tableauEditCellRef.current) {
+            outer: for (let r = 0; r < t.rows; r++) {
+              for (let c = 0; c < t.cols; c++) {
+                if (!t.cells[r][c]) { targetRow = r; targetCol = c; break outer; }
+              }
             }
           }
+          tableauEditCellRef.current = null; // consumed
           initialValue = t.cells[targetRow][targetCol];
           placeholder = targetRow === 0 && t.headerRow ? 'En-tête...' : 'Donnée...';
           fieldKey = `cells-${targetRow}-${targetCol}`;
@@ -1166,8 +1184,6 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected }: {
       return <ReponsePiece piece={piece} isSelected={isSelected} />;
     case 'droiteNumerique':
       return <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />;
-    case 'groupe':
-      return <GroupePiece piece={piece as Groupe} isSelected={isSelected} />;
     case 'tableau':
       return <TableauPiece piece={piece as Tableau} isSelected={isSelected} />;
     case 'fleche':
@@ -1217,31 +1233,37 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
   );
 }
 
-function BoitePiece({ piece, isSelected }: { piece: Piece & { type: 'boite' }; isSelected: boolean }) {
+function BoitePiece({ piece, isSelected }: { piece: Boite; isSelected: boolean }) {
+  const color = getPieceColor(piece.couleur);
+  const fillColor = getPieceFillColor(piece.couleur);
   return (
     <g>
-      <rect
-        x={piece.x} y={piece.y} width={piece.width} height={piece.height}
-        rx={2} fill={isSelected ? 'rgba(112, 40, 224, 0.06)' : 'rgba(156,163,175,0.05)'}
-        stroke={isSelected ? '#7028e0' : '#9CA3AF'}
-        strokeWidth={isSelected ? 1.5 : 0.5}
-        strokeDasharray={isSelected ? undefined : '3 2'}
-      />
-      {/* Label at top (always render for edit target positioning) */}
-      <text
-        x={piece.x + 4} y={piece.y - 3}
-        fontSize={4.5} fill={piece.label ? '#55506A' : 'transparent'}
-        data-testid="boite-label"
-        data-edit-target={piece.id}
-      >
-        {piece.label || ' '}
-      </text>
+      {/* Label above */}
+      {piece.label && (
+        <text x={piece.x + 4} y={piece.y - 3} fontSize={4.5} fill={color}
+          data-edit-target={piece.id}>
+          {piece.label}
+        </text>
+      )}
+      {/* Main container */}
+      <rect x={piece.x} y={piece.y} width={piece.width} height={piece.height} rx={2}
+        fill={fillColor}
+        stroke={isSelected ? color : '#9CA3AF'}
+        strokeWidth={isSelected ? 1 : 0.5}
+        strokeDasharray="3 2" />
+      {/* Value in center (semi-abstract mode) */}
+      {piece.value && (
+        <text x={piece.x + piece.width / 2} y={piece.y + piece.height / 2}
+          textAnchor="middle" dominantBaseline="central"
+          fontSize={8} fontWeight={600} fill={color}
+          data-edit-target={piece.id}>
+          {piece.value}
+        </text>
+      )}
+      {/* Selection highlight */}
       {isSelected && (
-        <rect
-          x={piece.x - 1} y={piece.y - 1}
-          width={piece.width + 2} height={piece.height + 2}
-          rx={3} fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1}
-        />
+        <rect x={piece.x - 1} y={piece.y - 1} width={piece.width + 2} height={piece.height + 2} rx={3}
+          fill="none" stroke={color} strokeWidth={0.5} strokeDasharray="2 1" />
       )}
     </g>
   );
@@ -1602,48 +1624,6 @@ function TableauPiece({ piece, isSelected }: { piece: Tableau; isSelected: boole
   );
 }
 
-function GroupePiece({ piece, isSelected }: { piece: Groupe; isSelected: boolean }) {
-  const gw = Math.max(25, piece.count * 6 + 10);
-  const gh = 15;
-  const color = getPieceColor(piece.couleur);
-  return (
-    <g>
-      {/* Label above */}
-      {piece.label && (
-        <text x={piece.x + gw / 2} y={piece.y - 3} textAnchor="middle" fontSize={4.5} fill="#55506A"
-          data-edit-target={piece.id}>
-          {piece.label}
-        </text>
-      )}
-      {/* Oval container */}
-      <ellipse
-        cx={piece.x + gw / 2} cy={piece.y + gh / 2}
-        rx={gw / 2} ry={gh / 2}
-        fill="rgba(150, 150, 170, 0.06)"
-        stroke="#9898A8"
-        strokeWidth={isSelected ? 1 : 0.5}
-        strokeDasharray="3 2"
-      />
-      {/* Miniature dots inside */}
-      {Array.from({ length: piece.count }, (_, i) => {
-        const cx = piece.x + 5 + i * 5 + (gw - (piece.count * 5 + 5)) / 2;
-        return <circle key={i} cx={cx} cy={piece.y + gh / 2} r={2} fill={color} fillOpacity={0.6} />;
-      })}
-      {/* Count label if no text label */}
-      {!piece.label && (
-        <text x={piece.x + gw / 2} y={piece.y + gh + 4} textAnchor="middle" fontSize={4} fill="#55506A">
-          ×{piece.count}
-        </text>
-      )}
-      {/* Selection highlight */}
-      {isSelected && (
-        <rect x={piece.x - 1} y={piece.y - 1} width={gw + 2} height={gh + 2} rx={gh / 2}
-          fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
-      )}
-    </g>
-  );
-}
-
 function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, padding = 0, jetonPadding = 0, pieces: Piece[] = []): boolean {
   const p = padding; // additive padding (mm) for tolerance profiles
   switch (piece.type) {
@@ -1680,13 +1660,6 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       const w = (piece as DroiteNumerique).width;
       return pos.x >= piece.x - p && pos.x <= piece.x + w + p &&
              pos.y >= piece.y - 10 - p && pos.y <= piece.y + 12 + p;
-    }
-    case 'groupe': {
-      const g = piece as Groupe;
-      const gw = Math.max(25, g.count * 6 + 10);
-      const gh = 15;
-      return pos.x >= g.x - p && pos.x <= g.x + gw + p &&
-             pos.y >= g.y - p && pos.y <= g.y + gh + p;
     }
     case 'tableau': {
       const t = piece as Tableau;
@@ -1727,7 +1700,6 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'reponse': return { x: piece.x + getReponseWidth(piece) / 2, y: piece.y + 11 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
-    case 'groupe': return { x: piece.x + Math.max(25, (piece as Groupe).count * 6 + 10) / 2, y: piece.y + 7.5 };
     case 'tableau': return { x: piece.x + (piece as Tableau).cols * TABLEAU_CELL_W / 2, y: piece.y + (piece as Tableau).rows * TABLEAU_CELL_H / 2 };
     default: return { x: piece.x, y: piece.y };
   }
@@ -1744,7 +1716,6 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 22; break;
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 4 + 8); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
-    case 'groupe': bx = piece.x; by = piece.y; bw = Math.max(25, (piece as Groupe).count * 6 + 10); bh = 15; break;
     case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
     default: return { x: piece.x, y: piece.y };
   }
@@ -1770,7 +1741,8 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'barre':
       return { id, type: 'barre', x: pos.x, y: pos.y, locked: false, couleur: 'bleu', sizeMultiplier: 1, label: '', value: '', divisions: null, coloredParts: [], showFraction: false, groupId: null, groupLabel: null };
     case 'boite':
-      return { id, type: 'boite', x: pos.x, y: pos.y, locked: false, width: 60, height: 40, label: '' };
+      return { id, type: 'boite', x: pos.x, y: pos.y, locked: false,
+        width: 60, height: 40, label: '', value: '', couleur: 'bleu' };
     case 'etiquette':
       return { id, type: 'etiquette', x: pos.x, y: pos.y, locked: false, text: '', attachedTo: null };
     case 'calcul':
@@ -1780,9 +1752,6 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'droiteNumerique':
       return { id, type: 'droiteNumerique', x: pos.x, y: pos.y, locked: false,
         min: 0, max: 10, step: 1, markers: [], width: 200 };
-    case 'groupe':
-      return { id, type: 'groupe', x: pos.x, y: pos.y, locked: false,
-        count: 3, label: '', couleur: 'bleu' };
     case 'tableau':
       return { id, type: 'tableau', x: pos.x, y: pos.y, locked: false,
         rows: 2, cols: 3, cells: Array.from({ length: 2 }, () => Array(3).fill('')), headerRow: true };

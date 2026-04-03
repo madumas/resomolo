@@ -43,6 +43,20 @@ export function loadEmergencySave(): UndoManager | null {
 /** Migrate pieces from older versions (add missing fields with defaults). */
 function migratePieces(pieces: any[]): any[] {
   return pieces.map(p => {
+    if (p.type === 'groupe') {
+      return {
+        ...p,
+        type: 'boite',
+        width: Math.max(25, (p.count || 3) * 6 + 10),
+        height: 15,
+        value: String(p.count || 3),
+        couleur: p.couleur || 'bleu',
+        label: p.label || '',
+      };
+    }
+    if (p.type === 'boite' && p.value === undefined) {
+      return { ...p, value: '', couleur: p.couleur || 'bleu' };
+    }
     if (p.type === 'barre' && p.showFraction === undefined) {
       return { ...p, showFraction: false };
     }
