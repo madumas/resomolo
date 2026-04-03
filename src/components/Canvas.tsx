@@ -1074,7 +1074,7 @@ export function Canvas({
       })()}
 
       {/* Tableau cell inputs overlay — HTML positioned over SVG cells */}
-      {tableauEditorPieceId && (() => {
+      {tableauEditorPieceId && !deleteMode && (() => {
         const piece = pieces.find(p => p.id === tableauEditorPieceId);
         if (!piece || piece.type !== 'tableau') return null;
         const t = piece as Tableau;

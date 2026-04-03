@@ -393,12 +393,12 @@ export function ContextActions({
           <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center' }}>
             {piece.rows}×{piece.cols} — clique pour écrire
           </span>
-          {piece.rows < 6 && (
+          {piece.rows < 10 && (
             <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows + 1, cells: [...piece.cells, Array(piece.cols).fill('')] })}>
               + Ligne
             </CtxBtn>
           )}
-          {piece.cols < 6 && (
+          {piece.cols < 10 && (
             <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols + 1, cells: piece.cells.map(r => [...r, '']) })}>
               + Colonne
             </CtxBtn>
