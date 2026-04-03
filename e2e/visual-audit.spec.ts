@@ -2422,7 +2422,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(100);
     }
     await selectTool(page, 'calcul');
-    await clickCanvas(page, 100, 200);
+    await clickCanvas(page, 100, 160);
     await page.waitForTimeout(400);
     const ed1 = page.locator('[data-testid="inline-editor"]');
     if (await ed1.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2431,7 +2431,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'calcul');
-    await clickCanvas(page, 100, 230);
+    await clickCanvas(page, 250, 160);
     await page.waitForTimeout(400);
     const ed2 = page.locator('[data-testid="inline-editor"]');
     if (await ed2.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2440,7 +2440,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'reponse');
-    await clickCanvas(page, 100, 260);
+    await clickCanvas(page, 100, 185);
     await page.waitForTimeout(400);
     const ed3 = page.locator('[data-testid="inline-editor"]');
     if (await ed3.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2449,7 +2449,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'reponse');
-    await clickCanvas(page, 100, 290);
+    await clickCanvas(page, 250, 185);
     await page.waitForTimeout(400);
     const ed4 = page.locator('[data-testid="inline-editor"]');
     if (await ed4.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2744,10 +2744,10 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 250, 50);
     await page.waitForTimeout(200);
     await selectTool(page, 'droiteNumerique');
-    await clickCanvas(page, 50, 130);
+    await clickCanvas(page, 50, 110);
     await page.waitForTimeout(200);
     await selectTool(page, 'calcul');
-    await clickCanvas(page, 50, 180);
+    await clickCanvas(page, 50, 150);
     await page.waitForTimeout(400);
     const ed = page.locator('[data-testid="inline-editor"]');
     if (await ed.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2756,7 +2756,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'reponse');
-    await clickCanvas(page, 50, 220);
+    await clickCanvas(page, 250, 150);
     await page.waitForTimeout(400);
     const repEd = page.locator('[data-testid="inline-editor"]');
     if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2765,7 +2765,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'etiquette');
-    await clickCanvas(page, 300, 130);
+    await clickCanvas(page, 300, 110);
     await page.waitForTimeout(400);
     const etEd = page.locator('[data-testid="inline-editor"]');
     if (await etEd.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -2774,7 +2774,7 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(200);
     }
     await selectTool(page, 'tableau');
-    await clickCanvas(page, 300, 180);
+    await clickCanvas(page, 350, 50);
     await page.waitForTimeout(300);
     await selectTool(page, 'tableau'); // off
 
