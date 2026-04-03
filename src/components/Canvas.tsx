@@ -152,8 +152,11 @@ export function Canvas({
     if (now - lastClickTime.current < tol.clickDebounceMs) return;
     lastClickTime.current = now;
 
-    // If editing, commit and close
+    // If editing, commit current value (blur triggers commit) then close
     if (editingPieceId) {
+      if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+        document.activeElement.blur(); // triggers onBlur → commit()
+      }
       onStopEdit();
       return;
     }
