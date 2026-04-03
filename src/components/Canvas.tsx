@@ -122,27 +122,8 @@ export function Canvas({
     if (now - lastClickTime.current < tol.clickDebounceMs) return;
     lastClickTime.current = now;
 
-    // If editing, commit and close — but for tableau, immediately reopen on clicked cell
+    // If editing, commit and close
     if (editingPieceId) {
-      const editingPiece = pieces.find(p => p.id === editingPieceId);
-      if (editingPiece && isTableau(editingPiece) && svgRef.current) {
-        const clickPos = pointerToMm(e, svgRef.current);
-        const relX = clickPos.x - editingPiece.x;
-        const relY = clickPos.y - editingPiece.y;
-        const col = Math.floor(relX / TABLEAU_CELL_W);
-        const row = Math.floor(relY / TABLEAU_CELL_H);
-        if (row >= 0 && row < editingPiece.rows && col >= 0 && col < editingPiece.cols) {
-          // Close current editor, then immediately reopen on the new cell
-          const targetCell = { row, col };
-          onStopEdit();
-          setTimeout(() => {
-            setTableauEditCell(targetCell);
-            setEditingBarField('label');
-            onStartEdit(editingPiece.id);
-          }, 0);
-          return;
-        }
-      }
       onStopEdit();
       return;
     }
@@ -979,6 +960,9 @@ export function Canvas({
             isCalcul={isCalcul}
             monospace={isCalcul}
             fontSize={svgFontSizeMm * mmToPx}
+            isTableauCell={piece.type === 'tableau'}
+            tableauCellWidthPx={piece.type === 'tableau' ? TABLEAU_CELL_W * mmToPx : undefined}
+            tableauCellHeightPx={piece.type === 'tableau' ? TABLEAU_CELL_H * mmToPx : undefined}
             onCommit={(value) => {
               if (fieldKey.startsWith('cells-')) {
                 // Tableau cell edit: fieldKey = "cells-row-col"
@@ -1407,12 +1391,15 @@ function ReponsePiece({ piece, isSelected }: {
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, onCommit, onCancel, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, isTableauCell, tableauCellWidthPx, tableauCellHeightPx, onCommit, onCancel, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
   fontSize?: number;
   monospace?: boolean;
+  isTableauCell?: boolean;
+  tableauCellWidthPx?: number;
+  tableauCellHeightPx?: number;
   onCommit: (value: string) => void;
   onCancel: () => void;
   onColumnCalc?: () => void;
@@ -1430,11 +1417,21 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
   }, []);
 
   const committed = useRef(false);
+  const valueRef = useRef(initialValue);
+  valueRef.current = value; // keep ref in sync for cleanup commit
+  const commitRef = useRef<() => void>();
+
   const commit = () => {
     if (committed.current) return; // prevent double commit
     committed.current = true;
     onCommit(value);
   };
+  commitRef.current = commit;
+
+  // Commit on unmount (when handlePointerDown calls onStopEdit before blur fires)
+  useEffect(() => {
+    return () => { if (!committed.current) commitRef.current?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const insertSymbol = (sym: string) => {
     const input = inputRef.current;
@@ -1472,10 +1469,11 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
           commit();
         }}
         style={{
-          minWidth: 200,
-          height: Math.max(28, fontSize * 1.8),
-          border: '2px solid #7028e0',
-          borderRadius: 6,
+          minWidth: isTableauCell ? undefined : 200,
+          width: isTableauCell ? tableauCellWidthPx : undefined,
+          height: isTableauCell ? tableauCellHeightPx : Math.max(28, fontSize * 1.8),
+          border: `2px solid #7028e0`,
+          borderRadius: isTableauCell ? 2 : 6,
           padding: '2px 6px',
           fontSize: Math.round(fontSize),
           fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
