@@ -387,28 +387,26 @@ export function ContextActions({
         </>
       )}
 
-      {/* Tableau: rows/cols +/- */}
+      {/* Tableau: structure actions only — cell editing is done by clicking directly on cells */}
       {isTableau(piece) && (
         <>
-          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Éditer cellule</CtxBtn>
-          {piece.rows < 4 && (
-            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows + 1, cells: [...piece.cells, Array(piece.cols).fill('')] })}>
-              + Ligne
-            </CtxBtn>
-          )}
-          {piece.rows > 2 && (
-            <CtxBtn onClick={() => onEditPiece(piece.id, { rows: piece.rows - 1, cells: piece.cells.slice(0, -1) })}>
-              − Ligne
-            </CtxBtn>
-          )}
-          {piece.cols < 4 && (
-            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols + 1, cells: piece.cells.map(r => [...r, '']) })}>
-              + Colonne
-            </CtxBtn>
-          )}
-          {piece.cols > 2 && (
-            <CtxBtn onClick={() => onEditPiece(piece.id, { cols: piece.cols - 1, cells: piece.cells.map(r => r.slice(0, -1)) })}>
-              − Colonne
+          <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center' }}>
+            Clique sur une cellule pour écrire
+          </span>
+          <CtxBtn onClick={() => onEditPiece(piece.id, { rows: Math.min(4, piece.rows + 1), cells: [...piece.cells, Array(piece.cols).fill('')] })}>
+            {piece.rows}×{piece.cols} + ligne
+          </CtxBtn>
+          <CtxBtn onClick={() => onEditPiece(piece.id, { cols: Math.min(4, piece.cols + 1), cells: piece.cells.map(r => [...r, '']) })}>
+            {piece.rows}×{piece.cols} + col.
+          </CtxBtn>
+          {(piece.rows > 2 || piece.cols > 2) && (
+            <CtxBtn onClick={() => {
+              if (piece.cols > piece.rows && piece.cols > 2)
+                onEditPiece(piece.id, { cols: piece.cols - 1, cells: piece.cells.map(r => r.slice(0, -1)) });
+              else if (piece.rows > 2)
+                onEditPiece(piece.id, { rows: piece.rows - 1, cells: piece.cells.slice(0, -1) });
+            }}>
+              Réduire
             </CtxBtn>
           )}
           <CtxBtn active={piece.headerRow} onClick={() => onEditPiece(piece.id, { headerRow: !piece.headerRow })}>
