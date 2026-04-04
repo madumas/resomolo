@@ -622,6 +622,8 @@ export function Canvas({
     const source = pieces.find(p => p.id === id);
     if (!source || !isBarre(source)) return;
 
+    const colorOrder: CouleurPiece[] = ['bleu', 'rouge', 'vert', 'jaune'];
+    const sourceColorIdx = colorOrder.indexOf(source.couleur);
     const newBars: Piece[] = [];
     for (let i = 1; i <= count; i++) {
       newBars.push({
@@ -630,7 +632,7 @@ export function Canvas({
         x: source.x,
         y: source.y + (BAR_HEIGHT_MM + BAR_VERTICAL_GAP_MM) * i,
         locked: false,
-        couleur: source.couleur,
+        couleur: colorOrder[(sourceColorIdx + i) % colorOrder.length],
         sizeMultiplier: source.sizeMultiplier,
         label: '',
         value: '', // don't copy value — each bar gets its own
@@ -1141,6 +1143,7 @@ export function Canvas({
           onStartGrouping={handleStartGrouping}
           onUngroup={handleUngroup}
           onTableauPreview={(rows, cols) => { setTableauPreviewRows(rows); setTableauPreviewCols(cols); }}
+          onDeletePiece={(id) => { onDeleteClick(id); onSelectPiece(null); }}
           onDismiss={() => onSelectPiece(null)}
         />
       )}

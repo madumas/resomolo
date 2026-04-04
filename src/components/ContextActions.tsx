@@ -27,6 +27,7 @@ interface ContextActionsProps {
   onStartGrouping: (id: string) => void;
   onUngroup: (groupId: string) => void;
   onTableauPreview?: (rows: number | null, cols: number | null) => void;
+  onDeletePiece?: (id: string) => void;
   onDismiss?: () => void;
 }
 
@@ -51,6 +52,7 @@ export function ContextActions({
   onStartGrouping,
   onUngroup,
   onTableauPreview,
+  onDeletePiece,
   onDismiss: _onDismiss,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
@@ -70,6 +72,14 @@ export function ContextActions({
 
   // Tableau submenu state + preview
   const [tableauSubmenu, setTableauSubmenu] = useState<'none' | 'lignes' | 'colonnes'>('none');
+
+  // Micro-confirmation for delete (2s timer)
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  useEffect(() => {
+    if (!deleteConfirm) return;
+    const timer = setTimeout(() => setDeleteConfirm(false), 2000);
+    return () => clearTimeout(timer);
+  }, [deleteConfirm]);
 
   // Reset submenus when piece changes
   useEffect(() => {
@@ -530,7 +540,22 @@ export function ContextActions({
         </>
       )}
 
-      {/* Delete is now in ActionBar, not here */}
+      {/* Delete — micro-confirmation "Sûr?" (2s timer) */}
+      {onDeletePiece && !piece.locked && (
+        <CtxBtn
+          testId="ctx-delete"
+          destructive
+          onClick={() => {
+            if (deleteConfirm) {
+              onDeletePiece(piece.id);
+            } else {
+              setDeleteConfirm(true);
+            }
+          }}
+        >
+          {deleteConfirm ? 'Sûr?' : 'Supprimer'}
+        </CtxBtn>
+      )}
     </div>
   );
 }
@@ -555,7 +580,7 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, testId
       data-testid={testId}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
-        fontSize: back ? 14 : 12,
+        fontSize: back ? 14 : 13,
         borderRadius: 6,
         background: disabled ? '#F0F0F0' : back ? '#F3F4F6' : destructive ? '#FEE2E2' : active ? '#EBF0F9' : UI_BG,
         border: `1px solid ${disabled ? '#E0E0E0' : back ? '#D5D0E0' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_BORDER}`,

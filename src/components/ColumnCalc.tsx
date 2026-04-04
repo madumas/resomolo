@@ -489,9 +489,11 @@ function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId }: {
       style={{
         width: CELL, height: CELL, fontSize: 28,
         fontWeight: bold ? 700 : 400, textAlign: 'center',
-        border: '2px solid #D5D0E0', borderRadius: 6,
+        border: `2px solid ${value ? '#D5D0E0' : '#E8E5F0'}`, borderRadius: 6,
         fontFamily: "'Consolas', 'Courier New', monospace",
-        outline: 'none', background: '#FAFCFF',
+        outline: 'none', background: value ? '#FAFCFF' : '#F8F7FC',
+        opacity: value ? 1 : 0.5,
+        transition: 'opacity 0.2s, border-color 0.2s, background 0.2s',
       }} />
   );
 }

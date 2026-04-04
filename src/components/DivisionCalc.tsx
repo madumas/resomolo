@@ -325,9 +325,15 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
             ))}
           </div>
 
-          {/* Steps (products + remainders) */}
+          {/* Steps (products + remainders) — last step highlighted as active */}
           {steps.map((step, stepIdx) => (
-            <div key={`step-${stepIdx}`}>
+            <div key={`step-${stepIdx}`} style={{
+              background: stepIdx === steps.length - 1 ? '#F5F0FF' : 'transparent',
+              borderRadius: stepIdx === steps.length - 1 ? 6 : 0,
+              padding: stepIdx === steps.length - 1 ? '4px 2px' : 0,
+              margin: stepIdx === steps.length - 1 ? '-4px -2px' : 0,
+              transition: 'background 0.2s',
+            }}>
               {/* Product with "−" sign */}
               <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
                 <div style={{ width: minusColWidth, textAlign: 'center', fontSize: 18, color: '#55506A', fontFamily: 'monospace', fontWeight: 600, flexShrink: 0 }}>−</div>
