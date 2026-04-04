@@ -10,32 +10,68 @@ const LEGACY_REGISTRY_KEY = 'modelivite_registry';
 const LEGACY_SLOT_KEY = 'modelivite_slot'; // old single-slot key
 const legacySlotKey = (id: string) => `modelivite_slot_${id}`;
 
+// localStorage mirror keys (fallback when IDB is unavailable/cleared)
+const LS_REGISTRY_KEY = 'resomolo_ls_registry';
+const lsSlotKey = (id: string) => `resomolo_ls_slot_${id}`;
+
+function lsSet(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* quota exceeded — best effort */ }
+}
+
+function lsGet(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function lsRemove(key: string): void {
+  try { localStorage.removeItem(key); } catch { /* ignore */ }
+}
+
 export async function saveRegistry(registry: SlotRegistry): Promise<void> {
-  await set(REGISTRY_KEY, JSON.stringify(registry));
+  const json = JSON.stringify(registry);
+  lsSet(LS_REGISTRY_KEY, json);
+  await set(REGISTRY_KEY, json);
 }
 
 export async function loadRegistry(): Promise<SlotRegistry> {
   try {
     const raw = await get<string>(REGISTRY_KEY) || await get<string>(LEGACY_REGISTRY_KEY);
     if (raw) return { ...createEmptyRegistry(), ...JSON.parse(raw) };
-  } catch { /* ignore */ }
+  } catch { /* IDB failed */ }
+  // Fallback: localStorage mirror
+  const lsRaw = lsGet(LS_REGISTRY_KEY);
+  if (lsRaw) {
+    try { return { ...createEmptyRegistry(), ...JSON.parse(lsRaw) }; } catch { /* ignore */ }
+  }
   return createEmptyRegistry();
 }
 
 export async function saveSlotData(slotId: string, undoManager: UndoManager): Promise<void> {
-  await set(slotKey(slotId), JSON.stringify({ version: 1, data: undoManager }));
+  const json = JSON.stringify({ version: 1, data: undoManager });
+  lsSet(lsSlotKey(slotId), json);
+  await set(slotKey(slotId), json);
 }
 
 export async function loadSlotData(slotId: string): Promise<UndoManager | null> {
   try {
     const raw = await get<string>(slotKey(slotId)) || await get<string>(legacySlotKey(slotId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed.data || parsed; // support versioned and legacy format
-  } catch { return null; }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.data || parsed;
+    }
+  } catch { /* IDB failed */ }
+  // Fallback: localStorage mirror
+  const lsRaw = lsGet(lsSlotKey(slotId));
+  if (lsRaw) {
+    try {
+      const parsed = JSON.parse(lsRaw);
+      return parsed.data || parsed;
+    } catch { /* ignore */ }
+  }
+  return null;
 }
 
 export async function deleteSlotData(slotId: string): Promise<void> {
+  lsRemove(lsSlotKey(slotId));
   await del(slotKey(slotId));
 }
 

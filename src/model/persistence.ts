@@ -26,18 +26,24 @@ export function saveEmergency(undoManager: UndoManager): void {
   } catch { /* quota exceeded — best effort */ }
 }
 
-/** Check and consume emergency save from localStorage. */
+/** Check emergency save from localStorage. Does NOT consume it — kept as IDB fallback. */
 export function loadEmergencySave(): UndoManager | null {
   try {
     // Try new key first, then legacy
     const raw = localStorage.getItem(EMERGENCY_KEY) || localStorage.getItem(LEGACY_EMERGENCY_KEY);
     if (!raw) return null;
-    localStorage.removeItem(EMERGENCY_KEY);
-    localStorage.removeItem(LEGACY_EMERGENCY_KEY);
     return parseStoredData(raw);
   } catch {
     return null;
   }
+}
+
+/** Clear emergency save (call after confirming IDB save succeeded). */
+export function clearEmergencySave(): void {
+  try {
+    localStorage.removeItem(EMERGENCY_KEY);
+    localStorage.removeItem(LEGACY_EMERGENCY_KEY);
+  } catch { /* ignore */ }
 }
 
 /** Migrate pieces from older versions (add missing fields with defaults). */
@@ -120,6 +126,11 @@ export async function clearAllStorage(): Promise<void> {
     }
     localStorage.removeItem(EMERGENCY_KEY);
     localStorage.removeItem(LEGACY_EMERGENCY_KEY);
+    // Clear localStorage mirrors (resomolo_ls_*)
+    const lsKeys = Object.keys(localStorage);
+    for (const key of lsKeys) {
+      if (key.startsWith('resomolo_ls_')) localStorage.removeItem(key);
+    }
   } catch (e) {
     console.warn('RésoMolo: clearAllStorage failed', e);
   }

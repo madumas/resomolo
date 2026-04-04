@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { appReducer, createInitialAppState } from './model/state';
 import type { Action } from './model/state';
-import { loadSettings, saveSettings, clearAllStorage, exportModelisation, importModelisation, loadEmergencySave } from './model/persistence';
+import { loadSettings, saveSettings, clearAllStorage, exportModelisation, importModelisation, loadEmergencySave, clearEmergencySave } from './model/persistence';
 import { parseShareParam, exportModelisationAsPng } from './engine/share';
 import { exportModelisationAsPdf } from './engine/pdf-export';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -151,6 +151,8 @@ export default function App() {
         if (finalData) {
           setUndoManager(finalData);
           setProblemZoneActive(finalData.current.probleme.length > 0);
+          // Clear emergency save only after confirming data loaded successfully
+          if (data) clearEmergencySave();
         } else {
           setShowAdultGuide(true);
         }
