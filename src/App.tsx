@@ -96,7 +96,6 @@ export default function App() {
   const [activityTick, setActivityTick] = useState(0);
 
   // Dispatch
-  const slotEnsuredRef = useRef(false);
   const dispatch = useCallback((action: Action) => {
     setUndoManager(prev => {
       const fakeAppState = {
