@@ -50,12 +50,17 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
       {Array.from({ length: numTicks }, (_, i) => {
         const val = min + i * safeStep;
         const tx = x + i * tickSpacing;
+        const isZero = min < 0 && Math.abs(val) < 1e-9;
         return (
           <g key={i}>
             <line x1={tx} y1={y - 3} x2={tx} y2={y + 3}
-              stroke="#55506A" strokeWidth={i % labelEvery === 0 ? 0.7 : 0.3} />
-            {i % labelEvery === 0 && (
-              <text x={tx} y={y + 8} textAnchor="middle" fontSize={4} fill="#55506A">
+              stroke={isZero ? '#7028E0' : '#55506A'}
+              strokeWidth={isZero ? 2.5 : (i % labelEvery === 0 ? 0.7 : 0.3)} />
+            {(i % labelEvery === 0 || isZero) && (
+              <text x={tx} y={y + 8} textAnchor="middle"
+                fontSize={isZero ? 5 : 4}
+                fontWeight={isZero ? 700 : 400}
+                fill={isZero ? '#7028E0' : '#55506A'}>
                 {val}
               </text>
             )}

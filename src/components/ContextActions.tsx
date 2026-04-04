@@ -70,7 +70,8 @@ export function ContextActions({
   const [showRepartir, setShowRepartir] = useState(false);
 
   // DroiteNumerique submenu state
-  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur'>('none');
+  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur' | 'min-custom' | 'max-custom'>('none');
+  const [customValue, setCustomValue] = useState(0);
 
   // Tableau submenu state + preview
   const [tableauSubmenu, setTableauSubmenu] = useState<'none' | 'lignes' | 'colonnes'>('none');
@@ -445,7 +446,7 @@ export function ContextActions({
               <CtxBtn onClick={() => setDroiteSubmenu('none')} back>
                 ←
               </CtxBtn>
-              {[0, 1, 5, 10].filter(n => n < piece.max).map(n => (
+              {[-15, -10, 0, 5, 10].filter(n => n < piece.max).map(n => (
                 <CtxBtn
                   key={n}
                   active={piece.min === n}
@@ -454,6 +455,30 @@ export function ContextActions({
                   {n}
                 </CtxBtn>
               ))}
+              <CtxBtn onClick={() => { setCustomValue(piece.min); setDroiteSubmenu('min-custom'); }}>
+                Autre…
+              </CtxBtn>
+            </>
+          )}
+          {droiteSubmenu === 'min-custom' && (
+            <>
+              <CtxBtn onClick={() => setDroiteSubmenu('min')} back>
+                ←
+              </CtxBtn>
+              <input
+                type="number"
+                value={customValue}
+                onChange={e => setCustomValue(Number(e.target.value))}
+                autoFocus
+                style={{ width: 60, minHeight: 44, fontSize: 15, textAlign: 'center', borderRadius: 8, border: '2px solid #D1D5DB', padding: '0 4px' }}
+                onKeyDown={e => { if (e.key === 'Enter' && customValue < piece.max) { onEditPiece(piece.id, { min: customValue }); setDroiteSubmenu('none'); } }}
+              />
+              <CtxBtn
+                disabled={customValue >= piece.max}
+                onClick={() => { if (customValue < piece.max) { onEditPiece(piece.id, { min: customValue }); setDroiteSubmenu('none'); } }}
+              >
+                OK
+              </CtxBtn>
             </>
           )}
           {droiteSubmenu === 'max' && (
@@ -470,6 +495,30 @@ export function ContextActions({
                   {n}
                 </CtxBtn>
               ))}
+              <CtxBtn onClick={() => { setCustomValue(piece.max); setDroiteSubmenu('max-custom'); }}>
+                Autre…
+              </CtxBtn>
+            </>
+          )}
+          {droiteSubmenu === 'max-custom' && (
+            <>
+              <CtxBtn onClick={() => setDroiteSubmenu('max')} back>
+                ←
+              </CtxBtn>
+              <input
+                type="number"
+                value={customValue}
+                onChange={e => setCustomValue(Number(e.target.value))}
+                autoFocus
+                style={{ width: 60, minHeight: 44, fontSize: 15, textAlign: 'center', borderRadius: 8, border: '2px solid #D1D5DB', padding: '0 4px' }}
+                onKeyDown={e => { if (e.key === 'Enter' && customValue > piece.min) { onEditPiece(piece.id, { max: customValue }); setDroiteSubmenu('none'); } }}
+              />
+              <CtxBtn
+                disabled={customValue <= piece.min}
+                onClick={() => { if (customValue > piece.min) { onEditPiece(piece.id, { max: customValue }); setDroiteSubmenu('none'); } }}
+              >
+                OK
+              </CtxBtn>
             </>
           )}
           {droiteSubmenu === 'pas' && (
