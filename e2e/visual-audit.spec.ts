@@ -535,7 +535,7 @@ test.describe('Visual audit — full flow', () => {
     await closeSettings(page);
 
     // Load a problem with multiple sentences via the problem zone text input
-    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    const problemInput = page.locator('button:has-text("Écris ou colle ton problème ici...")');
     await expect(problemInput).toBeVisible({ timeout: 3000 });
     await problemInput.click();
     await page.waitForTimeout(300);
@@ -1795,7 +1795,7 @@ test.describe('Visual audit — full flow', () => {
 
   test('56 — Surlignage 3 couleurs + superflu', async ({ page }) => {
     // Load problem via manual text input (more reliable than URL params)
-    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    const problemInput = page.locator('button:has-text("Écris ou colle ton problème ici...")');
     await expect(problemInput).toBeVisible({ timeout: 3000 });
     await problemInput.click();
     await page.waitForTimeout(300);
@@ -2756,7 +2756,7 @@ test.describe('Visual audit — full flow', () => {
 
   test('88 — Surlignage visible vérifié', async ({ page }) => {
     // Load problem via manual text input (more reliable than URL params)
-    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    const problemInput = page.locator('button:has-text("Écris ou colle ton problème ici...")');
     await expect(problemInput).toBeVisible({ timeout: 3000 });
     await problemInput.click();
     await page.waitForTimeout(300);

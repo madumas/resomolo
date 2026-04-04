@@ -134,7 +134,7 @@ export function ProblemZone({
               width: '100%', textAlign: 'left',
             }}
           >
-            Taper ou coller un problème
+            Écris ou colle ton problème ici...
           </button>
         </div>
       );
