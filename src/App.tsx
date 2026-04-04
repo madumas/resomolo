@@ -200,6 +200,13 @@ export default function App() {
     tutorial.startTutorial();
   }, [tutorial]);
 
+  // Ensure a slot exists as soon as content appears (any workflow)
+  useEffect(() => {
+    if (pieces.length > 0 || probleme.length > 0) {
+      slotManager.ensureSlot();
+    }
+  }, [pieces.length > 0, probleme.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Auto-save (slot-aware)
   useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot);
 
