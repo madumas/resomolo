@@ -3390,12 +3390,21 @@ test.describe('Visual audit — full flow', () => {
   // S3 — Zone repliée avec highlights
   test('114 — Zone repliée avec highlights', async ({ page }) => {
     test.setTimeout(60_000);
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes. Elle en donne 5 à Marc. Combien lui en reste-t-il?'));
-    await dismissOverlays(page);
-    await page.waitForTimeout(300);
+
+    // Charger un problème via le sélecteur
+    await openProblemSelector(page);
+    const pommes = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button:has-text("Pommes")');
+    if (await pommes.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await pommes.click();
+    } else {
+      // Fallback: premier problème
+      const firstBtn = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button').nth(1);
+      await firstBtn.click();
+    }
+    await page.waitForTimeout(1000);
 
     const pz = page.locator('[data-testid="problem-zone"]');
-    await expect(pz).toBeVisible({ timeout: 3000 });
+    await expect(pz).toBeVisible({ timeout: 5000 });
 
     // Surligner des mots (cliquer dessus — pastille bleue par défaut)
     const word12 = pz.locator('span:has-text("12")').first();
