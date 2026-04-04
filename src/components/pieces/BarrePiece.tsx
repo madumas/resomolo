@@ -2,30 +2,6 @@ import type { Barre } from '../../model/types';
 import { BAR_HEIGHT_MM } from '../../model/types';
 import { getPieceColor, getPieceFillColor } from '../../config/theme';
 
-const FRAC_MAP: Record<string, string> = {
-  '0.25': '¼', '0.5': '½', '0.75': '¾',
-};
-
-function formatMultiplier(n: number): string {
-  // Exact Unicode fractions
-  const key = n.toString();
-  if (FRAC_MAP[key]) return `${FRAC_MAP[key]}×`;
-  // Tiers (avoid float comparison issues)
-  if (Math.abs(n - 1/3) < 0.001) return '⅓×';
-  if (Math.abs(n - 2/3) < 0.001) return '⅔×';
-  // Mixed number (1.5 → "1½×")
-  const int = Math.floor(n);
-  const frac = n - int;
-  if (frac > 0.001) {
-    const fracKey = frac.toFixed(2).replace(/0+$/, '');
-    if (FRAC_MAP[fracKey]) return `${int}${FRAC_MAP[fracKey]}×`;
-  }
-  // Integer or fallback
-  if (Number.isInteger(n)) return `${n}×`;
-  return `${n.toString().replace('.', ',')}×`;
-}
-
-
 interface BarrePieceProps {
   piece: Barre;
   referenceUnitMm: number;
