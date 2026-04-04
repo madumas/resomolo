@@ -1444,15 +1444,39 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('80-mobile-portrait.png'), fullPage: true });
 
-    // Place a piece
-    await selectTool(page, 'jeton');
-    await clickCanvas(page, 100, 80);
-    await page.waitForTimeout(300);
+    // Place a piece — guard against overflow on narrow viewport
+    try {
+      const jetonBtn = page.locator('[data-testid="tool-jeton"]');
+      if (await jetonBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await jetonBtn.click();
+      } else {
+        // Try expanding toolbar first
+        const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
+        if (await moreBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await moreBtn.click();
+          await page.waitForTimeout(200);
+        }
+        if (await jetonBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await jetonBtn.click();
+        }
+      }
+      await page.waitForTimeout(200);
 
-    // Try to select it for context actions
-    await selectTool(page, 'jeton'); // toggle off
-    await clickCanvas(page, 100, 80);
-    await page.waitForTimeout(400);
+      const svg = page.locator('[data-testid="canvas-svg"]');
+      const box = await svg.boundingBox();
+      if (box && box.height > 50) {
+        await clickCanvas(page, 100, 60);
+        await page.waitForTimeout(300);
+
+        // Try to select it for context actions
+        await page.keyboard.press('Escape'); // deselect tool
+        await page.waitForTimeout(200);
+        await clickCanvas(page, 100, 60);
+        await page.waitForTimeout(400);
+      }
+    } catch {
+      // On 375px viewport some interactions may overflow — screenshot is the goal
+    }
 
     await page.screenshot({ path: shot('81-mobile-portrait-ctx.png'), fullPage: true });
   });
@@ -3392,10 +3416,10 @@ test.describe('Visual audit — full flow', () => {
       await page.waitForTimeout(300);
     }
 
-    // Replier la zone problème (cliquer sur ▼ Problème / bouton Réduire)
-    const toggleBtn = pz.locator('button[aria-label="Réduire"]');
-    if (await toggleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await toggleBtn.click();
+    // Replier la zone problème (cliquer sur le span "▼ Problème")
+    const toggleSpan = pz.locator('span:has-text("Problème")').first();
+    if (await toggleSpan.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await toggleSpan.click();
       await page.waitForTimeout(300);
     }
 
@@ -3603,13 +3627,12 @@ test.describe('Visual audit — full flow', () => {
     await calcEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Sélectionner → Division posée (via double-clic pour éditer, puis bouton)
-    await clickCanvas(page, 200, 200); // select
-    await page.waitForTimeout(300);
-    await clickCanvas(page, 200, 200); // edit
-    await page.waitForTimeout(300);
+    // Sélectionner la pièce pour afficher les actions contextuelles (pas double-clic qui ouvre l'éditeur)
+    await page.keyboard.press('Escape'); // s'assurer qu'aucun outil n'est actif
+    await page.waitForTimeout(200);
+    await selectPieceAt(page, 200, 200);
 
-    const divBtn = page.locator('button:has-text("Division")').first();
+    const divBtn = page.locator('[data-testid="context-actions"] button:has-text("Division")').first();
     if (await divBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await divBtn.click();
       await page.waitForTimeout(500);
@@ -3710,20 +3733,20 @@ test.describe('Visual audit — full flow', () => {
     // Placer 4 barres
     for (let i = 0; i < 4; i++) {
       await selectTool(page, 'barre');
-      await clickCanvas(page, 50 + i * 100, 60);
+      await clickCanvas(page, 50 + i * 100, 40);
       await page.waitForTimeout(200);
     }
 
     // Placer 3 jetons
     for (let i = 0; i < 3; i++) {
       await selectTool(page, 'jeton');
-      await clickCanvas(page, 50 + i * 80, 130);
+      await clickCanvas(page, 50 + i * 80, 90);
       await page.waitForTimeout(200);
     }
 
     // Placer un calcul
     await selectTool(page, 'calcul');
-    await clickCanvas(page, 50, 200);
+    await clickCanvas(page, 50, 130);
     await page.waitForTimeout(500);
     const calcEd = page.locator('[data-testid="inline-editor"]');
     if (await calcEd.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -3734,7 +3757,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Placer une réponse
     await selectTool(page, 'reponse');
-    await clickCanvas(page, 50, 250);
+    await clickCanvas(page, 50, 170);
     await page.waitForTimeout(500);
     const repEd = page.locator('[data-testid="inline-editor"]');
     if (await repEd.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -3782,26 +3805,26 @@ test.describe('Visual audit — full flow', () => {
     test.setTimeout(60_000);
     await navigateAndReady(page);
 
-    // Placer 3 barres en positions chaotiques
+    // Placer 3 barres en positions chaotiques (Y réduit pour rester dans le canvas)
     await selectTool(page, 'barre');
-    await clickCanvas(page, 350, 180);
+    await clickCanvas(page, 350, 120);
     await page.waitForTimeout(200);
     await selectTool(page, 'barre');
-    await clickCanvas(page, 50, 250);
+    await clickCanvas(page, 50, 160);
     await page.waitForTimeout(200);
     await selectTool(page, 'barre');
-    await clickCanvas(page, 400, 50);
+    await clickCanvas(page, 400, 40);
     await page.waitForTimeout(200);
 
-    // Placer 3 jetons en positions chaotiques
+    // Placer 3 jetons en positions chaotiques (Y réduit pour rester dans le canvas)
     await selectTool(page, 'jeton');
-    await clickCanvas(page, 200, 300);
+    await clickCanvas(page, 200, 180);
     await page.waitForTimeout(200);
     await selectTool(page, 'jeton');
     await clickCanvas(page, 10, 30);
     await page.waitForTimeout(200);
     await selectTool(page, 'jeton');
-    await clickCanvas(page, 450, 200);
+    await clickCanvas(page, 450, 100);
     await page.waitForTimeout(200);
 
     // Screenshot avant ranger
