@@ -755,7 +755,8 @@ export function Canvas({
         ref={svgRef}
         data-testid="canvas-svg"
         role="application"
-        aria-label="Canevas de modélisation"
+        aria-label={`Canevas de modélisation — ${pieces.length} pièce${pieces.length !== 1 ? 's' : ''}`}
+        aria-roledescription="Espace de travail interactif"
         viewBox={`0 0 ${CANVAS_WIDTH_MM} ${viewBoxHeight}`}
         style={{ width: '100%', height: '100%', display: 'block' }}
         onPointerDown={handlePointerDown}
@@ -1972,7 +1973,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
     case 'jeton': {
       const dx = pos.x - piece.x;
       const dy = pos.y - piece.y;
-      return Math.sqrt(dx * dx + dy * dy) <= 9 + jetonPadding;
+      return Math.sqrt(dx * dx + dy * dy) <= 11 + jetonPadding;
     }
     case 'barre': {
       const w = piece.sizeMultiplier * refUnit;

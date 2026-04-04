@@ -466,7 +466,8 @@ export default function App() {
   } else if (equalizingFromId) {
     statusMessage = 'Clique sur la barre à redimensionner';
   } else if (groupingBarId) {
-    statusMessage = 'Clique sur les barres à ajouter au groupe. Escape pour terminer.';
+    statusMessage = 'Clique sur les barres à ajouter au groupe.';
+    statusVariant = 'relance'; // highlight to show active mode
   } else if (tutorial.isActive) {
     statusMessage = tutorial.message;
   } else if (editingPieceId) {
@@ -534,6 +535,7 @@ export default function App() {
       <StatusBar
         message={statusMessage}
         variant={statusVariant}
+        cancelLabel={groupingBarId ? '✓ Terminer' : undefined}
         onCancel={(activeTool || deleteMode || equalizingFromId || groupingBarId) ? () => {
           if (deleteMode) { setDeleteMode(false); setDeleteConfirmId(null); }
           else if (equalizingFromId) setEqualizingFromId(null);

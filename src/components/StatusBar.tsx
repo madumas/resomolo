@@ -4,6 +4,7 @@ import { STATUS_BAR_HEIGHT, STATUS_BAR_BG, UI_PRIMARY, UI_BORDER, UI_TEXT_SECOND
 interface StatusBarProps {
   message: string;
   variant?: 'default' | 'relance';
+  cancelLabel?: string;
   onCancel?: () => void;
   showJetonQuantity?: boolean;
   jetonQuantity?: number;
@@ -16,6 +17,7 @@ interface StatusBarProps {
 export function StatusBar({
   message,
   variant = 'default',
+  cancelLabel,
   onCancel,
   showJetonQuantity,
   jetonQuantity = 1,
@@ -57,7 +59,7 @@ export function StatusBar({
             whiteSpace: 'nowrap',
           }}
         >
-          ✕ Annuler
+          {cancelLabel || '✕ Annuler'}
         </button>
       )}
       {showJetonQuantity && onJetonQuantityChange && (
