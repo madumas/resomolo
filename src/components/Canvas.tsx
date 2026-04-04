@@ -179,6 +179,7 @@ export function Canvas({
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
+  const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
   const originalMovePos = useRef<{ x: number; y: number } | null>(null);
   // tableauEditCellRef removed — TableauEditor handles its own cell editing
@@ -502,8 +503,16 @@ export function Canvas({
       // Subtract pick-up offset so piece doesn't jump to cursor
       const adjusted = { x: pos.x - moveOffset.current.dx, y: pos.y - moveOffset.current.dy };
       const snapped = snapToGrid(adjusted.x, adjusted.y);
-      const finalPos = snapBarAlignment(snapped, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
-      dispatch({ type: 'MOVE_PIECE_LIVE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
+      const snapResult = snapBarAlignment(snapped, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
+      dispatch({ type: 'MOVE_PIECE_LIVE', id: mode.pieceId, x: snapResult.x, y: snapResult.y });
+      // Show alignment guide when snapped
+      if (snapResult.aligned && snapResult.alignRefY !== undefined) {
+        const y1 = Math.min(snapResult.y, snapResult.alignRefY);
+        const y2 = Math.max(snapResult.y + BAR_HEIGHT_MM, snapResult.alignRefY + BAR_HEIGHT_MM);
+        setAlignGuide({ x: snapResult.x, y1, y2 });
+      } else {
+        setAlignGuide(null);
+      }
       return;
     }
 
@@ -530,9 +539,10 @@ export function Canvas({
     const pos = pointerToMm(e, svgRef.current);
     const adjusted = { x: pos.x - moveOffset.current.dx, y: pos.y - moveOffset.current.dy };
     const snapped = snapToGrid(adjusted.x, adjusted.y);
-    const finalPos = snapBarAlignment(snapped, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
-    dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
+    const snapResult = snapBarAlignment(snapped, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
+    dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: snapResult.x, y: snapResult.y });
     setMode({ type: 'idle' });
+    setAlignGuide(null);
     originalMovePos.current = null;
   }, [mode, pieces, referenceUnitMm, tol.barAlignSnapMm, dispatch]);
 
@@ -985,6 +995,15 @@ export function Canvas({
             </g>
           );
         })}
+        {/* Alignment guide — temporary dotted line during bar snap */}
+        {alignGuide && (
+          <line
+            x1={alignGuide.x} y1={alignGuide.y1 - 2}
+            x2={alignGuide.x} y2={alignGuide.y2 + 2}
+            stroke="#B0BEC5" strokeWidth={0.8} strokeDasharray="4 4"
+            opacity={0.5} pointerEvents="none"
+          />
+        )}
       </svg>
 
       {/* Inline editor overlay (HTML, not foreignObject) */}

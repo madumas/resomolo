@@ -45,11 +45,21 @@ svg g.piece-new {
   animation: piece-pop 150ms ease-out;
 }
 
-/* Mobile portrait: larger touch targets for motor accessibility */
+/* Mobile portrait: larger touch targets + toolbar grid layout */
 @media (max-width: 500px) and (orientation: portrait) {
   button {
     min-height: 48px !important;
     min-width: 48px !important;
+  }
+  /* Toolbar: grid 2 rows instead of overflow hidden */
+  [data-testid="toolbar"] {
+    height: auto !important;
+    min-height: 64px;
+  }
+  [data-testid="toolbar"] > div:first-child {
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+    gap: 4px !important;
   }
 }
 
