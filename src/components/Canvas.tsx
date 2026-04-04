@@ -924,11 +924,11 @@ export function Canvas({
                   x2={(minX + maxRight) / 2} y2={bracketY + 7}
                   stroke="#7028e0" strokeWidth={1.2} strokeLinecap="round" />
                 {labelBar.groupLabel ? (
-                  <text x={(minX + maxRight) / 2} y={bracketY + 12} textAnchor="middle" fontSize={4.5} fontWeight={600} fill="#7028e0">
+                  <text x={(minX + maxRight) / 2} y={bracketY + 13} textAnchor="middle" fontSize={6} fontWeight={600} fill="#7028e0">
                     {labelBar.groupLabel}
                   </text>
                 ) : (
-                  <text x={(minX + maxRight) / 2} y={bracketY + 12} textAnchor="middle" fontSize={3.5} fill="#9898A8">
+                  <text x={(minX + maxRight) / 2} y={bracketY + 13} textAnchor="middle" fontSize={5} fill="#9898A8">
                     total
                   </text>
                 )}

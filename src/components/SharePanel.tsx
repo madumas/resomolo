@@ -55,12 +55,14 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
     <div
       style={{
         padding: '12px 16px',
+        paddingRight: 56,
         background: '#FFFFFF',
         borderBottom: `1px solid ${UI_BORDER}`,
         display: 'flex',
         gap: 16,
         alignItems: 'flex-start',
         flexWrap: 'wrap',
+        position: 'relative' as const,
       }}
       onClick={e => e.stopPropagation()}
     >
@@ -163,11 +165,14 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
         </div>
       </div>
 
-      {/* Close button */}
+      {/* Close button — top-right fixed position */}
       <button
         onClick={onClose}
         aria-label="Fermer le panneau de partage"
         style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
           minWidth: MIN_BUTTON_SIZE_PX,
           minHeight: MIN_BUTTON_SIZE_PX,
           background: 'none',

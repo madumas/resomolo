@@ -17,7 +17,7 @@ export const STATUS_DELETE_MODE = 'Supprimer — Clique sur un élément pour le
 export const STATUS_DELETE_CONFIRM = (label: string) =>
   `Supprimer — ${label}? Clique à nouveau pour confirmer.`;
 
-export const AMORCAGE_WITH_PROBLEM = 'Commence par lire le problème. Clique sur les nombres.';
+export const AMORCAGE_WITH_PROBLEM = 'Commence par lire le problème. Clique sur les mots importants.';
 export const AMORCAGE_POST_HIGHLIGHT = 'Tu peux essayer un jeton ou une barre.';
 export const AMORCAGE_NO_PROBLEM = 'Tu peux commencer par placer un jeton ou une barre.';
 export const RELANCE_QUESTIONS = [

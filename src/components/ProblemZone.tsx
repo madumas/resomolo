@@ -185,8 +185,7 @@ export function ProblemZone({
 
   // Compact mode
   if (!expanded) {
-    const blueHighlights = highlights.filter(h => h.color === 'bleu');
-    const highlightedTexts = blueHighlights.map(h => text.slice(h.start, h.end));
+    const highlightedTexts = highlights.map(h => ({ text: text.slice(h.start, h.end), color: h.color }));
 
     return (
       <div
@@ -210,12 +209,14 @@ export function ProblemZone({
         </span>
         {highlightedTexts.length > 0 && (
           <span style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-            {highlightedTexts.map((t, i) => (
+            {highlightedTexts.map((h, i) => (
               <span key={i} style={{
-                background: '#C5D9F0', borderRadius: 3,
-                padding: '1px 6px', fontSize: 12, color: UI_PRIMARY, fontWeight: 500,
+                background: HIGHLIGHT_COLORS[h.color].bg, borderRadius: 3,
+                padding: '1px 6px', fontSize: 12, color: HIGHLIGHT_COLORS[h.color].border, fontWeight: 500,
+                textDecoration: h.color === 'gris' ? 'line-through' : 'none',
+                opacity: h.color === 'gris' ? 0.7 : 1,
               }}>
-                {t}
+                {h.text}
               </span>
             ))}
           </span>
