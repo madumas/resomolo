@@ -98,6 +98,19 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
           <CopyButton />
         </div>
 
+        <div style={{ fontSize: 12, color: UI_TEXT_SECONDARY, marginBottom: 12 }}>
+          Aussi par le même créateur :{' '}
+          <a
+            href="https://geomolo.ca"
+            target="_blank"
+            rel="noopener"
+            style={{ color: UI_PRIMARY, fontWeight: 600 }}
+          >
+            GéoMolo.ca
+          </a>
+          {' '}— géométrie accessible
+        </div>
+
         <div style={{ fontSize: 11, color: UI_TEXT_SECONDARY, marginBottom: 16 }}>
           Créé par un parent, pour son enfant — et tous ceux qui en ont besoin.
         </div>
