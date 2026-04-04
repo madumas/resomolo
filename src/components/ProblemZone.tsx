@@ -238,12 +238,29 @@ export function ProblemZone({
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: 6,
       }}>
-        <span
-          onClick={onToggle}
-          style={{ fontSize: 11, color: UI_TEXT_SECONDARY, textTransform: 'uppercase', letterSpacing: 0.5, cursor: 'pointer' }}
-        >
-          ▼ Problème
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            onClick={onToggle}
+            style={{ fontSize: 11, color: UI_TEXT_SECONDARY, textTransform: 'uppercase', letterSpacing: 0.5, cursor: 'pointer' }}
+          >
+            ▼ Problème
+          </span>
+          {onTextChange && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              title="Modifier le problème"
+              aria-label="Modifier le problème"
+              style={{
+                background: 'none', border: '1px solid #D5D0E0', borderRadius: 6,
+                minWidth: 32, minHeight: 32, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, color: UI_TEXT_SECONDARY,
+              }}
+            >
+              ✏️
+            </button>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {PASTILLE_ORDER.map(color => {
             const label = color === 'bleu' ? 'Données' : color === 'orange' ? 'Question' : color === 'vert' ? 'Contexte' : 'Superflu';

@@ -1395,8 +1395,9 @@ export function Canvas({
             position: 'absolute',
             bottom: 12,
             right: 12,
-            width: 44,
-            height: 44,
+            minWidth: 56,
+            minHeight: 48,
+            padding: '8px 14px',
             borderRadius: 8,
             background: '#fff',
             border: '1px solid #D5D0E0',
@@ -1406,13 +1407,14 @@ export function Canvas({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 18,
-            color: '#55506A',
+            gap: 6,
+            fontSize: 14,
+            color: '#3D3852',
             zIndex: 10,
           }}
         >
-          <span style={{ fontSize: 14 }}>⊞</span>
-          <span style={{ fontSize: 8, lineHeight: 1 }}>Ranger</span>
+          <span style={{ fontSize: 18 }}>⊞</span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Ranger</span>
         </button>
       )}
 

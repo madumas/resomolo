@@ -585,7 +585,7 @@ export default function App() {
         onToggle={settings.problemAlwaysVisible ? () => {} : () => setProblemExpanded(e => !e)}
         onHighlightAdd={handleHighlightAdd}
         onHighlightRemove={handleHighlightRemove}
-        onTextChange={current.problemeReadOnly ? undefined : handleTextChange}
+        onTextChange={handleTextChange}
         ttsEnabled={settings.ttsEnabled}
         ttsRate={settings.ttsRate}
         onTTSCharIndex={tts.currentCharIndex}
