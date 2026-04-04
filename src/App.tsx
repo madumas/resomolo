@@ -160,6 +160,8 @@ export default function App() {
       // URL sharing: ?probleme=text (simple) or ?s=<lz-compressed> (rich with pieces)
       const shared = parseShareParam(window.location.search);
       if (shared) {
+        // Suppress adult guide/tutorial so the shared problem isn't overwritten
+        setShowAdultGuide(false);
         dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: shared.text, readOnly: true });
         if (shared.pieces.length > 0) {
           dispatch({ type: 'PLACE_PIECES', pieces: shared.pieces });
@@ -425,6 +427,8 @@ export default function App() {
     setEditingPieceId(null);
     setActiveTool(null);
     setDeleteMode(false);
+    // Ensure a slot exists for auto-save persistence
+    slotManager.ensureSlot();
     // Auto-name slot from problem (if slot still has default name)
     if (slotManager.activeSlotId && preset.text) {
       const active = slotManager.registry.slots.find(s => s.id === slotManager.activeSlotId);

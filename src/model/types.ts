@@ -178,7 +178,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   toleranceProfile: 'normal',
   toolbarMode: 'essentiel',
-  relanceDelayMs: 45000,
+  relanceDelayMs: 30000,
   cursorSmoothing: false,
   smoothingAlpha: 0.30,
   sessionTimerEnabled: false,
@@ -216,7 +216,7 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
   'motricite-legere': {
     toleranceProfile: 'normal',
     cursorSmoothing: false,
-    relanceDelayMs: 45000,
+    relanceDelayMs: 30000,
     soundMode: 'reduced',
     textScale: 1,
     problemAlwaysVisible: false,
@@ -242,7 +242,7 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
   'motricite-lecture': {
     toleranceProfile: 'normal',
     cursorSmoothing: false,
-    relanceDelayMs: 45000,
+    relanceDelayMs: 30000,
     soundMode: 'full',
     textScale: 1.5,
     problemAlwaysVisible: true,

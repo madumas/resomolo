@@ -30,5 +30,6 @@ export function snapToGrid(x: number, y: number): { x: number; y: number } {
  */
 export function calculateViewBoxHeight(widthMm: number, containerWidth: number, containerHeight: number): number {
   if (containerWidth === 0) return 350;
-  return widthMm * (containerHeight / containerWidth);
+  const calculated = widthMm * (containerHeight / containerWidth);
+  return Math.max(calculated, 300); // minimum 300mm to ensure canvas is large enough
 }

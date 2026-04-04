@@ -770,6 +770,18 @@ export function Canvas({
           </marker>
         </defs>
 
+        {/* Canvas background — subtle border and area indicator */}
+        <rect
+          x={0} y={0} width={CANVAS_WIDTH_MM} height={viewBoxHeight}
+          fill="none" stroke="#E8E5F0" strokeWidth={0.5} rx={0}
+          pointerEvents="none"
+        />
+        <rect
+          x={2} y={2} width={CANVAS_WIDTH_MM - 4} height={viewBoxHeight - 4}
+          fill="none" stroke="#F2F0F8" strokeWidth={0.3} rx={2}
+          pointerEvents="none"
+        />
+
         {/* 3.2: Suggested zones — visible only when enabled in settings */}
         {showSuggestedZones && (
         <g pointerEvents="none" opacity={(() => {
@@ -1144,7 +1156,7 @@ export function Canvas({
           onStartGrouping={handleStartGrouping}
           onUngroup={handleUngroup}
           onTableauPreview={(rows, cols) => { setTableauPreviewRows(rows); setTableauPreviewCols(cols); }}
-          onDeletePiece={(id) => { onDeleteClick(id); onSelectPiece(null); }}
+          onDeletePiece={(id) => { dispatch({ type: 'DELETE_PIECE', id }); onSelectPiece(null); }}
           flattenActions={_toleranceProfile === 'tres-large'}
           onDismiss={() => onSelectPiece(null)}
         />

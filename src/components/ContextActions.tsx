@@ -211,7 +211,7 @@ export function ContextActions({
         </>
       )}
 
-      {/* Barre — L1 (fréquent): Nommer, Taille, Copier. L2 via "Plus...": Valeur, Fraction, Grouper, Couleur */}
+      {/* Barre — L1 (fréquent): Nommer, Taille, Copier, Fraction. L2 via "Plus...": Valeur, Grouper, Couleur */}
       {isBarre(piece) && barSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
@@ -223,15 +223,15 @@ export function ContextActions({
           {!piece.locked && (
             <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
           )}
+          {!piece.locked && (
+            <CtxBtn onClick={() => setBarSubmenu('fraction')}>
+              Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
+            </CtxBtn>
+          )}
           {/* L2 items — shown inline when flattenActions (aide maximale), otherwise in "Plus..." submenu */}
           {flattenActions && (
             <>
               <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
-              {!piece.locked && (
-                <CtxBtn onClick={() => setBarSubmenu('fraction')}>
-                  Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
-                </CtxBtn>
-              )}
               {!piece.groupId && !piece.locked && (
                 <CtxBtn testId="ctx-grouper" onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
               )}
@@ -250,9 +250,6 @@ export function ContextActions({
         <>
           <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
           <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
-          <CtxBtn onClick={() => setBarSubmenu('fraction')}>
-            Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
-          </CtxBtn>
           {!piece.groupId && (
             <CtxBtn testId="ctx-grouper" onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
           )}

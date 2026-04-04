@@ -86,7 +86,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <ToggleBtn
               active={settings.relanceDelayMs > 0}
-              onChange={on => update({ relanceDelayMs: on ? 45000 : 0 })}
+              onChange={on => update({ relanceDelayMs: on ? 30000 : 0 })}
             />
             {settings.relanceDelayMs > 0 && (
               <label style={{ fontSize: 13, color: UI_TEXT_SECONDARY, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -97,7 +97,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
                   max={120}
                   value={Math.round(settings.relanceDelayMs / 1000)}
                   onChange={e => {
-                    const sec = Math.max(30, Math.min(120, Number(e.target.value) || 45));
+                    const sec = Math.max(30, Math.min(120, Number(e.target.value) || 30));
                     update({ relanceDelayMs: sec * 1000 });
                   }}
                   style={{ width: 52, padding: '4px 6px', borderRadius: 4, border: '1px solid #D5D0E0', fontSize: 13, textAlign: 'center' }}
