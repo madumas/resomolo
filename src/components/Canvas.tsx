@@ -349,9 +349,15 @@ export function Canvas({
         handleStartMove(hitPiece.id, pos);
         return;
       }
-      // Calcul/Réponse/Étiquette — direct edit on click
+      // Calcul/Réponse/Étiquette — 1st click selects (context actions), 2nd click edits
       if (hitPiece.type === 'calcul' || hitPiece.type === 'reponse' || hitPiece.type === 'etiquette') {
-        onStartEdit(hitPiece.id);
+        if (hitPiece.id === selectedPieceId) {
+          // Already selected — enter edit mode
+          onStartEdit(hitPiece.id);
+        } else {
+          // First click — select to show context actions
+          onSelectPiece(hitPiece.id);
+        }
         return;
       }
       if (tableauEditorPieceId) closeTableauEditor();
@@ -738,6 +744,7 @@ export function Canvas({
         flex: 1,
         background: COLORS.canvasBg,
         position: 'relative',
+        zIndex: 1, // context actions (z-index:10) must escape above status bar
         overflow: 'hidden',
         cursor: getCanvasCursor(activeTool, deleteMode, mode.type === 'moving', !!hoveredPieceId),
       }}

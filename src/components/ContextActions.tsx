@@ -98,9 +98,9 @@ export function ContextActions({
     <div
       data-testid="context-actions"
       style={{
-        position: 'absolute',
-        left: anchorX,
-        top: anchorY,
+        position: 'fixed',
+        left: canvasRect.left + anchorX,
+        top: canvasRect.top + anchorY,
         transform: `translate(-50%, ${placeAbove ? '-100%' : '0'})`,
         display: 'flex',
         gap: 10,
@@ -109,7 +109,7 @@ export function ContextActions({
         borderRadius: 8,
         padding: 4,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        zIndex: 10,
+        zIndex: 50,
         flexWrap: 'wrap',
         maxWidth: MAX_ACTIONS_WIDTH,
         // Prevent overflow off canvas edges
@@ -221,12 +221,14 @@ export function ContextActions({
           )}
           {/* Grouper/Dégrouper toujours visibles (disabled quand pas applicable) — stabilité spatiale */}
           <CtxBtn
+            testId="ctx-grouper"
             onClick={() => !piece.groupId ? onStartGrouping(piece.id) : undefined}
             disabled={!!piece.groupId || piece.locked}
           >
             Grouper
           </CtxBtn>
           <CtxBtn
+            testId="ctx-degrouper"
             onClick={() => piece.groupId ? onUngroup(piece.groupId) : undefined}
             disabled={!piece.groupId}
           >
@@ -531,13 +533,14 @@ export function ContextActions({
   );
 }
 
-function CtxBtn({ children, onClick, active, destructive, back, disabled, onPointerEnter, onPointerLeave }: {
+function CtxBtn({ children, onClick, active, destructive, back, disabled, testId, onPointerEnter, onPointerLeave }: {
   children: React.ReactNode;
   onClick: () => void;
   active?: boolean;
   destructive?: boolean;
   back?: boolean;
   disabled?: boolean;
+  testId?: string;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
 }) {
@@ -547,6 +550,7 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, onPoin
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       disabled={disabled}
+      data-testid={testId}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
         fontSize: back ? 14 : 12,

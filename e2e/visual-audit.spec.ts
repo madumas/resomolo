@@ -13,7 +13,6 @@ import { test, expect } from '@playwright/test';
 import {
   clickCanvas,
   selectPieceAt,
-  selectPieceById,
   selectTool,
   getStatusText,
   dismissOverlays,
@@ -107,13 +106,13 @@ test.describe('Visual audit — full flow', () => {
     // Context actions panel may be behind the status bar — use dispatchEvent to click
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.dispatchEvent('click');
+    await tailleBtn.click();
     await page.waitForTimeout(300);
 
     // Click 3× in the Taille submenu (use dispatchEvent to bypass status bar overlay)
     const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.dispatchEvent('click');
+    await btn3x.click();
     await page.waitForTimeout(500);
     await page.screenshot({ path: shot('08-bar-3x.png'), fullPage: true });
 
@@ -126,7 +125,7 @@ test.describe('Visual audit — full flow', () => {
     // Test Copier (first level — no more Plus… submenu)
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     await expect(btnCopy).toBeVisible({ timeout: 5000 });
-    await btnCopy.click({ force: true });
+    await btnCopy.click();
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('09-bars-duplicated-aligned.png'), fullPage: true });
@@ -423,10 +422,10 @@ test.describe('Visual audit — full flow', () => {
     await calcEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Tool auto-deactivates after placement. Clicking calcul always opens editor.
-    // Use the inline editor's "En colonnes" button which auto-routes to
-    // Division posée when expression contains "/" or "÷".
-    await clickCanvas(page, 200, 200);
+    // Tool auto-deactivates. 1st click selects, 2nd click edits.
+    await clickCanvas(page, 200, 200); // select
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 200, 200); // edit
     await page.waitForTimeout(300);
 
     // The inline editor should be visible with the "En colonnes" button
@@ -463,16 +462,9 @@ test.describe('Visual audit — full flow', () => {
     await repEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Tool auto-deactivates after placement.
-    // Clicking a réponse piece always opens editor. Use selectPieceById to
-    // select the piece without editing (shows context actions).
-    const reponseId = await page.evaluate(() => {
-      const groups = document.querySelectorAll('[data-testid="canvas-svg"] g[data-piece-id]');
-      // The last placed piece is the last group element
-      const last = groups[groups.length - 1];
-      return last?.getAttribute('data-piece-id') ?? null;
-    });
-    if (reponseId) await selectPieceById(page, reponseId);
+    // Tool auto-deactivates after placement. Click the réponse piece to select it
+    // (1st click = selection with context actions, 2nd click = edit)
+    await selectPieceAt(page, 200, 150);
 
     // Look for "Phrase à trous" button in context actions
     const templateBtn = page.locator('[data-testid="context-actions"] button:has-text("Phrase à trous")');
@@ -731,11 +723,11 @@ test.describe('Visual audit — full flow', () => {
     // Open Taille submenu, click 2× (use dispatchEvent to bypass status bar overlay)
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.dispatchEvent('click');
+    await tailleBtn.click();
     await page.waitForTimeout(300);
     const btn2x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '2×', exact: true });
     await expect(btn2x).toBeVisible({ timeout: 2000 });
-    await btn2x.dispatchEvent('click');
+    await btn2x.click();
     await page.waitForTimeout(300);
 
     // Deselect and re-select to get fresh context actions (main menu, not Taille submenu)
@@ -754,10 +746,10 @@ test.describe('Visual audit — full flow', () => {
     // Select the first bar, open Plus… submenu, click Grouper
     await selectPieceAt(page, 110, 67);
 
-    // Click Grouper (use exact match to avoid matching "Dégrouper")
-    const grouperBtn = page.locator('[data-testid="context-actions"]').getByRole('button', { name: 'Grouper', exact: true });
+    // Click Grouper
+    const grouperBtn = page.locator('[data-testid="ctx-grouper"]');
     await expect(grouperBtn).toBeVisible({ timeout: 2000 });
-    await grouperBtn.dispatchEvent('click');
+    await grouperBtn.click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
@@ -1948,11 +1940,11 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.dispatchEvent('click');
+    await tailleBtn.click();
     await page.waitForTimeout(300);
     const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.dispatchEvent('click');
+    await btn3x.click();
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
@@ -1963,11 +1955,11 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 160, 67);
     const tailleBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn2).toBeVisible({ timeout: 2000 });
-    await tailleBtn2.dispatchEvent('click');
+    await tailleBtn2.click();
     await page.waitForTimeout(300);
     const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("= une autre barre")');
     await expect(memeTailleBtn).toBeVisible({ timeout: 2000 });
-    await memeTailleBtn.dispatchEvent('click');
+    await memeTailleBtn.click();
     await page.waitForTimeout(200);
     // Click second bar to equalize
     await clickCanvas(page, 110, 107);
@@ -1992,7 +1984,7 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 110, 107);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.click({ force: true });
+    await tailleBtn.click();
     await page.waitForTimeout(200);
     // Use exact match to avoid matching "1½×"
     const btnHalf = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '½×', exact: true });
@@ -2507,11 +2499,11 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.dispatchEvent('click');
+    await tailleBtn.click();
     await page.waitForTimeout(300);
     const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.dispatchEvent('click');
+    await btn3x.click();
     await page.waitForTimeout(300);
 
     // Copier (first level — no Plus submenu)
@@ -2522,7 +2514,7 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 160, 67);
     const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     await expect(copyBtn).toBeVisible({ timeout: 2000 });
-    await copyBtn.dispatchEvent('click');
+    await copyBtn.click();
     await page.waitForTimeout(300);
 
     // Calcul

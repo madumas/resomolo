@@ -35,6 +35,8 @@ export function StatusBar({
       flexShrink: 0,
       height: STATUS_BAR_HEIGHT,
       display: 'flex',
+      position: 'relative',
+      zIndex: 0, // below context actions (z-index: 10) which escape via Canvas z-index: 1
       alignItems: 'center',
       gap: 12,
     }}>
