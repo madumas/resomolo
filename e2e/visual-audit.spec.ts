@@ -115,14 +115,10 @@ test.describe('Visual audit — full flow', () => {
     // Re-select bar after resize (context actions reappear)
     await selectPieceAt(page, 80, 67);
 
-    // Test Copier (in Plus… submenu)
-    const plusBtnCopy = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    await expect(plusBtnCopy).toBeVisible({ timeout: 2000 });
-    await plusBtnCopy.click();
-    await page.waitForTimeout(200);
+    // Test Copier (first level — no more Plus… submenu)
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     await expect(btnCopy).toBeVisible({ timeout: 2000 });
-    await btnCopy.click();
+    await btnCopy.click({ force: true });
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('09-bars-duplicated-aligned.png'), fullPage: true });
@@ -759,14 +755,9 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 110, 67);
 
     // Open Plus… submenu first
-    const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    await expect(plusBtn).toBeVisible({ timeout: 2000 });
-    await plusBtn.click();
-    await page.waitForTimeout(200);
-
     const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
     await expect(grouperBtn).toBeVisible({ timeout: 2000 });
-    await grouperBtn.click();
+    await grouperBtn.click({ force: true });
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
@@ -1948,15 +1939,15 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
 
-    // Select first bar, open Plus… submenu, click "Même taille"
+    // Select first bar, open Taille submenu, click "= une autre barre"
     await selectPieceAt(page, 110, 67);
-    const plusBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    await expect(plusBtn2).toBeVisible({ timeout: 2000 });
-    await plusBtn2.click();
+    const tailleBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
+    await expect(tailleBtn2).toBeVisible({ timeout: 2000 });
+    await tailleBtn2.click({ force: true });
     await page.waitForTimeout(200);
-    const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Même taille")');
+    const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("= une autre barre")');
     await expect(memeTailleBtn).toBeVisible({ timeout: 2000 });
-    await memeTailleBtn.click();
+    await memeTailleBtn.click({ force: true });
     await page.waitForTimeout(200);
     // Click second bar to equalize
     await clickCanvas(page, 110, 107);
@@ -2492,15 +2483,11 @@ test.describe('Visual audit — full flow', () => {
     await btn3x.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Copier via Plus submenu
+    // Copier (first level — no Plus submenu)
     await selectPieceAt(page, 110, 67);
-    const plusBtn = page.locator('[data-testid="context-actions"] button:has-text("Plus")');
-    await expect(plusBtn).toBeVisible({ timeout: 2000 });
-    await plusBtn.click();
-    await page.waitForTimeout(200);
     const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     await expect(copyBtn).toBeVisible({ timeout: 2000 });
-    await copyBtn.click();
+    await copyBtn.click({ force: true });
     await page.waitForTimeout(300);
 
     // Calcul
