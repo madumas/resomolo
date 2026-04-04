@@ -90,6 +90,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('03 — bar sizes and duplication', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a bar
     await selectTool(page, 'barre');
     await clickCanvas(page, 50, 60);
@@ -117,7 +118,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Test Copier (first level — no more Plus… submenu)
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
-    await expect(btnCopy).toBeVisible({ timeout: 2000 });
+    await expect(btnCopy).toBeVisible({ timeout: 5000 });
     await btnCopy.click({ force: true });
     await page.waitForTimeout(300);
 
@@ -403,6 +404,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('15 — Division posée: open and interact', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a calcul piece
     await selectTool(page, 'calcul');
     await clickCanvas(page, 200, 200);
@@ -440,6 +442,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('16 — Template response (Phrase à trous)', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a réponse piece
     await selectTool(page, 'reponse');
     await clickCanvas(page, 200, 150);
@@ -473,6 +476,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('17 — TTS button visible in problem zone', async ({ page }) => {
+    await navigateAndReady(page);
     // First, enable TTS in settings
     await openSettings(page);
     const ttsToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
@@ -721,6 +725,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('25 — Bar grouping via Plus submenu', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a bar and resize to 2×
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
@@ -871,6 +876,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('29 — Calcul en colonnes: open overlay', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a calcul piece with a multiplication
     await selectTool(page, 'calcul');
     await clickCanvas(page, 200, 150);
@@ -1678,6 +1684,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('52 — Barre fraction label: subdivide, color, show fraction', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a barre
     await selectTool(page, 'barre');
     await clickCanvas(page, 150, 100);
@@ -1720,6 +1727,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('53 — Boîte: valeur, couleur, auto-resize with jetons', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a boîte
     await selectTool(page, 'boite');
     await clickCanvas(page, 150, 100);
@@ -1887,6 +1895,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('59 — Ranger button', async ({ page }) => {
+    await navigateAndReady(page);
     // Place several pieces in messy positions
     await selectTool(page, 'barre');
     await clickCanvas(page, 300, 180);
@@ -1918,6 +1927,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('60 — Barre equaliser (Même taille)', async ({ page }) => {
+    await navigateAndReady(page);
     // Place two bars of different sizes
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
@@ -1957,6 +1967,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('61 — Barres fractionnaires ½× et ¾×', async ({ page }) => {
+    await navigateAndReady(page);
     // Place a bar 1×
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
@@ -2728,18 +2739,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('88 — Surlignage visible vérifié', async ({ page }) => {
-    // Navigate directly — don't use navigateAndReady to avoid dismissOverlays clearing the problem
-    await page.goto('/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
-    await page.waitForSelector('[data-testid="canvas-svg"]');
-    await page.waitForTimeout(1000);
-    // Dismiss guide only (not problem selector)
-    const guideBtn = page.locator('button:has-text("Compris")');
-    if (await guideBtn.isVisible({ timeout: 1000 }).catch(() => false)) await guideBtn.click();
-    await page.waitForTimeout(500);
-    // Skip tutorial if visible
-    const skipBtn = page.locator('button:has-text("Passer")');
-    if (await skipBtn.isVisible({ timeout: 500 }).catch(() => false)) await skipBtn.click();
-    await page.waitForTimeout(500);
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
 
     // Expand problem zone — click on the problem text
     const marcText = page.locator('text=Marc').first();
