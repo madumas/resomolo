@@ -440,7 +440,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
           }}
         >
           <span style={{ fontSize: 16 }}>↶</span>
-          <span style={{ fontSize: 9 }}>Oups</span>
+          <span style={{ fontSize: 11 }}>Oups</span>
         </button>
         {/* Swap button — multiplication only, both operands have digits */}
         {operator === '×' && op1.some(d => d !== '') && op2.some(d => d !== '') && (

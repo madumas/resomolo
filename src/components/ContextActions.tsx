@@ -219,21 +219,23 @@ export function ContextActions({
               Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
             </CtxBtn>
           )}
-          {/* Grouper/Dégrouper toujours visibles (disabled quand pas applicable) — stabilité spatiale */}
-          <CtxBtn
-            testId="ctx-grouper"
-            onClick={() => !piece.groupId ? onStartGrouping(piece.id) : undefined}
-            disabled={!!piece.groupId || piece.locked}
-          >
-            Grouper
-          </CtxBtn>
-          <CtxBtn
-            testId="ctx-degrouper"
-            onClick={() => piece.groupId ? onUngroup(piece.groupId) : undefined}
-            disabled={!piece.groupId}
-          >
-            Dégrouper
-          </CtxBtn>
+          {/* Grouper/Dégrouper — masqué quand non applicable (réduction bruit visuel) */}
+          {!piece.groupId && !piece.locked && (
+            <CtxBtn
+              testId="ctx-grouper"
+              onClick={() => onStartGrouping(piece.id)}
+            >
+              Grouper
+            </CtxBtn>
+          )}
+          {piece.groupId && (
+            <CtxBtn
+              testId="ctx-degrouper"
+              onClick={() => onUngroup(piece.groupId!)}
+            >
+              Dégrouper
+            </CtxBtn>
+          )}
         </>
       )}
       {/* Barre — submenu Taille */}

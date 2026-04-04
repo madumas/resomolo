@@ -492,13 +492,12 @@ export default function App() {
     statusVariant = 'relance';
   } else if (showLabelNudge) {
     statusMessage = 'Tu peux nommer tes barres en cliquant dessus → Nommer';
-    statusVariant = 'relance';
   } else if (
     pieces.filter(p => p.type === 'barre' || p.type === 'jeton' || p.type === 'boite').length >= 2 &&
     pieces.some(p => p.type === 'calcul' && 'expression' in p && /[+\-×÷=]/.test((p as any).expression || '')) &&
     pieces.some(p => p.type === 'reponse' && 'text' in p && ((p as any).text?.length || 0) > 3)
   ) {
-    statusMessage = 'Ta modélisation est complète! Relis le problème pour vérifier.';
+    statusMessage = 'Tu as écrit ta réponse. Relis le problème pour vérifier.';
   } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'droiteNumerique') {
     statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {

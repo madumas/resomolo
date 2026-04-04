@@ -103,24 +103,24 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
             x={piece.x + w / 2}
             y={piece.y + h + 5}
             textAnchor="middle"
-            fontSize={5}
+            fontSize={6}
             fill="#55506A"
           >
             {piece.coloredParts.length}
           </text>
           <line
-            x1={piece.x + w / 2 - 4}
-            y1={piece.y + h + 6.5}
-            x2={piece.x + w / 2 + 4}
-            y2={piece.y + h + 6.5}
+            x1={piece.x + w / 2 - 5}
+            y1={piece.y + h + 7}
+            x2={piece.x + w / 2 + 5}
+            y2={piece.y + h + 7}
             stroke="#55506A"
             strokeWidth={0.5}
           />
           <text
             x={piece.x + w / 2}
-            y={piece.y + h + 11}
+            y={piece.y + h + 12}
             textAnchor="middle"
-            fontSize={5}
+            fontSize={6}
             fill="#55506A"
           >
             {piece.divisions}
@@ -134,7 +134,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
           const partX = piece.x + partW * i + partW / 2;
           return (
             <text key={`pl-${i}`} x={partX} y={piece.y - 3}
-              textAnchor="middle" fontSize={4} fill="#55506A">
+              textAnchor="middle" fontSize={5} fill="#55506A">
               {i + 1}/{piece.divisions}
             </text>
           );

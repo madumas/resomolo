@@ -9,7 +9,6 @@ interface ProblemSelectorProps {
 }
 
 type CycleFilter = 2 | 3 | 'all';
-type DifficultyFilter = 1 | 2 | 3 | 'all';
 type CategoryFilter = 'all' | 'additif' | 'multiplicatif' | 'fractions' | 'stats-proba' | 'complexe';
 
 const CATEGORY_GROUPS: Record<Exclude<CategoryFilter, 'all'>, string[]> = {
@@ -29,18 +28,12 @@ const LIBRE_PRESET: ProblemPreset = {
   difficulty: 1,
 };
 
-function difficultyStars(d: 1 | 2 | 3): string {
-  return '★'.repeat(d);
-}
-
 export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>('all');
-  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
   const filtered = PROBLEM_PRESETS.filter(p => {
     if (cycleFilter !== 'all' && p.cycle !== cycleFilter) return false;
-    if (difficultyFilter !== 'all' && p.difficulty !== difficultyFilter) return false;
     if (categoryFilter !== 'all' && !CATEGORY_GROUPS[categoryFilter].includes(p.category)) return false;
     return true;
   });
@@ -105,38 +98,6 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                     background: cycleFilter === opt.value ? '#EDE0FA' : '#fff',
                     border: `2px solid ${cycleFilter === opt.value ? UI_PRIMARY : UI_BORDER}`,
                     color: cycleFilter === opt.value ? UI_PRIMARY : UI_TEXT_SECONDARY,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Difficulty filter */}
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: UI_TEXT_PRIMARY, marginBottom: 6 }}>Difficulté</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {([
-                { value: 'all' as DifficultyFilter, label: 'Toutes' },
-                { value: 1 as DifficultyFilter, label: '★' },
-                { value: 2 as DifficultyFilter, label: '★★' },
-                { value: 3 as DifficultyFilter, label: '★★★' },
-              ]).map(opt => (
-                <button
-                  key={String(opt.value)}
-                  onClick={() => setDifficultyFilter(opt.value)}
-                  style={{
-                    minWidth: MIN_BUTTON_SIZE_PX,
-                    minHeight: MIN_BUTTON_SIZE_PX,
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    fontWeight: difficultyFilter === opt.value ? 700 : 400,
-                    background: difficultyFilter === opt.value ? '#EDE0FA' : '#fff',
-                    border: `2px solid ${difficultyFilter === opt.value ? UI_PRIMARY : UI_BORDER}`,
-                    color: difficultyFilter === opt.value ? UI_PRIMARY : UI_TEXT_SECONDARY,
                     cursor: 'pointer',
                   }}
                 >
@@ -223,18 +184,6 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                     flexShrink: 0,
                   }}>
                     C{preset.cycle}
-                  </span>
-                  <span style={{
-                    fontSize: 11,
-                    color: '#B8860B',
-                    background: '#FEF9E7',
-                    border: '1px solid #F5E6A3',
-                    borderRadius: 4,
-                    padding: '2px 6px',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}>
-                    {difficultyStars(preset.difficulty)}
                   </span>
                 </div>
                 <span style={{ fontSize: 12, color: UI_TEXT_SECONDARY, lineHeight: 1.4 }}>

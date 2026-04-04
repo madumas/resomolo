@@ -767,15 +767,15 @@ export function Canvas({
           </marker>
         </defs>
 
-        {/* 3.2: Suggested zones for children with executive function deficits */}
-        {/* Zone watermarks — always visible, dimmer with more pieces */}
+        {/* 3.2: Suggested zones — visible only when enabled in settings */}
+        {showSuggestedZones && (
         <g pointerEvents="none" opacity={(() => {
           const n = pieces.filter(p => !p.locked).length;
           if (n === 0) return 0.5;
-          if (showSuggestedZones && n < 3) return 0.4;
+          if (n < 3) return 0.4;
           return 0.12;
         })()}>
-            {/* Top zone: Modélisation */}
+            {/* Top zone */}
             <rect
               x={15} y={viewBoxHeight * 0.08}
               width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.48}
@@ -788,9 +788,9 @@ export function Canvas({
               textAnchor="middle" dominantBaseline="central"
               fontSize={10} fill="#90A4AE" fontWeight={500}
             >
-              Modélisation
+              Ton schéma
             </text>
-            {/* Bottom zone: Calcul et réponse */}
+            {/* Bottom zone */}
             <rect
               x={15} y={viewBoxHeight * 0.62}
               width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.30}
@@ -806,6 +806,7 @@ export function Canvas({
               Calcul et réponse
             </text>
         </g>
+        )}
 
         {/* Render pieces */}
         {/* Render boîtes first (background), then everything else on top */}
@@ -1374,7 +1375,8 @@ export function Canvas({
             zIndex: 10,
           }}
         >
-          ☰
+          <span style={{ fontSize: 14 }}>⊞</span>
+          <span style={{ fontSize: 8, lineHeight: 1 }}>Ranger</span>
         </button>
       )}
 

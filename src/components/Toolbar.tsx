@@ -141,7 +141,8 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: 16, lineHeight: 1 }}>⋯</span>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: 9 }}>Plus</span>
           </button>
         )}
       </div>

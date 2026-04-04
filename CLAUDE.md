@@ -13,3 +13,14 @@ Concrètement :
 - Les références bibliographiques proviennent de la mémoire d'entraînement du modèle et doivent être vérifiées avant toute publication
 
 Au Québec, les gestes réservés incluent notamment l'évaluation des troubles d'apprentissage, la prescription d'outils compensatoires, et les recommandations d'intervention. Ces gestes relèvent d'ordres professionnels (OEQ, OPQ, etc.) et ne peuvent être posés que par des membres en règle.
+
+## Politique de tests — les tests ont raison
+
+**Quand un test échoue, c'est l'application qui est fautive, pas le test.** Les tests sont la source de vérité sur le comportement attendu.
+
+Concrètement :
+- Ne jamais modifier un test pour contourner un bug dans l'application
+- Ne jamais ajouter de skip, xfail, ou condition pour masquer un échec réel
+- Ne jamais affaiblir une assertion (changer `toBe` en `toContain`, élargir une tolérance, etc.) pour faire passer un test
+- Quand un test échoue : identifier la cause racine dans le code de l'application et corriger le code, pas le test
+- Les seules modifications acceptables aux tests sont : corriger un test qui teste le mauvais comportement (bug dans le test lui-même, confirmé par la spec), ou adapter un test suite à un changement intentionnel de la spec/fonctionnalité
