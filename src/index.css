@@ -45,6 +45,14 @@ svg g.piece-new {
   animation: piece-pop 150ms ease-out;
 }
 
+/* Mobile portrait: larger touch targets for motor accessibility */
+@media (max-width: 500px) and (orientation: portrait) {
+  button {
+    min-height: 48px !important;
+    min-width: 48px !important;
+  }
+}
+
 @media print {
   [data-testid="toolbar"],
   [data-testid="status-bar"],

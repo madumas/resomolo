@@ -1145,6 +1145,7 @@ export function Canvas({
           onUngroup={handleUngroup}
           onTableauPreview={(rows, cols) => { setTableauPreviewRows(rows); setTableauPreviewCols(cols); }}
           onDeletePiece={(id) => { onDeleteClick(id); onSelectPiece(null); }}
+          flattenActions={_toleranceProfile === 'tres-large'}
           onDismiss={() => onSelectPiece(null)}
         />
       )}

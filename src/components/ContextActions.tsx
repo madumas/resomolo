@@ -28,6 +28,7 @@ interface ContextActionsProps {
   onUngroup: (groupId: string) => void;
   onTableauPreview?: (rows: number | null, cols: number | null) => void;
   onDeletePiece?: (id: string) => void;
+  flattenActions?: boolean; // Aide maximale: tout en L1, pas de sous-menu "Plus..."
   onDismiss?: () => void;
 }
 
@@ -53,13 +54,14 @@ export function ContextActions({
   onUngroup,
   onTableauPreview,
   onDeletePiece,
+  flattenActions = false,
   onDismiss: _onDismiss,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
 
   // 2.2: Submenu state for bar context actions (reduces cognitive overload)
-  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'fraction'>('none');
+  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'fraction' | 'plus'>('none');
 
   // Template submenu for reponse pieces
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
@@ -209,12 +211,10 @@ export function ContextActions({
         </>
       )}
 
-      {/* Barre — 6 boutons, 2 lignes. Pas de "Plus…" */}
+      {/* Barre — L1 (fréquent): Nommer, Taille, Copier. L2 via "Plus...": Valeur, Fraction, Grouper, Couleur */}
       {isBarre(piece) && barSubmenu === 'none' && (
         <>
-          {/* Ligne 1 : propriétés de la barre */}
           <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
-          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
           {!piece.locked && (
             <CtxBtn onClick={() => setBarSubmenu('taille')}>
               Taille {piece.sizeMultiplier}×
@@ -223,29 +223,53 @@ export function ContextActions({
           {!piece.locked && (
             <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
           )}
-          {/* Ligne 2 : structure */}
-          {!piece.locked && (
-            <CtxBtn onClick={() => setBarSubmenu('fraction')}>
-              Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
-            </CtxBtn>
+          {/* L2 items — shown inline when flattenActions (aide maximale), otherwise in "Plus..." submenu */}
+          {flattenActions && (
+            <>
+              <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+              {!piece.locked && (
+                <CtxBtn onClick={() => setBarSubmenu('fraction')}>
+                  Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
+                </CtxBtn>
+              )}
+              {!piece.groupId && !piece.locked && (
+                <CtxBtn testId="ctx-grouper" onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
+              )}
+              {piece.groupId && (
+                <CtxBtn testId="ctx-degrouper" onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
+              )}
+            </>
           )}
-          {/* Grouper/Dégrouper — masqué quand non applicable (réduction bruit visuel) */}
-          {!piece.groupId && !piece.locked && (
-            <CtxBtn
-              testId="ctx-grouper"
-              onClick={() => onStartGrouping(piece.id)}
-            >
-              Grouper
-            </CtxBtn>
+          {!flattenActions && !piece.locked && (
+            <CtxBtn onClick={() => setBarSubmenu('plus')}>Plus…</CtxBtn>
+          )}
+        </>
+      )}
+      {/* Barre — submenu Plus (L2 actions) */}
+      {isBarre(piece) && barSubmenu === 'plus' && (
+        <>
+          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
+          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+          <CtxBtn onClick={() => setBarSubmenu('fraction')}>
+            Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
+          </CtxBtn>
+          {!piece.groupId && (
+            <CtxBtn testId="ctx-grouper" onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
           )}
           {piece.groupId && (
-            <CtxBtn
-              testId="ctx-degrouper"
-              onClick={() => onUngroup(piece.groupId!)}
-            >
-              Dégrouper
-            </CtxBtn>
+            <CtxBtn testId="ctx-degrouper" onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
           )}
+          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
+            <button key={c} onClick={() => onChangeColor(piece.id, c)}
+              aria-label={`Couleur ${c}`}
+              style={{
+                minWidth: 44, minHeight: 44, borderRadius: '50%',
+                background: getPieceColor(c),
+                border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
+                cursor: 'pointer', opacity: piece.couleur === c ? 1 : 0.5,
+              }}
+            />
+          ))}
         </>
       )}
       {/* Barre — submenu Taille */}

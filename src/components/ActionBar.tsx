@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { canUndo, canRedo } from '../model/undo';
-import type { UndoManager, DominantHand } from '../model/types';
+import type { UndoManager, DominantHand, SettingsProfile } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_PRIMARY, UI_DESTRUCTIVE, UI_TEXT_SECONDARY, UI_SURFACE, UI_DISABLED_BG } from '../config/theme';
 import { UndoIcon, RedoIcon, DeleteIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
@@ -20,6 +20,7 @@ interface ActionBarProps {
   onExportPdf?: () => void;
   onShareLink?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
+  activeProfile?: SettingsProfile;
 }
 
 export function ActionBar({
@@ -37,6 +38,7 @@ export function ActionBar({
   onExportPdf,
   onShareLink,
   sessionTimer,
+  activeProfile = 'custom',
 }: ActionBarProps) {
   // showMore removed — fullscreen is now a standalone toggle
   return (
@@ -137,25 +139,33 @@ export function ActionBar({
         onShareLink={onShareLink}
       />
 
-      {/* Settings */}
+      {/* Settings — dot indicator when a non-custom profile is active */}
       <button
         onClick={onShowSettings}
         title="Paramètres"
-        aria-label="Paramètres"
+        aria-label={activeProfile !== 'custom' ? `Paramètres (profil actif)` : 'Paramètres'}
         style={{
           background: 'none',
-          border: `1px solid ${UI_PRIMARY}`,
+          border: `1px solid ${activeProfile !== 'custom' ? '#10B981' : UI_PRIMARY}`,
           borderRadius: '50%',
           width: MIN_BUTTON_SIZE_PX,
           height: MIN_BUTTON_SIZE_PX,
-          color: UI_PRIMARY,
+          color: activeProfile !== 'custom' ? '#10B981' : UI_PRIMARY,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'relative',
         }}
       >
         <SettingsIcon />
+        {activeProfile !== 'custom' && (
+          <span style={{
+            position: 'absolute', top: -2, right: -2,
+            width: 8, height: 8, borderRadius: '50%',
+            background: '#10B981', border: '2px solid #fff',
+          }} />
+        )}
       </button>
 
       {/* Guide */}

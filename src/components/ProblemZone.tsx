@@ -306,7 +306,7 @@ export function ProblemZone({
       {guidedReadingEnabled && sentences.length > 1 && currentSentenceIndex < sentences.length ? (
         <>
           {/* Current sentence with highlighting */}
-          <div style={{ fontSize: 14, lineHeight: 1.8, color: UI_TEXT_PRIMARY, marginBottom: 8 }}>
+          <div style={{ fontSize: 14, lineHeight: 1.8, color: UI_TEXT_PRIMARY, marginBottom: 8, background: '#F0EDFA', borderRadius: 6, padding: '4px 8px' }}>
             {(() => {
               const sentence = sentences[currentSentenceIndex];
               const sentenceStart = text.indexOf(sentence);

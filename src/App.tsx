@@ -520,6 +520,16 @@ export default function App() {
       style={{ display: 'flex', flexDirection: 'column', height: '100%', zoom: settings.textScale !== 1 ? settings.textScale : undefined }}
       onContextMenu={e => e.preventDefault()}
     >
+      {/* Mobile portrait advisory */}
+      {typeof window !== 'undefined' && window.innerWidth < 500 && window.innerHeight > window.innerWidth && (
+        <div style={{
+          padding: '6px 16px', background: '#FEF3C7', borderBottom: '1px solid #F59E0B',
+          fontSize: 12, color: '#92400E', textAlign: 'center', flexShrink: 0,
+        }}>
+          Pour une meilleure expérience, tourne ton appareil en mode paysage.
+        </div>
+      )}
+
       {/* Toolbar en haut — comme GéoMolo */}
       <Toolbar
         activeTool={activeTool}
@@ -631,6 +641,7 @@ export default function App() {
         onExportPdf={handleExportPdf}
         onShareLink={() => setShowSharePanel(true)}
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
+        activeProfile={settings.activeProfile}
       />
 
       {/* Adult guide overlay */}
