@@ -1438,44 +1438,27 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('46 — Mobile portrait 375px', async ({ page }) => {
-    test.setTimeout(60_000);
+    // Resize viewport — no re-navigation needed (beforeEach already loaded the app)
     await page.setViewportSize({ width: 375, height: 667 });
-    await navigateAndReady(page);
+    await page.waitForTimeout(500);
 
     await page.screenshot({ path: shot('80-mobile-portrait.png'), fullPage: true });
 
-    // Place a piece — guard against overflow on narrow viewport
-    try {
-      const jetonBtn = page.locator('[data-testid="tool-jeton"]');
-      if (await jetonBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await jetonBtn.click();
-      } else {
-        // Try expanding toolbar first
-        const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
-        if (await moreBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await moreBtn.click();
-          await page.waitForTimeout(200);
-        }
-        if (await jetonBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await jetonBtn.click();
-        }
-      }
+    // Place a jeton if the tool is accessible
+    const jetonBtn = page.locator('[data-testid="tool-jeton"]');
+    if (await jetonBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await jetonBtn.click({ force: true });
       await page.waitForTimeout(200);
-
       const svg = page.locator('[data-testid="canvas-svg"]');
       const box = await svg.boundingBox();
       if (box && box.height > 50) {
-        await clickCanvas(page, 100, 60);
+        await clickCanvas(page, 80, 50);
         await page.waitForTimeout(300);
-
-        // Try to select it for context actions
-        await page.keyboard.press('Escape'); // deselect tool
+        await page.keyboard.press('Escape');
         await page.waitForTimeout(200);
-        await clickCanvas(page, 100, 60);
+        await clickCanvas(page, 80, 50);
         await page.waitForTimeout(400);
       }
-    } catch {
-      // On 375px viewport some interactions may overflow — screenshot is the goal
     }
 
     await page.screenshot({ path: shot('81-mobile-portrait-ctx.png'), fullPage: true });
@@ -4091,5 +4074,98 @@ test.describe('Visual audit — full flow', () => {
     // Vérifier que des sons ont été produits
     const finalCalls = await page.evaluate(() => (window as any).__soundSpyCalls);
     expect.soft(finalCalls).toBeGreaterThan(initialCalls);
+  });
+
+  // S20 — Droite numérique avec nombres négatifs
+  test('130 — Droite numérique négatifs + zéro distinct', async ({ page }) => {
+    test.setTimeout(60_000);
+    await navigateAndReady(page);
+
+    // Placer une droite numérique
+    await selectTool(page, 'droiteNumerique');
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 150, 80);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique'); // toggle off
+
+    // Sélectionner la droite
+    await selectPieceAt(page, 150, 80);
+
+    // Vérifier que les context actions de la droite s'affichent
+    const minBtn = page.locator('[data-testid="context-actions"] button:has-text("Min:")');
+    await expect(minBtn).toBeVisible({ timeout: 3000 });
+
+    // Cliquer sur Min pour voir les presets
+    await minBtn.click();
+    await page.waitForTimeout(300);
+
+    // Vérifier que les presets négatifs sont présents
+    const neg15Btn = page.locator('[data-testid="context-actions"] button:has-text("-15")');
+    const neg10Btn = page.locator('[data-testid="context-actions"] button:has-text("-10")');
+    expect.soft(await neg15Btn.isVisible()).toBe(true);
+    expect.soft(await neg10Btn.isVisible()).toBe(true);
+
+    // Vérifier que "Autre…" est présent
+    const autreBtn = page.locator('[data-testid="context-actions"] button:has-text("Autre")');
+    expect.soft(await autreBtn.isVisible()).toBe(true);
+
+    // Sélectionner -10 comme min
+    await neg10Btn.click();
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('220-droite-negatifs.png'), fullPage: true });
+
+    // Vérifier que le zéro est rendu avec le style distinct (violet #7028E0)
+    const zeroTick = page.locator('[data-testid="canvas-svg"] line[stroke="#7028E0"]');
+    expect.soft(await zeroTick.count()).toBeGreaterThan(0);
+
+    // Vérifier que le label 0 est en gras
+    const zeroLabel = page.locator('[data-testid="canvas-svg"] text[fill="#7028E0"]');
+    expect.soft(await zeroLabel.count()).toBeGreaterThan(0);
+  });
+
+  // S21 — Droite numérique "Autre…" saisie libre
+  test('131 — Droite numérique saisie libre min via Autre', async ({ page }) => {
+    test.setTimeout(60_000);
+    await navigateAndReady(page);
+
+    // Placer une droite numérique
+    await selectTool(page, 'droiteNumerique');
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 150, 80);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique'); // toggle off
+
+    // Sélectionner la droite
+    await selectPieceAt(page, 150, 80);
+
+    // Ouvrir sous-menu Min
+    const minBtn = page.locator('[data-testid="context-actions"] button:has-text("Min:")');
+    await expect(minBtn).toBeVisible({ timeout: 3000 });
+    await minBtn.click();
+    await page.waitForTimeout(300);
+
+    // Cliquer "Autre…"
+    const autreBtn = page.locator('[data-testid="context-actions"] button:has-text("Autre")');
+    await autreBtn.click();
+    await page.waitForTimeout(300);
+
+    // Vérifier que l'input number apparaît
+    const input = page.locator('[data-testid="context-actions"] input[type="number"]');
+    await expect(input).toBeVisible({ timeout: 2000 });
+
+    // Saisir -5
+    await input.fill('-5');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: shot('221-droite-autre-input.png'), fullPage: true });
+
+    // Valider avec Enter
+    await input.press('Enter');
+    await page.waitForTimeout(500);
+
+    // Vérifier que le zéro distinct apparaît (min est maintenant négatif)
+    const zeroTick = page.locator('[data-testid="canvas-svg"] line[stroke="#7028E0"]');
+    expect.soft(await zeroTick.count()).toBeGreaterThan(0);
   });
 });
