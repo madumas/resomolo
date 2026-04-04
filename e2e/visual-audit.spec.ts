@@ -13,6 +13,7 @@ import { test, expect } from '@playwright/test';
 import {
   clickCanvas,
   selectPieceAt,
+  selectPieceById,
   selectTool,
   getStatusText,
   dismissOverlays,
@@ -94,27 +95,33 @@ test.describe('Visual audit — full flow', () => {
     // Place a bar
     await selectTool(page, 'barre');
     await clickCanvas(page, 50, 60);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
-    // Deselect tool, select the bar
-    await selectTool(page, 'barre'); // toggle off
+    // Tool auto-deactivates after placement, bar is auto-selected.
+    // Deselect first to get a clean state, then re-select.
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     await selectPieceAt(page, 80, 67);
 
     // Open Taille submenu (bar context actions now use submenus)
+    // Context actions panel may be behind the status bar — use dispatchEvent to click
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.click({ force: true });
-    await page.waitForTimeout(200);
+    await tailleBtn.dispatchEvent('click');
+    await page.waitForTimeout(300);
 
-    // Click 3× in the Taille submenu (force: context actions may overlap status bar)
-    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    // Click 3× in the Taille submenu (use dispatchEvent to bypass status bar overlay)
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.click({ force: true });
-    await page.waitForTimeout(200);
+    await btn3x.dispatchEvent('click');
+    await page.waitForTimeout(500);
     await page.screenshot({ path: shot('08-bar-3x.png'), fullPage: true });
 
-    // Re-select bar after resize (context actions reappear)
-    await selectPieceAt(page, 80, 67);
+    // Deselect then re-select to refresh context actions after resize
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    // After resize the bar is wider (3× = 180mm from x=50), click center
+    await selectPieceAt(page, 140, 67);
 
     // Test Copier (first level — no more Plus… submenu)
     const btnCopy = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
@@ -416,24 +423,26 @@ test.describe('Visual audit — full flow', () => {
     await calcEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Deselect tool, select the calcul piece
-    await selectTool(page, 'calcul'); // toggle off
-    await selectPieceAt(page, 200, 200);
+    // Tool auto-deactivates after placement. Clicking calcul always opens editor.
+    // Use the inline editor's "En colonnes" button which auto-routes to
+    // Division posée when expression contains "/" or "÷".
+    await clickCanvas(page, 200, 200);
+    await page.waitForTimeout(300);
 
-    // Click "Division posée" in context actions
-    const divBtn = page.locator('[data-testid="context-actions"] button:has-text("Division posée")');
-    await expect(divBtn).toBeVisible({ timeout: 2000 });
-    await divBtn.click();
+    // The inline editor should be visible with the "En colonnes" button
+    const editorColBtn = page.locator('button:has-text("En colonnes")');
+    await expect(editorColBtn).toBeVisible({ timeout: 2000 });
+    await editorColBtn.click();
     await page.waitForTimeout(400);
 
-    // Verify DivisionCalc overlay opens (look for the "Division posée" heading)
-    const divHeading = page.locator('text=Division posée').first();
+    // Verify DivisionCalc overlay opens (heading is "Division à crochet")
+    const divHeading = page.locator('text=Division à crochet').first();
     await expect(divHeading).toBeVisible({ timeout: 3000 });
 
     await page.screenshot({ path: shot('28-division-posee-overlay.png'), fullPage: true });
 
-    // Close it by clicking Annuler
-    const cancelBtn = page.locator('button:has-text("Annuler")').first();
+    // Close it by clicking Fermer
+    const cancelBtn = page.locator('button:has-text("Fermer")').first();
     await expect(cancelBtn).toBeVisible({ timeout: 2000 });
     await cancelBtn.click();
     await page.waitForTimeout(200);
@@ -454,9 +463,16 @@ test.describe('Visual audit — full flow', () => {
     await repEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Deselect tool, select the réponse piece
-    await selectTool(page, 'reponse'); // toggle off
-    await selectPieceAt(page, 200, 150);
+    // Tool auto-deactivates after placement.
+    // Clicking a réponse piece always opens editor. Use selectPieceById to
+    // select the piece without editing (shows context actions).
+    const reponseId = await page.evaluate(() => {
+      const groups = document.querySelectorAll('[data-testid="canvas-svg"] g[data-piece-id]');
+      // The last placed piece is the last group element
+      const last = groups[groups.length - 1];
+      return last?.getAttribute('data-piece-id') ?? null;
+    });
+    if (reponseId) await selectPieceById(page, reponseId);
 
     // Look for "Phrase à trous" button in context actions
     const templateBtn = page.locator('[data-testid="context-actions"] button:has-text("Phrase à trous")');
@@ -476,38 +492,15 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('17 — TTS button visible in problem zone', async ({ page }) => {
-    await navigateAndReady(page);
-    // First, enable TTS in settings
-    await openSettings(page);
-    const ttsToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
-    if (await ttsToggle.isVisible().catch(() => false)) {
-      await ttsToggle.click();
-      await page.waitForTimeout(100);
-    }
-    await closeSettings(page);
+    // TTS is enabled by default (ttsEnabled: true in DEFAULT_SETTINGS).
+    // Load a problem via the problem selector to get text in the problem zone.
+    await openProblemSelector(page);
+    await page.locator('text=Comparaison multiplicative').click();
+    await page.waitForTimeout(500);
 
-    // Load a problem so the problem zone has text
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Test de lecture.'));
-
-    // Re-enable TTS after navigating (settings may reset)
-    await openSettings(page);
-    const ttsToggle2 = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
-    if (await ttsToggle2.isVisible().catch(() => false)) {
-      await ttsToggle2.click();
-      await page.waitForTimeout(100);
-    }
-    await closeSettings(page);
-
-    // Expand problem zone if collapsed
-    const expandable = page.locator('text=Test de lecture').first();
-    if (await expandable.isVisible().catch(() => false)) {
-      await expandable.click();
-      await page.waitForTimeout(300);
-    }
-
-    // Look for the speaker/TTS button
+    // Problem zone should be expanded with text — TTS button should be visible
     const speakerBtn = page.locator('button[aria-label="Lire à voix haute"]');
-    await expect.soft(speakerBtn).toBeVisible({ timeout: 2000 });
+    await expect.soft(speakerBtn).toBeVisible({ timeout: 3000 });
     if (await speakerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await page.screenshot({ path: shot('32-tts-button-visible.png'), fullPage: true });
 
@@ -540,10 +533,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('19 — Guided reading: phrase navigation', async ({ page }) => {
-    const problemText = 'Phrase un. Phrase deux. Phrase trois.';
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent(problemText));
-
-    // Enable guided reading in settings
+    // Enable guided reading in settings FIRST (before loading a problem)
     await openSettings(page);
     const guidedToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture guidée').locator('..').locator('button:has-text("Désactivé")');
     if (await guidedToggle.isVisible().catch(() => false)) {
@@ -552,19 +542,23 @@ test.describe('Visual audit — full flow', () => {
     }
     await closeSettings(page);
 
-    // Expand problem zone if collapsed
-    const problemZone = page.locator('text=Phrase').first();
-    if (await problemZone.isVisible().catch(() => false)) {
-      await problemZone.click();
-      await page.waitForTimeout(300);
-    }
+    // Load a problem with multiple sentences via the problem zone text input
+    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    await expect(problemInput).toBeVisible({ timeout: 3000 });
+    await problemInput.click();
+    await page.waitForTimeout(300);
+    const textarea = page.locator('textarea');
+    await expect(textarea).toBeVisible({ timeout: 2000 });
+    await textarea.fill('Phrase un. Phrase deux. Phrase trois.');
+    await textarea.press('Enter');
+    await page.waitForTimeout(500);
 
     await page.screenshot({ path: shot('36-guided-reading-sentence1.png'), fullPage: true });
 
     // Look for sentence counter "1 / 3"
     const counter = page.locator('text=1 / 3');
-    await expect.soft(counter).toBeVisible({ timeout: 2000 });
-    if (await counter.isVisible({ timeout: 500 }).catch(() => false)) {
+    await expect.soft(counter).toBeVisible({ timeout: 3000 });
+    if (await counter.isVisible({ timeout: 1000 }).catch(() => false)) {
 
       // Click "Suivant" to advance to sentence 2
       const suivantBtn = page.locator('button:has-text("Suivant")');
@@ -731,21 +725,22 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 60);
     await page.waitForTimeout(300);
 
-    // Deselect tool, select the bar
-    await selectTool(page, 'barre'); // toggle off
+    // Tool auto-deactivates after placement — select the bar
     await selectPieceAt(page, 110, 67);
 
-    // Open Taille submenu, click 2×
+    // Open Taille submenu, click 2× (use dispatchEvent to bypass status bar overlay)
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.click({ force: true });
-    await page.waitForTimeout(200);
-    const btn2x = page.locator('[data-testid="context-actions"] button:has-text("2×")');
+    await tailleBtn.dispatchEvent('click');
+    await page.waitForTimeout(300);
+    const btn2x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '2×', exact: true });
     await expect(btn2x).toBeVisible({ timeout: 2000 });
-    await btn2x.click({ force: true });
-    await page.waitForTimeout(200);
+    await btn2x.dispatchEvent('click');
+    await page.waitForTimeout(300);
 
-    // Re-select bar to get context actions again
+    // Deselect and re-select to get fresh context actions (main menu, not Taille submenu)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     await selectPieceAt(page, 110, 67);
 
     // Duplicate (Copier)
@@ -759,10 +754,10 @@ test.describe('Visual audit — full flow', () => {
     // Select the first bar, open Plus… submenu, click Grouper
     await selectPieceAt(page, 110, 67);
 
-    // Open Plus… submenu first
-    const grouperBtn = page.locator('[data-testid="context-actions"] button:has-text("Grouper")');
+    // Click Grouper (use exact match to avoid matching "Dégrouper")
+    const grouperBtn = page.locator('[data-testid="context-actions"]').getByRole('button', { name: 'Grouper', exact: true });
     await expect(grouperBtn).toBeVisible({ timeout: 2000 });
-    await grouperBtn.click({ force: true });
+    await grouperBtn.dispatchEvent('click');
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: shot('49-grouping-mode.png'), fullPage: true });
@@ -888,14 +883,15 @@ test.describe('Visual audit — full flow', () => {
     await calcEditor.press('Enter');
     await page.waitForTimeout(300);
 
-    // Deselect tool, select the calcul piece
-    await selectTool(page, 'calcul'); // toggle off
-    await selectPieceAt(page, 200, 150);
+    // Tool auto-deactivates after placement.
+    // Click calcul piece to re-open editor, then use the "En colonnes" button
+    // from within the inline editor (auto-routes to ColumnCalc for multiplication).
+    await clickCanvas(page, 200, 150);
+    await page.waitForTimeout(300);
 
-    // Click "En colonnes" in context actions
-    const colBtn = page.locator('[data-testid="context-actions"] button:has-text("En colonnes")');
-    await expect(colBtn).toBeVisible({ timeout: 2000 });
-    await colBtn.click();
+    const editorColBtn = page.locator('button:has-text("En colonnes")');
+    await expect(editorColBtn).toBeVisible({ timeout: 2000 });
+    await editorColBtn.click();
     await page.waitForTimeout(400);
 
     // Verify ColumnCalc overlay opens
@@ -1690,9 +1686,8 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 150, 100);
     await page.waitForTimeout(400);
 
-    // Deselect tool, select piece → context actions
-    await selectTool(page, 'barre');
-    await selectPieceAt(page, 150, 100);
+    // Tool auto-deactivates after placement — select the bar
+    await selectPieceAt(page, 180, 107);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
 
@@ -1702,8 +1697,8 @@ test.describe('Visual audit — full flow', () => {
     await fractionBtn.click();
     await page.waitForTimeout(200);
 
-    // Choose 1/3 division
-    const div3 = ctxActions.locator('button:has-text("1/3")');
+    // Choose division into 3 parts (button shows "3", not "1/3")
+    const div3 = ctxActions.locator('button').filter({ hasText: /^3$/ });
     await expect(div3).toBeVisible({ timeout: 2000 });
     await div3.click();
     await page.waitForTimeout(300);
@@ -1732,9 +1727,9 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'boite');
     await clickCanvas(page, 150, 100);
     await page.waitForTimeout(400);
-    await selectTool(page, 'boite'); // toggle off
+    // Tool auto-deactivates after placement — boîte is auto-selected
 
-    // Select boîte, set Valeur
+    // Select boîte (may already be selected after placement)
     await selectPieceAt(page, 165, 120);
 
     const ctxActions = page.locator('[data-testid="context-actions"]');
@@ -1807,7 +1802,17 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('56 — Surlignage 3 couleurs + superflu', async ({ page }) => {
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes rouges. Elle en donne 5 à Marc. Il fait beau. Combien lui en reste-t-il?'));
+    // Load problem via manual text input (more reliable than URL params)
+    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    await expect(problemInput).toBeVisible({ timeout: 3000 });
+    await problemInput.click();
+    await page.waitForTimeout(300);
+    const textarea = page.locator('textarea');
+    await expect(textarea).toBeVisible({ timeout: 2000 });
+    await textarea.fill('Léa a 12 pommes rouges. Elle en donne 5 à Marc. Il fait beau. Combien lui en reste-t-il?');
+    await textarea.press('Enter');
+    await page.waitForTimeout(500);
+
     const pz = page.locator('[data-testid="problem-zone"]');
 
     // Bleu (default pastille) — click "12"
@@ -1915,8 +1920,8 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('102-before-ranger.png'), fullPage: true });
 
-    // Click Ranger button
-    const rangerBtn = page.locator('button[aria-label="Ranger"]');
+    // Click Ranger button (aria-label is "Ranger les pièces")
+    const rangerBtn = page.locator('button[aria-label="Ranger les pièces"]');
     await expect.soft(rangerBtn).toBeVisible({ timeout: 2000 });
     if (await rangerBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await rangerBtn.click();
@@ -1928,36 +1933,41 @@ test.describe('Visual audit — full flow', () => {
 
   test('60 — Barre equaliser (Même taille)', async ({ page }) => {
     await navigateAndReady(page);
-    // Place two bars of different sizes
+    // Place two bars (tool auto-deactivates after each placement, re-select to place another)
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
     await page.waitForTimeout(300);
+    // Re-activate tool to place second bar
+    await selectTool(page, 'barre');
     await clickCanvas(page, 80, 100);
     await page.waitForTimeout(300);
-    await selectTool(page, 'barre'); // toggle off
 
-    // Resize first bar to 3×
+    // Tool auto-deactivates — resize first bar to 3×
+    await page.keyboard.press('Escape'); // deselect after placement
+    await page.waitForTimeout(300);
     await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.click({ force: true });
-    await page.waitForTimeout(200);
-    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    await tailleBtn.dispatchEvent('click');
+    await page.waitForTimeout(300);
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.click({ force: true });
-    await page.waitForTimeout(200);
+    await btn3x.dispatchEvent('click');
+    await page.waitForTimeout(300);
 
     await page.screenshot({ path: shot('104-bars-different-sizes.png'), fullPage: true });
 
-    // Select first bar, open Taille submenu, click "= une autre barre"
-    await selectPieceAt(page, 110, 67);
+    // Deselect and re-select first bar (now 3× wide: x=80 to x=260)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await selectPieceAt(page, 160, 67);
     const tailleBtn2 = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn2).toBeVisible({ timeout: 2000 });
-    await tailleBtn2.click({ force: true });
-    await page.waitForTimeout(200);
+    await tailleBtn2.dispatchEvent('click');
+    await page.waitForTimeout(300);
     const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("= une autre barre")');
     await expect(memeTailleBtn).toBeVisible({ timeout: 2000 });
-    await memeTailleBtn.click({ force: true });
+    await memeTailleBtn.dispatchEvent('click');
     await page.waitForTimeout(200);
     // Click second bar to equalize
     await clickCanvas(page, 110, 107);
@@ -1973,18 +1983,19 @@ test.describe('Visual audit — full flow', () => {
     await clickCanvas(page, 80, 60);
     await page.waitForTimeout(300);
 
-    // Place a second bar below
+    // Re-activate tool to place a second bar below
+    await selectTool(page, 'barre');
     await clickCanvas(page, 80, 100);
     await page.waitForTimeout(300);
-    await selectTool(page, 'barre'); // toggle off
 
-    // Resize second bar to ½×
+    // Tool auto-deactivates — resize second bar to ½×
     await selectPieceAt(page, 110, 107);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
     await tailleBtn.click({ force: true });
     await page.waitForTimeout(200);
-    const btnHalf = page.locator('[data-testid="context-actions"] button:has-text("½×")');
+    // Use exact match to avoid matching "1½×"
+    const btnHalf = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '½×', exact: true });
     await expect(btnHalf).toBeVisible({ timeout: 2000 });
     await btnHalf.click();
     await page.waitForTimeout(200);
@@ -2280,8 +2291,10 @@ test.describe('Visual audit — full flow', () => {
   // ────────────────────────────────────────────────────────
 
   test('72 — Profil dyslexie avec problème chargé + surlignage', async ({ page }) => {
-    // Load problem first
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 12 pommes. Elle en donne 5. Combien en reste-t-il?'));
+    // Load problem via problem selector (more reliable than URL params)
+    await openProblemSelector(page);
+    await page.locator('text=Comparaison multiplicative').click();
+    await page.waitForTimeout(500);
 
     // Enable OpenDyslexic + letter spacing
     await openSettings(page);
@@ -2295,16 +2308,19 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(200);
     await closeSettings(page);
 
-    // Highlight "12" in bleu — target within problem zone
+    // Wait for problem zone to be expanded with word spans
     const pz = page.locator('[data-testid="problem-zone"]');
-    const word12 = pz.locator('span:has-text("12")').first();
-    await expect.soft(word12).toBeVisible({ timeout: 2000 });
-    if (await word12.isVisible({ timeout: 500 }).catch(() => false)) {
-      await word12.click();
+    await expect(pz).toBeVisible({ timeout: 3000 });
+
+    // Highlight "45" in bleu (default pastille)
+    const word45 = pz.locator('span:has-text("45")').first();
+    await expect.soft(word45).toBeVisible({ timeout: 3000 });
+    if (await word45.isVisible({ timeout: 500 }).catch(() => false)) {
+      await word45.click();
       await page.waitForTimeout(300);
     }
 
-    // Also highlight "donne" in orange
+    // Switch to orange, highlight "Combien"
     const orangeBtn = pz.locator('button:has-text("Question")');
     await expect.soft(orangeBtn).toBeVisible({ timeout: 2000 });
     if (await orangeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
@@ -2455,13 +2471,15 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('78 — TTS surlignage mot à mot', async ({ page }) => {
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a douze pommes rouges.'));
+    // TTS is enabled by default. Load problem via problem selector.
+    await openProblemSelector(page);
+    await page.locator('text=Comparaison multiplicative').click();
+    await page.waitForTimeout(500);
 
-    // Enable TTS
+    // Verify TTS is enabled (default) — toggle shows "Activé"
     await openSettings(page);
-    const ttsToggle = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Désactivé")');
-    await expect.soft(ttsToggle).toBeVisible({ timeout: 2000 });
-    if (await ttsToggle.isVisible({ timeout: 500 }).catch(() => false)) await ttsToggle.click();
+    const ttsActive = page.locator('[role="dialog"][aria-label="Paramètres"]').locator('text=Lecture à voix haute').locator('..').locator('button:has-text("Activé")');
+    await expect.soft(ttsActive).toBeVisible({ timeout: 2000 });
     await closeSettings(page);
 
     // Click speaker button
@@ -2483,22 +2501,28 @@ test.describe('Visual audit — full flow', () => {
     await selectTool(page, 'barre');
     await clickCanvas(page, 80, 60);
     await page.waitForTimeout(300);
-    await selectTool(page, 'barre'); // off
+    // Tool auto-deactivates, bar auto-selected — deselect first for clean state
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
     await selectPieceAt(page, 110, 67);
     const tailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Taille")');
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
-    await tailleBtn.click({ force: true });
-    await page.waitForTimeout(200);
-    const btn3x = page.locator('[data-testid="context-actions"] button:has-text("3×")');
+    await tailleBtn.dispatchEvent('click');
+    await page.waitForTimeout(300);
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
-    await btn3x.click({ force: true });
-    await page.waitForTimeout(200);
+    await btn3x.dispatchEvent('click');
+    await page.waitForTimeout(300);
 
     // Copier (first level — no Plus submenu)
-    await selectPieceAt(page, 110, 67);
+    // Deselect and re-select to get fresh context actions (main menu)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    // After resize, bar is 3× wide (x=80 to x=260), click center
+    await selectPieceAt(page, 160, 67);
     const copyBtn = page.locator('[data-testid="context-actions"] button:has-text("Copier")');
     await expect(copyBtn).toBeVisible({ timeout: 2000 });
-    await copyBtn.click({ force: true });
+    await copyBtn.dispatchEvent('click');
     await page.waitForTimeout(300);
 
     // Calcul
@@ -2739,31 +2763,38 @@ test.describe('Visual audit — full flow', () => {
   });
 
   test('88 — Surlignage visible vérifié', async ({ page }) => {
-    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marc a 24 billes bleues. Il en donne 9.'));
+    // Load problem via manual text input (more reliable than URL params)
+    const problemInput = page.locator('button:has-text("Taper ou coller un problème")');
+    await expect(problemInput).toBeVisible({ timeout: 3000 });
+    await problemInput.click();
+    await page.waitForTimeout(300);
+    const textarea = page.locator('textarea');
+    await expect(textarea).toBeVisible({ timeout: 2000 });
+    await textarea.fill('Marc a 24 billes bleues. Il en donne 9.');
+    await textarea.press('Enter');
+    await page.waitForTimeout(500);
 
-    // Expand problem zone — click on the problem text
-    const marcText = page.locator('text=Marc').first();
-    if (await marcText.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await marcText.click();
-      await page.waitForTimeout(500);
-    }
+    const pz = page.locator('[data-testid="problem-zone"]');
+
+    // Wait for problem zone to appear with expanded content
+    await expect(pz).toBeVisible({ timeout: 3000 });
 
     // Highlight "24" in bleu (default)
-    const word24 = page.locator('span:has-text("24")').first();
-    await expect.soft(word24).toBeVisible({ timeout: 2000 });
+    const word24 = pz.locator('span:has-text("24")').first();
+    await expect.soft(word24).toBeVisible({ timeout: 3000 });
     if (await word24.isVisible({ timeout: 500 }).catch(() => false)) {
       await word24.click();
       await page.waitForTimeout(400);
     }
 
     // Switch to orange, highlight "donne"
-    const orangeBtn = page.locator('button:has-text("Question")');
+    const orangeBtn = pz.locator('button:has-text("Question")');
     await expect.soft(orangeBtn).toBeVisible({ timeout: 2000 });
     if (await orangeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await orangeBtn.click();
       await page.waitForTimeout(300);
     }
-    const wordDonne = page.locator('span:has-text("donne")').first();
+    const wordDonne = pz.locator('span:has-text("donne")').first();
     await expect.soft(wordDonne).toBeVisible({ timeout: 2000 });
     if (await wordDonne.isVisible({ timeout: 500 }).catch(() => false)) {
       await wordDonne.click();

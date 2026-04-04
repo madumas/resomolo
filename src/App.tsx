@@ -171,6 +171,19 @@ export default function App() {
     loadSettings().then(s => { setSettings(s); settingsLoadedRef.current = true; });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Test-only: expose piece selection without editing (for e2e tests)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.id) {
+        setSelectedPieceId(detail.id);
+        setEditingPieceId(null);
+      }
+    };
+    window.addEventListener('test-select-piece', handler);
+    return () => window.removeEventListener('test-select-piece', handler);
+  }, []);
+
   // Auto-save settings on change + sync sound/font/spacing (skip initial mount)
   useEffect(() => {
     if (settingsLoadedRef.current) saveSettings(settings);

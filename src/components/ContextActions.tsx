@@ -187,6 +187,7 @@ export function ContextActions({
           {/* Color buttons */}
           {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
             <button key={c} onClick={() => onEditPiece(piece.id, { couleur: c })}
+              aria-label={`Couleur ${c}`}
               style={{
                 minWidth: 44, minHeight: 44, borderRadius: '50%',
                 background: getPieceColor(c),

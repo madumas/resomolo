@@ -71,6 +71,21 @@ export async function selectPieceAt(page: Page, xMm: number, yMm: number): Promi
 }
 
 /**
+ * Select a piece by ID without opening the inline editor.
+ * Useful for calcul/reponse/etiquette pieces which always open the editor on click.
+ * Dispatches a custom event that App.tsx listens for (test-only).
+ */
+export async function selectPieceById(page: Page, pieceId: string): Promise<void> {
+  await page.evaluate((id) => {
+    window.dispatchEvent(new CustomEvent('test-select-piece', { detail: { id } }));
+  }, pieceId);
+  await page.waitForTimeout(200);
+
+  const ctx = page.locator('[data-testid="context-actions"]');
+  await expect(ctx).toBeVisible({ timeout: 2000 });
+}
+
+/**
  * Select a tool by clicking its toolbar button.
  * Auto-expands the toolbar if the tool is hidden (simplified mode).
  */

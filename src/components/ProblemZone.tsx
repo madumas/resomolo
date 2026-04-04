@@ -145,7 +145,7 @@ export function ProblemZone({
   // Editing mode (textarea)
   if (isEditing && onTextChange) {
     return (
-      <div style={{
+      <div data-testid="problem-zone" style={{
         padding: '12px 16px',
         background: '#F2F0F8',
         borderBottom: '1px solid #E8E5F0',
@@ -190,6 +190,7 @@ export function ProblemZone({
 
     return (
       <div
+        data-testid="problem-zone"
         onClick={onToggle}
         style={{
           padding: '8px 16px',
@@ -225,7 +226,7 @@ export function ProblemZone({
 
   // Expanded mode with word-by-word highlighting
   return (
-    <div style={{
+    <div data-testid="problem-zone" style={{
       padding: '12px 16px',
       background: '#F2F0F8',
       borderBottom: '1px solid #E8E5F0',
