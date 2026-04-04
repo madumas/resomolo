@@ -648,8 +648,6 @@ test.describe('Visual audit — full flow', () => {
       await newSlotBtn.click();
       await page.waitForTimeout(500);
 
-      await page.screenshot({ path: shot('45-slot-manager-after-create.png'), fullPage: true });
-
       // Reopen slot manager to verify the new slot exists
       await openSlotManager(page);
       const slotEntries = page.locator('[role="dialog"][aria-label="Mes travaux"]').locator('text=En cours');

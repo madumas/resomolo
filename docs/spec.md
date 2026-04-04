@@ -1,10 +1,10 @@
-# ModéliVite — Spécification
+# RésoMolo — Spécification
 
 ## 1. Vision
 
-ModéliVite est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre. L'enfant fait le raisonnement; l'outil lui permet de le rendre visible.
+RésoMolo est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre. L'enfant fait le raisonnement; l'outil lui permet de le rendre visible.
 
-L'enfant ayant des difficultés motrices (Trouble Développemental de la Coordination) ne peut pas dessiner ses schémas sur papier. ModéliVite compense le geste moteur — pas le raisonnement. Comme GéoMolo pour la géométrie, mais pour la résolution de problèmes.
+L'enfant ayant des difficultés motrices (Trouble Développemental de la Coordination) ne peut pas dessiner ses schémas sur papier. RésoMolo compense le geste moteur — pas le raisonnement. Comme GéoMolo pour la géométrie, mais pour la résolution de problèmes.
 
 L'outil est utile à tout enfant en difficulté en résolution de problèmes. L'enfant ayant des difficultés motrices en bénéficie le plus, mais la modélisation visuelle est une stratégie universelle qui aide aussi les enfants ayant des difficultés en math (construction du sens du nombre), en lecture (traduction texte → schéma), en attention (ancrage visuel de chaque étape contre l'oubli), ou de l'anxiété de performance (point de départ concret au lieu de la page blanche).
 
@@ -19,7 +19,7 @@ L'outil est utile à tout enfant en difficulté en résolution de problèmes. L'
 
 ### 3.1 L'enfant raisonne, l'outil dessine
 
-ModéliVite ne résout rien. Il ne valide rien. Il ne donne pas d'indices sur la solution. L'outil est un médiateur muet — comme une feuille de papier, mais qui compense le geste moteur et l'organisation spatiale.
+RésoMolo ne résout rien. Il ne valide rien. Il ne donne pas d'indices sur la solution. L'outil est un médiateur muet — comme une feuille de papier, mais qui compense le geste moteur et l'organisation spatiale.
 
 La barre d'état fournit des **accusés de réception factuels** (« Barre placée », « Lien créé ») qui confirment que l'action a été exécutée. Ce ne sont pas des jugements — l'outil ne dit jamais si c'est bien ou mal.
 
@@ -68,7 +68,7 @@ Projet séparé de GéoMolo. Même stack, code indépendant.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ModéliVite                    [Slots ▾]  [⟲] [⟳] [⚙]  │
+│  RésoMolo  [Pièces...]  [Simplifié/Complet] [Problèmes] [⚙] │
 ├─────────────────────────────────────────────────────────┤
 │  ┌───────────────────────────────────────────────────┐  │
 │  │ Zone problème (toujours partiellement visible)    │  │
@@ -85,7 +85,7 @@ Projet séparé de GéoMolo. Même stack, code indépendant.
 │  │                                                   │  │
 │  └───────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────┐  │
-│  │ Barre d'outils (pièces)                           │  │
+│  │ Barre d'action (⟲ Undo, ⟳ Redo, etc.)            │  │
 │  └───────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────┐  │
 │  │ Barre d'état                                      │  │
@@ -99,7 +99,7 @@ Bandeau en haut de l'espace de travail. Affiche l'énoncé du problème.
 
 - **Texte libre :** L'enfant peut taper ou coller un énoncé. Champ `contenteditable` ou `<textarea>`.
 - **Fourni :** Via fichier `.modelivite`, URL query param (`?probleme=...`), ou vide (problème dans un cahier d'exercices physique).
-- **Surlignage par mots :** L'enfant peut surligner le texte en 3 couleurs (bleu = données connues, orange = question, vert = contexte relationnel comme « de plus », « fois plus », « le reste »). Stratégie universelle en orthopédagogie pour la compréhension d'énoncés. **Interaction sans drag :** l'enfant choisit une pastille de couleur, puis clique sur les mots un par un. Un clic sur un mot adjacent à un mot déjà surligné de la même couleur étend la sélection. Un clic sur un mot non-adjacent crée un nouveau segment surligné. Un clic sur un mot déjà surligné le désélectionne. Zéro drag — compensation motrice complète. Chaque pastille de couleur affiche un label texte visible à l'intérieur (« Données », « Question », « Contexte ») plutôt que de reposer uniquement sur les tooltips. Amélioration d'accessibilité : les tooltips HTML ne fonctionnent pas sur tablette, et un enfant daltonien ne distingue pas les couleurs sans texte.
+- **Surlignage par mots :** L'enfant peut surligner le texte en 4 couleurs (bleu = données connues, orange = question, vert = contexte relationnel comme « de plus », « fois plus », « le reste », gris = superflu — données non pertinentes). Stratégie universelle en orthopédagogie pour la compréhension d'énoncés. La 4e couleur (gris, Superflu) soutient l'inhibition cognitive : l'enfant identifie explicitement les informations qu'il doit ignorer. **Interaction sans drag :** l'enfant choisit une pastille de couleur, puis clique sur les mots un par un. Un clic sur un mot adjacent à un mot déjà surligné de la même couleur étend la sélection. Un clic sur un mot non-adjacent crée un nouveau segment surligné. Un clic sur un mot déjà surligné le désélectionne. Zéro drag — compensation motrice complète. Chaque pastille de couleur affiche un label texte visible à l'intérieur (« Données », « Question », « Contexte », « Superflu ») plutôt que de reposer uniquement sur les tooltips. Amélioration d'accessibilité : les tooltips HTML ne fonctionnent pas sur tablette, et un enfant daltonien ne distingue pas les couleurs sans texte.
 - **Mode compact :** Un clic replie la zone pour maximiser l'espace de travail. **Le mode replié n'est jamais vide** : il affiche toujours la première ligne du texte et les passages surlignés (données numériques) restent visibles dans un bandeau résumé. L'enfant n'a pas besoin de relire tout le texte pour retrouver « 100 $ ». Clic pour déplier et relire le texte complet.
 - **Lecture seule quand fourni :** Si le problème vient d'un fichier ou URL, le texte est en lecture seule (le surlignage reste possible).
 - **Sanitization :** `textContent` jamais `innerHTML` pour les params URL.
@@ -115,6 +115,7 @@ Canvas SVG. Surface libre où l'enfant place ses pièces.
 - **Grille invisible de snap :** Les pièces s'alignent sur une grille invisible de 5mm dans le système de coordonnées du modèle. L'enfant ne voit pas la grille mais ses pièces s'alignent proprement.
 - **Pas de pan ni de scroll.** Le canvas reste entièrement visible en tout temps. Justification accessibilité et UX-pédagogie : (1) un enfant ayant des difficultés motrices a besoin de voir l'ensemble de son modèle pour raisonner — un canvas navigable brise cette vue d'ensemble ; (2) la confusion entre « déplacer une pièce » et « déplacer le canvas » est un risque majeur pour cette population ; (3) les problèmes du primaire QC tiennent largement dans un viewport fixe bien organisé. Le bouton « Ranger » couvre le besoin de réorganisation spatiale. Si l'espace devient insuffisant, la solution est le dimensionnement responsive et l'auto-zoom adaptatif, pas le pan.
 - **Ranger :** Bouton flottant en bas à droite du canvas, à côté de Voir tout (icône grille/alignement). Réorganise les pièces existantes pour maximiser la lisibilité. Algorithme simple : barres alignées à gauche en haut, jetons/boîtes au milieu, calculs en bas, réponse tout en bas ; espacement uniforme (15mm vertical, 10mm horizontal) ; ordre relatif préservé au sein de chaque groupe. Ne déplace PAS les pièces verrouillées. **Animation lente (400-500ms, ease-out)** — chaque pièce glisse vers sa nouvelle position. Pas de téléportation. L'animation est critique : avec animation, c'est rassurant ; sans, c'est désorientant. Pas de confirmation modale — l'undo suffit comme filet (un Ctrl+Z et tout revient). Les flèches ne sont pas réarrangées — elles suivent leurs pièces attachées. Barre d'état après : « Pièces réorganisées ». Cible 44×44px.
+- **Zones sugérées :** Quand activé dans les paramètres, deux zones semi-transparentes ("Ton schéma" en haut, "Calcul et réponse" en bas) apparaissent comme guides visuels. Désactivées par défaut. Ne restreignent pas le placement des pièces.
 - **Sélection :** Clic sur une pièce pour la sélectionner. Actions contextuelles (déplacer, éditer, supprimer) via barre d'actions comme GéoMolo.
 
 ### 5.4 Barre d'outils (pièces)
@@ -133,7 +134,7 @@ Mode complet:
 
 L'ordre en mode complet place les 5 pièces essentielles en premier, suivies des 3 pièces secondaires. L'enfant qui passe en mode complet retrouve ses repères.
 
-La droite numérique, la grille de calcul et le tableau sont reportés (v2 — cycles 1 et 3).
+La droite numérique et le tableau sont disponibles en mode Complet. La grille de calcul est reportée (v2 — cycles 1 et 3).
 
 **Pièces configurables :** Le fichier `.modelivite` peut restreindre les pièces disponibles via un champ `availablePieces`. Le parent ou l'enseignant peut préparer un problème avec seulement Barre + Calcul + Réponse. Réduit la charge de choix et simplifie l'utilisation.
 
@@ -149,6 +150,8 @@ Comme GéoMolo. Affiche l'outil actif et le geste attendu. Fournit des accusés 
 - **Après surlignage (au moins un mot surligné, aucune pièce) :** « Place ta première pièce. »
 - **Amorçage (pas d'énoncé, espace vide) :** « Tu peux commencer par placer un jeton ou une barre. » — nommer deux pièces concrètes réduit le champ de choix.
 - **Amorçage (énoncé présent, pièces verrouillées pré-placées) :** « Des pièces sont déjà placées. Complète le schéma. » — l'enfant comprend qu'il doit ajouter, pas repartir de zéro.
+- **Suggestions procédurales :** Les messages procéduraux (« Tu peux nommer tes barres... ») utilisent le style par défaut de la barre d'état.
+- **Relances métacognitives :** Les relances PFEQ (questions « Que sais-tu? », etc.) utilisent un style visuel distinct (violet) pour les différencier des messages procéduraux.
 - **Questions de relance :** Deux déclencheurs complémentaires :
   1. **Relance initiale :** Quand aucune pièce n'est placée depuis `relanceDelayMs` (défaut 30s, plancher 30s), indépendamment du surlignage. Affiche les trois questions PFEQ **une à la fois en séquence** : « Que sais-tu? » → (délai) → « Que cherches-tu? » → (délai) → « Qu'est-ce qui se passe dans l'histoire? ». Après la 3e, reste sur la dernière. Toute interaction réinitialise.
   2. **Relance d'inactivité :** Quand aucune *nouvelle action* (placement, édition, déplacement, surlignage) n'est détectée depuis `relanceDelayMs`, même si des pièces existent déjà. Un enfant qui a placé un jeton puis reste bloqué doit recevoir du soutien. Mêmes questions, même séquence.
@@ -157,9 +160,12 @@ Comme GéoMolo. Affiche l'outil actif et le geste attendu. Fournit des accusés 
 
 ### 5.6 En-tête
 
-- **Logo/nom :** ModéliVite
-- **Sélecteur de slot :** Menu déroulant. Chaque slot affiche son nom et sa date de dernière modification.
-- **Undo/Redo :** Boutons ⟲ / ⟳
+L'en-tête contient : Logo RésoMolo, Toolbar (pièces), sélecteur Simplifié/Complet, bouton Problèmes. Undo/Redo sont dans la barre d'action en bas.
+
+- **Logo/nom :** RésoMolo
+- **Toolbar (pièces) :** Intégrée dans l'en-tête (voir §5.4)
+- **Sélecteur Simplifié/Complet :** Bascule entre les modes de pièces
+- **Bouton Problèmes :** Accès à la banque de problèmes. Le sélecteur de problèmes ne montre pas de niveaux de difficulté à l'élève. Le filtrage se fait par cycle et type de problème uniquement.
 - **Recommencer :** Bouton qui vide les pièces mais garde l'énoncé du problème. Confirmation requise (« Effacer les pièces et recommencer? »). Distinct de « Nouvelle modélisation » qui crée un nouveau slot. Soutient la flexibilité cognitive : recommencer à zéro est parfois la meilleure stratégie.
 - **Paramètres :** Bouton ⚙
 
@@ -264,9 +270,11 @@ Comme GéoMolo. Affiche l'outil actif et le geste attendu. Fournit des accusés 
 - Sélection + Déplacer
 - Sélection + Supprimer
 
+**Message factuel post-réponse :** Quand l'enfant a placé des pièces de modélisation, un calcul et une réponse, la barre d'état affiche : « Tu as écrit ta réponse. Relis le problème pour vérifier. » -- message factuel, jamais évaluatif.
+
 ### 6.6 Calcul
 
-**Quoi :** Un espace d'écriture d'opération mathématique. L'enfant tape l'expression ET le résultat — l'outil ne calcule rien. C'est de la compensation motrice (écriture propre et alignée), pas cognitive. L'enfant qui a besoin d'une calculatrice a sa calculatrice à côté. ModéliVite modélise, la calculatrice calcule — chaque outil a sa mission.
+**Quoi :** Un espace d'écriture d'opération mathématique. L'enfant tape l'expression ET le résultat — l'outil ne calcule rien. C'est de la compensation motrice (écriture propre et alignée), pas cognitive. L'enfant qui a besoin d'une calculatrice a sa calculatrice à côté. RésoMolo modélise, la calculatrice calcule — chaque outil a sa mission.
 
 **Placement :** Clic dans l'espace → un champ apparaît avec curseur actif.
 
@@ -343,6 +351,8 @@ Par défaut, mode expression (le plus simple).
 
 **Contenu :** Texte libre. L'enfant écrit sa réponse en phrase (« Théo a lu 15 pages ») ou juste le nombre (« 15 pages »). Pas de validation.
 
+**Gabarits de réponse :** L'enfant peut choisir parmi des amorces syntaxiques : « Il en reste ___ . », « Chaque ___ reçoit ___ . », « ___ a ___ de plus que ___ . », « ___ a ___ fois plus que ___ . », « En tout, il y a ___ . », « La réponse est ___ . ». Ils fournissent la structure de phrase sans contenu mathématique.
+
 **Unicité :** Un seul encadré Réponse par espace de travail. Si l'enfant clique Réponse alors qu'il en existe déjà un, l'existant est sélectionné et le curseur y est placé.
 
 **Interactions :**
@@ -367,13 +377,15 @@ Actions disponibles selon la pièce :
 
 | Pièce | Actions |
 |---|---|
-| Jeton | Déplacer, Couleur, Supprimer |
-| Boîte | Déplacer, Supprimer |
-| Étiquette | Éditer, Déplacer, Supprimer |
-| Flèche | Éditer étiquette, Supprimer |
-| Barre | **Niveau 1 :** Déplacer, Taille (sous-menu : 1×-5×), Copier [N], Supprimer — **Niveau 2 (« Plus ») :** Diviser, Même taille, Grouper, Couleur |
-| Calcul | Éditer, En colonnes / En ligne, Déplacer, Supprimer |
-| Réponse | Éditer, Déplacer, Supprimer |
+| Jeton | Déplacer, Couleur, Supprimer (micro-confirmation « Sûr? ») |
+| Boîte | Déplacer, Supprimer (micro-confirmation « Sûr? ») |
+| Étiquette | Éditer, Déplacer, Supprimer (micro-confirmation « Sûr? ») |
+| Flèche | Éditer étiquette, Supprimer (micro-confirmation « Sûr? ») |
+| Barre | **Niveau 1 (L1) :** Nommer, Taille (sous-menu : 1×-5×), Copier [N], Supprimer (micro-confirmation « Sûr? ») — **Niveau 2 (L2 « Plus... ») :** Valeur, Fraction, Grouper/Dégrouper, Couleur |
+| Calcul | Éditer, En colonnes / En ligne, Déplacer, Supprimer (micro-confirmation « Sûr? ») |
+| Réponse | Éditer, Déplacer, Supprimer (micro-confirmation « Sûr? ») |
+
+Le profil Aide maximale aplatit les deux niveaux (L1 + L2) en un seul niveau — toutes les actions sont visibles directement.
 
 Boutons 44×44px, espacement 8px. Suppression avec micro-confirmation (comme GéoMolo) : le bouton passe en rouge et affiche « Sûr? » pendant 2s.
 
@@ -503,6 +515,7 @@ Trois modes, comme GéoMolo (Web Audio API, 50ms synthétisé) :
 - **Pièces visibles :** Essentiel (5 pièces) / Complet (8 pièces) (défaut : Essentiel)
 - **Questions de relance :** Activées / Désactivées (défaut : activées). Les questions métacognitives dans la barre d'état. Plancher configurable : 30 secondes minimum (pas 5s — anxiogène pour les enfants lents mais actifs).
 - **Problème toujours visible :** Activé / Désactivé (défaut : désactivé). Quand activé, la zone problème ne peut pas être réduite en mode compact. Recommandé pour les enfants avec faible mémoire de travail.
+- **Zones sugérées :** Activées / Désactivées (défaut : désactivées). Affiche des zones guides semi-transparentes sur le canevas.
 - **Compteur de jetons :** Activé / Désactivé (défaut : activé). Affiche un décompte par couleur en bas du canvas (« 5 bleus, 3 rouges »). Soutient le dénombrement pour les enfants dyscalculiques.
 
 ### 9.5 Profils prédéfinis
@@ -542,7 +555,7 @@ Même famille que GéoMolo, adaptée au contexte :
 - **Réponse — bordure :** #185FA5 (bleu), 2px
 - **Suppression :** #C82828 (rouge)
 - **Fond UI :** #F5F7FA
-- **Surlignage zone problème :** Bleu #C5D9F0, Orange #F5D5C0, Vert #C5E8D5
+- **Surlignage zone problème :** Bleu #C5D9F0, Orange #F5D5C0, Vert #C5E8D5, Gris #D5D5D5 (Superflu)
 
 ### 10.2 Couleurs des pièces
 
@@ -755,7 +768,7 @@ interface Reponse extends Piece {
 interface Highlight {
   start: number;       // index de début dans le texte
   end: number;         // index de fin
-  color: 'bleu' | 'orange' | 'vert';
+  color: 'bleu' | 'orange' | 'vert' | 'gris';
 }
 
 interface ModelisationState {
