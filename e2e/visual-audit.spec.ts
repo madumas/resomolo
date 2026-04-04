@@ -1351,7 +1351,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(minBtn).toBeVisible({ timeout: 2000 });
     await minBtn.click();
     await page.waitForTimeout(200);
-    const val5 = ctxActions.locator('button:has-text("5")').first();
+    const val5 = ctxActions.getByRole('button', { name: '5', exact: true });
     await expect(val5).toBeVisible({ timeout: 2000 });
     await val5.click();
     await page.waitForTimeout(300);
@@ -1361,9 +1361,11 @@ test.describe('Visual audit — full flow', () => {
 
     await page.screenshot({ path: shot('77-droite-min5.png'), fullPage: true });
 
-    // Verify first tick label is 5, not 0
-    const texts = page.locator('[data-testid="canvas-svg"] text');
-    const allTexts = await texts.allTextContents();
+    // Verify tick labels include 5 and the droite does not show 0 as a tick label
+    // Scope to the droite piece's group to avoid false positives from other SVG text elements
+    const droitePiece = page.locator('[data-testid="canvas-svg"] [data-piece-id]').first();
+    const droiteTexts = droitePiece.locator('text');
+    const allTexts = await droiteTexts.allTextContents();
     expect(allTexts.some(t => t.trim() === '5')).toBe(true);
     expect(allTexts.filter(t => t.trim() === '0').length).toBe(0);
   });
