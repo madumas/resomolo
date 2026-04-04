@@ -106,7 +106,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
             rel="noopener"
             style={{ color: UI_PRIMARY, fontWeight: 600 }}
           >
-            GéoMolo.ca
+            GeoMolo.ca
           </a>
           {' '}— géométrie accessible
         </div>
