@@ -113,14 +113,9 @@ export default function App() {
       return result.undoManager;
     });
     setActivityTick(t => t + 1);
-    // Ensure a slot exists on first content-modifying action so auto-save works
-    if (!slotEnsuredRef.current) {
-      slotEnsuredRef.current = true;
-      slotManager.ensureSlot();
-    }
-  }, [slotManager]);
+  }, []);
 
-  // Slot manager
+  // Slot manager — must be declared before any useEffect that references it
   const slotManager = useSlotManager({ undoManager, dispatch });
 
   const handleUndo = useCallback(() => {
