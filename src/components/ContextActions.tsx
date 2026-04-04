@@ -364,22 +364,33 @@ export function ContextActions({
       {/* Jeton: color + duplicate */}
       {isJeton(piece) && (
         <>
-          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
-            <button
-              key={c}
-              onClick={() => onChangeColor(piece.id, c)}
-              aria-label={`Couleur ${c}`}
-              style={{
-                minWidth: 44,
-                minHeight: 44,
-                borderRadius: '50%',
-                background: getPieceColor(c),
-                border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
-                cursor: 'pointer',
-                opacity: piece.couleur === c ? 1 : 0.5,
-              }}
-            />
-          ))}
+          {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => {
+            const label = { bleu: 'B', rouge: 'R', vert: 'V', jaune: 'J' }[c];
+            return (
+              <button
+                key={c}
+                onClick={() => onChangeColor(piece.id, c)}
+                aria-label={`Couleur ${c}`}
+                style={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  borderRadius: '50%',
+                  background: getPieceColor(c),
+                  border: `3px solid ${piece.couleur === c ? '#1E1A2E' : 'transparent'}`,
+                  cursor: 'pointer',
+                  opacity: piece.couleur === c ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
           <CtxBtn onClick={() => onDuplicateJetons(piece.id, 3)}>=3</CtxBtn>
           <CtxBtn onClick={() => onDuplicateJetons(piece.id, 5)}>=5</CtxBtn>
           {freeJetonCount >= 2 && onRepartirJetons && !showRepartir && (

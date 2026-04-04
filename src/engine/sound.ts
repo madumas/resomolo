@@ -39,10 +39,31 @@ export function soundPlace() {
   setTimeout(() => play(880, 40, 'sine', 0.08), 30);
 }
 
-// Snap — bar aligned (subtle click)
-export function soundSnap() {
-  play(1200, 25, 'square', 0.05);
+// Snap — bar aligned (subtle click in reduced, sweep in full)
+export function soundSnapReduced() {
+  play(250, 20, 'triangle', 0.10);
 }
+export function soundSnapFull() {
+  try {
+    const c = getCtx();
+    if (c.state === 'suspended') c.resume();
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = 480;
+    osc.frequency.linearRampToValueAtTime(320, c.currentTime + 0.035);
+    g.gain.value = 0.15 * gainMultiplier;
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.035);
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.start();
+    osc.stop(c.currentTime + 0.035);
+  } catch {
+    // Audio not available — silent fallback
+  }
+}
+// Keep legacy export for backward compat
+export const soundSnap = soundSnapReduced;
 
 // Delete — neutral, not punitive (short descending, soft)
 export function soundDelete() {
@@ -112,8 +133,13 @@ export function onPlace() {
   if (mode !== 'off') { soundPlace(); haptic(); }
 }
 
+let _lastSnapTime = 0;
 export function onSnap() {
-  if (mode === 'full') { soundSnap(); haptic(15); }
+  const now = Date.now();
+  if (now - _lastSnapTime < 150) return;       // debounce 150ms
+  _lastSnapTime = now;
+  if (mode === 'reduced') { soundSnapReduced(); }
+  else if (mode === 'full') { soundSnapFull(); haptic(15); }
 }
 
 export function onDelete() {

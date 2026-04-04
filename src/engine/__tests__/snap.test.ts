@@ -28,7 +28,7 @@ describe('snapBarAlignment', () => {
   it('no other bars -- returns unchanged position', () => {
     const pos = { x: 50, y: 50 };
     const result = snapBarAlignment(pos, 'b1', [], SNAP_RADIUS);
-    expect(result).toEqual({ x: 50, y: 50 });
+    expect(result).toEqual({ x: 50, y: 50, aligned: false, alignRefY: undefined });
   });
 
   it('bar within snap radius -- x snaps to match', () => {
