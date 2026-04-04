@@ -96,6 +96,7 @@ export default function App() {
   const [activityTick, setActivityTick] = useState(0);
 
   // Dispatch
+  const slotEnsuredRef = useRef(false);
   const dispatch = useCallback((action: Action) => {
     setUndoManager(prev => {
       const fakeAppState = {
@@ -112,7 +113,12 @@ export default function App() {
       return result.undoManager;
     });
     setActivityTick(t => t + 1);
-  }, []);
+    // Ensure a slot exists on first content-modifying action so auto-save works
+    if (!slotEnsuredRef.current) {
+      slotEnsuredRef.current = true;
+      slotManager.ensureSlot();
+    }
+  }, [slotManager]);
 
   // Slot manager
   const slotManager = useSlotManager({ undoManager, dispatch });
@@ -170,6 +176,8 @@ export default function App() {
         }
         setProblemZoneActive(true);
         window.history.replaceState({}, '', window.location.pathname);
+        // Ensure a slot exists so auto-save persists the shared content
+        slotManager.ensureSlot();
       }
     })().then(() => setAppReady(true));
     loadSettings().then(s => { setSettings(s); settingsLoadedRef.current = true; });
