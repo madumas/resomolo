@@ -251,13 +251,16 @@ export function ProblemZone({
               title="Modifier le problème"
               aria-label="Modifier le problème"
               style={{
-                background: 'none', border: '1px solid #D5D0E0', borderRadius: 6,
-                minWidth: 32, minHeight: 32, cursor: 'pointer',
+                background: 'none', border: 'none', borderRadius: 4,
+                minWidth: 28, minHeight: 28, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, color: UI_TEXT_SECONDARY,
+                color: UI_TEXT_SECONDARY, opacity: 0.5,
+                padding: 2,
               }}
             >
-              ✏️
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11.5 1.5l3 3L5 14H2v-3z" />
+              </svg>
             </button>
           )}
         </div>
