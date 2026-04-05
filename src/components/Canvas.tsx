@@ -1455,7 +1455,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
     case 'jeton': return { x: piece.x + 2, y: piece.y - 7 };
     case 'barre': return { x: piece.x + piece.sizeMultiplier * referenceUnitMm - 6, y: piece.y - 8 };
     case 'boite': return { x: piece.x + (piece as Boite).width - 6, y: piece.y - 2 };
-    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) - 6, y: piece.y - 12 };
+    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 5.5 + 10) - 6, y: piece.y - 12 };
     case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) - 6, y: piece.y - 2 };
     case 'reponse': return { x: piece.x + getReponseWidth(piece as Reponse) - 6, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width - 4, y: piece.y - 14 };
@@ -1520,7 +1520,7 @@ function JetonPiece({ piece, isSelected, highContrast }: { piece: Piece & { type
 }
 
 function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquette' }; isSelected: boolean }) {
-  const w = Math.max(30, piece.text.length * 4 + 8);
+  const w = Math.max(30, piece.text.length * 5.5 + 10);
   const h = 10;
   return (
     <g>
@@ -1534,7 +1534,7 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
       />
       <text
         x={piece.x} y={piece.y}
-        fontSize={5}
+        fontSize={7}
         fill="#1E1A2E"
         data-edit-target={piece.id}
       >
@@ -1585,20 +1585,20 @@ function CalculPiece({ piece, isSelected }: {
   isSelected: boolean;
 }) {
   const displayText = formatExpr(piece.expression) || '…';
-  const w = Math.max(80, piece.expression.length * 5 + 10);
-  const h = 14;
+  const w = Math.max(80, piece.expression.length * 7 + 16);
+  const h = 20;
 
   return (
     <g>
       <rect
-        x={piece.x} y={piece.y} width={w} height={h} rx={2}
+        x={piece.x} y={piece.y} width={w} height={h} rx={3}
         fill={COLORS.calculBg}
         stroke={isSelected ? COLORS.primary : COLORS.calculBorder}
         strokeWidth={0.5}
       />
       <text
-        x={piece.x + 4} y={piece.y + h / 2}
-        dominantBaseline="central" fontSize={5}
+        x={piece.x + 6} y={piece.y + h / 2}
+        dominantBaseline="central" fontSize={8}
         fontFamily="'Consolas', 'Courier New', monospace"
         fill={piece.expression ? COLORS.text : '#9CA3AF'}
         data-edit-target={piece.id}
@@ -1656,10 +1656,10 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
           stroke={COLORS.reponseBorder}
           strokeWidth={isSelected ? 1 : 0.7}
         />
-        <text x={piece.x + 4} y={piece.y + 6} fontSize={4} fill={COLORS.primary}>
+        <text x={piece.x + 6} y={piece.y + 7} fontSize={5} fill={COLORS.primary}>
           {numbered ? `Réponse ${reponseIndex! + 1} (à trous)` : 'Réponse (à trous)'}
         </text>
-        <text x={piece.x + 4} y={piece.y + 16} fontSize={5} data-edit-target={piece.id}>
+        <text x={piece.x + 6} y={piece.y + 18} fontSize={7} data-edit-target={piece.id}>
           {segments.map((seg, i) => (
             <tspan
               key={i}
@@ -1675,21 +1675,21 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
   }
 
   // Free-form mode (original behavior)
-  const w = Math.max(100, piece.text.length * 4 + 20);
-  const h = 22;
+  const w = Math.max(100, piece.text.length * 5.5 + 24);
+  const h = 26;
 
   return (
     <g>
       <rect
-        x={piece.x} y={piece.y} width={w} height={h} rx={2}
+        x={piece.x} y={piece.y} width={w} height={h} rx={3}
         fill="#fff"
         stroke={COLORS.reponseBorder}
         strokeWidth={isSelected ? 1 : 0.7}
       />
-      <text x={piece.x + 4} y={piece.y + 6} fontSize={5} fill={COLORS.primary}>
+      <text x={piece.x + 6} y={piece.y + 7} fontSize={5} fill={COLORS.primary}>
         {numbered ? `Réponse ${reponseIndex! + 1}` : 'Réponse'}
       </text>
-      <text x={piece.x + 4} y={piece.y + 16} fontSize={5} fill={piece.text ? COLORS.text : '#9CA3AF'}
+      <text x={piece.x + 6} y={piece.y + 18} fontSize={7} fill={piece.text ? COLORS.text : '#9CA3AF'}
         data-edit-target={piece.id}>
         {piece.text || '…'}
       </text>
@@ -1908,9 +1908,9 @@ function getReponseWidth(piece: Reponse): number {
         templateText += blanks[i] || '____';
       }
     }
-    return Math.max(120, templateText.length * 3.2 + 20);
+    return Math.max(120, templateText.length * 4.5 + 24);
   }
-  return Math.max(100, piece.text.length * 4 + 20);
+  return Math.max(100, piece.text.length * 5.5 + 24);
 }
 
 // === Hit test ===
@@ -2015,7 +2015,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
              pos.y >= piece.y - p && pos.y <= piece.y + BAR_HEIGHT_MM + p;
     }
     case 'etiquette': {
-      const ew = Math.max(30, piece.text.length * 4 + 8);
+      const ew = Math.max(30, piece.text.length * 5.5 + 10);
       return pos.x >= piece.x - 2 - p && pos.x <= piece.x + ew + p &&
              pos.y >= piece.y - 7 - p && pos.y <= piece.y + 3 + p;
     }
@@ -2075,7 +2075,7 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'boite': return { x: piece.x + piece.width / 2, y: piece.y + piece.height / 2 };
     case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) / 2, y: piece.y + 7 };
     case 'reponse': return { x: piece.x + getReponseWidth(piece) / 2, y: piece.y + 11 };
-    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
+    case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 5.5 + 10) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
     case 'tableau': return { x: piece.x + (piece as Tableau).cols * TABLEAU_CELL_W / 2, y: piece.y + (piece as Tableau).rows * TABLEAU_CELL_H / 2 };
     default: return { x: piece.x, y: piece.y };
@@ -2089,9 +2089,9 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'jeton': return { x: piece.x, y: piece.y }; // circle — center is fine
     case 'barre': bx = piece.x; by = piece.y; bw = piece.sizeMultiplier * refUnit; bh = BAR_HEIGHT_MM; break;
     case 'boite': bx = piece.x; by = piece.y; bw = piece.width; bh = piece.height; break;
-    case 'calcul': bx = piece.x; by = piece.y; bw = Math.max(80, piece.expression.length * 5 + 10); bh = 12; break;
-    case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 22; break;
-    case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 4 + 8); bh = 10; break;
+    case 'calcul': bx = piece.x; by = piece.y; bw = Math.max(80, piece.expression.length * 7 + 16); bh = 20; break;
+    case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 26; break;
+    case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 5.5 + 10); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
     case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
     default: return { x: piece.x, y: piece.y };
