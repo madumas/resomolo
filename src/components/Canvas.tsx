@@ -1027,13 +1027,14 @@ export function Canvas({
         let fieldKey = '';
         let editorLeft: number;
         let editorTop: number;
-        let svgFontSizeMm = 5;
+        let svgFontSizeMm = 7;
 
         // Determine field to edit
         if (piece.type === 'calcul') {
           initialValue = piece.expression;
           placeholder = '5 + 3 = 8';
           fieldKey = 'expression';
+          svgFontSizeMm = 8;
         } else if (piece.type === 'reponse') {
           initialValue = piece.text;
           if (piece.template) {
@@ -1046,6 +1047,7 @@ export function Canvas({
             placeholder = 'Ta réponse...';
           }
           fieldKey = 'text';
+          svgFontSizeMm = 7;
         } else if (piece.type === 'barre' && editingBarField === 'value') {
           initialValue = piece.value;
           placeholder = 'Valeur (ex: 45, ?)';
@@ -1069,11 +1071,12 @@ export function Canvas({
           initialValue = piece.text;
           placeholder = 'Texte...';
           fieldKey = 'text';
+          svgFontSizeMm = 7;
         } else if (piece.type === 'fleche') {
           initialValue = piece.label;
           placeholder = 'Texte de la flèche...';
           fieldKey = 'label';
-          svgFontSizeMm = 4.5;
+          svgFontSizeMm = 5;
         } else {
           return null;
         }
