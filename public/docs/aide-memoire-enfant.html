@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@600;800&display=swap" rel="stylesheet" />
+<title>RésoMolo — Aide-mémoire</title>
+<style>
+  @page { size: letter; margin: 10mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #1A2433;
+    background: #fff;
+    max-width: 188mm;
+    margin: 0 auto;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .header {
+    text-align: center;
+    margin: 4mm 0 3mm;
+  }
+  .logo {
+    font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .logo-reso { font-weight: 600; color: #5B21B6; }
+  .logo-molo { font-weight: 800; color: #7028e0; }
+  .header h1 {
+    font-size: 16px;
+    color: #555;
+    font-weight: 400;
+    margin-top: 2mm;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3mm;
+    margin-top: 4mm;
+  }
+
+  .card {
+    border: 2px solid #EDE9FE;
+    border-radius: 10px;
+    padding: 3mm;
+    text-align: center;
+  }
+  .card-num {
+    display: inline-flex;
+    width: 7mm;
+    height: 7mm;
+    background: #7028e0;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 16px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2mm;
+  }
+  .card h2 {
+    font-size: 15px;
+    color: #5B21B6;
+    margin-bottom: 2mm;
+    border: none;
+  }
+  .card p {
+    font-size: 12px;
+    color: #555;
+  }
+
+  .img-block {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin: 2mm auto;
+    width: 80%;
+    min-height: 25mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 11px;
+  }
+
+  .help-tip {
+    text-align: center;
+    margin-top: 4mm;
+    padding: 2mm;
+    background: #F5F3FF;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #5B21B6;
+    font-weight: 600;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 4mm;
+    font-size: 10px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo"><span class="logo-reso">Réso</span><span class="logo-molo">Molo</span></span>
+  <h1>Aide-mémoire</h1>
+</div>
+
+<div class="cards">
+
+  <div class="card">
+    <div class="card-num">1</div>
+    <h2>Lis le problème</h2>
+    <div class="img-block"><!-- TODO: capture — zone problème avec surlignage --></div>
+    <p><!-- TODO: instruction courte — surligner les nombres et mots importants --></p>
+  </div>
+
+  <div class="card">
+    <div class="card-num">2</div>
+    <h2>Place tes pièces</h2>
+    <div class="img-block"><!-- TODO: capture — barre d'outils avec pièces --></div>
+    <p><!-- TODO: instruction courte — cliquer sur un outil, cliquer dans l'espace --></p>
+  </div>
+
+  <div class="card">
+    <div class="card-num">3</div>
+    <h2>Construis ton idée</h2>
+    <div class="img-block"><!-- TODO: capture — modélisation en cours --></div>
+    <p><!-- TODO: instruction courte — déplacer, modifier, relier --></p>
+  </div>
+
+  <div class="card">
+    <div class="card-num">4</div>
+    <h2>Écris ta réponse</h2>
+    <div class="img-block"><!-- TODO: capture — pièce Réponse --></div>
+    <p><!-- TODO: instruction courte — placer la pièce Réponse et écrire --></p>
+  </div>
+
+</div>
+
+<div class="help-tip">
+  <!-- TODO: raccourci d'urgence (Ctrl+Z pour annuler, ESC pour désélectionner) -->
+</div>
+
+<div class="footer">
+  <strong>resomolo.ca</strong> · <span class="doc-version">v0.1.0</span>
+</div>
+
+</body>
+</html>

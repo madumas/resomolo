@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@600;800&display=swap" rel="stylesheet" />
+<title>RésoMolo — Fiche descriptive</title>
+<style>
+  @page { size: letter; margin: 10mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #1A2433;
+    background: #fff;
+    max-width: 188mm;
+    margin: 0 auto;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 3mm;
+    margin: 4mm 0 3mm;
+  }
+  .logo {
+    font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .logo-reso { font-weight: 600; color: #5B21B6; }
+  .logo-molo { font-weight: 800; color: #7028e0; }
+  h1 { font-size: 18px; color: #555; font-weight: 400; }
+
+  h2 {
+    font-size: 14px;
+    color: #5B21B6;
+    border-bottom: 2px solid #5B21B6;
+    padding-bottom: 1px;
+    margin: 4mm 0 2mm;
+  }
+  h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1A2433;
+    margin: 2.5mm 0 1mm;
+  }
+
+  .lead {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 3mm;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3mm;
+  }
+
+  ul { padding-left: 4mm; }
+  li { margin-bottom: 1mm; }
+
+  .callout {
+    background: #F5F3FF;
+    border-left: 3px solid #7028e0;
+    padding: 2mm 3mm;
+    margin: 2mm 0;
+    font-size: 11px;
+  }
+
+  .page-break { page-break-before: always; }
+
+  .footer {
+    text-align: center;
+    margin-top: 6mm;
+    padding-top: 2mm;
+    border-top: 1px solid #ddd;
+    font-size: 10px;
+    color: #999;
+  }
+
+  /* TODO: compléter les styles selon le contenu final */
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo"><span class="logo-reso">Réso</span><span class="logo-molo">Molo</span></span>
+  <h1>Fiche descriptive</h1>
+</div>
+
+<p class="lead">
+  <!-- TODO: paragraphe d'introduction — résumé en 2-3 lignes de ce qu'est RésoMolo -->
+  RésoMolo est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre.
+</p>
+
+<h2>En bref</h2>
+<!-- TODO: tableau ou liste — public cible, cycles visés, stack, accès -->
+
+<h2>Ce que fait l'enfant</h2>
+<!-- TODO: décrire le flux — lire le problème, surligner, placer des pièces, construire le raisonnement -->
+
+<h2>Les pièces sémantiques</h2>
+<!-- TODO: tableau des 10 pièces (jeton, boîte, étiquette, flèche, barre, droite numérique, grille de calcul, tableau, calcul, réponse) avec cycle d'introduction -->
+
+<h2>Principes de conception</h2>
+<div class="two-col">
+  <div>
+    <h3>L'enfant raisonne, l'outil dessine</h3>
+    <!-- TODO -->
+  </div>
+  <div>
+    <h3>Espace libre, pas séquence imposée</h3>
+    <!-- TODO -->
+  </div>
+  <div>
+    <h3>Accessible à tous</h3>
+    <!-- TODO -->
+  </div>
+  <div>
+    <h3>Aligné PFEQ</h3>
+    <!-- TODO -->
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Compensations techniques</h2>
+<!-- TODO: détailler les compensations d'accessibilité — clic (pas drag), snap, grandes cibles 44×44, pas de right-click, etc. -->
+
+<h2>Profils d'accessibilité</h2>
+<!-- TODO: lister les profils si applicable (TDC, lecture, attention, etc.) -->
+
+<h2>Ce que l'outil ne fait PAS</h2>
+<ul>
+  <li>Ne résout pas le problème</li>
+  <li>Ne valide pas la modélisation de l'élève</li>
+  <li>Ne donne pas d'indices sur la solution</li>
+  <li>Ne remplace pas l'enseignement de la résolution de problèmes</li>
+  <li>Ne pose pas de diagnostic</li>
+  <li>Ne collecte aucune donnée</li>
+</ul>
+
+<h2>Compatibilité</h2>
+<p>Chromebook, iPad, ordinateur. Rien à installer. Fonctionne hors ligne. Aucun compte. Aucune collecte de données.</p>
+
+<div class="callout">
+  Suggestions générées par IA, à valider par un professionnel qualifié. Cet outil ne constitue pas un avis professionnel.
+</div>
+
+<div class="footer">
+  <strong>resomolo.ca</strong> · info@allomolo.ca · <span class="doc-version">v0.1.0</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@600;800&display=swap" rel="stylesheet" />
+<title>RésoMolo — Guide enseignant</title>
+<style>
+  @page { size: letter; margin: 12mm 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #1A2433;
+    background: #fff;
+    max-width: 188mm;
+    margin: 0 auto;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 3mm;
+    margin: 4mm 0 3mm;
+  }
+  .logo {
+    font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .logo-reso { font-weight: 600; color: #5B21B6; }
+  .logo-molo { font-weight: 800; color: #7028e0; }
+  h1 { font-size: 18px; color: #555; font-weight: 400; }
+
+  h2 {
+    font-size: 14px;
+    color: #5B21B6;
+    border-bottom: 2px solid #5B21B6;
+    padding-bottom: 1px;
+    margin: 4mm 0 2mm;
+  }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step;
+    padding-left: 8mm;
+    margin-bottom: 3mm;
+    position: relative;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    width: 5mm;
+    height: 5mm;
+    background: #EDE9FE;
+    color: #5B21B6;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .callout {
+    background: #F5F3FF;
+    border-left: 3px solid #7028e0;
+    padding: 2mm 3mm;
+    margin: 2mm 0;
+    font-size: 11px;
+  }
+
+  .img-block {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 2mm;
+    margin: 2mm 0;
+    text-align: center;
+    color: #999;
+    font-size: 11px;
+    min-height: 30mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-break { page-break-before: always; }
+
+  .footer {
+    text-align: center;
+    margin-top: 6mm;
+    padding-top: 2mm;
+    border-top: 1px solid #ddd;
+    font-size: 10px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="logo"><span class="logo-reso">Réso</span><span class="logo-molo">Molo</span></span>
+  <h1>Guide enseignant</h1>
+</div>
+
+<h2>Ouvrir l'outil</h2>
+<ol class="steps">
+  <li><!-- TODO: étapes d'accès — URL, PWA, aucun compte --></li>
+  <li><!-- TODO: choisir un mode (libre / avec énoncé) --></li>
+</ol>
+
+<div class="img-block"><!-- TODO: capture d'écran — vue d'ensemble de l'interface --></div>
+
+<h2>Proposer un problème</h2>
+<!-- TODO: comment coller/saisir un énoncé, ou laisser l'enfant en mode libre -->
+
+<h2>Observer la modélisation</h2>
+<!-- TODO: ce que l'enseignant voit — les pièces placées par l'enfant, la trace de raisonnement -->
+
+<h2>Récupérer le travail</h2>
+<!-- TODO: export image / partage / sauvegarde locale -->
+
+<div class="page-break"></div>
+
+<h2>Profils d'accessibilité</h2>
+<!-- TODO: quels profils existent, comment les activer, pour quels élèves -->
+
+<h2>En évaluation</h2>
+<!-- TODO: comment utiliser l'outil en contexte d'évaluation — ce qu'il montre, ce qu'il ne montre pas -->
+
+<div class="callout">
+  RésoMolo ne valide pas les réponses. La modélisation de l'élève est sa trace de raisonnement — c'est l'enseignant qui évalue.
+</div>
+
+<div class="footer">
+  <strong>resomolo.ca</strong> · info@allomolo.ca · <span class="doc-version">v0.1.0</span>
+</div>
+
+</body>
+</html>
