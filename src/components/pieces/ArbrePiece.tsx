@@ -72,7 +72,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
           <text key={`lvl-${li}`}
             x={x - 6} y={y + firstNode.y + 1}
             textAnchor="end" dominantBaseline="central"
-            fontSize={5} fill="#8B85A0" fontStyle="italic">
+            fontSize={5} fill="#55506A" fontWeight={500}>
             {level.name}
           </text>
         );
@@ -121,7 +121,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
 
       {/* Leaf counter — always visible */}
       <text x={x + width} y={y + height + 10}
-        textAnchor="end" fontSize={5} fill="#8B85A0">
+        textAnchor="end" fontSize={5} fill="#55506A">
         {leafCount} {leafCount === 1 ? 'feuille' : 'feuilles'}
       </text>
 

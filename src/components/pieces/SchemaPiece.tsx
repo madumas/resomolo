@@ -153,7 +153,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
       {/* Gabarit indicator (subtle, bottom-right) */}
       {piece.gabarit !== 'libre' && (
         <text x={x + layout.width} y={y + layout.height + 6}
-          textAnchor="end" fontSize={4} fill="#B0A8C0" fontStyle="italic">
+          textAnchor="end" fontSize={4.5} fill="#7A7490">
           {piece.gabarit === 'parties-tout' ? 'parties-tout' :
            piece.gabarit === 'comparaison' ? 'comparaison' :
            piece.gabarit === 'groupes-egaux' ? 'groupes égaux' :
