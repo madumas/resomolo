@@ -126,6 +126,33 @@
     display: block;
   }
 
+  .gabarit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm;
+    grid-column: 1 / -1;
+    margin-top: 1mm;
+  }
+  .gabarit-grid figure {
+    margin: 0;
+    border: 1px solid #E5E2EE;
+    border-radius: 6px;
+    overflow: hidden;
+    text-align: center;
+  }
+  .gabarit-grid img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .gabarit-grid figcaption {
+    font-size: 9px;
+    color: #5B21B6;
+    font-weight: 600;
+    padding: 0.5mm 0;
+    background: #F5F3FF;
+  }
+
   .piece-operations {
     grid-column: 1 / -1;
   }
@@ -320,7 +347,25 @@
       <dt>Actions</dt>
       <dd>Choisir/changer le gabarit. Ajouter des parties ou des barres selon le gabarit. Nommer et donner des valeurs. Redimensionner (&times;0.5 à &times;3).</dd>
     </div>
-    <div class="piece-img"><img src="images/catalogue-schema-parties.png" alt="schema parties"></div>
+    <div class="piece-img"><img src="images/catalogue-schema-parties.png" alt="schema parties-tout"></div>
+    <div class="gabarit-grid">
+      <figure>
+        <img src="images/catalogue-schema-parties.png" alt="Parties-tout">
+        <figcaption>Parties-tout</figcaption>
+      </figure>
+      <figure>
+        <img src="images/catalogue-schema-comparaison.png" alt="Comparaison">
+        <figcaption>Comparaison</figcaption>
+      </figure>
+      <figure>
+        <img src="images/catalogue-schema-groupes.png" alt="Groupes égaux">
+        <figcaption>Groupes égaux</figcaption>
+      </figure>
+      <figure>
+        <img src="images/catalogue-schema-transformation.png" alt="Transformation">
+        <figcaption>Transformation</figcaption>
+      </figure>
+    </div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>

@@ -90,6 +90,28 @@ export async function colorBtn(page, couleur) {
   await page.waitForTimeout(150);
 }
 
+// Select a piece by dispatching to the app's state (bypasses click issues for text pieces)
+export async function selectPieceById(page, pieceId) {
+  await page.evaluate((id) => {
+    // Access React fiber to find dispatch — or use the global store if available
+    const event = new CustomEvent('__resomolo_select_piece', { detail: id });
+    window.dispatchEvent(event);
+  }, pieceId).catch(() => {});
+  await page.waitForTimeout(300);
+}
+
+// Get the ID of the last placed piece
+export async function getLastPieceId(page) {
+  return page.evaluate(() => {
+    const svg = document.querySelector('[data-testid="canvas-svg"]');
+    if (!svg) return null;
+    // Find all elements with data-piece-id
+    const els = svg.querySelectorAll('[data-piece-id]');
+    if (els.length === 0) return null;
+    return els[els.length - 1].getAttribute('data-piece-id');
+  }).catch(() => null);
+}
+
 export async function snap(page, filename, region) {
   const clip = {
     x: cx(region.x), y: cy(region.y),
