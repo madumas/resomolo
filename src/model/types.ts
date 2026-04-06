@@ -182,8 +182,8 @@ export const MAX_UNDO_LEVELS = 100;
 
 // Arbre constants
 export const ARBRE_LEVEL_GAP_MM = 30;
-export const ARBRE_NODE_W_MM = 20;
-export const ARBRE_NODE_H_MM = 12;
+export const ARBRE_NODE_W_MM = 26;
+export const ARBRE_NODE_H_MM = 16;
 export const ARBRE_SIBLING_GAP_MM = 8;
 export const ARBRE_MAX_LEVELS = 4;
 export const ARBRE_MAX_OPTIONS = 6;

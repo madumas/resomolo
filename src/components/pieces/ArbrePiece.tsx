@@ -20,7 +20,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
   if (nodes.length === 0) {
     return (
       <g>
-        <text x={x} y={y + 8} fontSize={4} fill="#55506A">
+        <text x={x} y={y + 8} fontSize={6} fill="#55506A">
           Arbre vide — ajouter un niveau
         </text>
       </g>
@@ -50,14 +50,14 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
         const isLeaf = node.levelIndex === piece.levels.length - 1;
         return (
           <g key={`n-${i}`}>
-            <rect x={nx} y={ny} width={nw} height={nh} rx={2}
+            <rect x={nx} y={ny} width={nw} height={nh} rx={2.5}
               fill={isLeaf ? 'rgba(24, 95, 165, 0.12)' : 'rgba(85, 80, 106, 0.08)'}
               stroke={isLeaf ? '#185FA5' : '#55506A'}
               strokeWidth={0.6} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={Math.min(5, nw / Math.max(1, node.label.length) * 1.2)}
-              fill="#1E1A2E" fontWeight={500}>
+              fontSize={Math.min(7, nw / Math.max(1, node.label.length) * 1.4)}
+              fill="#1E1A2E" fontWeight={600}>
               {node.label}
             </text>
           </g>
@@ -72,51 +72,47 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
           <text key={`lvl-${li}`}
             x={x - 6} y={y + firstNode.y + 1}
             textAnchor="end" dominantBaseline="central"
-            fontSize={3.5} fill="#8B85A0" fontStyle="italic">
+            fontSize={5} fill="#8B85A0" fontStyle="italic">
             {level.name}
           </text>
         );
       })}
 
-      {/* [+] buttons — always visible at reduced opacity (R8) */}
-      {piece.levels.map((_level, li) => {
-        // Show [+] add level button below the last level
-        if (li === piece.levels.length - 1) {
-          const lastNode = nodes.filter(n => n.levelIndex === li)[0];
-          if (!lastNode) return null;
-          const btnY = y + lastNode.y + nh / 2 + 6;
-          return (
-            <g key={`add-level`} opacity={isSelected ? 1 : 0.4}
-              data-arbre-action="add-level" style={{ cursor: 'pointer' }}>
-              <rect x={x + width / 2 - 8} y={btnY} width={16} height={8} rx={2}
-                fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
-              <text x={x + width / 2} y={btnY + 4.5}
-                textAnchor="middle" dominantBaseline="central"
-                fontSize={3.5} fill="#7028e0" fontWeight={600}>
-                + Niveau
-              </text>
-            </g>
-          );
-        }
-        return null;
-      })}
+      {/* [+] add level button below the last level — always visible (R8) */}
+      {(() => {
+        const lastLevelNodes = nodes.filter(n => n.levelIndex === piece.levels.length - 1);
+        if (lastLevelNodes.length === 0) return null;
+        const btnY = y + lastLevelNodes[0].y + nh / 2 + 8;
+        return (
+          <g opacity={isSelected ? 1 : 0.4}
+            data-arbre-action="add-level" style={{ cursor: 'pointer' }}>
+            <rect x={x + width / 2 - 12} y={btnY} width={24} height={10} rx={3}
+              fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
+            <text x={x + width / 2} y={btnY + 5.5}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={5} fill="#7028e0" fontWeight={600}>
+              + Niveau
+            </text>
+          </g>
+        );
+      })()}
 
-      {/* [+] add option buttons on each level */}
+      {/* [+] add option buttons on each level — always visible (R8) */}
       {piece.levels.map((_level, li) => {
         const levelNodes = nodes.filter(n => n.levelIndex === li);
         if (levelNodes.length === 0) return null;
         const lastNode = levelNodes[levelNodes.length - 1];
-        const btnX = x + lastNode.x + nw / 2 + 3;
-        const btnY = y + lastNode.y - nh / 4;
+        const btnX = x + lastNode.x + nw / 2 + 4;
+        const btnCY = y + lastNode.y;
         return (
           <g key={`add-opt-${li}`} opacity={isSelected ? 1 : 0.4}
             data-arbre-action="add-option" data-level-index={li}
             style={{ cursor: 'pointer' }}>
-            <circle cx={btnX + 4} cy={btnY + nh / 4} r={4}
+            <circle cx={btnX + 5} cy={btnCY} r={5}
               fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
-            <text x={btnX + 4} y={btnY + nh / 4 + 0.5}
+            <text x={btnX + 5} y={btnCY + 0.5}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={5} fill="#7028e0" fontWeight={700}>
+              fontSize={7} fill="#7028e0" fontWeight={700}>
               +
             </text>
           </g>
@@ -124,15 +120,15 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
       })}
 
       {/* Leaf counter — always visible */}
-      <text x={x + width} y={y + height + 8}
-        textAnchor="end" fontSize={3.5} fill="#8B85A0">
+      <text x={x + width} y={y + height + 10}
+        textAnchor="end" fontSize={5} fill="#8B85A0">
         {leafCount} {leafCount === 1 ? 'feuille' : 'feuilles'}
       </text>
 
       {/* Warning if too many leaves (R5) */}
       {warning && (
-        <text x={x + width / 2} y={y + height + 14}
-          textAnchor="middle" fontSize={3.5} fill="#B8860B">
+        <text x={x + width / 2} y={y + height + 18}
+          textAnchor="middle" fontSize={5} fill="#B8860B">
           {warning}
         </text>
       )}

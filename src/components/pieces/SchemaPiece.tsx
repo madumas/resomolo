@@ -41,17 +41,17 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {bar.label && (
               <text x={x + bar.x - 4} y={y + bar.y + barH / 2}
                 textAnchor="end" dominantBaseline="central"
-                fontSize={5} fill="#1E1A2E"
+                fontSize={6} fill="#1E1A2E"
                 data-edit-target={`${piece.id}-bar-${bi}-label`}>
                 {bar.label}
               </text>
             )}
 
-            {/* Multiplier annotation "×N" (R15 — triple coding) — offset below label */}
+            {/* Multiplier annotation "×N" (R15 — triple coding) — offset below first bar */}
             {bar.multiplierLabel && bi === 0 && (
-              <text x={x + bar.x - 4} y={y + bar.y + barH + 5}
+              <text x={x + bar.x - 4} y={y + bar.y + barH + 6}
                 textAnchor="end" dominantBaseline="central"
-                fontSize={5} fill="#55506A" fontWeight={700}>
+                fontSize={6} fill="#55506A" fontWeight={700}>
                 {bar.multiplierLabel}
               </text>
             )}
@@ -75,7 +75,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {/* Part label above */}
             {part.label && (
               <text x={x + part.x + part.width / 2} y={y + part.y - 2}
-                textAnchor="middle" fontSize={4} fill="#55506A"
+                textAnchor="middle" fontSize={5.5} fill="#55506A"
                 data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-label`}>
                 {part.label}
               </text>
@@ -85,7 +85,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {part.value !== null && (
               <text x={x + part.x + part.width / 2} y={y + part.y + part.height / 2 + 1}
                 textAnchor="middle" dominantBaseline="central"
-                fontSize={5} fill="#1E1A2E" fontWeight={600}>
+                fontSize={6} fill="#1E1A2E" fontWeight={600}>
                 {part.value}
               </text>
             )}
@@ -118,11 +118,11 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
         return (
           <g>
             {/* Bracket line */}
-            <path d={`M${bx},${by} L${bx},${by + 3} L${bx + barWidth},${by + 3} L${bx + barWidth},${by}`}
-              stroke="#55506A" strokeWidth={0.6} fill="none" />
+            <path d={`M${bx},${by} L${bx},${by + 4} L${bx + barWidth},${by + 4} L${bx + barWidth},${by}`}
+              stroke="#55506A" strokeWidth={0.8} fill="none" />
             {/* Total label */}
-            <text x={bx + barWidth / 2} y={by + 7}
-              textAnchor="middle" fontSize={4.5} fill="#55506A"
+            <text x={bx + barWidth / 2} y={by + 9}
+              textAnchor="middle" fontSize={6} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-total`}>
               {tb.label || '?'}
             </text>
@@ -138,11 +138,11 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
         return (
           <g>
             {/* Bracket line */}
-            <path d={`M${bx},${by} L${bx + 4},${by} L${bx + 4},${by + db.height} L${bx},${by + db.height}`}
-              stroke="#55506A" strokeWidth={0.6} fill="none" />
+            <path d={`M${bx},${by} L${bx + 5},${by} L${bx + 5},${by + db.height} L${bx},${by + db.height}`}
+              stroke="#55506A" strokeWidth={0.8} fill="none" />
             {/* Difference label */}
-            <text x={bx + 7} y={by + db.height / 2}
-              dominantBaseline="central" fontSize={4.5} fill="#55506A"
+            <text x={bx + 9} y={by + db.height / 2}
+              dominantBaseline="central" fontSize={6} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-diff`}>
               {db.label}
             </text>
@@ -152,8 +152,8 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
 
       {/* Gabarit indicator (subtle, bottom-right) */}
       {piece.gabarit !== 'libre' && (
-        <text x={x + layout.width} y={y + layout.height + 5}
-          textAnchor="end" fontSize={3} fill="#B0A8C0" fontStyle="italic">
+        <text x={x + layout.width} y={y + layout.height + 6}
+          textAnchor="end" fontSize={4} fill="#B0A8C0" fontStyle="italic">
           {piece.gabarit === 'parties-tout' ? 'parties-tout' :
            piece.gabarit === 'comparaison' ? 'comparaison' :
            piece.gabarit === 'groupes-egaux' ? 'groupes égaux' :

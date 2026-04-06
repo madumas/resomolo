@@ -26,7 +26,7 @@ describe('computeTreeLayout', () => {
     expect(r.nodes).toHaveLength(3);
     expect(r.branches).toHaveLength(0); // no parents → no branches
     expect(r.leafCount).toBe(3);
-    expect(r.height).toBe(12); // 1 level, nodeH=12
+    expect(r.height).toBe(16); // 1 level, nodeH=16
   });
 
   it('2×2 = 2 nodes at L0, 4 at L1, 6 total, 4 branches', () => {
