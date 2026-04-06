@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
-import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema } from '../model/types';
+import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema, isDiagrammeBandes } from '../model/types';
+import { CHART_MAX_CATEGORIES } from '../model/types';
 import type { SchemaGabarit } from '../model/types';
 import { computeTreeLayout } from '../engine/arbre-layout';
 import { computeSchemaWidth, computeSchemaHeight, getGabaritDefaults } from '../engine/schema-layout';
@@ -705,6 +706,69 @@ export function ContextActions({
         </>
       )}
 
+      {/* DiagrammeBandes — actions contextuelles */}
+      {isDiagrammeBandes(piece) && (
+        <>
+          <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
+          {piece.categories.map((cat, i) => (
+            <CtxBtn key={`cat-${i}`} onClick={() => {
+              const newLabel = prompt('Catégorie :', cat.label);
+              if (newLabel === null) return;
+              const newValue = prompt('Valeur :', String(cat.value));
+              if (newValue === null) return;
+              const parsed = parseFloat(newValue);
+              if (isNaN(parsed)) return;
+              const newCats = [...piece.categories];
+              newCats[i] = { ...newCats[i], label: newLabel, value: parsed };
+              onEditPiece(piece.id, { categories: newCats });
+            }}>{cat.label}: {cat.value}</CtxBtn>
+          ))}
+          {piece.categories.length < CHART_MAX_CATEGORIES && (
+            <CtxBtn onClick={() => {
+              const partColors = ['bleu', 'rouge', 'vert', 'jaune'] as const;
+              const newCat = { label: '', value: 0, couleur: partColors[piece.categories.length % 4] };
+              onEditPiece(piece.id, { categories: [...piece.categories, newCat] });
+            }}>+ Bande</CtxBtn>
+          )}
+          {piece.categories.length > 1 && (
+            <CtxBtn onClick={() => {
+              onEditPiece(piece.id, { categories: piece.categories.slice(0, -1) });
+            }}>− Bande</CtxBtn>
+          )}
+        </>
+      )}
+
+      {/* DiagrammeLigne — actions contextuelles */}
+      {piece.type === 'diagrammeLigne' && (
+        <>
+          <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
+          {(piece as any).points.map((pt: any, i: number) => (
+            <CtxBtn key={`pt-${i}`} onClick={() => {
+              const newLabel = prompt('Étiquette :', pt.label);
+              if (newLabel === null) return;
+              const newValue = prompt('Valeur :', String(pt.value));
+              if (newValue === null) return;
+              const parsed = parseFloat(newValue);
+              if (isNaN(parsed)) return;
+              const newPts = [...(piece as any).points];
+              newPts[i] = { ...newPts[i], label: newLabel, value: parsed };
+              onEditPiece(piece.id, { points: newPts });
+            }}>{pt.label}: {pt.value}</CtxBtn>
+          ))}
+          {(piece as any).points.length < CHART_MAX_CATEGORIES && (
+            <CtxBtn onClick={() => {
+              const newPt = { label: '', value: 0 };
+              onEditPiece(piece.id, { points: [...(piece as any).points, newPt] });
+            }}>+ Point</CtxBtn>
+          )}
+          {(piece as any).points.length > 1 && (
+            <CtxBtn onClick={() => {
+              onEditPiece(piece.id, { points: (piece as any).points.slice(0, -1) });
+            }}>− Point</CtxBtn>
+          )}
+        </>
+      )}
+
       {/* Inconnue — éditer texte */}
       {piece.type === 'inconnue' && (
         <CtxBtn onClick={() => onStartEdit(piece.id)}>Texte</CtxBtn>
@@ -838,6 +902,9 @@ function getPieceBoundsScreen(
     x -= 4; y -= 4; w = 8; h = 8;
   } else if (piece.type === 'inconnue') {
     x -= 6; y -= 6; w = 12; h = 12;
+  } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
+    w = (piece as any).width || 120;
+    h = (piece as any).height || 90;
   } else if (isDroiteNumerique(piece)) {
     w = piece.width;
     h = 20;

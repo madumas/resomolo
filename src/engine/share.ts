@@ -25,6 +25,8 @@ interface MinPiece {
   // Schema
   gb?: string; tl?: string; tv?: number | null; brs?: any[];
   rfw?: number;
+  // Charts (DiagrammeBandes / DiagrammeLigne)
+  ttl?: string; cats?: any[]; pts?: any[]; yal?: string;
 }
 
 interface SharePayload {
@@ -95,6 +97,18 @@ function minifyPiece(p: Piece): MinPiece {
       if (p.text !== '?') m.tx = p.text;
       if (p.attachedTo) m.at = p.attachedTo;
       break;
+    case 'diagrammeBandes':
+      if (p.title) m.ttl = p.title;
+      m.cats = p.categories;
+      m.w = p.width; m.h = p.height;
+      if (p.yAxisLabel) m.yal = p.yAxisLabel;
+      break;
+    case 'diagrammeLigne':
+      if (p.title) m.ttl = p.title;
+      m.pts = p.points;
+      m.w = p.width; m.h = p.height;
+      if (p.yAxisLabel) m.yal = p.yAxisLabel;
+      break;
   }
   return m;
 }
@@ -138,6 +152,16 @@ function expandPiece(m: MinPiece): Piece {
         referenceWidth: m.rfw ?? 60 };
     case 'inconnue':
       return { ...base, type: 'inconnue', text: m.tx ?? '?', attachedTo: m.at ?? null };
+    case 'diagrammeBandes':
+      return { ...base, type: 'diagrammeBandes',
+        title: m.ttl ?? '', yAxisLabel: m.yal ?? '',
+        categories: m.cats ?? [{ label: 'A', value: 0, couleur: 'bleu' }],
+        width: m.w ?? 120, height: m.h ?? 90 };
+    case 'diagrammeLigne':
+      return { ...base, type: 'diagrammeLigne',
+        title: m.ttl ?? '', yAxisLabel: m.yal ?? '',
+        points: m.pts ?? [{ label: 'A', value: 0 }],
+        width: m.w ?? 120, height: m.h ?? 90 };
     default:
       return { ...base, type: 'jeton', couleur: 'bleu', parentId: null };
   }

@@ -6,7 +6,7 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue } from '../model/types';
+import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue, DiagrammeBandes } from '../model/types';
 import { isBarre, isBoite, isDroiteNumerique, isTableau } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
@@ -15,6 +15,8 @@ import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
 import { ArbrePiece } from './pieces/ArbrePiece';
 import { SchemaPiece } from './pieces/SchemaPiece';
+import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
+import { DiagrammeLignePiece } from './pieces/DiagrammeLignePiece';
 import { computeTreeLayout } from '../engine/arbre-layout';
 import { computeSchemaWidth, computeSchemaHeight } from '../engine/schema-layout';
 import { getGabaritDefaults } from '../engine/schema-layout';
@@ -1792,6 +1794,9 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
     }
     case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) - 6, y: piece.y - 2 };
     case 'inconnue': return { x: piece.x + 4, y: piece.y - 9 };
+    case 'diagrammeBandes':
+    case 'diagrammeLigne':
+      return { x: piece.x + (piece as any).width - 6, y: piece.y - 2 };
     default: return { x: piece.x, y: piece.y - 8 };
   }
 }
@@ -1827,6 +1832,10 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
       inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'inconnue':
       inner = <InconnuePiece piece={piece as Inconnue} isSelected={isSelected} textScale={textScale} />; break;
+    case 'diagrammeBandes':
+      inner = <DiagrammeBandesPiece piece={piece as DiagrammeBandes} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
+    case 'diagrammeLigne':
+      inner = <DiagrammeLignePiece piece={piece as any} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'tableau':
       return null; // rendered separately in Canvas to pass editing props
     case 'fleche':
@@ -2424,6 +2433,13 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       const dy = pos.y - piece.y;
       return Math.sqrt(dx * dx + dy * dy) <= 9 + p; // hit radius > visual radius (ergo)
     }
+    case 'diagrammeBandes':
+    case 'diagrammeLigne': {
+      const cw = (piece as any).width || 120;
+      const ch = (piece as any).height || 90;
+      return pos.x >= piece.x - p && pos.x <= piece.x + cw + p &&
+             pos.y >= piece.y - p && pos.y <= piece.y + ch + p;
+    }
     case 'fleche': {
       const fleche = piece as Fleche;
       const from = pieces.find(p => p.id === fleche.fromId);
@@ -2461,6 +2477,9 @@ function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: nu
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x - pad, y: piece.y - pad, w: tl.width + 2 * pad, h: tl.height + 2 * pad }; }
     case 'schema': return { x: piece.x - pad, y: piece.y - pad, w: computeSchemaWidth(piece as Schema, referenceUnitMm) + 2 * pad, h: computeSchemaHeight(piece as Schema) + 2 * pad };
     case 'inconnue': return { x: piece.x - 6 - pad, y: piece.y - 6 - pad, w: 12 + 2 * pad, h: 12 + 2 * pad };
+    case 'diagrammeBandes':
+    case 'diagrammeLigne':
+      return { x: piece.x - pad, y: piece.y - pad, w: ((piece as any).width || 120) + 2 * pad, h: ((piece as any).height || 90) + 2 * pad };
     default: return { x: piece.x - pad, y: piece.y - pad, w: 20 + 2 * pad, h: 14 + 2 * pad };
   }
 }
@@ -2478,6 +2497,9 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x + tl.width / 2, y: piece.y + tl.height / 2 }; }
     case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) / 2, y: piece.y + computeSchemaHeight(piece as Schema) / 2 };
     case 'inconnue': return { x: piece.x, y: piece.y };
+    case 'diagrammeBandes':
+    case 'diagrammeLigne':
+      return { x: piece.x + ((piece as any).width || 120) / 2, y: piece.y + ((piece as any).height || 90) / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -2497,6 +2519,9 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); bx = piece.x; by = piece.y; bw = tl.width; bh = tl.height; break; }
     case 'schema': bx = piece.x; by = piece.y; bw = computeSchemaWidth(piece as Schema, refUnit); bh = computeSchemaHeight(piece as Schema); break;
     case 'inconnue': return { x: piece.x, y: piece.y }; // circle — center is fine
+    case 'diagrammeBandes':
+    case 'diagrammeLigne':
+      bx = piece.x; by = piece.y; bw = (piece as any).width || 120; bh = (piece as any).height || 90; break;
     default: return { x: piece.x, y: piece.y };
   }
   // Clamp target to the edge of the bounding box
@@ -2553,6 +2578,22 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number },
         referenceWidth: defaults.referenceWidth ?? 60,
       };
     }
+    case 'diagrammeBandes':
+      return { id, type: 'diagrammeBandes', x: pos.x, y: pos.y, locked: false,
+        title: '', yAxisLabel: '', width: 120, height: 90,
+        categories: [
+          { label: 'Pommes', value: 3, couleur: 'bleu' },
+          { label: 'Bananes', value: 5, couleur: 'rouge' },
+          { label: 'Oranges', value: 2, couleur: 'vert' },
+        ] };
+    case 'diagrammeLigne':
+      return { id, type: 'diagrammeLigne', x: pos.x, y: pos.y, locked: false,
+        title: '', yAxisLabel: '', width: 120, height: 90,
+        points: [
+          { label: 'Lundi', value: 3 },
+          { label: 'Mardi', value: 5 },
+          { label: 'Mercredi', value: 2 },
+        ] };
     case 'fleche':
       return null; // fleche uses two-click placement, not createPiece
     case 'deplacer':

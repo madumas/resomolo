@@ -140,6 +140,34 @@ export function ArbreIcon() {
   );
 }
 
+/** Diagramme à bandes: vertical bars — bar chart */
+export function DiagrammeBandesIcon() {
+  return (
+    <svg {...S}>
+      <line x1="4" y1="3" x2="4" y2="17" stroke={stroke} strokeWidth="1.5" />
+      <line x1="4" y1="17" x2="18" y2="17" stroke={stroke} strokeWidth="1.5" />
+      <rect x="6" y="10" width="3" height="7" rx="0.5" fill="currentColor" fillOpacity="0.3" stroke={stroke} strokeWidth="1" />
+      <rect x="10" y="5" width="3" height="12" rx="0.5" fill="currentColor" fillOpacity="0.3" stroke={stroke} strokeWidth="1" />
+      <rect x="14" y="8" width="3" height="9" rx="0.5" fill="currentColor" fillOpacity="0.3" stroke={stroke} strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Diagramme à ligne brisée: connected dots — line chart */
+export function DiagrammeLigneIcon() {
+  return (
+    <svg {...S}>
+      <line x1="4" y1="3" x2="4" y2="17" stroke={stroke} strokeWidth="1.5" />
+      <line x1="4" y1="17" x2="18" y2="17" stroke={stroke} strokeWidth="1.5" />
+      <polyline points="6,14 9,8 12,11 15,5" fill="none" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
+      <circle cx="6" cy="14" r="1.5" fill="currentColor" />
+      <circle cx="9" cy="8" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="11" r="1.5" fill="currentColor" />
+      <circle cx="15" cy="5" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 /** Inconnue: circle with "?" — unknown value marker */
 export function InconnueIcon() {
   return (

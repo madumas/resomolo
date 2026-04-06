@@ -104,6 +104,9 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
       return { x: piece.x + w / 2, y: piece.y + h / 2 };
     }
     case 'inconnue': return { x: piece.x, y: piece.y }; // center-origin like jeton
+    case 'diagrammeBandes':
+    case 'diagrammeLigne':
+      return { x: piece.x + ((piece as any).width || 120) / 2, y: piece.y + ((piece as any).height || 90) / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }

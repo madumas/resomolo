@@ -82,6 +82,26 @@ function migratePieces(pieces: any[]): any[] {
     if (p.type === 'inconnue') {
       return { ...p, text: p.text ?? '?', attachedTo: p.attachedTo ?? null };
     }
+    if (p.type === 'diagrammeBandes') {
+      return {
+        ...p,
+        title: p.title ?? '',
+        categories: p.categories ?? [{ label: 'A', value: 0, couleur: 'bleu' }],
+        yAxisLabel: p.yAxisLabel ?? '',
+        width: p.width ?? 120,
+        height: p.height ?? 90,
+      };
+    }
+    if (p.type === 'diagrammeLigne') {
+      return {
+        ...p,
+        title: p.title ?? '',
+        points: p.points ?? [{ label: 'A', value: 0 }],
+        yAxisLabel: p.yAxisLabel ?? '',
+        width: p.width ?? 120,
+        height: p.height ?? 90,
+      };
+    }
     return p;
   });
 }

@@ -5,7 +5,7 @@ import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY }
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
-import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, CalculIcon, ReponseIcon, BoiteIcon, TableauIcon, EtiquetteIcon, InconnueIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
+import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, CalculIcon, ReponseIcon, BoiteIcon, TableauIcon, DiagrammeBandesIcon, DiagrammeLigneIcon, EtiquetteIcon, InconnueIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -49,6 +49,8 @@ const ALL_TOOLS: ToolDef[] = [
   { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
   { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
   { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
+  { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
+  { type: 'diagrammeLigne', label: 'Ligne', Icon: DiagrammeLigneIcon },
   // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
