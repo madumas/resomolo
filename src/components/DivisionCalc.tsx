@@ -536,7 +536,8 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
                 />
               </React.Fragment>
             ))}
-            {/* Remainder label and input */}
+            {/* Remainder label and input — hidden in decimal mode */}
+            {decimalPos === null && (<>
             <span style={{ fontSize: 14, fontWeight: 600, color: '#55506A', marginLeft: 8, fontFamily: 'monospace' }}>R</span>
             <input
               ref={el => setCellRef('remainder', el)}
@@ -554,6 +555,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
                 outline: 'none', background: '#FAFCFF',
               }}
             />
+            </>)}
           </div>
         </div>
       </div>
