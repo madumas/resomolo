@@ -34,23 +34,23 @@ await page.waitForTimeout(400);
 await esc(page);
 await snap(page, 'catalogue-tableau.png', { x: 50, y: 32, w: 125, h: 65 });
 
-// ── DIAGRAMME À BANDES — centered ──────────────
+// ── DIAGRAMME À BANDES — place top-left for better framing ──
 console.log('Diagramme à bandes');
 await fresh(page);
 await tool(page, 'diagrammeBandes');
-await click(page, 90, 60);
+await click(page, 70, 50);
 await page.waitForTimeout(500);
 await esc(page);
-await snap(page, 'catalogue-diagramme-bandes.png', { x: 10, y: 8, w: 220, h: 130 });
+await snap(page, 'catalogue-diagramme-bandes.png', { x: 5, y: 5, w: 200, h: 120 });
 
-// ── DIAGRAMME À LIGNE BRISÉE — centered ────────
+// ── DIAGRAMME À LIGNE BRISÉE ────────────────────
 console.log('Diagramme à ligne brisée');
 await fresh(page);
 await tool(page, 'diagrammeLigne');
-await click(page, 90, 60);
+await click(page, 70, 50);
 await page.waitForTimeout(500);
 await esc(page);
-await snap(page, 'catalogue-diagramme-ligne.png', { x: 10, y: 8, w: 220, h: 130 });
+await snap(page, 'catalogue-diagramme-ligne.png', { x: 5, y: 5, w: 200, h: 120 });
 
 await browser.close();
 console.log('Done: structuré');
