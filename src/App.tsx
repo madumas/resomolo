@@ -204,7 +204,7 @@ export default function App() {
   }, [pieces.length > 0, probleme.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save (slot-aware)
-  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot);
+  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot, appReady);
 
   // beforeunload
   useEffect(() => {
