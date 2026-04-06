@@ -629,6 +629,7 @@ export default function App() {
           showSuggestedZones={appReady && settings.showSuggestedZones}
           showTokenCounter={settings.showTokenCounter}
           highContrast={settings.highContrast}
+          textScale={settings.textScale}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>

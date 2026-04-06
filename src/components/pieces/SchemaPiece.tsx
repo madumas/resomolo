@@ -8,9 +8,11 @@ interface SchemaPieceProps {
   referenceUnitMm: number;
   isSelected: boolean;
   highContrast?: boolean;
+  textScale?: number;
 }
 
-export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }: SchemaPieceProps) {
+export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, textScale = 1 }: SchemaPieceProps) {
+  const ts = textScale;
   const { x, y } = piece;
   const layout = computePartLayout(piece, referenceUnitMm);
   const barH = SCHEMA_BAR_HEIGHT_MM;
@@ -41,7 +43,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {bar.label && (
               <text x={x + bar.x - 4} y={y + bar.y + barH / 2}
                 textAnchor="end" dominantBaseline="central"
-                fontSize={6} fill="#1E1A2E"
+                fontSize={6 * ts} fill="#1E1A2E"
                 data-edit-target={`${piece.id}-bar-${bi}-label`}>
                 {bar.label}
               </text>
@@ -51,7 +53,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {bar.multiplierLabel && bi === 0 && (
               <text x={x + bar.x - 4} y={y + bar.y + barH + 6}
                 textAnchor="end" dominantBaseline="central"
-                fontSize={6} fill="#55506A" fontWeight={700}>
+                fontSize={6 * ts} fill="#55506A" fontWeight={700}>
                 {bar.multiplierLabel}
               </text>
             )}
@@ -75,7 +77,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {/* Part label above */}
             {part.label && (
               <text x={x + part.x + part.width / 2} y={y + part.y - 2}
-                textAnchor="middle" fontSize={5.5} fill="#55506A"
+                textAnchor="middle" fontSize={5.5 * ts} fill="#55506A"
                 data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-label`}>
                 {part.label}
               </text>
@@ -85,7 +87,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
             {part.value !== null && (
               <text x={x + part.x + part.width / 2} y={y + part.y + part.height / 2 + 1}
                 textAnchor="middle" dominantBaseline="central"
-                fontSize={6} fill="#1E1A2E" fontWeight={600}>
+                fontSize={6 * ts} fill="#1E1A2E" fontWeight={600}>
                 {part.value}
               </text>
             )}
@@ -122,7 +124,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
               stroke="#55506A" strokeWidth={0.8} fill="none" />
             {/* Total label */}
             <text x={bx + barWidth / 2} y={by + 9}
-              textAnchor="middle" fontSize={6} fill="#55506A" fontWeight={500}
+              textAnchor="middle" fontSize={6 * ts} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-total`}>
               {tb.label || '?'}
             </text>
@@ -142,7 +144,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
               stroke="#55506A" strokeWidth={0.8} fill="none" />
             {/* Difference label */}
             <text x={bx + 9} y={by + db.height / 2}
-              dominantBaseline="central" fontSize={6} fill="#55506A" fontWeight={500}
+              dominantBaseline="central" fontSize={6 * ts} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-diff`}>
               {db.label}
             </text>
@@ -153,7 +155,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
       {/* Gabarit indicator (subtle, bottom-right) */}
       {piece.gabarit !== 'libre' && (
         <text x={x + layout.width} y={y + layout.height + 6}
-          textAnchor="end" fontSize={4.5} fill="#7A7490">
+          textAnchor="end" fontSize={4.5 * ts} fill="#7A7490">
           {piece.gabarit === 'parties-tout' ? 'parties-tout' :
            piece.gabarit === 'comparaison' ? 'comparaison' :
            piece.gabarit === 'groupes-egaux' ? 'groupes égaux' :

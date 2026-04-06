@@ -1,9 +1,11 @@
 import type { DroiteNumerique } from '../../model/types';
 
-export function DroiteNumeriquePiece({ piece, isSelected }: {
+export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
   piece: DroiteNumerique;
   isSelected: boolean;
+  textScale?: number;
 }) {
+  const ts = textScale;
   const { x, y, min, max, step, markers, width } = piece;
 
   // C2: if min >= max, render fallback
@@ -58,7 +60,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
               strokeWidth={isZero ? 2.5 : (i % labelEvery === 0 ? 0.7 : 0.3)} />
             {(i % labelEvery === 0 || isZero) && (
               <text x={tx} y={y + 9} textAnchor="middle"
-                fontSize={isZero ? 6.5 : 5.5}
+                fontSize={(isZero ? 6.5 : 5.5) * ts}
                 fontWeight={isZero ? 700 : 500}
                 fill={isZero ? '#7028E0' : '#55506A'}>
                 {val}
@@ -75,7 +77,7 @@ export function DroiteNumeriquePiece({ piece, isSelected }: {
           <g key={i}>
             <circle cx={mx} cy={y} r={4}
               fill="#185FA5" stroke="#fff" strokeWidth={0.7} />
-            <text x={mx} y={y - 6} textAnchor="middle" fontSize={6} fontWeight={600} fill="#185FA5">
+            <text x={mx} y={y - 6} textAnchor="middle" fontSize={6 * ts} fontWeight={600} fill="#185FA5">
               {val}
             </text>
           </g>

@@ -7,9 +7,11 @@ interface BarrePieceProps {
   referenceUnitMm: number;
   isSelected: boolean;
   highContrast?: boolean;
+  textScale?: number;
 }
 
-export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }: BarrePieceProps) {
+export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, textScale = 1 }: BarrePieceProps) {
+  const ts = textScale;
   const w = piece.sizeMultiplier * referenceUnitMm;
   const h = BAR_HEIGHT_MM;
   const color = getPieceColor(piece.couleur, highContrast);
@@ -26,7 +28,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
         y={piece.y + h / 2}
         textAnchor="end"
         dominantBaseline="central"
-        fontSize={5}
+        fontSize={5 * ts}
         fill={hasLabel ? '#1E1A2E' : 'transparent'}
         data-testid="bar-label"
         data-edit-target={`${piece.id}-label`}
@@ -64,7 +66,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast }:
         y={piece.y + h / 2}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={6}
+        fontSize={6 * ts}
         fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1E1A2E') : (!hasLabel ? (piece.locked ? '#9CA3AF' : color) : 'transparent')}
         fontWeight={600}
         opacity={hasValue ? 1 : 0.5}

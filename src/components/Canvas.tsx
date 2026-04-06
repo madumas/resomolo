@@ -56,6 +56,7 @@ interface CanvasProps {
   showSuggestedZones?: boolean;
   showTokenCounter?: boolean;
   highContrast?: boolean;
+  textScale?: number;
 }
 
 type InteractionMode =
@@ -105,6 +106,7 @@ export function Canvas({
   showSuggestedZones,
   showTokenCounter,
   highContrast,
+  textScale = 1,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -991,7 +993,7 @@ export function Canvas({
         {/* Render boîtes first (background), then everything else on top */}
         {pieces.filter(p => p.type === 'boite').map(piece => (
           <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
-            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} />
+            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
           </g>
         ))}
 
@@ -1019,7 +1021,7 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity: isMoving ? 0.6 : 1, transition: 'opacity 0.1s' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
             </g>
           );
         })}
@@ -1794,17 +1796,18 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1 }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
   reponseIds?: string[];
   highContrast?: boolean;
+  textScale?: number;
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
     case 'barre':
-      inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} />; break;
+      inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'jeton':
       inner = <JetonPiece piece={piece} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'boite':
@@ -1817,11 +1820,11 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
       inner = <ReponsePiece piece={piece} isSelected={isSelected}
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
-      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />; break;
+      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale} />; break;
     case 'arbre':
-      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} />; break;
+      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} />; break;
     case 'schema':
-      inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} />; break;
+      inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'tableau':
       return null; // rendered separately in Canvas to pass editing props
     case 'fleche':

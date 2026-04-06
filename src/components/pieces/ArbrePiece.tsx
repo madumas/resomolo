@@ -8,9 +8,11 @@ import { computeTreeLayout } from '../../engine/arbre-layout';
 interface ArbrePieceProps {
   piece: Arbre;
   isSelected: boolean;
+  textScale?: number;
 }
 
-export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
+export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps) {
+  const ts = textScale;
   const layout = computeTreeLayout(piece.levels);
   const { nodes, branches, leafCount, width, height, warning } = layout;
   const { x, y } = piece;
@@ -56,7 +58,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
               strokeWidth={0.6} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={Math.min(7, nw / Math.max(1, node.label.length) * 1.4)}
+              fontSize={Math.min(7, nw / Math.max(1, node.label.length) * 1.4) * ts}
               fill="#1E1A2E" fontWeight={600}>
               {node.label}
             </text>
@@ -72,7 +74,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
           <text key={`lvl-${li}`}
             x={x - 6} y={y + firstNode.y + 1}
             textAnchor="end" dominantBaseline="central"
-            fontSize={5} fill="#55506A" fontWeight={500}>
+            fontSize={5 * ts} fill="#55506A" fontWeight={500}>
             {level.name}
           </text>
         );
@@ -90,7 +92,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
               fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
             <text x={x + width / 2} y={btnY + 5.5}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={5} fill="#7028e0" fontWeight={600}>
+              fontSize={5 * ts} fill="#7028e0" fontWeight={600}>
               + Niveau
             </text>
           </g>
@@ -121,7 +123,7 @@ export function ArbrePiece({ piece, isSelected }: ArbrePieceProps) {
 
       {/* Leaf counter — always visible */}
       <text x={x + width} y={y + height + 10}
-        textAnchor="end" fontSize={5} fill="#55506A">
+        textAnchor="end" fontSize={5 * ts} fill="#55506A">
         {leafCount} {leafCount === 1 ? 'feuille' : 'feuilles'}
       </text>
 
