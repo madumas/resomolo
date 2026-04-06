@@ -4,6 +4,7 @@ import type { UndoManager, DominantHand, SettingsProfile } from '../model/types'
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_PRIMARY, UI_DESTRUCTIVE, UI_TEXT_SECONDARY, UI_SURFACE, UI_DISABLED_BG } from '../config/theme';
 import { UndoIcon, RedoIcon, DeleteIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
+import { AboutDialog } from './AboutDialog';
 
 interface ActionBarProps {
   undoManager: UndoManager;
@@ -19,6 +20,7 @@ interface ActionBarProps {
   onExportImage?: () => void;
   onExportPdf?: () => void;
   onShareLink?: () => void;
+  onStartTutorial?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
   activeProfile?: SettingsProfile;
 }
@@ -37,6 +39,7 @@ export function ActionBar({
   onExportImage,
   onExportPdf,
   onShareLink,
+  onStartTutorial,
   sessionTimer,
   activeProfile = 'custom',
 }: ActionBarProps) {
@@ -168,26 +171,8 @@ export function ActionBar({
         )}
       </button>
 
-      {/* Guide */}
-      <button
-        onClick={onShowGuide}
-        title="Guide accompagnateur"
-        aria-label="Guide accompagnateur"
-        style={{
-          background: 'none',
-          border: `1px solid ${UI_PRIMARY}`,
-          borderRadius: '50%',
-          width: MIN_BUTTON_SIZE_PX,
-          height: MIN_BUTTON_SIZE_PX,
-          color: UI_PRIMARY,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <HelpIcon />
-      </button>
+      {/* Menu aide */}
+      <HelpMenu onShowGuide={onShowGuide} onStartTutorial={onStartTutorial} />
 
       {/* Fullscreen toggle — same position as GéoMolo */}
       <FullscreenToggle />
@@ -294,6 +279,111 @@ function ShareRow({ icon, label, onClick }: { icon: React.ReactNode; label: stri
       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24 }}>{icon}</span>
       {label}
     </button>
+  );
+}
+
+function HelpMenu({ onShowGuide, onStartTutorial }: {
+  onShowGuide: () => void;
+  onStartTutorial?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open]);
+
+  return (
+    <>
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      <div ref={menuRef} style={{ position: 'relative' }}>
+        <button
+          onClick={() => setOpen(!open)}
+          title="Aide"
+          aria-label="Aide"
+          aria-haspopup="true"
+          aria-expanded={open}
+          style={{
+            background: 'none',
+            border: `1px solid ${UI_PRIMARY}`,
+            borderRadius: '50%',
+            width: MIN_BUTTON_SIZE_PX,
+            height: MIN_BUTTON_SIZE_PX,
+            color: UI_PRIMARY,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <HelpIcon />
+        </button>
+        {open && (
+          <div
+            role="menu"
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: 0,
+              marginBottom: 8,
+              background: '#fff',
+              border: `1px solid ${UI_BORDER}`,
+              borderRadius: 10,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              padding: 6,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              zIndex: 50,
+              minWidth: 200,
+            }}
+          >
+            {onStartTutorial && (
+              <ShareRow
+                icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M4 2v10l8-5z" /></svg>}
+                label="Tutoriel"
+                onClick={() => { onStartTutorial(); setOpen(false); }}
+              />
+            )}
+            <ShareRow
+              icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 1C4 1 2 3 2 5.5S4 10 7 13c3-3 5-5.5 5-7.5S10 1 7 1z" /><circle cx="7" cy="5.5" r="1.5" /></svg>}
+              label="Guide pour l'adulte"
+              onClick={() => { onShowGuide(); setOpen(false); }}
+            />
+            <div style={{ height: 1, background: UI_BORDER, margin: '2px 8px' }} />
+            <ShareRow
+              icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11V3h8v8H3zM6 3v8M3 7h8" /><path d="M9 1l4 0 0 4" strokeWidth="1.2" /><path d="M13 1L9 5" strokeWidth="1.2" /></svg>}
+              label="Documentation"
+              onClick={() => { window.open('docs/index.html', '_blank'); setOpen(false); }}
+            />
+            <ShareRow
+              icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="7" cy="7" r="6" /><path d="M7 4v4M7 10v.5" strokeLinecap="round" /></svg>}
+              label="À propos"
+              onClick={() => { setShowAbout(true); setOpen(false); }}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

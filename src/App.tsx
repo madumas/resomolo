@@ -644,6 +644,7 @@ export default function App() {
         onToggleDeleteMode={handleToggleDeleteMode}
         onRecommencer={handleRecommencer}
         onShowGuide={() => setShowAdultGuide(true)}
+        onStartTutorial={() => tutorial.startTutorial()}
         onShowSettings={() => setShowSettings(true)}
         onShowSlotManager={() => setShowSlotManager(true)}
         onExportImage={() => {
