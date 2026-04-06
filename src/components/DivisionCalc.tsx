@@ -177,6 +177,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     const newDec = newDecPos ?? 0;
     const shift = newDec - oldDecPos;
     if (shift !== 0) {
+      // Block if reducing decimals would truncate non-empty cells
+      if (shift < 0) {
+        const wouldLose = (row: Row) => row.slice(row.length + shift).some(d => d !== '');
+        if (wouldLose(dividend) || wouldLose(quotient) || wouldLose(divisor) ||
+            steps.some(s => wouldLose(s.product) || wouldLose(s.partialRemainder))) {
+          return;
+        }
+      }
       const shiftRow = (row: Row): Row => {
         if (shift > 0) return [...row.slice(shift), ...Array(shift).fill('')];
         return [...Array(-shift).fill(''), ...row.slice(0, shift)];
@@ -243,15 +251,18 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     setRemainder(digit);
   };
 
-  // Build the ordered list of all row names for vertical navigation
-  // Quebec crochet: dividend on top-left, steps below; divisor top-right, quotient below
-  const allRowNames = (): string[] => {
-    const rows: string[] = ['dividend', 'divisor', 'quotient'];
+  // Vertical navigation: two separate zones matching the visual layout
+  // LEFT zone: dividend, then steps (product/remainder pairs)
+  // RIGHT zone: divisor, then quotient
+  const verticalRows = (rowName: string): string[] => {
+    const isRight = rowName === 'divisor' || rowName === 'quotient';
+    if (isRight) return ['divisor', 'quotient'];
+    const left: string[] = ['dividend'];
     for (let i = 0; i < steps.length; i++) {
-      rows.push(`step${i}-product`);
-      rows.push(`step${i}-remainder`);
+      left.push(`step${i}-product`);
+      left.push(`step${i}-remainder`);
     }
-    return rows;
+    return left;
   };
 
   const handleKeyDown = (rowName: string, col: number, e: React.KeyboardEvent, maxCols?: number) => {
@@ -273,11 +284,13 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      const rows = allRowNames();
+      const rows = verticalRows(rowName);
       const idx = rows.indexOf(rowName);
       const nextIdx = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
       if (nextIdx >= 0 && nextIdx < rows.length) {
-        focusCell(`${rows[nextIdx]}-${col}`);
+        const targetRow = rows[nextIdx];
+        const targetCols = targetRow === 'divisor' ? DIVISOR_COLS : DIV_COLS;
+        focusCell(`${targetRow}-${Math.min(col, targetCols - 1)}`);
       }
     }
     if (e.key === 'Backspace' && !((e.target as HTMLInputElement).value)) {
@@ -307,12 +320,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   const addStep = () => {
     if (steps.length < MAX_STEPS) {
       setSteps(prev => [...prev, emptyStep()]);
+      setLastModified(null);
     }
   };
 
   const removeStep = () => {
     if (steps.length > 1) {
       setSteps(prev => prev.slice(0, -1));
+      setLastModified(null);
     }
   };
 
