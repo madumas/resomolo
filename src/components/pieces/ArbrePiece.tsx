@@ -5,6 +5,11 @@ import { computeTreeLayout } from '../../engine/arbre-layout';
 // TODO v2: WAI-ARIA TreeView keyboard navigation (tabindex + aria-activedescendant)
 // Ref: https://www.w3.org/WAI/ARIA/apg/patterns/treeview/
 
+// SVG font tiers (mm) — harmonized across all pieces
+const T1 = 7;   // content: node labels
+const T2 = 6;   // labels: level names, leaf counter
+const T3 = 5;   // annotation: buttons
+
 interface ArbrePieceProps {
   piece: Arbre;
   isSelected: boolean;
@@ -22,7 +27,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
   if (nodes.length === 0) {
     return (
       <g>
-        <text x={x} y={y + 8} fontSize={6} fill="#55506A">
+        <text x={x} y={y + 8} fontSize={T2 * ts} fill="#55506A">
           Arbre vide — ajouter un niveau
         </text>
       </g>
@@ -58,7 +63,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
               strokeWidth={0.6} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={Math.min(7, nw / Math.max(1, node.label.length) * 1.4) * ts}
+              fontSize={Math.min(T1, nw / Math.max(1, node.label.length) * 1.4) * ts}
               fill="#1E1A2E" fontWeight={600}>
               {node.label}
             </text>
@@ -74,7 +79,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
           <text key={`lvl-${li}`}
             x={x - 6} y={y + firstNode.y + 1}
             textAnchor="end" dominantBaseline="central"
-            fontSize={5 * ts} fill="#55506A" fontWeight={500}>
+            fontSize={T2 * ts} fill="#55506A" fontWeight={500}>
             {level.name}
           </text>
         );
@@ -92,7 +97,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
               fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
             <text x={x + width / 2} y={btnY + 5.5}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={5 * ts} fill="#7028e0" fontWeight={600}>
+              fontSize={T3 * ts} fill="#7028e0" fontWeight={600}>
               + Niveau
             </text>
           </g>
@@ -114,7 +119,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
               fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
             <text x={btnX + 5} y={btnCY + 0.5}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={7} fill="#7028e0" fontWeight={700}>
+              fontSize={T1 * ts} fill="#7028e0" fontWeight={700}>
               +
             </text>
           </g>
@@ -123,14 +128,14 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
 
       {/* Leaf counter — always visible */}
       <text x={x + width} y={y + height + 10}
-        textAnchor="end" fontSize={5 * ts} fill="#55506A">
+        textAnchor="end" fontSize={T2 * ts} fill="#55506A">
         {leafCount} {leafCount === 1 ? 'feuille' : 'feuilles'}
       </text>
 
       {/* Warning if too many leaves (R5) */}
       {warning && (
         <text x={x + width / 2} y={y + height + 18}
-          textAnchor="middle" fontSize={5} fill="#B8860B">
+          textAnchor="middle" fontSize={T2 * ts} fill="#B8860B">
           {warning}
         </text>
       )}

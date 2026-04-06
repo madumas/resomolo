@@ -28,7 +28,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
         y={piece.y + h / 2}
         textAnchor="end"
         dominantBaseline="central"
-        fontSize={5 * ts}
+        fontSize={6 * ts}
         fill={hasLabel ? '#1E1A2E' : 'transparent'}
         data-testid="bar-label"
         data-edit-target={`${piece.id}-label`}
@@ -66,7 +66,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
         y={piece.y + h / 2}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={6 * ts}
+        fontSize={7 * ts}
         fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1E1A2E') : (!hasLabel ? (piece.locked ? '#9CA3AF' : color) : 'transparent')}
         fontWeight={600}
         opacity={hasValue ? 1 : 0.5}
@@ -81,7 +81,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
             x={piece.x + w / 2}
             y={piece.y + h + 5}
             textAnchor="middle"
-            fontSize={6}
+            fontSize={7 * ts}
             fill="#55506A"
           >
             {piece.coloredParts.length}
@@ -98,7 +98,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
             x={piece.x + w / 2}
             y={piece.y + h + 12}
             textAnchor="middle"
-            fontSize={6}
+            fontSize={7 * ts}
             fill="#55506A"
           >
             {piece.divisions}
@@ -112,7 +112,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
           const partX = piece.x + partW * i + partW / 2;
           return (
             <text key={`pl-${i}`} x={partX} y={piece.y - 3}
-              textAnchor="middle" fontSize={5} fill="#55506A">
+              textAnchor="middle" fontSize={5 * ts} fill="#55506A">
               {i + 1}/{piece.divisions}
             </text>
           );
