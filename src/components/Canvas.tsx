@@ -59,6 +59,7 @@ interface CanvasProps {
   showTokenCounter?: boolean;
   highContrast?: boolean;
   textScale?: number;
+  focusMode?: boolean;
 }
 
 type InteractionMode =
@@ -109,6 +110,7 @@ export function Canvas({
   showTokenCounter,
   highContrast,
   textScale = 1,
+  focusMode,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -993,11 +995,15 @@ export function Canvas({
 
         {/* Render pieces */}
         {/* Render boîtes first (background), then everything else on top */}
-        {pieces.filter(p => p.type === 'boite').map(piece => (
-          <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
-            <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
-          </g>
-        ))}
+        {pieces.filter(p => p.type === 'boite').map(piece => {
+          const isFaded = focusMode && piece.id !== selectedPieceId;
+          return (
+            <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}
+              style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
+            </g>
+          );
+        })}
 
         {/* Flèches rendered after all pieces — see end of SVG */}
 
@@ -1018,10 +1024,12 @@ export function Canvas({
 
         {pieces.filter(p => p.type !== 'boite' && p.type !== 'fleche').map(piece => {
           const isMoving = mode.type === 'moving' && mode.pieceId === piece.id;
+          const isFaded = focusMode && piece.id !== selectedPieceId;
+          const opacity = isMoving ? 0.6 : isFaded ? 0.35 : 1;
           return (
             <g key={piece.id} data-piece-id={piece.id}
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-              style={{ opacity: isMoving ? 0.6 : 1, transition: 'opacity 0.1s' }}
+              style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
             >
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
             </g>
@@ -1029,9 +1037,12 @@ export function Canvas({
         })}
 
         {/* Tableaux — rendered separately for in-place editing */}
-        {pieces.filter(p => p.type === 'tableau').map(piece => (
+        {pieces.filter(p => p.type === 'tableau').map(piece => {
+          const isFaded = focusMode && piece.id !== selectedPieceId;
+          return (
           <g key={piece.id} data-piece-id={piece.id}
-            className={piece.id === lastPlacedId ? 'piece-new' : undefined}>
+            className={piece.id === lastPlacedId ? 'piece-new' : undefined}
+            style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
             <TableauPiece
               piece={piece as Tableau}
               isSelected={piece.id === selectedPieceId}
@@ -1042,7 +1053,8 @@ export function Canvas({
               activeCol={tableauEditorPieceId === piece.id ? activeCellRC?.col ?? null : null}
             />
           </g>
-        ))}
+          );
+        })}
 
         {/* Delete confirmation overlay — red highlight on piece pending deletion */}
         {deleteConfirmId && (() => {

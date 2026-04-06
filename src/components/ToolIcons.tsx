@@ -168,6 +168,16 @@ export function DiagrammeLigneIcon() {
   );
 }
 
+/** Focus/spotlight: cone of light — mode concentré */
+export function FocusIcon() {
+  return (
+    <svg {...SA}>
+      <circle cx="10" cy="5" r="2.5" fill="currentColor" fillOpacity="0.6" />
+      <path d="M6 8 L3 17 L17 17 L14 8" fill="currentColor" fillOpacity="0.15" stroke={stroke} strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Inconnue: circle with "?" — unknown value marker */
 export function InconnueIcon() {
   return (

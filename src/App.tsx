@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { appReducer, createInitialAppState } from './model/state';
+import { appReducer } from './model/state';
 import type { Action } from './model/state';
-import { loadSettings, saveSettings, clearAllStorage, exportModelisation, importModelisation, loadEmergencySave, clearEmergencySave } from './model/persistence';
-import { parseShareParam, exportModelisationAsPng } from './engine/share';
+import { saveSettings, clearAllStorage, exportModelisation, importModelisation } from './model/persistence';
+import { exportModelisationAsPng } from './engine/share';
 import { exportModelisationAsPdf } from './engine/pdf-export';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useSlotManager } from './hooks/useSlotManager';
-import { migrateIfNeeded } from './model/slot-persistence';
-import { loadSlotData } from './model/slot-persistence';
 import type { UndoManager, ToolType, Highlight, Settings } from './model/types';
-import { DEFAULT_SETTINGS } from './model/types';
+import type { SlotRegistry } from './model/slots';
 import { canUndo, canRedo, undo, redo } from './model/undo';
 import { useTutorial } from './hooks/useTutorial';
 import { useSessionTimer } from './hooks/useSessionTimer';
@@ -30,9 +28,16 @@ import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE
 import { onDelete, onUndoSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import type { ProblemPreset } from './config/problems';
 
-export default function App() {
+interface AppProps {
+  initialRegistry: SlotRegistry;
+  initialUndoManager: UndoManager;
+  initialSettings: Settings;
+  initialProblemZoneActive: boolean;
+}
+
+export default function App({ initialRegistry, initialUndoManager, initialSettings, initialProblemZoneActive }: AppProps) {
   const [undoManager, setUndoManager] = useState<UndoManager>(
-    () => createInitialAppState().undoManager
+    () => initialUndoManager
   );
   const [activeTool, setActiveTool] = useState<ToolType>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
@@ -40,17 +45,18 @@ export default function App() {
   const [jetonQuantity, setJetonQuantity] = useState(1);
   const [problemExpanded, setProblemExpanded] = useState(true);
   const [showProblemSelector, setShowProblemSelector] = useState(false);
-  const [problemZoneActive, setProblemZoneActive] = useState(false);
+  const [problemZoneActive, setProblemZoneActive] = useState(initialProblemZoneActive);
   const [showAdultGuide, setShowAdultGuide] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [showRelance, setShowRelance] = useState(false);
   const [relanceIndex, setRelanceIndex] = useState(0);
   const [arrowFromId, setArrowFromId] = useState<string | null>(null);
   const [deleteMode, setDeleteMode] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [equalizingFromId, setEqualizingFromId] = useState<string | null>(null);
   const [groupingBarId, setGroupingBarId] = useState<string | null>(null);
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<Settings>(initialSettings);
   const [showSettings, setShowSettings] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<Omit<ConfirmDialogProps, 'onCancel'> | null>(null);
   const [showSlotManager, setShowSlotManager] = useState(false);
@@ -58,8 +64,7 @@ export default function App() {
   const inactivityTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [showLabelNudge, setShowLabelNudge] = useState(false);
   const labelNudgeShownRef = useRef(false);
-  const settingsLoadedRef = useRef(false);
-  const [appReady, setAppReady] = useState(false);
+  const skipFirstSettingsSave = useRef(true);
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
   const [inactivityRelanceIndex, setInactivityRelanceIndex] = useState(0);
 
@@ -114,8 +119,8 @@ export default function App() {
     setActivityTick(t => t + 1);
   }, []);
 
-  // Slot manager — must be declared before any useEffect that references it
-  const slotManager = useSlotManager({ undoManager, dispatch });
+  // Slot manager — pre-loaded registry from boot()
+  const slotManager = useSlotManager({ initialRegistry, undoManager, dispatch });
 
   const handleUndo = useCallback(() => {
     setUndoManager(prev => {
@@ -135,48 +140,8 @@ export default function App() {
     setDeleteConfirmId(null);
   }, []);
 
-  // Restore from IndexedDB on mount (slot-based)
+  // Sync sound/font/spacing — always (including first render with pre-loaded settings)
   useEffect(() => {
-    (async () => {
-      const reg = await migrateIfNeeded();
-      slotManager.initRegistry(reg);
-      if (reg.activeSlotId) {
-        const data = await loadSlotData(reg.activeSlotId);
-        // I6: Check emergency save and use whichever has more pieces
-        const emergency = loadEmergencySave();
-        let finalData = data;
-        if (emergency && (!data || emergency.current.pieces.length > data.current.pieces.length)) {
-          finalData = emergency;
-        }
-        if (finalData) {
-          setUndoManager(finalData);
-          setProblemZoneActive(finalData.current.probleme.length > 0);
-          // Clear emergency save only after confirming data loaded successfully
-          if (data) clearEmergencySave();
-        }
-      }
-      // URL sharing: ?probleme=text (simple) or ?s=<lz-compressed> (rich with pieces)
-      const shared = parseShareParam(window.location.search);
-      if (shared) {
-        // Suppress adult guide/tutorial so the shared problem isn't overwritten
-        setShowAdultGuide(false);
-        dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: shared.text, readOnly: true });
-        if (shared.pieces.length > 0) {
-          dispatch({ type: 'PLACE_PIECES', pieces: shared.pieces });
-        }
-        setProblemZoneActive(true);
-        window.history.replaceState({}, '', window.location.pathname);
-        // Ensure a slot exists so auto-save persists the shared content
-        slotManager.ensureSlot();
-      }
-    })().then(() => setAppReady(true));
-    loadSettings().then(s => { setSettings(s); settingsLoadedRef.current = true; });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-
-  // Auto-save settings on change + sync sound/font/spacing (skip initial mount)
-  useEffect(() => {
-    if (settingsLoadedRef.current) saveSettings(settings);
     setSoundMode(settings.soundMode);
     setGainMultiplier(settings.soundGain);
     // Apply font family + letter spacing + size compensation
@@ -189,6 +154,12 @@ export default function App() {
     document.documentElement.style.setProperty('--font-body', font.family);
     document.documentElement.style.setProperty('--font-size-adjust', font.sizeAdjust);
     document.documentElement.style.setProperty('--letter-spacing', settings.letterSpacing ? `${settings.letterSpacing}em` : 'normal');
+  }, [settings]);
+
+  // Persist settings — skip first render (initial value comes from boot)
+  useEffect(() => {
+    if (skipFirstSettingsSave.current) { skipFirstSettingsSave.current = false; return; }
+    saveSettings(settings);
   }, [settings]);
 
   const handleCloseAdultGuide = useCallback(() => {
@@ -204,7 +175,7 @@ export default function App() {
   }, [pieces.length > 0, probleme.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save (slot-aware)
-  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot, appReady);
+  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot);
 
   // beforeunload
   useEffect(() => {
@@ -569,6 +540,9 @@ export default function App() {
         showTutorialButtons={tutorial.showNextButton}
         onTutorialNext={tutorial.nextStep}
         onTutorialSkip={tutorial.skipTutorial}
+        problemCollapsed={problemZoneActive && !(settings.problemAlwaysVisible || problemExpanded) && probleme.length > 0}
+        problemText={probleme}
+        onExpandProblem={() => setProblemExpanded(true)}
       />
 
       {/* Zone problème — visible seulement si activée (problème sélectionné ou slot avec problème) */}
@@ -626,10 +600,11 @@ export default function App() {
           onSetEqualizingFromId={setEqualizingFromId}
           groupingBarId={groupingBarId}
           onSetGroupingBarId={setGroupingBarId}
-          showSuggestedZones={appReady && settings.showSuggestedZones}
+          showSuggestedZones={settings.showSuggestedZones}
           showTokenCounter={settings.showTokenCounter}
           highContrast={settings.highContrast}
           textScale={settings.textScale}
+          focusMode={focusMode}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>
@@ -638,10 +613,12 @@ export default function App() {
       <ActionBar
         undoManager={undoManager}
         deleteMode={deleteMode}
+        focusMode={focusMode}
         dominantHand={settings.dominantHand}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onToggleDeleteMode={handleToggleDeleteMode}
+        onToggleFocusMode={() => setFocusMode(f => !f)}
         onRecommencer={handleRecommencer}
         onShowGuide={() => setShowAdultGuide(true)}
         onStartTutorial={() => tutorial.startTutorial()}
