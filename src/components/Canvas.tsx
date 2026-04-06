@@ -460,7 +460,7 @@ export function Canvas({
         }
         onSetTool(null);
       } else {
-        const piece = createPiece(activeTool, snapped);
+        const piece = createPiece(activeTool, snapped, referenceUnitMm);
         if (!piece) return; // deplacer tool — no piece to create
         // Center large pieces on cursor for better spatial anticipation (TDC)
         if (piece.type === 'droiteNumerique') {
@@ -1225,7 +1225,7 @@ export function Canvas({
             })()}
             {/* Ghost: Schema — bar with bracket (R13: real size) */}
             {activeTool === 'schema' && (() => {
-              const gw = 120; // 2 * referenceUnit default
+              const gw = 2 * referenceUnitMm; // R13: real size ghost
               const gh = 15;
               const gx = ghostCursorMm.x - gw / 2;
               const gy = ghostCursorMm.y - gh / 2;
@@ -2477,7 +2477,7 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
 
 // === Piece factory ===
 
-function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number }): Piece | null {
+function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number }, referenceUnitMm = 60): Piece | null {
   const id = generateId();
   switch (tool) {
     case 'jeton':
@@ -2506,7 +2506,7 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
           { name: 'Niveau 2', options: ['1', '2'] },
         ] };
     case 'schema': {
-      const defaults = getGabaritDefaults('parties-tout', 60); // R3: default parties-tout
+      const defaults = getGabaritDefaults('parties-tout', referenceUnitMm); // R3: default parties-tout
       return { id, type: 'schema', x: pos.x, y: pos.y, locked: false,
         gabarit: 'parties-tout',
         totalLabel: defaults.totalLabel ?? '',

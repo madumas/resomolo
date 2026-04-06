@@ -709,11 +709,20 @@ export function ContextActions({
         <>
           <CtxBtn onClick={() => setSchemaSubmenu('type')}>Type</CtxBtn>
           {/* Discrete size buttons — direct in L1 to reduce clicks (R12) */}
+          {/* For comparaison: resize first bar only, preserve ratio. Others: uniform. */}
           {[0.5, 1, 2, 3].map(m => (
             <CtxBtn key={m}
               active={piece.bars[0]?.sizeMultiplier === m}
               onClick={() => {
-                const newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: m }));
+                let newBars;
+                if (piece.gabarit === 'comparaison' && piece.bars.length >= 2) {
+                  // Preserve ratio between bars
+                  const oldFirst = piece.bars[0].sizeMultiplier || 1;
+                  const ratio = m / oldFirst;
+                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: Math.max(0.25, b.sizeMultiplier * ratio) }));
+                } else {
+                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: m }));
+                }
                 onEditPiece(piece.id, { bars: newBars, referenceWidth: m * referenceUnitMm });
               }}>×{m}</CtxBtn>
           ))}
@@ -722,7 +731,9 @@ export function ContextActions({
             <CtxBtn onClick={() => {
               const bar = piece.bars[0];
               if (bar && bar.parts.length < 6) {
-                const newParts = [...bar.parts, { label: '', value: null, couleur: 'bleu' as const }];
+                const partColors: ('bleu' | 'rouge' | 'vert' | 'jaune')[] = ['bleu', 'rouge', 'vert', 'jaune'];
+                const newColor = partColors[bar.parts.length % partColors.length];
+                const newParts = [...bar.parts, { label: '', value: null, couleur: newColor }];
                 const newBars = [{ ...bar, parts: newParts }, ...piece.bars.slice(1)];
                 onEditPiece(piece.id, { bars: newBars });
                 onAddPart();
@@ -730,7 +741,7 @@ export function ContextActions({
             }} disabled={piece.bars[0]?.parts.length >= 6}>+ Partie</CtxBtn>
           )}
           {/* Add bar (for comparaison, groupes-egaux) */}
-          {(piece.gabarit === 'comparaison' || piece.gabarit === 'groupes-egaux') && (
+          {(piece.gabarit === 'comparaison' || piece.gabarit === 'groupes-egaux') && piece.bars.length < 8 && (
             <CtxBtn onClick={() => {
               const refBar = piece.bars[0] || { label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] };
               const newBar = { ...refBar, label: '', couleur: piece.gabarit === 'comparaison' ? (['bleu', 'rouge', 'vert', 'jaune'][piece.bars.length % 4] as any) : refBar.couleur };

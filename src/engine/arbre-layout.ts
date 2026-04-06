@@ -96,14 +96,12 @@ export function computeTreeLayout(
     const spanPerNode = width / nodesAtLevel;
     const y = li * levelGap + nodeH / 2;
 
+    let leafNodesAdded = 0;
     for (let pi = 0; pi < parentPaths; pi++) {
+      if (capped && li === levels.length - 1 && leafNodesAdded >= leafCount) break;
       for (let oi = 0; oi < options.length; oi++) {
+        if (capped && li === levels.length - 1 && leafNodesAdded >= leafCount) break;
         const flatIndex = pi * options.length + oi;
-
-        // Check leaf cap
-        if (capped && li === levels.length - 1 && nodes.filter(n => n.levelIndex === li).length >= leafCount) {
-          break;
-        }
 
         const x = spanPerNode * flatIndex + spanPerNode / 2;
         const nodeIndex = nodes.length;
@@ -135,11 +133,41 @@ export function computeTreeLayout(
             });
           }
         }
+        if (li === levels.length - 1) leafNodesAdded++;
       }
     }
   }
 
-  return { nodes, branches, leafCount, width, height, warning, capped };
+  // Recalculate width based on actual max nodes at any level
+  const nodesPerLevel = new Map<number, number>();
+  for (const n of nodes) {
+    nodesPerLevel.set(n.levelIndex, (nodesPerLevel.get(n.levelIndex) ?? 0) + 1);
+  }
+  const maxNodesAtAnyLevel = Math.max(1, ...nodesPerLevel.values());
+  const actualWidth = Math.max(nodeW, maxNodesAtAnyLevel * cellW - siblingGap);
+
+  // Reposition nodes to use actual width
+  for (let li = 0; li < levels.length; li++) {
+    const levelNodes = nodes.filter(n => n.levelIndex === li);
+    const count = levelNodes.length;
+    if (count === 0) continue;
+    const span = actualWidth / count;
+    levelNodes.forEach((n, i) => { n.x = span * i + span / 2; });
+  }
+
+  // Recalculate branch endpoints after repositioning
+  for (const b of branches) {
+    const from = nodes[b.fromIndex];
+    const to = nodes[b.toIndex];
+    if (from && to) {
+      b.x1 = from.x;
+      b.y1 = from.y + nodeH / 2;
+      b.x2 = to.x;
+      b.y2 = to.y - nodeH / 2;
+    }
+  }
+
+  return { nodes, branches, leafCount, width: actualWidth, height, warning, capped };
 }
 
 // === "Brancher pareil" helper ===

@@ -47,11 +47,11 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast }
               </text>
             )}
 
-            {/* Multiplier annotation "×N" (R15 — triple coding) */}
+            {/* Multiplier annotation "×N" (R15 — triple coding) — offset below label */}
             {bar.multiplierLabel && bi === 0 && (
-              <text x={x + bar.x - 4} y={y + bar.y + barH / 2}
+              <text x={x + bar.x - 4} y={y + bar.y + barH + 5}
                 textAnchor="end" dominantBaseline="central"
-                fontSize={6} fill="#55506A" fontWeight={700}>
+                fontSize={5} fill="#55506A" fontWeight={700}>
                 {bar.multiplierLabel}
               </text>
             )}
