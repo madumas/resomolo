@@ -20,6 +20,11 @@ interface MinPiece {
   mn?: number; mx?: number; st?: number; mk?: number[]; wd?: number;
   // Tableau
   rw?: number; cl?: number; clz?: string[][]; hr?: boolean;
+  // Arbre
+  lvl?: { n: string; o: string[] }[];
+  // Schema
+  gb?: string; tl?: string; tv?: number | null; brs?: any[];
+  rfw?: number;
 }
 
 interface SharePayload {
@@ -76,6 +81,16 @@ function minifyPiece(p: Piece): MinPiece {
       m.rw = p.rows; m.cl = p.cols; m.clz = p.cells;
       if (!p.headerRow) m.hr = false;
       break;
+    case 'arbre':
+      m.lvl = (p as any).levels.map((l: any) => ({ n: l.name, o: l.options }));
+      break;
+    case 'schema':
+      m.gb = (p as any).gabarit;
+      if ((p as any).totalLabel) m.tl = (p as any).totalLabel;
+      if ((p as any).totalValue != null) m.tv = (p as any).totalValue;
+      m.brs = (p as any).bars;
+      m.rfw = (p as any).referenceWidth;
+      break;
   }
   return m;
 }
@@ -106,6 +121,17 @@ function expandPiece(m: MinPiece): Piece {
       return { ...base, type: 'tableau', rows: m.rw ?? 2, cols: m.cl ?? 3,
         cells: m.clz ?? Array.from({ length: m.rw ?? 2 }, () => Array(m.cl ?? 3).fill('')),
         headerRow: m.hr ?? true };
+    case 'arbre':
+      return { ...base, type: 'arbre',
+        levels: (m.lvl ?? [{ n: 'Niveau 1', o: ['A', 'B'] }, { n: 'Niveau 2', o: ['1', '2'] }])
+          .map((l: any) => ({ name: l.n, options: l.o })) };
+    case 'schema':
+      return { ...base, type: 'schema',
+        gabarit: (m.gb ?? 'libre') as any,
+        totalLabel: m.tl ?? '',
+        totalValue: m.tv ?? null,
+        bars: m.brs ?? [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],
+        referenceWidth: m.rfw ?? 60 };
     default:
       return { ...base, type: 'jeton', couleur: 'bleu', parentId: null };
   }

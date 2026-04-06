@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
-import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau } from '../model/types';
+import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema } from '../model/types';
+import type { SchemaGabarit } from '../model/types';
+import { computeTreeLayout } from '../engine/arbre-layout';
+import { computeSchemaWidth, computeSchemaHeight, getGabaritDefaults } from '../engine/schema-layout';
+import { onAddNode, onChangeGabarit, onAddPart } from '../engine/sound';
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
@@ -80,6 +84,12 @@ export function ContextActions({
   // Tableau submenu state + preview
   const [tableauSubmenu, setTableauSubmenu] = useState<'none' | 'lignes' | 'colonnes'>('none');
 
+  // Arbre submenu state
+  const [arbreSubmenu, setArbreSubmenu] = useState<'none' | 'gabarit' | 'niveaux'>('none');
+
+  // Schema submenu state
+  const [schemaSubmenu, setSchemaSubmenu] = useState<'none' | 'type' | 'taille'>('none');
+
   // Micro-confirmation for delete (2s timer)
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   useEffect(() => {
@@ -95,6 +105,8 @@ export function ContextActions({
     setShowRepartir(false);
     setDroiteSubmenu('none');
     setTableauSubmenu('none');
+    setArbreSubmenu('none');
+    setSchemaSubmenu('none');
   }, [piece.id]);
 
   // Convert piece bounding box from SVG mm to screen px
@@ -630,6 +642,127 @@ export function ContextActions({
         </>
       )}
 
+      {/* Arbre — premier niveau */}
+      {isArbre(piece) && arbreSubmenu === 'none' && (
+        <>
+          <CtxBtn onClick={() => setArbreSubmenu('gabarit')}>Gabarit</CtxBtn>
+          <CtxBtn onClick={() => setArbreSubmenu('niveaux')}>Niveaux {piece.levels.length}</CtxBtn>
+          <CtxBtn onClick={() => {
+            if (piece.levels.length < 4) {
+              const newLevels = [...piece.levels, { name: `Niveau ${piece.levels.length + 1}`, options: ['A', 'B'] }];
+              onEditPiece(piece.id, { levels: newLevels });
+              onAddNode();
+            }
+          }} disabled={piece.levels.length >= 4}>+ Niveau</CtxBtn>
+        </>
+      )}
+      {/* Arbre — sous-menu Gabarit (templates) */}
+      {isArbre(piece) && arbreSubmenu === 'gabarit' && (
+        <>
+          <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
+          {[
+            { label: '2×2', levels: [{ name: 'Niveau 1', options: ['A', 'B'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
+            { label: '2×3', levels: [{ name: 'Niveau 1', options: ['A', 'B'] }, { name: 'Niveau 2', options: ['1', '2', '3'] }] },
+            { label: '3×2', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
+            { label: '3×3', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C'] }, { name: 'Niveau 2', options: ['1', '2', '3'] }] },
+            { label: '4×2', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C', 'D'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
+          ].map(t => (
+            <CtxBtn key={t.label} onClick={() => {
+              onEditPiece(piece.id, { levels: t.levels });
+              setArbreSubmenu('none');
+              onChangeGabarit();
+            }}>{t.label}</CtxBtn>
+          ))}
+        </>
+      )}
+      {/* Arbre — sous-menu Niveaux (ajuster options par niveau) */}
+      {isArbre(piece) && arbreSubmenu === 'niveaux' && (
+        <>
+          <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
+          {piece.levels.map((level, li) => (
+            <React.Fragment key={li}>
+              <CtxBtn onClick={() => {}} disabled>{level.name}: {level.options.length}</CtxBtn>
+              <CtxBtn onClick={() => {
+                if (level.options.length < 6) {
+                  const newLevels = piece.levels.map((l, i) =>
+                    i === li ? { ...l, options: [...l.options, String.fromCharCode(65 + l.options.length)] } : l
+                  );
+                  onEditPiece(piece.id, { levels: newLevels });
+                  onAddNode();
+                }
+              }} disabled={level.options.length >= 6}>+</CtxBtn>
+              <CtxBtn onClick={() => {
+                if (level.options.length > 1) {
+                  const newLevels = piece.levels.map((l, i) =>
+                    i === li ? { ...l, options: l.options.slice(0, -1) } : l
+                  );
+                  onEditPiece(piece.id, { levels: newLevels });
+                }
+              }} disabled={level.options.length <= 1}>−</CtxBtn>
+            </React.Fragment>
+          ))}
+        </>
+      )}
+
+      {/* Schema — premier niveau */}
+      {isSchema(piece) && schemaSubmenu === 'none' && (
+        <>
+          <CtxBtn onClick={() => setSchemaSubmenu('type')}>Type</CtxBtn>
+          {/* Discrete size buttons — direct in L1 to reduce clicks (R12) */}
+          {[0.5, 1, 2, 3].map(m => (
+            <CtxBtn key={m}
+              active={piece.bars[0]?.sizeMultiplier === m}
+              onClick={() => {
+                const newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: m }));
+                onEditPiece(piece.id, { bars: newBars, referenceWidth: m * referenceUnitMm });
+              }}>×{m}</CtxBtn>
+          ))}
+          {/* Add/remove parts (for parties-tout, transformation) */}
+          {(piece.gabarit === 'parties-tout' || piece.gabarit === 'transformation' || piece.gabarit === 'libre') && (
+            <CtxBtn onClick={() => {
+              const bar = piece.bars[0];
+              if (bar && bar.parts.length < 6) {
+                const newParts = [...bar.parts, { label: '', value: null, couleur: 'bleu' as const }];
+                const newBars = [{ ...bar, parts: newParts }, ...piece.bars.slice(1)];
+                onEditPiece(piece.id, { bars: newBars });
+                onAddPart();
+              }
+            }} disabled={piece.bars[0]?.parts.length >= 6}>+ Partie</CtxBtn>
+          )}
+          {/* Add bar (for comparaison, groupes-egaux) */}
+          {(piece.gabarit === 'comparaison' || piece.gabarit === 'groupes-egaux') && (
+            <CtxBtn onClick={() => {
+              const refBar = piece.bars[0] || { label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] };
+              const newBar = { ...refBar, label: '', couleur: piece.gabarit === 'comparaison' ? (['bleu', 'rouge', 'vert', 'jaune'][piece.bars.length % 4] as any) : refBar.couleur };
+              onEditPiece(piece.id, { bars: [...piece.bars, newBar] });
+              onAddPart();
+            }}>+ Barre</CtxBtn>
+          )}
+        </>
+      )}
+      {/* Schema — sous-menu Type (R12: illustration + verbe d'action) */}
+      {isSchema(piece) && schemaSubmenu === 'type' && (
+        <>
+          <CtxBtn onClick={() => setSchemaSubmenu('none')} back>←</CtxBtn>
+          {([
+            { g: 'parties-tout' as SchemaGabarit, label: 'Séparer en parties' },
+            { g: 'comparaison' as SchemaGabarit, label: 'Comparer deux quantités' },
+            { g: 'groupes-egaux' as SchemaGabarit, label: 'Faire des groupes égaux' },
+            { g: 'transformation' as SchemaGabarit, label: 'Avant → Après' },
+            { g: 'libre' as SchemaGabarit, label: 'Libre' },
+          ]).map(({ g, label }) => (
+            <CtxBtn key={g}
+              active={piece.gabarit === g}
+              onClick={() => {
+                const defaults = getGabaritDefaults(g, referenceUnitMm);
+                onEditPiece(piece.id, { ...defaults });
+                setSchemaSubmenu('none');
+                onChangeGabarit();
+              }}>{label}</CtxBtn>
+          ))}
+        </>
+      )}
+
       {/* Delete — micro-confirmation "Sûr?" (2s timer) */}
       {onDeletePiece && !piece.locked && (
         <CtxBtn
@@ -740,6 +873,13 @@ function getPieceBoundsScreen(
   } else if (isTableau(piece)) {
     w = piece.cols * 12;
     h = piece.rows * 10;
+  } else if (isArbre(piece)) {
+    const tl = computeTreeLayout(piece.levels);
+    w = tl.width;
+    h = tl.height;
+  } else if (isSchema(piece)) {
+    w = computeSchemaWidth(piece, refUnit);
+    h = computeSchemaHeight(piece);
   } else if (piece.type === 'fleche') {
     // For arrows, find the rendered SVG element and use its bounding box
     const el = svg.querySelector(`[data-piece-id="${piece.id}"]`);

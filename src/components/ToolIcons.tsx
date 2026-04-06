@@ -116,6 +116,30 @@ export function DroiteNumeriqueIcon() {
   );
 }
 
+/** Schéma: two stacked bars with bracket — distinct from BarreIcon */
+export function SchemaIcon() {
+  return (
+    <svg {...S}>
+      <rect x="2" y="5" width="12" height="4" rx="1" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+      <rect x="2" y="11" width="8" height="4" rx="1" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+      <path d="M16 5c2 0 2 0 2 5s0 5-2 5" stroke={stroke} strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+/** Arbre: root node with 2 branches and 2 children */
+export function ArbreIcon() {
+  return (
+    <svg {...S}>
+      <circle cx="10" cy="4" r="2.5" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+      <line x1="10" y1="6.5" x2="5" y2="12" stroke={stroke} strokeWidth="1.5" />
+      <line x1="10" y1="6.5" x2="15" y2="12" stroke={stroke} strokeWidth="1.5" />
+      <circle cx="5" cy="14" r="2.5" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+      <circle cx="15" cy="14" r="2.5" stroke={stroke} strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
+    </svg>
+  );
+}
+
 /** Déplacer: four-direction arrow cross — identical to GéoMolo MoveIcon */
 export function DeplacerIcon() {
   return (

@@ -171,6 +171,34 @@ export function onDistribute() {
   if (mode === 'full') { soundDistribute(); }
 }
 
+// Arbre: add node — brief ascending pop (R10)
+export function soundAddNode() {
+  play(600, 30, 'sine', 0.06);
+}
+
+// Schema: change gabarit — smooth transition (R10)
+export function soundChangeGabarit() {
+  play(400, 40, 'triangle', 0.04);
+  setTimeout(() => play(500, 30, 'triangle', 0.04), 50);
+}
+
+// Schema: add part/subdivision (R10)
+export function soundAddPart() {
+  play(550, 20, 'sine', 0.05);
+}
+
+export function onAddNode() {
+  if (mode !== 'off') { soundAddNode(); haptic(20); }
+}
+
+export function onChangeGabarit() {
+  if (mode !== 'off') { soundChangeGabarit(); }
+}
+
+export function onAddPart() {
+  if (mode === 'full') { soundAddPart(); haptic(15); }
+}
+
 let _lastGhostSnapTime = 0;
 export function onGhostSnap() {
   const now = Date.now();

@@ -1,6 +1,6 @@
 // === Piece types ===
 
-export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'tableau';
+export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'tableau' | 'arbre' | 'schema';
 
 export type CouleurPiece = 'bleu' | 'rouge' | 'vert' | 'jaune';
 
@@ -83,7 +83,46 @@ export interface Tableau extends PieceBase {
   headerRow: boolean;      // first row styled as header
 }
 
-export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Tableau;
+// === Arbre (tree diagram — probability/enumeration, 3e cycle) ===
+
+export interface ArbreLevel {
+  name: string;        // e.g. "Entrée", "Plat", "Dessert"
+  options: string[];   // e.g. ["Soupe", "Salade"]
+}
+
+export interface Arbre extends PieceBase {
+  type: 'arbre';
+  levels: ArbreLevel[];
+}
+
+// === Schéma (tape/strip diagram — part-whole, comparison, transformation) ===
+
+export type SchemaGabarit = 'parties-tout' | 'comparaison' | 'groupes-egaux' | 'transformation' | 'libre';
+
+export interface SchemaPart {
+  label: string;
+  value: number | null;
+  couleur: CouleurPiece;
+}
+
+export interface SchemaBar {
+  label: string;
+  value: number | null;
+  sizeMultiplier: number;
+  couleur: CouleurPiece;
+  parts: SchemaPart[];
+}
+
+export interface Schema extends PieceBase {
+  type: 'schema';
+  gabarit: SchemaGabarit;
+  totalLabel: string;
+  totalValue: number | null;
+  bars: SchemaBar[];
+  referenceWidth: number;   // mm, synced with referenceUnitMm
+}
+
+export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Tableau | Arbre | Schema;
 
 // Type guards
 export function isJeton(p: Piece): p is Jeton { return p.type === 'jeton'; }
@@ -92,6 +131,8 @@ export function isBoite(p: Piece): p is Boite { return p.type === 'boite'; }
 export function isFleche(p: Piece): p is Fleche { return p.type === 'fleche'; }
 export function isDroiteNumerique(p: Piece): p is DroiteNumerique { return p.type === 'droiteNumerique'; }
 export function isTableau(p: Piece): p is Tableau { return p.type === 'tableau'; }
+export function isArbre(p: Piece): p is Arbre { return p.type === 'arbre'; }
+export function isSchema(p: Piece): p is Schema { return p.type === 'schema'; }
 
 // === Highlights ===
 
@@ -105,7 +146,7 @@ export interface Highlight {
 
 // === Tool ===
 
-export type ToolType = 'jeton' | 'barre' | 'droiteNumerique' | 'boite' | 'tableau' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
+export type ToolType = 'jeton' | 'barre' | 'schema' | 'droiteNumerique' | 'boite' | 'tableau' | 'arbre' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
 
 // === State ===
 
@@ -138,6 +179,19 @@ export const DRAG_THRESHOLD_MM = 1.5;
 export const CLICK_DEBOUNCE_MS = 150;
 export const AUTOSAVE_DEBOUNCE_MS = 2000;
 export const MAX_UNDO_LEVELS = 100;
+
+// Arbre constants
+export const ARBRE_LEVEL_GAP_MM = 30;
+export const ARBRE_NODE_W_MM = 20;
+export const ARBRE_NODE_H_MM = 12;
+export const ARBRE_SIBLING_GAP_MM = 8;
+export const ARBRE_MAX_LEVELS = 4;
+export const ARBRE_MAX_OPTIONS = 6;
+export const ARBRE_MAX_LEAVES = 24;
+export const ARBRE_WARN_LEAVES = 16;
+
+// Schema constants
+export const SCHEMA_BAR_HEIGHT_MM = 15;  // same as BAR_HEIGHT_MM for visual coherence
 
 // === Settings ===
 

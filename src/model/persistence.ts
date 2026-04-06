@@ -66,6 +66,19 @@ function migratePieces(pieces: any[]): any[] {
     if (p.type === 'barre' && p.showFraction === undefined) {
       return { ...p, showFraction: false };
     }
+    if (p.type === 'arbre' && !p.levels) {
+      return { ...p, levels: [{ name: 'Niveau 1', options: ['A', 'B'] }, { name: 'Niveau 2', options: ['1', '2'] }] };
+    }
+    if (p.type === 'schema') {
+      return {
+        ...p,
+        gabarit: p.gabarit || 'libre',
+        totalLabel: p.totalLabel ?? '',
+        totalValue: p.totalValue ?? null,
+        bars: p.bars || [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],
+        referenceWidth: p.referenceWidth || 60,
+      };
+    }
     return p;
   });
 }

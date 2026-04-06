@@ -14,6 +14,14 @@ export interface Tolerances {
   hitTestPaddingMm: number;
   /** Additive padding for jeton hit tests (mm). Capped to avoid overlap at JETON_SPACING_MM. */
   jetonHitPaddingMm: number;
+  // Arbre-specific (R9, R16)
+  treeNodeHitPaddingMm: number;
+  treeBranchHitWidthMm: number;
+  treeNodeMinSpacingMm: number;
+  // Schema-specific (R9, R16)
+  schemaResizeHandleHitMm: number;
+  schemaSegmentMinWidthMm: number;
+  schemaVerticalGapMm: number;
 }
 
 /** Max jeton padding so that two adjacent jetons' hit zones don't overlap.
@@ -33,5 +41,13 @@ export function getTolerances(profile: ToleranceProfile): Tolerances {
     clickDebounceMs: Math.round(CLICK_DEBOUNCE_MS * Math.sqrt(m)),
     hitTestPaddingMm: rawPadding,
     jetonHitPaddingMm: Math.min(rawPadding, MAX_JETON_PADDING),
+    // Arbre (R9, R16)
+    treeNodeHitPaddingMm: 3 * m,
+    treeBranchHitWidthMm: 6 * m,
+    treeNodeMinSpacingMm: 20 * m,
+    // Schema (R9, R16)
+    schemaResizeHandleHitMm: 12 * m,
+    schemaSegmentMinWidthMm: 10 * m,
+    schemaVerticalGapMm: 8 + 2 * (m - 1),
   };
 }

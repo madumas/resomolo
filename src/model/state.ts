@@ -88,6 +88,21 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as any).width / 2, y: piece.y };
     case 'tableau': return { x: piece.x + (piece as any).cols * 12 / 2, y: piece.y + (piece as any).rows * 10 / 2 };
+    case 'arbre': {
+      // Simplified: estimate width from leaf count product
+      const levels = (piece as any).levels || [];
+      const leafCount = levels.reduce((acc: number, l: any) => acc * Math.max(1, (l.options || []).length), 1);
+      const w = Math.max(60, leafCount * 28);
+      const h = Math.max(12, levels.length * 30);
+      return { x: piece.x + w / 2, y: piece.y + h / 2 };
+    }
+    case 'schema': {
+      const bars = (piece as any).bars || [];
+      const maxSm = bars.reduce((m: number, b: any) => Math.max(m, b.sizeMultiplier || 1), 1);
+      const w = maxSm * referenceUnitMm;
+      const h = Math.max(15, bars.length * 23);
+      return { x: piece.x + w / 2, y: piece.y + h / 2 };
+    }
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -133,11 +148,25 @@ function autoResizeBoite(state: ModelisationState): ModelisationState {
   return changed ? { ...state, pieces } : state;
 }
 
-/** Auto-scale referenceUnitMm so that the widest barre fits in the canvas. */
+/** Collect all sizeMultipliers from free barres AND schema bars. */
+function getAllBarMultipliers(pieces: Piece[]): number[] {
+  const multipliers: number[] = [];
+  for (const p of pieces) {
+    if (p.type === 'barre') multipliers.push((p as any).sizeMultiplier);
+    if (p.type === 'schema') {
+      for (const bar of ((p as any).bars || [])) {
+        multipliers.push(bar.sizeMultiplier || 1);
+      }
+    }
+  }
+  return multipliers;
+}
+
+/** Auto-scale referenceUnitMm so that the widest barre/schema bar fits in the canvas. */
 function autoScaleReference(state: ModelisationState): ModelisationState {
-  const barres = state.pieces.filter(p => p.type === 'barre');
-  if (barres.length === 0) return state;
-  const maxMultiplier = Math.max(...barres.map(b => (b as any).sizeMultiplier));
+  const multipliers = getAllBarMultipliers(state.pieces);
+  if (multipliers.length === 0) return state;
+  const maxMultiplier = Math.max(...multipliers);
   const maxWidth = 470; // CANVAS_WIDTH_MM (500) - 2 * MARGIN (15)
   if (maxMultiplier * state.referenceUnitMm > maxWidth) {
     // C3: Floor of 10mm to prevent referenceUnitMm = 0
@@ -146,11 +175,11 @@ function autoScaleReference(state: ModelisationState): ModelisationState {
   return state;
 }
 
-/** C3: Restore referenceUnitMm after deleting barres (may allow larger unit again). */
+/** C3: Restore referenceUnitMm after deleting barres/schema (may allow larger unit again). */
 function autoRestoreReference(state: ModelisationState): ModelisationState {
-  const barres = state.pieces.filter(p => p.type === 'barre');
-  if (barres.length === 0) return { ...state, referenceUnitMm: REFERENCE_UNIT_MM };
-  const maxMultiplier = Math.max(...barres.map(b => (b as any).sizeMultiplier));
+  const multipliers = getAllBarMultipliers(state.pieces);
+  if (multipliers.length === 0) return { ...state, referenceUnitMm: REFERENCE_UNIT_MM };
+  const maxMultiplier = Math.max(...multipliers);
   const maxWidth = 470;
   const ideal = Math.min(REFERENCE_UNIT_MM, Math.floor(maxWidth / maxMultiplier));
   return { ...state, referenceUnitMm: Math.max(10, ideal) };
@@ -165,7 +194,7 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
       if (action.piece.type === 'jeton' && action.piece.parentId) {
         newState = autoResizeBoite(newState);
       }
-      if (action.piece.type === 'barre') {
+      if (action.piece.type === 'barre' || action.piece.type === 'schema') {
         newState = autoScaleReference(newState);
       }
       return newState;
@@ -262,7 +291,7 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
           p.id === action.id ? { ...p, ...safeChanges } as Piece : p
         ),
       };
-      if ('sizeMultiplier' in safeChanges) {
+      if ('sizeMultiplier' in safeChanges || 'bars' in safeChanges) {
         newState = autoScaleReference(newState);
       }
       return newState;

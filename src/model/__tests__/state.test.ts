@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialAppState, appReducer } from '../state';
 import type { Action, AppState } from '../state';
-import type { Jeton, Barre, Fleche, Etiquette, Boite, Tableau, ModelisationState } from '../types';
+import type { Jeton, Barre, Fleche, Etiquette, Boite, Tableau, Arbre, Schema, ModelisationState } from '../types';
 import { REFERENCE_UNIT_MM } from '../types';
 // pushState imported via appReducer tests indirectly
 
@@ -687,6 +687,88 @@ describe('appReducer', () => {
       app = dispatch(app, { type: 'UNDO' });
       expect(currentModel(app).pieces).toHaveLength(1);
       expect((currentModel(app).pieces[0] as Tableau).type).toBe('tableau');
+    });
+  });
+
+  // === Arbre & Schema ===
+
+  describe('Arbre', () => {
+    function makeArbre(overrides: Partial<Arbre> = {}): Arbre {
+      return { id: 'a1', type: 'arbre', x: 100, y: 100, locked: false,
+        levels: [{ name: 'N1', options: ['A', 'B'] }, { name: 'N2', options: ['X', 'Y'] }],
+        ...overrides };
+    }
+
+    it('PLACE_PIECE places an arbre', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeArbre() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect((currentModel(app).pieces[0] as Arbre).type).toBe('arbre');
+      expect((currentModel(app).pieces[0] as Arbre).levels).toHaveLength(2);
+    });
+
+    it('EDIT_PIECE can add a level', () => {
+      let app = freshApp();
+      const arbre = makeArbre();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: arbre });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: arbre.id, changes: {
+        levels: [...arbre.levels, { name: 'N3', options: ['1', '2', '3'] }],
+      } });
+      expect((currentModel(app).pieces[0] as Arbre).levels).toHaveLength(3);
+    });
+
+    it('DELETE_PIECE removes arbre and cascades etiquettes', () => {
+      let app = freshApp();
+      const arbre = makeArbre();
+      const etiq = makeEtiquette({ id: 'e-arbre', attachedTo: arbre.id });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: arbre });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: etiq });
+      expect(currentModel(app).pieces).toHaveLength(2);
+      app = dispatch(app, { type: 'DELETE_PIECE', id: arbre.id });
+      expect(currentModel(app).pieces).toHaveLength(0);
+    });
+  });
+
+  describe('Schema', () => {
+    function makeSchema(overrides: Partial<Schema> = {}): Schema {
+      return { id: 's1', type: 'schema', x: 100, y: 100, locked: false,
+        gabarit: 'parties-tout', totalLabel: '', totalValue: null,
+        bars: [{ label: '', value: null, sizeMultiplier: 2, couleur: 'bleu', parts: [] }],
+        referenceWidth: 120,
+        ...overrides };
+    }
+
+    it('PLACE_PIECE places a schema', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeSchema() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect((currentModel(app).pieces[0] as Schema).gabarit).toBe('parties-tout');
+    });
+
+    it('EDIT_PIECE can change gabarit', () => {
+      let app = freshApp();
+      const schema = makeSchema();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: schema });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: schema.id, changes: {
+        gabarit: 'comparaison',
+        bars: [
+          { label: '', value: null, sizeMultiplier: 2, couleur: 'bleu', parts: [] },
+          { label: '', value: null, sizeMultiplier: 1, couleur: 'rouge', parts: [] },
+        ],
+      } });
+      expect((currentModel(app).pieces[0] as Schema).gabarit).toBe('comparaison');
+      expect((currentModel(app).pieces[0] as Schema).bars).toHaveLength(2);
+    });
+
+    it('autoScaleReference includes schema bars', () => {
+      let app = freshApp();
+      // Place a schema with a very large sizeMultiplier that would overflow canvas
+      const schema = makeSchema({
+        bars: [{ label: '', value: null, sizeMultiplier: 10, couleur: 'bleu', parts: [] }],
+      });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: schema });
+      // referenceUnitMm should be reduced from 60 to fit 10 * ref <= 470
+      expect(currentModel(app).referenceUnitMm).toBeLessThan(REFERENCE_UNIT_MM);
     });
   });
 });

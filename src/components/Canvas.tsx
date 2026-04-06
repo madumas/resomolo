@@ -6,13 +6,18 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau } from '../model/types';
+import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema } from '../model/types';
 import { isBarre, isBoite, isDroiteNumerique, isTableau } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
+import { ArbrePiece } from './pieces/ArbrePiece';
+import { SchemaPiece } from './pieces/SchemaPiece';
+import { computeTreeLayout } from '../engine/arbre-layout';
+import { computeSchemaWidth, computeSchemaHeight } from '../engine/schema-layout';
+import { getGabaritDefaults } from '../engine/schema-layout';
 import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
@@ -247,7 +252,7 @@ export function Canvas({
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
-    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, barre: 4, droiteNumerique: 4, tableau: 5, fleche: 5, boite: 6 };
+    const HIT_PRIORITY: Record<string, number> = { jeton: 0, etiquette: 1, calcul: 2, reponse: 3, barre: 4, schema: 4, droiteNumerique: 4, arbre: 5, tableau: 5, fleche: 5, boite: 6 };
     const sortedPieces = [...pieces].sort((a, b) => (HIT_PRIORITY[a.type] ?? 9) - (HIT_PRIORITY[b.type] ?? 9));
 
     let hitPiece: Piece | null = null;
@@ -463,6 +468,15 @@ export function Canvas({
         } else if (piece.type === 'tableau') {
           piece.x = snapped.x - (piece as Tableau).cols * TABLEAU_CELL_W / 2;
           piece.y = snapped.y - (piece as Tableau).rows * TABLEAU_CELL_H / 2;
+        } else if (piece.type === 'arbre') {
+          const treeLayout = computeTreeLayout((piece as Arbre).levels);
+          piece.x = snapped.x - treeLayout.width / 2;
+          piece.y = snapped.y - treeLayout.height / 4;
+        } else if (piece.type === 'schema') {
+          const schemaW = computeSchemaWidth(piece as Schema, referenceUnitMm);
+          const schemaH = computeSchemaHeight(piece as Schema);
+          piece.x = snapped.x - schemaW / 2;
+          piece.y = snapped.y - schemaH / 2;
         }
         if (piece.type === 'barre') {
           const aligned = snapBarAlignment({ x: piece.x, y: piece.y }, piece.id, pieces, tol.barAlignSnapMm, referenceUnitMm);
@@ -553,7 +567,9 @@ export function Canvas({
     // Ghost cursor tracking for fleche (with arrowFromId) and large piece placement
     if ((activeTool === 'fleche' && arrowFromId) ||
         activeTool === 'droiteNumerique' ||
-        activeTool === 'tableau') {
+        activeTool === 'tableau' ||
+        activeTool === 'arbre' ||
+        activeTool === 'schema') {
       const snapped = snapToGrid(rawPos.x, rawPos.y);
       setGhostCursorMm(snapped);
       // For fleche: hit-test to detect target piece (skip source + other arrows)
@@ -1136,7 +1152,7 @@ export function Canvas({
         )}
 
         {/* Ghost: large piece placement preview (droiteNumerique / tableau) */}
-        {ghostCursorMm && !arrowFromId && (activeTool === 'droiteNumerique' || activeTool === 'tableau') && (
+        {ghostCursorMm && !arrowFromId && (activeTool === 'droiteNumerique' || activeTool === 'tableau' || activeTool === 'arbre' || activeTool === 'schema') && (
           <g pointerEvents="none" aria-hidden="true">
             {activeTool === 'droiteNumerique' && (() => {
               const gw = 200;
@@ -1186,6 +1202,44 @@ export function Canvas({
                   <text x={gx + tw / 2} y={gy + th + 6} textAnchor="middle"
                     fontSize={3.5} fill="#7028e0" opacity={0.5}>
                     3 × 2
+                  </text>
+                </>
+              );
+            })()}
+            {/* Ghost: Arbre — root + 2 branches + 2 children (R13: real size, opacity ≥ 0.35) */}
+            {activeTool === 'arbre' && (() => {
+              const gx = ghostCursorMm.x;
+              const gy = ghostCursorMm.y;
+              return (
+                <>
+                  <circle cx={gx} cy={gy - 15} r={5} fill="none" stroke="#7028e0" strokeWidth={0.8} strokeDasharray="3 3" opacity={0.4} />
+                  <line x1={gx} y1={gy - 10} x2={gx - 20} y2={gy + 10} stroke="#7028e0" strokeWidth={0.6} strokeDasharray="3 3" opacity={0.35} />
+                  <line x1={gx} y1={gy - 10} x2={gx + 20} y2={gy + 10} stroke="#7028e0" strokeWidth={0.6} strokeDasharray="3 3" opacity={0.35} />
+                  <circle cx={gx - 20} cy={gy + 13} r={5} fill="none" stroke="#7028e0" strokeWidth={0.8} strokeDasharray="3 3" opacity={0.4} />
+                  <circle cx={gx + 20} cy={gy + 13} r={5} fill="none" stroke="#7028e0" strokeWidth={0.8} strokeDasharray="3 3" opacity={0.4} />
+                  <text x={gx} y={gy + 24} textAnchor="middle" fontSize={3.5} fill="#7028e0" opacity={0.5}>
+                    2 × 2
+                  </text>
+                </>
+              );
+            })()}
+            {/* Ghost: Schema — bar with bracket (R13: real size) */}
+            {activeTool === 'schema' && (() => {
+              const gw = 120; // 2 * referenceUnit default
+              const gh = 15;
+              const gx = ghostCursorMm.x - gw / 2;
+              const gy = ghostCursorMm.y - gh / 2;
+              return (
+                <>
+                  <rect x={gx} y={gy} width={gw} height={gh} rx={1.5}
+                    fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                    strokeDasharray="4 4" opacity={0.4} />
+                  {/* Bracket below */}
+                  <path d={`M${gx},${gy + gh + 2} L${gx},${gy + gh + 5} L${gx + gw},${gy + gh + 5} L${gx + gw},${gy + gh + 2}`}
+                    stroke="#7028e0" strokeWidth={0.5} fill="none" opacity={0.35} />
+                  <text x={gx + gw / 2} y={gy + gh + 10} textAnchor="middle"
+                    fontSize={3.5} fill="#7028e0" opacity={0.5}>
+                    schéma
                   </text>
                 </>
               );
@@ -1731,6 +1785,11 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
     case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) - 6, y: piece.y - 2 };
     case 'reponse': return { x: piece.x + getReponseWidth(piece as Reponse) - 6, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width - 4, y: piece.y - 14 };
+    case 'arbre': {
+      const tl = computeTreeLayout((piece as Arbre).levels);
+      return { x: piece.x + tl.width - 6, y: piece.y - 2 };
+    }
+    case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) - 6, y: piece.y - 2 };
     default: return { x: piece.x, y: piece.y - 8 };
   }
 }
@@ -1759,6 +1818,10 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
       inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} />; break;
+    case 'arbre':
+      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} />; break;
+    case 'schema':
+      inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'tableau':
       return null; // rendered separately in Canvas to pass editing props
     case 'fleche':
@@ -2317,6 +2380,17 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       return pos.x >= t.x - p && pos.x <= t.x + tw + p &&
              pos.y >= t.y - p && pos.y <= t.y + th + p;
     }
+    case 'arbre': {
+      const tl = computeTreeLayout((piece as Arbre).levels);
+      return pos.x >= piece.x - p && pos.x <= piece.x + tl.width + p &&
+             pos.y >= piece.y - p && pos.y <= piece.y + tl.height + p;
+    }
+    case 'schema': {
+      const sw = computeSchemaWidth(piece as Schema, refUnit);
+      const sh = computeSchemaHeight(piece as Schema);
+      return pos.x >= piece.x - p && pos.x <= piece.x + sw + p &&
+             pos.y >= piece.y - p && pos.y <= piece.y + sh + p;
+    }
     case 'fleche': {
       const fleche = piece as Fleche;
       const from = pieces.find(p => p.id === fleche.fromId);
@@ -2351,6 +2425,8 @@ function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: nu
     case 'etiquette': return { x: piece.x - pad, y: piece.y - 7 - pad, w: Math.max(30, piece.text.length * 5.5 + 10) + 2 * pad, h: 10 + 2 * pad };
     case 'droiteNumerique': return { x: piece.x - pad, y: piece.y - 10 - pad, w: (piece as DroiteNumerique).width + 2 * pad, h: 20 + 2 * pad };
     case 'tableau': return { x: piece.x - pad, y: piece.y - pad, w: (piece as Tableau).cols * TABLEAU_CELL_W + 2 * pad, h: (piece as Tableau).rows * TABLEAU_CELL_H + 2 * pad };
+    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x - pad, y: piece.y - pad, w: tl.width + 2 * pad, h: tl.height + 2 * pad }; }
+    case 'schema': return { x: piece.x - pad, y: piece.y - pad, w: computeSchemaWidth(piece as Schema, referenceUnitMm) + 2 * pad, h: computeSchemaHeight(piece as Schema) + 2 * pad };
     default: return { x: piece.x - pad, y: piece.y - pad, w: 20 + 2 * pad, h: 14 + 2 * pad };
   }
 }
@@ -2365,6 +2441,8 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 5.5 + 10) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
     case 'tableau': return { x: piece.x + (piece as Tableau).cols * TABLEAU_CELL_W / 2, y: piece.y + (piece as Tableau).rows * TABLEAU_CELL_H / 2 };
+    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x + tl.width / 2, y: piece.y + tl.height / 2 }; }
+    case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) / 2, y: piece.y + computeSchemaHeight(piece as Schema) / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -2381,6 +2459,8 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 5.5 + 10); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
     case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
+    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); bx = piece.x; by = piece.y; bw = tl.width; bh = tl.height; break; }
+    case 'schema': bx = piece.x; by = piece.y; bw = computeSchemaWidth(piece as Schema, refUnit); bh = computeSchemaHeight(piece as Schema); break;
     default: return { x: piece.x, y: piece.y };
   }
   // Clamp target to the edge of the bounding box
@@ -2419,6 +2499,22 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number })
     case 'tableau':
       return { id, type: 'tableau', x: pos.x, y: pos.y, locked: false,
         rows: 2, cols: 3, cells: Array.from({ length: 2 }, () => Array(3).fill('')), headerRow: true };
+    case 'arbre':
+      return { id, type: 'arbre', x: pos.x, y: pos.y, locked: false,
+        levels: [
+          { name: 'Niveau 1', options: ['A', 'B'] },
+          { name: 'Niveau 2', options: ['1', '2'] },
+        ] };
+    case 'schema': {
+      const defaults = getGabaritDefaults('parties-tout', 60); // R3: default parties-tout
+      return { id, type: 'schema', x: pos.x, y: pos.y, locked: false,
+        gabarit: 'parties-tout',
+        totalLabel: defaults.totalLabel ?? '',
+        totalValue: defaults.totalValue ?? null,
+        bars: defaults.bars ?? [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],
+        referenceWidth: defaults.referenceWidth ?? 60,
+      };
+    }
     case 'fleche':
       return null; // fleche uses two-click placement, not createPiece
     case 'deplacer':
