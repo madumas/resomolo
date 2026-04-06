@@ -16,11 +16,11 @@ const DOCS = path.join(ROOT, 'public', 'docs');
 const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const docs = [
-  { html: 'fiche-descriptive.html', pdf: 'RésoMolo-fiche-descriptive.pdf' },
-  { html: 'catalogue-pieces.html', pdf: 'RésoMolo-catalogue-pieces.pdf' },
-  { html: 'guide-enseignant.html', pdf: 'RésoMolo-guide-enseignant.pdf' },
-  { html: 'aide-memoire-enfant.html', pdf: 'RésoMolo-aide-memoire.pdf' },
-  { html: 'note-parent.html', pdf: 'RésoMolo-note-parent.pdf' },
+  { html: 'fiche-descriptive.html', pdf: 'ResoMolo-fiche-descriptive.pdf' },
+  { html: 'catalogue-pieces.html', pdf: 'ResoMolo-catalogue-pieces.pdf' },
+  { html: 'guide-enseignant.html', pdf: 'ResoMolo-guide-enseignant.pdf' },
+  { html: 'aide-memoire-enfant.html', pdf: 'ResoMolo-aide-memoire.pdf' },
+  { html: 'note-parent.html', pdf: 'ResoMolo-note-parent.pdf' },
 ];
 
 // Stamp version into all HTML files (including index.html)
