@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialAppState, appReducer } from '../state';
 import type { Action, AppState } from '../state';
-import type { Jeton, Barre, Fleche, Etiquette, Boite, Tableau, Arbre, Schema, ModelisationState } from '../types';
+import type { Jeton, Barre, Fleche, Etiquette, Boite, Tableau, Arbre, Schema, Inconnue, DiagrammeBandes, DiagrammeLigne, ModelisationState } from '../types';
 import { REFERENCE_UNIT_MM } from '../types';
 // pushState imported via appReducer tests indirectly
 
@@ -769,6 +769,116 @@ describe('appReducer', () => {
       app = dispatch(app, { type: 'PLACE_PIECE', piece: schema });
       // referenceUnitMm should be reduced from 60 to fit 10 * ref <= 470
       expect(currentModel(app).referenceUnitMm).toBeLessThan(REFERENCE_UNIT_MM);
+    });
+  });
+
+  describe('Inconnue', () => {
+    function makeInconnue(overrides: Partial<Inconnue> = {}): Inconnue {
+      return { id: 'inc1', type: 'inconnue', x: 100, y: 100, locked: false, text: '?', attachedTo: null, ...overrides };
+    }
+
+    it('places an inconnue piece', () => {
+      let app = createInitialAppState();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeInconnue() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect(currentModel(app).pieces[0].type).toBe('inconnue');
+    });
+
+    it('inconnue follows parent on MOVE_PIECE', () => {
+      let app = createInitialAppState();
+      const barre = makeBarre({ id: 'b1' });
+      const inc = makeInconnue({ id: 'inc1', attachedTo: 'b1', x: 110, y: 110 });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: barre });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: inc });
+      app = dispatch(app, { type: 'MOVE_PIECE', id: 'b1', x: 200, y: 200 });
+      const movedInc = currentModel(app).pieces.find(p => p.id === 'inc1')!;
+      expect(movedInc.x).toBe(210); // 110 + (200-100)
+      expect(movedInc.y).toBe(210);
+    });
+
+    it('deleting parent cascades to attached inconnue', () => {
+      let app = createInitialAppState();
+      const barre = makeBarre({ id: 'b1' });
+      const inc = makeInconnue({ id: 'inc1', attachedTo: 'b1' });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: barre });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: inc });
+      app = dispatch(app, { type: 'DELETE_PIECE', id: 'b1' });
+      expect(currentModel(app).pieces).toHaveLength(0);
+    });
+
+    it('detaches inconnue when moved far from parent', () => {
+      let app = createInitialAppState();
+      const barre = makeBarre({ id: 'b1', x: 100, y: 100 });
+      const inc = makeInconnue({ id: 'inc1', attachedTo: 'b1', x: 105, y: 105 });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: barre });
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: inc });
+      app = dispatch(app, { type: 'MOVE_PIECE', id: 'inc1', x: 300, y: 300 });
+      const movedInc = currentModel(app).pieces.find(p => p.id === 'inc1') as Inconnue;
+      expect(movedInc.attachedTo).toBeNull();
+    });
+  });
+
+  describe('DiagrammeBandes', () => {
+    function makeDiagrammeBandes(overrides: Partial<DiagrammeBandes> = {}): DiagrammeBandes {
+      return {
+        id: 'db1', type: 'diagrammeBandes', x: 50, y: 50, locked: false,
+        title: '', yAxisLabel: '', width: 120, height: 90,
+        categories: [
+          { label: 'A', value: 3, couleur: 'bleu' },
+          { label: 'B', value: 5, couleur: 'rouge' },
+        ],
+        ...overrides,
+      };
+    }
+
+    it('places a diagrammeBandes piece', () => {
+      let app = createInitialAppState();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeDiagrammeBandes() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect(currentModel(app).pieces[0].type).toBe('diagrammeBandes');
+    });
+
+    it('edits categories', () => {
+      let app = createInitialAppState();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeDiagrammeBandes() });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: 'db1', changes: {
+        categories: [{ label: 'X', value: 10, couleur: 'vert' }],
+      }});
+      const db = currentModel(app).pieces[0] as DiagrammeBandes;
+      expect(db.categories).toHaveLength(1);
+      expect(db.categories[0].label).toBe('X');
+    });
+  });
+
+  describe('DiagrammeLigne', () => {
+    function makeDiagrammeLigne(overrides: Partial<DiagrammeLigne> = {}): DiagrammeLigne {
+      return {
+        id: 'dl1', type: 'diagrammeLigne', x: 50, y: 50, locked: false,
+        title: '', yAxisLabel: '', width: 120, height: 90,
+        points: [
+          { label: 'Lundi', value: 3 },
+          { label: 'Mardi', value: 5 },
+        ],
+        ...overrides,
+      };
+    }
+
+    it('places a diagrammeLigne piece', () => {
+      let app = createInitialAppState();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeDiagrammeLigne() });
+      expect(currentModel(app).pieces).toHaveLength(1);
+      expect(currentModel(app).pieces[0].type).toBe('diagrammeLigne');
+    });
+
+    it('edits points', () => {
+      let app = createInitialAppState();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeDiagrammeLigne() });
+      app = dispatch(app, { type: 'EDIT_PIECE', id: 'dl1', changes: {
+        points: [{ label: 'Jeudi', value: 8 }],
+      }});
+      const dl = currentModel(app).pieces[0] as DiagrammeLigne;
+      expect(dl.points).toHaveLength(1);
+      expect(dl.points[0].value).toBe(8);
     });
   });
 });
