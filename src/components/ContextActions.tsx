@@ -705,6 +705,11 @@ export function ContextActions({
         </>
       )}
 
+      {/* Inconnue — éditer texte */}
+      {piece.type === 'inconnue' && (
+        <CtxBtn onClick={() => onStartEdit(piece.id)}>Texte</CtxBtn>
+      )}
+
       {/* Delete — micro-confirmation "Sûr?" (2s timer) */}
       {onDeletePiece && !piece.locked && (
         <CtxBtn
@@ -831,6 +836,8 @@ function getPieceBoundsScreen(
     h = 22;
   } else if (piece.type === 'jeton') {
     x -= 4; y -= 4; w = 8; h = 8;
+  } else if (piece.type === 'inconnue') {
+    x -= 6; y -= 6; w = 12; h = 12;
   } else if (isDroiteNumerique(piece)) {
     w = piece.width;
     h = 20;

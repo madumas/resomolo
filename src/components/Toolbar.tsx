@@ -5,7 +5,7 @@ import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY }
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
-import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, CalculIcon, ReponseIcon, BoiteIcon, TableauIcon, EtiquetteIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
+import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, CalculIcon, ReponseIcon, BoiteIcon, TableauIcon, EtiquetteIcon, InconnueIcon, FlecheIcon, DeplacerIcon } from './ToolIcons';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -31,6 +31,8 @@ const SIMPLE_TOOLS: ToolDef[] = [
   // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
+  // Annoter
+  { type: 'inconnue', label: 'Inconnue', Icon: InconnueIcon },
   // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
@@ -52,6 +54,7 @@ const ALL_TOOLS: ToolDef[] = [
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
   // Annoter
   { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
+  { type: 'inconnue', label: 'Inconnue', Icon: InconnueIcon },
   { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
   // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },

@@ -6,7 +6,7 @@ import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
-import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema } from '../model/types';
+import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue } from '../model/types';
 import { isBarre, isBoite, isDroiteNumerique, isTableau } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
@@ -497,16 +497,16 @@ export function Canvas({
             (piece as any).parentId = boite.id;
           }
         }
-        // B7: Auto-attach étiquette to nearby piece
-        if (piece.type === 'etiquette') {
+        // B7: Auto-attach étiquette/inconnue to nearby piece
+        if (piece.type === 'etiquette' || piece.type === 'inconnue') {
           const nearbyPiece = pieces.find(p => {
-            if (p.type === 'etiquette' || p.type === 'fleche') return false;
+            if (p.type === 'etiquette' || p.type === 'fleche' || p.type === 'inconnue') return false;
             const center = getPieceCenter(p, referenceUnitMm);
             const dist = Math.hypot(snapped.x - center.x, snapped.y - center.y);
             return dist < 15;
           });
           if (nearbyPiece) {
-            piece.attachedTo = nearbyPiece.id;
+            (piece as any).attachedTo = nearbyPiece.id;
             onAttach();
           }
         }
@@ -517,7 +517,7 @@ export function Canvas({
         // Always deactivate tool after placement (one action at a time — simpler for children)
         onSetTool(null);
         // Auto-edit text pieces; auto-select others to show context actions
-        if (piece.type === 'calcul' || piece.type === 'reponse' || piece.type === 'etiquette') {
+        if (piece.type === 'calcul' || piece.type === 'reponse' || piece.type === 'etiquette' || piece.type === 'inconnue') {
           onStartEdit(piece.id);
         } else {
           onSelectPiece(piece.id);
@@ -1791,6 +1791,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
       return { x: piece.x + tl.width - 6, y: piece.y - 2 };
     }
     case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) - 6, y: piece.y - 2 };
+    case 'inconnue': return { x: piece.x + 4, y: piece.y - 9 };
     default: return { x: piece.x, y: piece.y - 8 };
   }
 }
@@ -1824,6 +1825,8 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
       inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} />; break;
     case 'schema':
       inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
+    case 'inconnue':
+      inner = <InconnuePiece piece={piece as Inconnue} isSelected={isSelected} textScale={textScale} />; break;
     case 'tableau':
       return null; // rendered separately in Canvas to pass editing props
     case 'fleche':
@@ -1876,6 +1879,29 @@ function EtiquettePiece({ piece, isSelected }: { piece: Piece & { type: 'etiquet
         data-edit-target={piece.id}
       >
         {piece.text || '…'}
+      </text>
+    </g>
+  );
+}
+
+function InconnuePiece({ piece, isSelected, textScale = 1 }: { piece: Inconnue; isSelected: boolean; textScale?: number }) {
+  const r = 6; // visual radius = 12mm diameter
+  const ts = textScale;
+  return (
+    <g>
+      <circle
+        cx={piece.x} cy={piece.y} r={r}
+        fill={isSelected ? 'rgba(112, 40, 224, 0.15)' : 'rgba(112, 40, 224, 0.08)'}
+        stroke="#7028e0"
+        strokeWidth={isSelected ? 1.5 : 1}
+      />
+      <text
+        x={piece.x} y={piece.y}
+        textAnchor="middle" dominantBaseline="central"
+        fontSize={8 * ts} fontWeight="700" fill="#7028e0"
+        data-edit-target={piece.id}
+      >
+        {piece.text || '?'}
       </text>
     </g>
   );
@@ -2393,6 +2419,11 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       return pos.x >= piece.x - p && pos.x <= piece.x + sw + p &&
              pos.y >= piece.y - p && pos.y <= piece.y + sh + p;
     }
+    case 'inconnue': {
+      const dx = pos.x - piece.x;
+      const dy = pos.y - piece.y;
+      return Math.sqrt(dx * dx + dy * dy) <= 9 + p; // hit radius > visual radius (ergo)
+    }
     case 'fleche': {
       const fleche = piece as Fleche;
       const from = pieces.find(p => p.id === fleche.fromId);
@@ -2429,6 +2460,7 @@ function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: nu
     case 'tableau': return { x: piece.x - pad, y: piece.y - pad, w: (piece as Tableau).cols * TABLEAU_CELL_W + 2 * pad, h: (piece as Tableau).rows * TABLEAU_CELL_H + 2 * pad };
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x - pad, y: piece.y - pad, w: tl.width + 2 * pad, h: tl.height + 2 * pad }; }
     case 'schema': return { x: piece.x - pad, y: piece.y - pad, w: computeSchemaWidth(piece as Schema, referenceUnitMm) + 2 * pad, h: computeSchemaHeight(piece as Schema) + 2 * pad };
+    case 'inconnue': return { x: piece.x - 6 - pad, y: piece.y - 6 - pad, w: 12 + 2 * pad, h: 12 + 2 * pad };
     default: return { x: piece.x - pad, y: piece.y - pad, w: 20 + 2 * pad, h: 14 + 2 * pad };
   }
 }
@@ -2445,6 +2477,7 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'tableau': return { x: piece.x + (piece as Tableau).cols * TABLEAU_CELL_W / 2, y: piece.y + (piece as Tableau).rows * TABLEAU_CELL_H / 2 };
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x + tl.width / 2, y: piece.y + tl.height / 2 }; }
     case 'schema': return { x: piece.x + computeSchemaWidth(piece as Schema, referenceUnitMm) / 2, y: piece.y + computeSchemaHeight(piece as Schema) / 2 };
+    case 'inconnue': return { x: piece.x, y: piece.y };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -2463,6 +2496,7 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
     case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); bx = piece.x; by = piece.y; bw = tl.width; bh = tl.height; break; }
     case 'schema': bx = piece.x; by = piece.y; bw = computeSchemaWidth(piece as Schema, refUnit); bh = computeSchemaHeight(piece as Schema); break;
+    case 'inconnue': return { x: piece.x, y: piece.y }; // circle — center is fine
     default: return { x: piece.x, y: piece.y };
   }
   // Clamp target to the edge of the bounding box
@@ -2491,6 +2525,8 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number },
         width: 60, height: 40, label: '', value: '', couleur: 'bleu' };
     case 'etiquette':
       return { id, type: 'etiquette', x: pos.x, y: pos.y, locked: false, text: '', attachedTo: null };
+    case 'inconnue':
+      return { id, type: 'inconnue', x: pos.x, y: pos.y, locked: false, text: '?', attachedTo: null };
     case 'calcul':
       return { id, type: 'calcul', x: pos.x, y: pos.y, locked: false, expression: '' };
     case 'reponse':

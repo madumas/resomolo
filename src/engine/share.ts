@@ -91,6 +91,10 @@ function minifyPiece(p: Piece): MinPiece {
       m.brs = (p as any).bars;
       m.rfw = (p as any).referenceWidth;
       break;
+    case 'inconnue':
+      if (p.text !== '?') m.tx = p.text;
+      if (p.attachedTo) m.at = p.attachedTo;
+      break;
   }
   return m;
 }
@@ -132,6 +136,8 @@ function expandPiece(m: MinPiece): Piece {
         totalValue: m.tv ?? null,
         bars: m.brs ?? [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],
         referenceWidth: m.rfw ?? 60 };
+    case 'inconnue':
+      return { ...base, type: 'inconnue', text: m.tx ?? '?', attachedTo: m.at ?? null };
     default:
       return { ...base, type: 'jeton', couleur: 'bleu', parentId: null };
   }

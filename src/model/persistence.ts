@@ -79,6 +79,9 @@ function migratePieces(pieces: any[]): any[] {
         referenceWidth: p.referenceWidth || 60,
       };
     }
+    if (p.type === 'inconnue') {
+      return { ...p, text: p.text ?? '?', attachedTo: p.attachedTo ?? null };
+    }
     return p;
   });
 }

@@ -12,6 +12,7 @@ export const TOOL_MESSAGES: Record<NonNullable<ToolType>, string> = {
   arbre: 'Diagramme en arbre — Clique pour le placer',
   tableau: 'Tableau — Clique pour placer un tableau',
   fleche: 'Flèche — Clique sur la pièce de départ',
+  inconnue: 'Inconnue — Clique pour placer un point d\'interrogation',
   deplacer: 'Déplacer — Clique sur une pièce pour la prendre',
 };
 

@@ -13,7 +13,7 @@ export interface ArrangementMove {
 }
 
 /** Layout order: barres top, boîtes (with their jetons), free jetons, étiquettes, calculs, réponse bottom. */
-const LAYOUT_ORDER = ['barre', 'schema', 'droiteNumerique', 'arbre', 'boite', 'jeton', 'tableau', 'etiquette', 'calcul', 'reponse'] as const;
+const LAYOUT_ORDER = ['barre', 'schema', 'droiteNumerique', 'arbre', 'boite', 'jeton', 'tableau', 'inconnue', 'etiquette', 'calcul', 'reponse'] as const;
 
 /**
  * Compute new positions for all movable pieces.
@@ -148,6 +148,7 @@ function getPieceWidth(piece: Piece, referenceUnitMm: number): number {
     case 'jeton': return JETON_DIAMETER_MM;
     case 'boite': return piece.width;
     case 'etiquette': return Math.max(30, piece.text.length * 4 + 8);
+    case 'inconnue': return 12;
     case 'calcul': return Math.max(60, piece.expression.length * 5 + 10);
     case 'reponse': return Math.max(100, piece.text.length * 4 + 20);
     case 'tableau': return (piece as any).cols * 12;
@@ -172,6 +173,7 @@ function getPieceHeight(piece: Piece): number {
     case 'jeton': return JETON_DIAMETER_MM;
     case 'boite': return piece.height;
     case 'etiquette': return 10;
+    case 'inconnue': return 12;
     case 'calcul': return 12;
     case 'reponse': return 22;
     case 'tableau': return (piece as any).rows * 10;

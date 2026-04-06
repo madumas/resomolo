@@ -1,6 +1,6 @@
 // === Piece types ===
 
-export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'tableau' | 'arbre' | 'schema';
+export type PieceType = 'jeton' | 'barre' | 'calcul' | 'reponse' | 'boite' | 'etiquette' | 'fleche' | 'droiteNumerique' | 'tableau' | 'arbre' | 'schema' | 'inconnue';
 
 export type CouleurPiece = 'bleu' | 'rouge' | 'vert' | 'jaune';
 
@@ -57,6 +57,12 @@ export interface Etiquette extends PieceBase {
   type: 'etiquette';
   text: string;
   attachedTo: string | null;
+}
+
+export interface Inconnue extends PieceBase {
+  type: 'inconnue';
+  text: string;              // défaut "?", l'enfant peut changer en "x", "n", etc.
+  attachedTo: string | null; // pièce parente optionnelle
 }
 
 export interface Fleche extends PieceBase {
@@ -122,7 +128,7 @@ export interface Schema extends PieceBase {
   referenceWidth: number;   // mm, synced with referenceUnitMm
 }
 
-export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Tableau | Arbre | Schema;
+export type Piece = Jeton | Barre | Calcul | Reponse | Boite | Etiquette | Fleche | DroiteNumerique | Tableau | Arbre | Schema | Inconnue;
 
 // Type guards
 export function isJeton(p: Piece): p is Jeton { return p.type === 'jeton'; }
@@ -133,6 +139,7 @@ export function isDroiteNumerique(p: Piece): p is DroiteNumerique { return p.typ
 export function isTableau(p: Piece): p is Tableau { return p.type === 'tableau'; }
 export function isArbre(p: Piece): p is Arbre { return p.type === 'arbre'; }
 export function isSchema(p: Piece): p is Schema { return p.type === 'schema'; }
+export function isInconnue(p: Piece): p is Inconnue { return p.type === 'inconnue'; }
 
 // === Highlights ===
 
@@ -146,7 +153,7 @@ export interface Highlight {
 
 // === Tool ===
 
-export type ToolType = 'jeton' | 'barre' | 'schema' | 'droiteNumerique' | 'boite' | 'tableau' | 'arbre' | 'etiquette' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
+export type ToolType = 'jeton' | 'barre' | 'schema' | 'droiteNumerique' | 'boite' | 'tableau' | 'arbre' | 'etiquette' | 'inconnue' | 'calcul' | 'reponse' | 'fleche' | 'deplacer' | null;
 
 // === State ===
 
@@ -192,6 +199,9 @@ export const ARBRE_WARN_LEAVES = 16;
 
 // Schema constants
 export const SCHEMA_BAR_HEIGHT_MM = 15;  // same as BAR_HEIGHT_MM for visual coherence
+
+// Inconnue constants
+export const INCONNUE_SIZE_MM = 12;  // diameter of the visual circle
 
 // === Settings ===
 

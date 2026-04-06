@@ -140,6 +140,17 @@ export function ArbreIcon() {
   );
 }
 
+/** Inconnue: circle with "?" — unknown value marker */
+export function InconnueIcon() {
+  return (
+    <svg {...S}>
+      <circle cx="10" cy="10" r="7" stroke={stroke} strokeWidth="2" fill="currentColor" fillOpacity="0.1" />
+      <text x="10" y="11" textAnchor="middle" dominantBaseline="central"
+        fontSize="10" fontWeight="700" fill="currentColor">?</text>
+    </svg>
+  );
+}
+
 /** Déplacer: four-direction arrow cross — identical to GéoMolo MoveIcon */
 export function DeplacerIcon() {
   return (

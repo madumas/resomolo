@@ -1,4 +1,4 @@
-import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Reponse } from './types';
+import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Inconnue, Reponse } from './types';
 import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM, CANVAS_WIDTH_MM } from './types';
 import { generateId } from './id';
 import { createUndoManager, pushState, undo as undoFn, redo as redoFn } from './undo';
@@ -103,6 +103,7 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
       const h = Math.max(15, bars.length * 23);
       return { x: piece.x + w / 2, y: piece.y + h / 2 };
     }
+    case 'inconnue': return { x: piece.x, y: piece.y }; // center-origin like jeton
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -221,12 +222,30 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
         if (p.type === 'etiquette' && (p as Etiquette).attachedTo === action.id) {
           return { ...p, x: p.x + dx, y: p.y + dy };
         }
+        // Inconnues follow their parent
+        if (p.type === 'inconnue' && (p as Inconnue).attachedTo === action.id) {
+          return { ...p, x: p.x + dx, y: p.y + dy };
+        }
         // Jetons follow their parent boîte
         if (p.type === 'jeton' && (p as Jeton).parentId === action.id && movedPiece.type === 'boite') {
           return { ...p, x: p.x + dx, y: p.y + dy };
         }
         return p;
       });
+
+      // MOVE_PIECE (final, not live): detach inconnue if moved far from parent
+      if (action.type === 'MOVE_PIECE' && movedPiece.type === 'inconnue' && (movedPiece as Inconnue).attachedTo) {
+        const parent = pieces.find(p => p.id === (movedPiece as Inconnue).attachedTo);
+        if (parent) {
+          const center = getPieceCenterSimple(parent, state.referenceUnitMm);
+          const dist = Math.hypot(action.x - center.x, action.y - center.y);
+          if (dist > 15) {
+            pieces = pieces.map(p =>
+              p.id === movedPiece.id ? { ...p, attachedTo: null } as Piece : p
+            );
+          }
+        }
+      }
 
       // MOVE_PIECE (final, not live): detach étiquette if moved far from parent
       if (action.type === 'MOVE_PIECE' && movedPiece.type === 'etiquette' && (movedPiece as Etiquette).attachedTo) {
@@ -306,6 +325,7 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
           if (p.id === deletedId) return false;
           if (p.type === 'fleche' && (p.fromId === deletedId || p.toId === deletedId)) return false;
           if (p.type === 'etiquette' && p.attachedTo === deletedId) return false;
+          if (p.type === 'inconnue' && (p as Inconnue).attachedTo === deletedId) return false;
           if (p.type === 'jeton' && p.parentId === deletedId) return false;
           return true;
         }),
