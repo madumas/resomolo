@@ -97,7 +97,10 @@ function emptyStep(): DivisionStep {
 export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor, savedData, onCommit, onCancel }: DivisionCalcProps) {
   const initialDecPos = savedData?.decimalPos !== undefined ? savedData.decimalPos : (detectDecimalPosition(initialDividend) ?? detectDecimalPosition(initialDivisor));
   const [decimalPos, setDecimalPos] = useState<number | null>(initialDecPos);
-  const [decimalLocked, setDecimalLocked] = useState(false);
+  const [decimalLocked, setDecimalLocked] = useState(
+    () => initialDecPos !== null && initialDecPos !== undefined
+      && !!savedData?.quotient?.some(d => d !== '')
+  );
   const [dividend, setDividend] = useState<Row>(savedData?.dividend || numToRow(initialDividend, DIV_COLS, initialDecPos));
   const [divisor, setDivisor] = useState<Row>(savedData?.divisor || numToRow(initialDivisor, DIVISOR_COLS, initialDecPos));
   const [quotient, setQuotient] = useState<Row>(savedData?.quotient || emptyRow(DIV_COLS));
