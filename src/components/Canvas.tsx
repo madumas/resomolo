@@ -17,7 +17,7 @@ import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
-import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge } from '../engine/sound';
+import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
 import { createSmoothingState, smooth } from '../engine/smoothing';
 import type { SmoothingState } from '../engine/smoothing';
@@ -111,6 +111,9 @@ export function Canvas({
   const tableauUndo = useCellUndo(20);
   const [tableauPreviewRows, setTableauPreviewRows] = useState<number | null>(null);
   const [tableauPreviewCols, setTableauPreviewCols] = useState<number | null>(null);
+  // Ghost preview states
+  const [ghostCursorMm, setGhostCursorMm] = useState<{ x: number; y: number } | null>(null);
+  const [dnGhostMarker, setDnGhostMarker] = useState<{ pieceId: string; val: number; xMm: number; isRemoval: boolean } | null>(null);
 
   // Commit all tableau input values before closing the editor
   const closeTableauEditor = useCallback(() => {
@@ -190,6 +193,30 @@ export function Canvas({
   const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
+
+  // Clear ghost states when tool or selection changes
+  useEffect(() => {
+    setGhostCursorMm(null);
+    setDnGhostMarker(null);
+  }, [activeTool, selectedPieceId]);
+
+  // Ghost snap sound — play when ghost marker value changes or arrow snaps to target
+  const prevDnGhostVal = useRef<number | null>(null);
+  const prevArrowTarget = useRef<string | null>(null);
+  useEffect(() => {
+    if (dnGhostMarker && dnGhostMarker.val !== prevDnGhostVal.current) {
+      if (prevDnGhostVal.current !== null) onGhostSnap();
+      prevDnGhostVal.current = dnGhostMarker.val;
+    } else if (!dnGhostMarker) {
+      prevDnGhostVal.current = null;
+    }
+  }, [dnGhostMarker]);
+  useEffect(() => {
+    if (arrowFromId && hoveredPieceId && hoveredPieceId !== prevArrowTarget.current) {
+      onGhostSnap();
+    }
+    prevArrowTarget.current = hoveredPieceId ?? null;
+  }, [hoveredPieceId, arrowFromId]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const now = Date.now();
@@ -430,6 +457,13 @@ export function Canvas({
       } else {
         const piece = createPiece(activeTool, snapped);
         if (!piece) return; // deplacer tool — no piece to create
+        // Center large pieces on cursor for better spatial anticipation (TDC)
+        if (piece.type === 'droiteNumerique') {
+          piece.x = snapped.x - (piece as DroiteNumerique).width / 2;
+        } else if (piece.type === 'tableau') {
+          piece.x = snapped.x - (piece as Tableau).cols * TABLEAU_CELL_W / 2;
+          piece.y = snapped.y - (piece as Tableau).rows * TABLEAU_CELL_H / 2;
+        }
         if (piece.type === 'barre') {
           const aligned = snapBarAlignment({ x: piece.x, y: piece.y }, piece.id, pieces, tol.barAlignSnapMm, referenceUnitMm);
           if (aligned.x !== piece.x || aligned.y !== piece.y) onSnap();
@@ -516,6 +550,27 @@ export function Canvas({
       return;
     }
 
+    // Ghost cursor tracking for fleche (with arrowFromId) and large piece placement
+    if ((activeTool === 'fleche' && arrowFromId) ||
+        activeTool === 'droiteNumerique' ||
+        activeTool === 'tableau') {
+      const snapped = snapToGrid(rawPos.x, rawPos.y);
+      setGhostCursorMm(snapped);
+      // For fleche: hit-test to detect target piece (skip source + other arrows)
+      if (activeTool === 'fleche' && arrowFromId) {
+        let found: string | null = null;
+        for (const piece of pieces) {
+          if (piece.id === arrowFromId || piece.type === 'fleche') continue;
+          if (hitTest(piece, rawPos, referenceUnitMm, tol.hitTestPaddingMm, tol.jetonHitPaddingMm, pieces)) {
+            found = piece.id;
+            break;
+          }
+        }
+        setHoveredPieceId(found);
+      }
+      return;
+    }
+
     // Hover hit-test for cursor affordance (idle mode only)
     if (!activeTool && !deleteMode) {
       const pos = snapToGrid(rawPos.x, rawPos.y);
@@ -527,8 +582,28 @@ export function Canvas({
         }
       }
       setHoveredPieceId(found);
+
+      // Ghost marker for selected droiteNumerique
+      if (found && found === selectedPieceId) {
+        const dn = pieces.find(p => p.id === found);
+        if (dn && isDroiteNumerique(dn)) {
+          const relX = rawPos.x - dn.x;
+          const ratio = relX / dn.width;
+          const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
+          const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
+          const safeStep = Math.max(0.1, dn.step);
+          const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+          const mx = dn.x + ((snapped - dn.min) / (dn.max - dn.min)) * dn.width;
+          const isRemoval = dn.markers.some(m => Math.abs(m - snapped) < 0.001);
+          setDnGhostMarker({ pieceId: found, val: snapped, xMm: mx, isRemoval });
+        } else {
+          setDnGhostMarker(null);
+        }
+      } else {
+        setDnGhostMarker(null);
+      }
     }
-  }, [mode, pieces, referenceUnitMm, tol, activeTool, deleteMode, _cursorSmoothing, dispatch]);
+  }, [mode, pieces, referenceUnitMm, tol, activeTool, deleteMode, _cursorSmoothing, dispatch, arrowFromId, selectedPieceId]);
 
   // Pointer up — finalize move ONLY for touch/pen (finger lift = put down).
   // Mouse uses click-click (pick up on pointerDown, put down on next pointerDown).
@@ -772,11 +847,15 @@ export function Canvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerLeave={() => { setGhostCursorMm(null); setDnGhostMarker(null); }}
         onContextMenu={handleRightClick}
       >
         <defs>
           <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <path d="M0,0 L8,3 L0,6" fill="#55506A" />
+          </marker>
+          <marker id="arrowhead-ghost" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="#7028e0" opacity="0.5" />
           </marker>
         </defs>
 
@@ -890,17 +969,9 @@ export function Canvas({
         {deleteConfirmId && (() => {
           const piece = pieces.find(p => p.id === deleteConfirmId);
           if (!piece) return null;
-          // Get approximate bounds
-          let bx = piece.x - 2, by = piece.y - 2, bw = 20, bh = 14;
-          if (isBarre(piece)) { bw = piece.sizeMultiplier * referenceUnitMm + 4; bh = BAR_HEIGHT_MM + 4; }
-          else if (piece.type === 'boite') { bw = (piece as Boite).width + 4; bh = (piece as Boite).height + 4; }
-          else if (piece.type === 'jeton') { bx = piece.x - 8; by = piece.y - 8; bw = 16; bh = 16; }
-          else if (piece.type === 'calcul') { bw = Math.max(60, (piece as any).expression?.length * 5 + 10) + 4; bh = 16; }
-          else if (piece.type === 'reponse') { bw = getReponseWidth(piece as Reponse) + 4; bh = 26; }
-          else if (isTableau(piece)) { bw = piece.cols * TABLEAU_CELL_W + 4; bh = piece.rows * TABLEAU_CELL_H + 4; }
-          else if (isDroiteNumerique(piece)) { bw = (piece as DroiteNumerique).width + 4; bh = 24; by = piece.y - 12; }
+          const b = getPieceBounds(piece, referenceUnitMm, 2);
           return (
-            <rect x={bx} y={by} width={bw} height={bh} rx={3}
+            <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={3}
               fill="rgba(200, 40, 40, 0.12)" stroke="#C82828" strokeWidth={1.5}
               style={{ pointerEvents: 'none' }}>
               <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite" />
@@ -1004,6 +1075,143 @@ export function Canvas({
             opacity={0.5} pointerEvents="none"
           />
         )}
+
+        {/* Ghost: large piece placement preview (droiteNumerique / tableau) */}
+        {ghostCursorMm && !arrowFromId && (activeTool === 'droiteNumerique' || activeTool === 'tableau') && (
+          <g pointerEvents="none" aria-hidden="true">
+            {activeTool === 'droiteNumerique' && (() => {
+              const gw = 200;
+              const gx = ghostCursorMm.x - gw / 2;
+              const gy = ghostCursorMm.y;
+              return (
+                <>
+                  <line x1={gx} y1={gy} x2={gx + gw} y2={gy}
+                    stroke="#7028e0" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
+                  {/* Arrow tips */}
+                  <polygon points={`${gx - 3},${gy} ${gx + 2},${gy - 2} ${gx + 2},${gy + 2}`}
+                    fill="#7028e0" opacity={0.4} />
+                  <polygon points={`${gx + gw + 3},${gy} ${gx + gw - 2},${gy - 2} ${gx + gw - 2},${gy + 2}`}
+                    fill="#7028e0" opacity={0.4} />
+                  {/* End ticks */}
+                  <line x1={gx} y1={gy - 3} x2={gx} y2={gy + 3}
+                    stroke="#7028e0" strokeWidth={0.5} opacity={0.4} />
+                  <line x1={gx + gw} y1={gy - 3} x2={gx + gw} y2={gy + 3}
+                    stroke="#7028e0" strokeWidth={0.5} opacity={0.4} />
+                  <text x={gx + gw / 2} y={gy + 10} textAnchor="middle"
+                    fontSize={4} fill="#7028e0" opacity={0.5}>
+                    0 — 10
+                  </text>
+                </>
+              );
+            })()}
+            {activeTool === 'tableau' && (() => {
+              const tw = 3 * TABLEAU_CELL_W;
+              const th = 2 * TABLEAU_CELL_H;
+              const gx = ghostCursorMm.x - tw / 2;
+              const gy = ghostCursorMm.y - th / 2;
+              return (
+                <>
+                  <rect x={gx} y={gy} width={tw} height={th}
+                    fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                    strokeDasharray="4 4" rx={1} />
+                  {/* Header separator */}
+                  <line x1={gx} y1={gy + TABLEAU_CELL_H} x2={gx + tw} y2={gy + TABLEAU_CELL_H}
+                    stroke="#7028e0" strokeWidth={0.3} strokeDasharray="2 2" opacity={0.4} />
+                  {/* Column separators */}
+                  {[1, 2].map(c => (
+                    <line key={`gc-${c}`}
+                      x1={gx + c * TABLEAU_CELL_W} y1={gy}
+                      x2={gx + c * TABLEAU_CELL_W} y2={gy + th}
+                      stroke="#7028e0" strokeWidth={0.3} strokeDasharray="2 2" opacity={0.4} />
+                  ))}
+                  <text x={gx + tw / 2} y={gy + th + 6} textAnchor="middle"
+                    fontSize={3.5} fill="#7028e0" opacity={0.5}>
+                    3 × 2
+                  </text>
+                </>
+              );
+            })()}
+          </g>
+        )}
+
+        {/* Ghost: marker preview on droiteNumerique */}
+        {dnGhostMarker && (() => {
+          const dn = pieces.find(p => p.id === dnGhostMarker.pieceId) as DroiteNumerique | undefined;
+          if (!dn) return null;
+          return (
+            <g pointerEvents="none" aria-hidden="true">
+              {dnGhostMarker.isRemoval ? (
+                // Removal indicator: X over existing marker
+                <g>
+                  <line x1={dnGhostMarker.xMm - 3} y1={dn.y - 3}
+                    x2={dnGhostMarker.xMm + 3} y2={dn.y + 3}
+                    stroke="#C82828" strokeWidth={1.2} opacity={0.5} />
+                  <line x1={dnGhostMarker.xMm + 3} y1={dn.y - 3}
+                    x2={dnGhostMarker.xMm - 3} y2={dn.y + 3}
+                    stroke="#C82828" strokeWidth={1.2} opacity={0.5} />
+                </g>
+              ) : (
+                // Add indicator: ghost circle + label
+                <g>
+                  <circle cx={dnGhostMarker.xMm} cy={dn.y} r={4}
+                    fill="rgba(24, 95, 165, 0.4)" stroke="#185FA5" strokeWidth={0.5}
+                    strokeDasharray="2 1" />
+                  <text x={dnGhostMarker.xMm} y={dn.y - 6} textAnchor="middle"
+                    fontSize={4.5} fontWeight={600} fill="#185FA5" opacity={0.5}>
+                    {dnGhostMarker.val}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })()}
+
+        {/* Ghost: arrow line from source to cursor/target */}
+        {arrowFromId && ghostCursorMm && (() => {
+          const fromPiece = pieces.find(p => p.id === arrowFromId);
+          if (!fromPiece) return null;
+          const fromBounds = getPieceBounds(fromPiece, referenceUnitMm, 2);
+          const fromEdge = getEdgePoint(fromPiece, ghostCursorMm, referenceUnitMm);
+
+          // Determine target: snap to hovered piece edge, or use cursor
+          let targetPoint = ghostCursorMm;
+          let snapToTarget = false;
+          if (hoveredPieceId && hoveredPieceId !== arrowFromId) {
+            const targetPiece = pieces.find(p => p.id === hoveredPieceId);
+            if (targetPiece && targetPiece.type !== 'fleche') {
+              const fromCenter = getPieceCenter(fromPiece, referenceUnitMm);
+              targetPoint = getEdgePoint(targetPiece, fromCenter, referenceUnitMm);
+              snapToTarget = true;
+            }
+          }
+
+          const dx = targetPoint.x - fromEdge.x;
+          const dy = targetPoint.y - fromEdge.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 2) return null;
+
+          return (
+            <g pointerEvents="none" aria-hidden="true">
+              {/* Source highlight */}
+              <rect x={fromBounds.x} y={fromBounds.y} width={fromBounds.w} height={fromBounds.h} rx={3}
+                fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={1}
+                strokeDasharray="3 2" />
+              {/* Ghost line */}
+              <line x1={fromEdge.x} y1={fromEdge.y} x2={targetPoint.x} y2={targetPoint.y}
+                stroke="#7028e0" strokeWidth={1} strokeDasharray="4 4" opacity={0.5}
+                markerEnd="url(#arrowhead-ghost)" />
+              {/* Target snap indicator */}
+              {snapToTarget && (() => {
+                const tb = getPieceBounds(pieces.find(p => p.id === hoveredPieceId)!, referenceUnitMm, 2);
+                return (
+                  <rect x={tb.x} y={tb.y} width={tb.w} height={tb.h} rx={3}
+                    fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={1}
+                    strokeDasharray="3 2" />
+                );
+              })()}
+            </g>
+          );
+        })()}
       </svg>
 
       {/* Inline editor overlay (HTML, not foreignObject) */}
@@ -2069,6 +2277,21 @@ function distanceToSegment(p: {x:number,y:number}, a: {x:number,y:number}, b: {x
   let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
   t = Math.max(0, Math.min(1, t));
   return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+/** Get the bounding box {x, y, w, h} of a piece with optional padding. */
+function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: number; y: number; w: number; h: number } {
+  switch (piece.type) {
+    case 'jeton': return { x: piece.x - 8 + pad, y: piece.y - 8 + pad, w: 16 - 2 * pad, h: 16 - 2 * pad };
+    case 'barre': return { x: piece.x - pad, y: piece.y - pad, w: piece.sizeMultiplier * referenceUnitMm + 2 * pad, h: BAR_HEIGHT_MM + 2 * pad };
+    case 'boite': return { x: piece.x - pad, y: piece.y - pad, w: piece.width + 2 * pad, h: piece.height + 2 * pad };
+    case 'calcul': return { x: piece.x - pad, y: piece.y - pad, w: Math.max(80, piece.expression.length * 7 + 16) + 2 * pad, h: 20 + 2 * pad };
+    case 'reponse': return { x: piece.x - pad, y: piece.y - pad, w: getReponseWidth(piece as Reponse) + 2 * pad, h: 26 + 2 * pad };
+    case 'etiquette': return { x: piece.x - pad, y: piece.y - 7 - pad, w: Math.max(30, piece.text.length * 5.5 + 10) + 2 * pad, h: 10 + 2 * pad };
+    case 'droiteNumerique': return { x: piece.x - pad, y: piece.y - 10 - pad, w: (piece as DroiteNumerique).width + 2 * pad, h: 20 + 2 * pad };
+    case 'tableau': return { x: piece.x - pad, y: piece.y - pad, w: (piece as Tableau).cols * TABLEAU_CELL_W + 2 * pad, h: (piece as Tableau).rows * TABLEAU_CELL_H + 2 * pad };
+    default: return { x: piece.x - pad, y: piece.y - pad, w: 20 + 2 * pad, h: 14 + 2 * pad };
+  }
 }
 
 function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: number } {

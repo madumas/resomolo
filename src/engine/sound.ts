@@ -94,6 +94,11 @@ export function soundAcknowledge() {
   play(500, 25, 'sine', 0.04);
 }
 
+// Ghost snap — cursor snaps to a target/graduation during preview (very subtle tick)
+export function soundGhostSnap() {
+  play(350, 15, 'triangle', 0.05);
+}
+
 // Distribute — jetons distributed into groups (3 micropulses)
 export function soundDistribute() {
   play(600, 20, 'sine', 0.06);
@@ -164,4 +169,12 @@ export function onAcknowledge() {
 
 export function onDistribute() {
   if (mode === 'full') { soundDistribute(); }
+}
+
+let _lastGhostSnapTime = 0;
+export function onGhostSnap() {
+  const now = Date.now();
+  if (now - _lastGhostSnapTime < 100) return;  // debounce 100ms
+  _lastGhostSnapTime = now;
+  if (mode === 'full') { soundGhostSnap(); }
 }
