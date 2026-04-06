@@ -118,6 +118,12 @@
     font-style: italic;
     grid-column: 2;
     grid-row: 1 / 4;
+    overflow: hidden;
+  }
+  .piece-img img {
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   .piece-operations {
@@ -194,7 +200,7 @@
 </div>
 
 <p class="intro">
-  RésoMolo offre 12 pièces pour modéliser visuellement des problèmes mathématiques. Chaque pièce se place par un clic. Ce document présente ce que fait chaque pièce, ses actions, et les types de problèmes où elle est utile.
+  RésoMolo offre 15 pièces pour modéliser visuellement des problèmes mathématiques. Chaque pièce se place par un clic. Ce document présente ce que fait chaque pièce, ses actions, et les types de problèmes où elle est utile.
 </p>
 
 <div class="callout">
@@ -219,7 +225,7 @@
       <dt>Actions</dt>
       <dd>Couleur (bleu, rouge, vert, jaune). Dupliquer (=3, =5). Répartir dans des boîtes (2 à 6 groupes). Supprimer.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-jeton.png" alt="jeton"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -246,7 +252,7 @@
       <dt>Actions</dt>
       <dd>Nommer. Valeur (texte affiché au centre). Copier la boîte avec tous ses jetons (couleur suivante automatique). Couleur. Supprimer.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-boite.png" alt="boite"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -277,7 +283,7 @@
       <dt>Actions</dt>
       <dd>Nommer. Valeur. Taille (1&times; à 10&times;, fractions). Copier. Fraction (subdiviser en 2 à 12 parts, colorier des parts). Grouper avec accolade. Couleur. Égaliser à une autre barre.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-barre.png" alt="barre"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -314,7 +320,7 @@
       <dt>Actions</dt>
       <dd>Choisir/changer le gabarit. Ajouter des parties ou des barres selon le gabarit. Nommer et donner des valeurs. Redimensionner (&times;0.5 à &times;3).</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-schema-parties.png" alt="schema parties"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -345,7 +351,7 @@
       <dt>Actions</dt>
       <dd>Régler le minimum et le maximum. Choisir le pas de graduation (1, 2, 5, 10). Ajuster la largeur. Placer ou effacer des marqueurs.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-droite.png" alt="droite"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -372,7 +378,7 @@
       <dt>Actions</dt>
       <dd>Gabarit rapide (2&times;2, 2&times;3, 3&times;2, etc.). Nommer chaque niveau et chaque option. Ajouter/retirer des niveaux (max 4) et des options par niveau (max 6).</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-arbre.png" alt="arbre"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -398,7 +404,7 @@
       <dt>Actions</dt>
       <dd>Ajuster le nombre de lignes (2-10) et de colonnes (2-10). Activer/désactiver l'en-tête. Saisir des données cellule par cellule.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-tableau.png" alt="tableau"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -406,6 +412,58 @@
         <li>Tableau de correspondance</li>
         <li>Grille de résultats en probabilités</li>
         <li>Alternance au diagramme en arbre</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── Diagramme à bandes ────────────────────── -->
+<div class="piece">
+  <div class="piece-header">
+    <div class="piece-icon">&#x2581;&#x2583;&#x2585;</div>
+    <span class="piece-name">Diagramme à bandes</span>
+    <span class="piece-cycles">Cycles 2-3</span>
+  </div>
+  <div class="piece-body">
+    <div>
+      <dt>C'est quoi</dt>
+      <dd>Un graphique à barres verticales avec titre, axe vertical et catégories. Chaque bande représente une catégorie avec sa valeur et sa couleur. L'enfant construit son diagramme donnée par donnée.</dd>
+      <dt>Actions</dt>
+      <dd>Titre. Nom de l'axe vertical. Ajouter/retirer des catégories. Nommer et donner une valeur à chaque catégorie. Couleur par catégorie.</dd>
+    </div>
+    <div class="piece-img"><img src="images/catalogue-diagramme-bandes.png" alt="diagramme bandes"></div>
+    <div class="piece-operations">
+      <dt>Utile pour</dt>
+      <ul>
+        <li>Représenter des données de dénombrement (sondage, inventaire)</li>
+        <li>Comparer des quantités entre catégories</li>
+        <li>Statistiques (PFEQ 2e-3e cycle)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── Diagramme à ligne brisée ──────────────── -->
+<div class="piece">
+  <div class="piece-header">
+    <div class="piece-icon">&#x1F4C8;</div>
+    <span class="piece-name">Diagramme à ligne brisée</span>
+    <span class="piece-cycles">Cycles 2-3</span>
+  </div>
+  <div class="piece-body">
+    <div>
+      <dt>C'est quoi</dt>
+      <dd>Un graphique linéaire reliant des points de données. Chaque point a un nom (axe horizontal) et une valeur (axe vertical). Utile pour montrer une évolution ou une tendance dans le temps.</dd>
+      <dt>Actions</dt>
+      <dd>Titre. Nom de l'axe vertical. Ajouter/retirer des points. Nommer et donner une valeur à chaque point.</dd>
+    </div>
+    <div class="piece-img"><img src="images/catalogue-diagramme-ligne.png" alt="diagramme ligne"></div>
+    <div class="piece-operations">
+      <dt>Utile pour</dt>
+      <ul>
+        <li>Évolution dans le temps (température, croissance)</li>
+        <li>Tendances et comparaisons temporelles</li>
+        <li>Statistiques (PFEQ 2e-3e cycle)</li>
       </ul>
     </div>
   </div>
@@ -437,7 +495,7 @@
         </ul>
       </dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-calcul-expression.png" alt="calcul expression"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -471,7 +529,7 @@
         La réponse est ___.
       </dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-reponse.png" alt="reponse"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -501,13 +559,39 @@
       <dt>Actions</dt>
       <dd>Éditer le texte. Déplacer. Supprimer.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-etiquette.png" alt="etiquette"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
         <li>Identifier les acteurs du problème (Léo, grand-mère)</li>
         <li>Noter une quantité à côté d'une pièce</li>
         <li>Annoter sa démarche ou ses hypothèses</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── Inconnue ─────────────────────────────── -->
+<div class="piece">
+  <div class="piece-header">
+    <div class="piece-icon">&#x003F;</div>
+    <span class="piece-name">Inconnue</span>
+    <span class="piece-cycles">Cycles 1-2-3</span>
+  </div>
+  <div class="piece-body">
+    <div>
+      <dt>C'est quoi</dt>
+      <dd>Un marqueur « ? » que l'on place sur l'espace de travail pour représenter la valeur cherchée dans le problème. Se colle à une pièce voisine, comme l'étiquette. Le texte est modifiable (?, x, n, etc.).</dd>
+      <dt>Actions</dt>
+      <dd>Éditer le texte. Déplacer. Supprimer.</dd>
+    </div>
+    <div class="piece-img"><img src="images/catalogue-inconnue.png" alt="inconnue"></div>
+    <div class="piece-operations">
+      <dt>Utile pour</dt>
+      <ul>
+        <li>Identifier ce qu'on cherche dans le problème</li>
+        <li>Marquer une quantité inconnue sur un schéma ou une barre</li>
+        <li>Rendre explicite la question avant de calculer</li>
       </ul>
     </div>
   </div>
@@ -527,7 +611,7 @@
       <dt>Actions</dt>
       <dd>Éditer l'étiquette (donne, reçoit, &times;3, +5, etc.). Supprimer.</dd>
     </div>
-    <div class="piece-img">capture &agrave; venir</div>
+    <div class="piece-img"><img src="images/catalogue-fleche.png" alt="fleche"></div>
     <div class="piece-operations">
       <dt>Utile pour</dt>
       <ul>
@@ -551,7 +635,7 @@
 
 <table class="xref">
   <tr>
-    <th style="width:28%">Type de problème</th>
+    <th style="width:24%">Type de problème</th>
     <th>Jeton</th>
     <th>Boîte</th>
     <th>Barre</th>
@@ -559,6 +643,8 @@
     <th>Droite</th>
     <th>Arbre</th>
     <th>Tableau</th>
+    <th>Bandes</th>
+    <th>Ligne</th>
   </tr>
   <tr>
     <td><strong>Ajout / Retrait</strong><br><span style="font-size:9px;color:#888">Léo a 8 billes, il en reçoit 5</span></td>
@@ -567,6 +653,8 @@
     <td class="dot-alt">&#x25CB;</td>
     <td class="dot-alt">&#x25CB;</td>
     <td class="dot">&#x25CF;</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
   </tr>
@@ -579,6 +667,8 @@
     <td class="dot-alt">&#x25CB;</td>
     <td></td>
     <td></td>
+    <td class="dot-alt">&#x25CB;</td>
+    <td></td>
   </tr>
   <tr>
     <td><strong>Comparaison multiplicative</strong><br><span style="font-size:9px;color:#888">Camille a lu 3 fois plus que Théo</span></td>
@@ -586,6 +676,8 @@
     <td></td>
     <td class="dot">&#x25CF;</td>
     <td class="dot">&#x25CF;</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -599,6 +691,8 @@
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td><strong>Partage</strong><br><span style="font-size:9px;color:#888">24 biscuits entre 3 amis</span></td>
@@ -606,6 +700,8 @@
     <td class="dot">&#x25CF;</td>
     <td class="dot-alt">&#x25CB;</td>
     <td class="dot-alt">&#x25CB;</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -619,6 +715,8 @@
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td><strong>Transformation</strong><br><span style="font-size:9px;color:#888">Il avait 35 $, il dépense 12 $</span></td>
@@ -627,6 +725,8 @@
     <td class="dot-alt">&#x25CB;</td>
     <td class="dot">&#x25CF;</td>
     <td class="dot">&#x25CF;</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
   </tr>
@@ -639,6 +739,8 @@
     <td class="dot-alt">&#x25CB;</td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td><strong>Combinatoire / Probabilités</strong><br><span style="font-size:9px;color:#888">3 entrées, 4 plats, 2 desserts</span></td>
@@ -649,9 +751,11 @@
     <td></td>
     <td class="dot">&#x25CF;</td>
     <td class="dot">&#x25CF;</td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
-    <td><strong>Organisation de données</strong><br><span style="font-size:9px;color:#888">Classer des résultats, compiler</span></td>
+    <td><strong>Statistiques / Données</strong><br><span style="font-size:9px;color:#888">Sondage, dénombrement, évolution</span></td>
     <td></td>
     <td class="dot-alt">&#x25CB;</td>
     <td></td>
@@ -659,10 +763,12 @@
     <td></td>
     <td></td>
     <td class="dot">&#x25CF;</td>
+    <td class="dot">&#x25CF;</td>
+    <td class="dot">&#x25CF;</td>
   </tr>
 </table>
 
-<p style="font-size:10px;color:#888;margin:1mm 0 3mm">Les pièces Calcul, Réponse, Étiquette et Flèche s'ajoutent à toute modélisation pour poser les opérations, formuler la réponse et annoter.</p>
+<p style="font-size:10px;color:#888;margin:1mm 0 3mm">Les pièces Calcul, Réponse, Inconnue, Étiquette et Flèche s'ajoutent à toute modélisation pour poser les opérations, formuler la réponse et annoter.</p>
 
 <!-- ═══════════════════════════════════════════ -->
 <h2>Combiner les pièces</h2>
