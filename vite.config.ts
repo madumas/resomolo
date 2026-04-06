@@ -10,8 +10,23 @@ const gitHash = (() => {
 })();
 
 const gitBranch = (() => {
-  try { return execSync('git rev-parse --abbrev-ref HEAD').toString().trim(); }
-  catch { return 'unknown'; }
+  if (process.env.CF_PAGES_BRANCH) return process.env.CF_PAGES_BRANCH;
+  if (process.env.GITHUB_REF_NAME) return process.env.GITHUB_REF_NAME;
+  try {
+    const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+    if (branch !== 'HEAD') return branch;
+    // Detached HEAD — check if we're on a tag (release commit)
+    try {
+      execSync('git describe --exact-match --tags HEAD', { stdio: 'pipe' });
+      return 'main';
+    } catch {
+      try {
+        const msg = execSync('git log -1 --format=%s').toString().trim();
+        if (msg.startsWith('release: v')) return 'main';
+      } catch { /* ignore */ }
+      return 'dev';
+    }
+  } catch { return 'unknown'; }
 })();
 
 // https://vite.dev/config/

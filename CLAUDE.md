@@ -14,6 +14,15 @@ Concrètement :
 
 Au Québec, les gestes réservés incluent notamment l'évaluation des troubles d'apprentissage, la prescription d'outils compensatoires, et les recommandations d'intervention. Ces gestes relèvent d'ordres professionnels (OEQ, OPQ, etc.) et ne peuvent être posés que par des membres en règle.
 
+## Release & Versioning
+
+- **Branches:** `dev` pour le développement, `main` pour la production. Cloudflare auto-déploie sur push à `main`.
+- **Conventional commits:** `fix:` → patch, `feat:` → minor, `BREAKING CHANGE` → major.
+- **Release script:** `npm run release` (ou `./scripts/release.sh`). Auto-détecte le bump depuis les commits depuis le dernier tag, merge `dev` → `main`, `npm version`, crée un tag git léger, push branche et tag séparément (pas `--follow-tags` qui ne push que les tags annotés), sync `dev`.
+- **Build hash & branch:** `__BUILD_HASH__` (git short hash) et `__GIT_BRANCH__` injectés au build via `vite.config.ts`. Détection de branche : `CF_PAGES_BRANCH` env → git branch → tag match → release commit message match → fallback `dev`.
+- **Tags:** Semver léger avec préfixe `v` (`v0.1.0`, `v0.2.0`). Créés par le script de release, jamais manuellement. Doivent être pushés explicitement (`git push origin v{version}`).
+- **Docs PDF:** Le script de release cherche `docs/generate-pdfs.mjs` et l'exécute s'il existe pour stamper la version dans les docs HTML et regénérer les PDFs.
+
 ## Politique de tests — les tests ont raison
 
 **Quand un test échoue, c'est l'application qui est fautive, pas le test.** Les tests sont la source de vérité sur le comportement attendu.

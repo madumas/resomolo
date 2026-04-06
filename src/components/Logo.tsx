@@ -18,7 +18,7 @@ export function Logo({ height = 32, brand = 'reso' }: { height?: number; brand?:
         display: 'inline-flex',
         alignItems: 'center',
         height,
-        fontFamily: "'Avenir Next', 'Segoe UI', system-ui, sans-serif",
+        fontFamily: "'Nunito Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif",
         fontSize,
         lineHeight: 1,
         letterSpacing: '-0.02em',

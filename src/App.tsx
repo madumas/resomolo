@@ -153,11 +153,7 @@ export default function App() {
           setProblemZoneActive(finalData.current.probleme.length > 0);
           // Clear emergency save only after confirming data loaded successfully
           if (data) clearEmergencySave();
-        } else {
-          setShowAdultGuide(true);
         }
-      } else {
-        setShowAdultGuide(true);
       }
       // URL sharing: ?probleme=text (simple) or ?s=<lz-compressed> (rich with pieces)
       const shared = parseShareParam(window.location.search);
