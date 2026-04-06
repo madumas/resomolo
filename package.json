@@ -1,7 +1,7 @@
 {
   "name": "resomolo",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Outil visuel de modélisation de problèmes mathématiques pour le primaire au Québec",
   "author": "Marc-André Dumas",
   "license": "MIT",
