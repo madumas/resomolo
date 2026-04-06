@@ -12,6 +12,15 @@ interface StatusBarProps {
   showTutorialButtons?: boolean;
   onTutorialNext?: () => void;
   onTutorialSkip?: () => void;
+  problemCollapsed?: boolean;
+  problemText?: string;
+  onExpandProblem?: () => void;
+}
+
+function extractQuestion(text: string): string {
+  const sentences = text.split(/(?<=[.?!])\s+/);
+  const question = [...sentences].reverse().find(s => s.includes('?'));
+  return question || sentences[sentences.length - 1] || text;
 }
 
 export function StatusBar({
@@ -25,7 +34,14 @@ export function StatusBar({
   showTutorialButtons,
   onTutorialNext,
   onTutorialSkip,
+  problemCollapsed,
+  problemText,
+  onExpandProblem,
 }: StatusBarProps) {
+  // When problem zone is collapsed and there's a problem, show the question
+  const showProblemReminder = problemCollapsed && problemText && problemText.length > 0;
+  const questionText = showProblemReminder ? extractQuestion(problemText) : '';
+
   return (
     <div data-testid="status-bar" role="status" aria-live="polite" style={{
       padding: '6px 16px',
@@ -42,7 +58,36 @@ export function StatusBar({
       alignItems: 'center',
       gap: 12,
     }}>
-      <StatusMessage message={message} variant={variant} />
+      {showProblemReminder ? (
+        <span
+          onClick={onExpandProblem}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter') onExpandProblem?.(); }}
+          style={{
+            flex: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            minHeight: MIN_BUTTON_SIZE_PX,
+          }}
+          title="Cliquer pour voir le problème"
+        >
+          <span style={{ fontSize: 10, color: UI_TEXT_SECONDARY }}>▶</span>
+          <span style={{
+            color: '#4E5560',
+            fontStyle: 'italic',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {questionText}
+          </span>
+        </span>
+      ) : (
+        <StatusMessage message={message} variant={variant} />
+      )}
       {onCancel && (
         <button
           onClick={onCancel}
