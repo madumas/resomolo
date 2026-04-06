@@ -26,17 +26,17 @@ for (let c = 0; c < 5; c++) {
   await colorBtn(page, 'rouge');
   await esc(page);
 }
-await snap(page, 'catalogue-jeton.png', { x: 35, y: 38, w: 130, h: 42 });
+await snap(page, 'catalogue-jeton.png', { x: 35, y: 38, w: 170, h: 42 });
 
 // ── BOÎTE — "1 sac de 6 bonbons" ────────────────
 console.log('Boîte');
 await fresh(page);
 await tool(page, 'boite');
-await click(page, 90, 65); await esc(page);
-// 6 jetons dedans
+await click(page, 75, 65); await esc(page);
+// 6 jetons inside the box (centered on box position)
 for (let c = 0; c < 6; c++) {
   await tool(page, 'jeton');
-  await click(page, 60 + c * 13, 65);
+  await click(page, 55 + c * 12, 65);
   await esc(page);
 }
 // Name the box — click on it
@@ -54,7 +54,7 @@ if (await ctx.isVisible({ timeout: 1500 }).catch(() => false)) {
   }
 }
 await esc(page);
-await snap(page, 'catalogue-boite.png', { x: 25, y: 30, w: 145, h: 65 });
+await snap(page, 'catalogue-boite.png', { x: 20, y: 28, w: 155, h: 70 });
 
 await browser.close();
 console.log('Done: concret');

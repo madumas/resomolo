@@ -10,7 +10,7 @@ await tool(page, 'droiteNumerique');
 await click(page, 150, 60);
 await page.waitForTimeout(400);
 await esc(page);
-await snap(page, 'catalogue-droite.png', { x: 15, y: 30, w: 290, h: 50 });
+await snap(page, 'catalogue-droite.png', { x: 15, y: 40, w: 290, h: 35 });
 
 // ── ARBRE — Entrée/Plat/Dessert ────────────────
 console.log('Arbre');
@@ -38,19 +38,19 @@ await snap(page, 'catalogue-tableau.png', { x: 50, y: 32, w: 125, h: 65 });
 console.log('Diagramme à bandes');
 await fresh(page);
 await tool(page, 'diagrammeBandes');
-await click(page, 70, 50);
+await click(page, 55, 40);
 await page.waitForTimeout(500);
 await esc(page);
-await snap(page, 'catalogue-diagramme-bandes.png', { x: 5, y: 5, w: 200, h: 120 });
+await snap(page, 'catalogue-diagramme-bandes.png', { x: 2, y: 2, w: 180, h: 115 });
 
 // ── DIAGRAMME À LIGNE BRISÉE ────────────────────
 console.log('Diagramme à ligne brisée');
 await fresh(page);
 await tool(page, 'diagrammeLigne');
-await click(page, 70, 50);
+await click(page, 55, 40);
 await page.waitForTimeout(500);
 await esc(page);
-await snap(page, 'catalogue-diagramme-ligne.png', { x: 5, y: 5, w: 200, h: 120 });
+await snap(page, 'catalogue-diagramme-ligne.png', { x: 2, y: 2, w: 180, h: 115 });
 
 await browser.close();
 console.log('Done: structuré');

@@ -58,7 +58,7 @@ await ctxClick(page, 'Type');
 await page.locator('[data-testid="context-actions"] button:has-text("Comparer")').click().catch(() => {});
 await page.waitForTimeout(300);
 await esc(page);
-await snap(page, 'catalogue-schema-comparaison.png', { x: 30, y: 18, w: 230, h: 100 });
+await snap(page, 'catalogue-schema-comparaison.png', { x: 30, y: 30, w: 230, h: 88 });
 
 // ── SCHÉMA: groupes-égaux ───────────────────────
 console.log('Schéma groupes-égaux');
@@ -74,7 +74,7 @@ await page.waitForTimeout(200);
 await page.locator('[data-testid="context-actions"] button:has-text("+ Barre")').click().catch(() => {});
 await page.waitForTimeout(200);
 await esc(page);
-await snap(page, 'catalogue-schema-groupes.png', { x: 30, y: 12, w: 200, h: 130 });
+await snap(page, 'catalogue-schema-groupes.png', { x: 15, y: 22, w: 210, h: 120 });
 
 // ── SCHÉMA: transformation ──────────────────────
 console.log('Schéma transformation');
