@@ -1,26 +1,23 @@
 import { useState, useCallback, useRef } from 'react';
 import type { UndoManager } from '../model/types';
 import type { SlotRegistry } from '../model/slots';
-import { createSlotMetadata, createEmptyRegistry, MAX_SLOTS } from '../model/slots';
+import { createSlotMetadata, MAX_SLOTS } from '../model/slots';
 import { saveRegistry, saveSlotData, loadSlotData, deleteSlotData } from '../model/slot-persistence';
 import { createInitialUndoManager } from '../model/state';
 import type { Action } from '../model/state';
 
 interface UseSlotManagerOptions {
+  initialRegistry: SlotRegistry;
   undoManager: UndoManager;
   dispatch: (action: Action) => void;
 }
 
-export function useSlotManager({ undoManager, dispatch }: UseSlotManagerOptions) {
-  const [registry, setRegistry] = useState<SlotRegistry>(createEmptyRegistry());
+export function useSlotManager({ initialRegistry, undoManager, dispatch }: UseSlotManagerOptions) {
+  const [registry, setRegistry] = useState<SlotRegistry>(initialRegistry);
 
   // C1: Ref to always have latest undoManager for async operations
   const undoManagerRef = useRef(undoManager);
   undoManagerRef.current = undoManager;
-
-  const initRegistry = useCallback(async (loaded: SlotRegistry) => {
-    setRegistry(loaded);
-  }, []);
 
   const switchSlot = useCallback(async (targetId: string): Promise<UndoManager> => {
     // Save current slot (C1: use ref for latest undoManager in async)
@@ -144,7 +141,6 @@ export function useSlotManager({ undoManager, dispatch }: UseSlotManagerOptions)
   return {
     registry,
     activeSlotId: registry.activeSlotId,
-    initRegistry,
     switchSlot,
     createNewSlot,
     removeSlot,

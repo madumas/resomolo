@@ -20,12 +20,10 @@ export function useAutoSave(
   undoManager: UndoManager,
   activeSlotId?: string | null,
   touchActiveSlot?: (summaries?: { problemeSummary?: string; piecesSummary?: string }) => Promise<void>,
-  ready = true,
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    if (!ready) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (activeSlotId) {
@@ -46,11 +44,10 @@ export function useAutoSave(
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [undoManager, activeSlotId, touchActiveSlot, ready]);
+  }, [undoManager, activeSlotId, touchActiveSlot]);
 
   // I6: Save on beforeunload — slot key (async, best effort) + emergency (sync localStorage)
   useEffect(() => {
-    if (!ready) return;
     const handler = () => {
       if (activeSlotId) {
         saveSlotData(activeSlotId, undoManager); // async best-effort
@@ -59,5 +56,5 @@ export function useAutoSave(
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [undoManager, activeSlotId, ready]);
+  }, [undoManager, activeSlotId]);
 }
