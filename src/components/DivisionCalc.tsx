@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { onSnap } from '../engine/sound';
 
 export interface DivisionCalcData {
@@ -8,6 +8,7 @@ export interface DivisionCalcData {
   quotient: string[];      // digits of quotient (6 cells)
   remainder: string;       // final remainder (1-2 digits)
   steps: DivisionStep[];   // variable number of division steps
+  decimalPos?: number | null; // null=integer, 1=dixièmes, 2=centièmes — applies to dividend AND quotient
 }
 
 interface DivisionStep {
@@ -37,9 +38,32 @@ function emptyRow(n: number): Row {
   return Array(n).fill('');
 }
 
-function numToRow(num: string | undefined, cols: number): Row {
+export function detectDecimalPosition(num: string | undefined): number | null {
+  if (!num) return null;
+  const match = num.match(/[,.](\d+)$/);
+  return match ? match[1].length : null;
+}
+
+export function numToRow(num: string | undefined, cols: number, decimalPos?: number | null): Row {
   if (!num) return emptyRow(cols);
-  const digits = num.split('');
+  if (decimalPos) {
+    const parts = num.split(/[,.]/);
+    const intPart = parts[0] || '';
+    const decPart = parts[1] || '';
+    const row = emptyRow(cols);
+    const intStart = cols - decimalPos - intPart.length;
+    for (let i = 0; i < intPart.length; i++) {
+      const idx = intStart + i;
+      if (idx >= 0 && idx < cols) row[idx] = intPart[i];
+    }
+    const decStart = cols - decimalPos;
+    for (let i = 0; i < decPart.length; i++) {
+      if (decStart + i < cols) row[decStart + i] = decPart[i];
+    }
+    return row;
+  }
+  // Integer mode: strip non-digits, right-align
+  const digits = num.replace(/[^0-9]/g, '').split('');
   const row = emptyRow(cols);
   for (let i = 0; i < digits.length && i < cols; i++) {
     row[cols - 1 - i] = digits[digits.length - 1 - i];
@@ -51,6 +75,18 @@ function rowToNum(row: Row): string {
   return row.join('').replace(/^0+/, '') || '0';
 }
 
+export function rowToNumWithDecimal(row: Row, decPos: number | null, cols: number): string {
+  if (decPos === null || decPos === 0) {
+    return row.join('').replace(/^0+/, '') || '0';
+  }
+  const intCells = row.slice(0, cols - decPos);
+  const decCells = row.slice(cols - decPos);
+  const intPart = intCells.join('').replace(/^0+/, '') || '0';
+  const decPart = decCells.join('');
+  if (!decPart) return intPart;
+  return `${intPart},${decPart}`;
+}
+
 function emptyStep(): DivisionStep {
   return {
     product: emptyRow(DIV_COLS),
@@ -59,7 +95,10 @@ function emptyStep(): DivisionStep {
 }
 
 export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor, savedData, onCommit, onCancel }: DivisionCalcProps) {
-  const [dividend, setDividend] = useState<Row>(savedData?.dividend || numToRow(initialDividend, DIV_COLS));
+  const initialDecPos = savedData?.decimalPos !== undefined ? savedData.decimalPos : (detectDecimalPosition(initialDividend) ?? detectDecimalPosition(initialDivisor));
+  const [decimalPos, setDecimalPos] = useState<number | null>(initialDecPos);
+  const [decimalLocked, setDecimalLocked] = useState(false);
+  const [dividend, setDividend] = useState<Row>(savedData?.dividend || numToRow(initialDividend, DIV_COLS, initialDecPos));
   const [divisor, setDivisor] = useState<Row>(savedData?.divisor || numToRow(initialDivisor, DIVISOR_COLS));
   const [quotient, setQuotient] = useState<Row>(savedData?.quotient || emptyRow(DIV_COLS));
   const [remainder, setRemainder] = useState(savedData?.remainder || '');
@@ -129,6 +168,27 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     onSnap();
   };
 
+  const changeDecimalPos = (newDecPos: number | null) => {
+    if (decimalLocked) return;
+    const oldDecPos = decimalPos ?? 0;
+    const newDec = newDecPos ?? 0;
+    const shift = newDec - oldDecPos;
+    if (shift !== 0) {
+      const shiftRow = (row: Row): Row => {
+        if (shift > 0) return [...row.slice(shift), ...Array(shift).fill('')];
+        return [...Array(-shift).fill(''), ...row.slice(0, shift)];
+      };
+      setDividend(shiftRow);
+      setQuotient(shiftRow);
+      setSteps(prev => prev.map(s => ({
+        product: shiftRow(s.product),
+        partialRemainder: shiftRow(s.partialRemainder),
+      })));
+    }
+    setDecimalPos(newDecPos);
+    setLastModified(null);
+  };
+
   const handleCellChange = (
     row: Row,
     setRow: ((r: Row) => void) | null,
@@ -144,6 +204,11 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     const digit = normalized.replace(/[^0-9]/g, '').slice(-1);
     const next = [...row];
     next[col] = digit;
+
+    // Lock decimal selector once user types in quotient
+    if (rowName === 'quotient' && digit && decimalPos !== null && !decimalLocked) {
+      setDecimalLocked(true);
+    }
 
     if (stepIdx !== undefined && stepField) {
       setSteps(prev => {
@@ -248,11 +313,13 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   };
 
   const commit = () => {
-    const dividendStr = rowToNum(dividend);
+    const dividendStr = decimalPos !== null ? rowToNumWithDecimal(dividend, decimalPos, DIV_COLS) : rowToNum(dividend);
     const divisorStr = rowToNum(divisor);
-    const quotientStr = rowToNum(quotient);
+    const quotientStr = decimalPos !== null ? rowToNumWithDecimal(quotient, decimalPos, DIV_COLS) : rowToNum(quotient);
     // J4: don't commit "0 ÷ 0 = 0" for empty grids
-    if (divisorStr === '0' || dividendStr === '0') {
+    const dividendRaw = rowToNum(dividend);
+    const divisorRaw = rowToNum(divisor);
+    if (divisorRaw === '0' || dividendRaw === '0') {
       const data: DivisionCalcData = {
         type: 'division',
         dividend: [...dividend],
@@ -263,6 +330,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           product: [...s.product],
           partialRemainder: [...s.partialRemainder],
         })),
+        decimalPos,
       };
       onCommit('', data);
       return;
@@ -280,12 +348,14 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         product: [...s.product],
         partialRemainder: [...s.partialRemainder],
       })),
+      decimalPos,
     };
     onCommit(expr, data);
   };
 
   // Width calculations
-  const dividendWidth = DIV_COLS * (CELL + GAP) - GAP;
+  const decSepWidth = decimalPos !== null ? 16 + GAP : 0; // decimal separator width + gap
+  const dividendWidth = DIV_COLS * (CELL + GAP) - GAP + decSepWidth;
   const bracketWidth = 3; // vertical bar thickness
   const bracketGap = 8;   // gap around bracket
   const minusColWidth = CELL / 2; // width for the "−" sign column
@@ -305,6 +375,21 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         Division à crochet
       </div>
 
+      {/* Decimal mode selector */}
+      <div style={{ display: 'flex', gap: GAP, marginBottom: 8 }}>
+        {([null, 1, 2] as const).map(dp => (
+          <button key={String(dp)} onClick={() => changeDecimalPos(dp)}
+            disabled={decimalLocked}
+            style={{
+              ...decBtnStyle,
+              ...(decimalPos === dp ? decBtnActiveStyle : {}),
+              ...(decimalLocked ? { opacity: 0.5, cursor: 'default' } : {}),
+            }}>
+            {dp === null ? 'Entier' : dp === 1 ? 'dixièmes' : 'centièmes'}
+          </button>
+        ))}
+      </div>
+
       {/* Two-column layout: LEFT (dividend + steps) | bracket | RIGHT (divisor + quotient) */}
       <div style={{ display: 'flex', gap: 0 }}>
 
@@ -313,15 +398,19 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           {/* Dividend row */}
           <div style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
             {dividend.map((d, col) => (
-              <CellInput
-                key={`dividend-${col}`}
-                cellId={`dividend-${col}`}
-                refCb={el => setCellRef(`dividend-${col}`, el)}
-                value={d}
-                onChange={v => handleCellChange(dividend, setDividend, 'dividend', col, v)}
-                onKeyDown={e => handleKeyDown('dividend', col, e)}
-                colIdx={col}
-              />
+              <React.Fragment key={`dividend-${col}`}>
+                {decimalPos !== null && col === DIV_COLS - decimalPos && (
+                  <span style={decimalSepStyle}>,</span>
+                )}
+                <CellInput
+                  cellId={`dividend-${col}`}
+                  refCb={el => setCellRef(`dividend-${col}`, el)}
+                  value={d}
+                  onChange={v => handleCellChange(dividend, setDividend, 'dividend', col, v)}
+                  onKeyDown={e => handleKeyDown('dividend', col, e)}
+                  colIdx={col}
+                />
+              </React.Fragment>
             ))}
           </div>
 
@@ -338,15 +427,19 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
               <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
                 <div style={{ width: minusColWidth, textAlign: 'center', fontSize: 18, color: '#55506A', fontFamily: 'monospace', fontWeight: 600, flexShrink: 0 }}>−</div>
                 {step.product.map((d, col) => (
-                  <CellInput
-                    key={`step${stepIdx}-product-${col}`}
-                    cellId={`step${stepIdx}-product-${col}`}
-                    refCb={el => setCellRef(`step${stepIdx}-product-${col}`, el)}
-                    value={d}
-                    onChange={v => handleCellChange(step.product, null, `step${stepIdx}-product`, col, v, stepIdx, 'product')}
-                    onKeyDown={e => handleKeyDown(`step${stepIdx}-product`, col, e)}
-                    colIdx={col}
-                  />
+                  <React.Fragment key={`step${stepIdx}-product-${col}`}>
+                    {decimalPos !== null && col === DIV_COLS - decimalPos && (
+                      <span style={{ ...decimalSepStyle, visibility: 'hidden' }}>,</span>
+                    )}
+                    <CellInput
+                      cellId={`step${stepIdx}-product-${col}`}
+                      refCb={el => setCellRef(`step${stepIdx}-product-${col}`, el)}
+                      value={d}
+                      onChange={v => handleCellChange(step.product, null, `step${stepIdx}-product`, col, v, stepIdx, 'product')}
+                      onKeyDown={e => handleKeyDown(`step${stepIdx}-product`, col, e)}
+                      colIdx={col}
+                    />
+                  </React.Fragment>
                 ))}
               </div>
 
@@ -357,15 +450,19 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
               <div style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
                 <div style={{ width: minusColWidth, flexShrink: 0 }} /> {/* spacer for "−" column */}
                 {step.partialRemainder.map((d, col) => (
-                  <CellInput
-                    key={`step${stepIdx}-remainder-${col}`}
-                    cellId={`step${stepIdx}-remainder-${col}`}
-                    refCb={el => setCellRef(`step${stepIdx}-remainder-${col}`, el)}
-                    value={d}
-                    onChange={v => handleCellChange(step.partialRemainder, null, `step${stepIdx}-remainder`, col, v, stepIdx, 'partialRemainder')}
-                    onKeyDown={e => handleKeyDown(`step${stepIdx}-remainder`, col, e)}
-                    colIdx={col}
-                  />
+                  <React.Fragment key={`step${stepIdx}-remainder-${col}`}>
+                    {decimalPos !== null && col === DIV_COLS - decimalPos && (
+                      <span style={{ ...decimalSepStyle, visibility: 'hidden' }}>,</span>
+                    )}
+                    <CellInput
+                      cellId={`step${stepIdx}-remainder-${col}`}
+                      refCb={el => setCellRef(`step${stepIdx}-remainder-${col}`, el)}
+                      value={d}
+                      onChange={v => handleCellChange(step.partialRemainder, null, `step${stepIdx}-remainder`, col, v, stepIdx, 'partialRemainder')}
+                      onKeyDown={e => handleKeyDown(`step${stepIdx}-remainder`, col, e)}
+                      colIdx={col}
+                    />
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -419,16 +516,20 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           {/* Quotient + R + remainder */}
           <div style={{ display: 'flex', gap: GAP, alignItems: 'center' }}>
             {quotient.map((d, col) => (
-              <CellInput
-                key={`quotient-${col}`}
-                cellId={`quotient-${col}`}
-                refCb={el => setCellRef(`quotient-${col}`, el)}
-                value={d}
-                onChange={v => handleCellChange(quotient, setQuotient, 'quotient', col, v)}
-                onKeyDown={e => handleKeyDown('quotient', col, e)}
-                bold
-                colIdx={col}
-              />
+              <React.Fragment key={`quotient-${col}`}>
+                {decimalPos !== null && col === DIV_COLS - decimalPos && (
+                  <span style={decimalSepStyle}>,</span>
+                )}
+                <CellInput
+                  cellId={`quotient-${col}`}
+                  refCb={el => setCellRef(`quotient-${col}`, el)}
+                  value={d}
+                  onChange={v => handleCellChange(quotient, setQuotient, 'quotient', col, v)}
+                  onKeyDown={e => handleKeyDown('quotient', col, e)}
+                  bold
+                  colIdx={col}
+                />
+              </React.Fragment>
             ))}
             {/* Remainder label and input */}
             <span style={{ fontSize: 14, fontWeight: 600, color: '#55506A', marginLeft: 8, fontFamily: 'monospace' }}>R</span>
@@ -510,4 +611,18 @@ const addStepBtnStyle: React.CSSProperties = {
   padding: '8px 16px', fontSize: 13, border: '1px dashed #7028e0',
   borderRadius: 6, background: '#EBF0F9', cursor: 'pointer', minHeight: 44,
   color: '#7028e0', fontWeight: 500,
+};
+
+const decimalSepStyle: React.CSSProperties = {
+  width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: 24, fontWeight: 700, color: '#1E1A2E', fontFamily: 'monospace',
+};
+
+const decBtnStyle: React.CSSProperties = {
+  padding: '6px 12px', fontSize: 13, border: '1px solid #D5D0E0',
+  borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', minHeight: 36,
+};
+
+const decBtnActiveStyle: React.CSSProperties = {
+  background: '#7028e0', color: '#fff', border: '1px solid #7028e0',
 };

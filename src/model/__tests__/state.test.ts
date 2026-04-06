@@ -61,6 +61,26 @@ describe('reduceModelisation', () => {
       const next = dispatch(app, { type: 'PLACE_PIECES', pieces: [j1, j2] });
       expect(currentModel(next).pieces).toHaveLength(2);
     });
+
+    it('duplicate boite with children — jetons point to new boite', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBoite({ id: 'box1', x: 50, y: 50 }) });
+      // Simulate duplication: new boite + 2 child jetons
+      const newBoite = makeBoite({ id: 'box2', x: 140, y: 50 });
+      const j1 = makeJeton({ id: 'j1', x: 150, y: 60, parentId: 'box2' });
+      const j2 = makeJeton({ id: 'j2', x: 160, y: 60, parentId: 'box2' });
+      app = dispatch(app, { type: 'PLACE_PIECES', pieces: [newBoite, j1, j2] });
+      expect(currentModel(app).pieces.filter(p => p.type === 'boite')).toHaveLength(2);
+      expect(currentModel(app).pieces.filter(p => p.type === 'jeton' && (p as any).parentId === 'box2')).toHaveLength(2);
+    });
+
+    it('duplicate empty boite (no children)', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBoite({ id: 'box1', x: 50, y: 50 }) });
+      const newBoite = makeBoite({ id: 'box2', x: 140, y: 50 });
+      app = dispatch(app, { type: 'PLACE_PIECES', pieces: [newBoite] });
+      expect(currentModel(app).pieces.filter(p => p.type === 'boite')).toHaveLength(2);
+    });
   });
 
   describe('MOVE_PIECE', () => {

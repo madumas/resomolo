@@ -202,6 +202,12 @@ L'en-tête contient : Logo RésoMolo, Toolbar (pièces), sélecteur Simplifié/C
 - **Déplacement de boîte :** Les jetons contenus se déplacent avec la boîte (offset relatif préservé).
 - **Suppression de boîte :** Les jetons contenus deviennent libres, conservent leurs coordonnées absolues.
 
+**Actions contextuelles :**
+- **Nommer** : éditer l'étiquette de la boîte
+- **Valeur** : éditer la valeur affichée au centre
+- **Copier** : duplique la boîte ET ses jetons enfants. La copie apparaît à droite (fallback en dessous si débordement). Couleur cyclique (bleu→rouge→vert→jaune), label/value réinitialisés. Grisé si la boîte est vide (0 enfants). Justification pédagogique : modéliser « N groupes de K » (problème multiplicatif 2e cycle) sans recréer chaque groupe manuellement.
+- **Couleur** : 4 choix (bleu, rouge, vert, jaune)
+
 **Interactions :**
 - Clic : placer une boîte
 - Sélection + Déplacer : déplacer avec contenu
@@ -314,6 +320,8 @@ L'outil ne fournit **rien d'autre**. Pas de calcul automatique, pas de vérifica
 
 **Opérations supportées en mode colonnes :** Addition, soustraction, multiplication multi-chiffres (ex: 28×14 avec lignes intermédiaires automatiques), division (l'opérateur ÷ est disponible dans le sélecteur). Note : le layout spécifique à la division longue (diviseur à gauche, quotient en haut, format nord-américain québécois) est planifié en v1.1.
 
+**Division à crochet — support décimal :** Un sélecteur unique **« Entier | dixièmes | centièmes »** (vocabulaire PDA officiel) s'applique simultanément au dividende ET au quotient. La virgule est affichée visuellement entre les cellules, alignée verticalement entre dividende et quotient. Les étapes intermédiaires (produit, reste partiel) n'ont pas de virgule — conformément à la procédure enseignée au 3e cycle. Auto-détection depuis le préremplissage (ex: « 12,60 ÷ 3 » → sélecteur automatiquement sur « centièmes »). Le sélecteur se verrouille (grisé) après la première saisie dans le quotient pour éviter le décalage déstabilisant en cours de résolution. Le zéro final est préservé (« 4,20 » pas « 4,2 ») — contexte monétaire.
+
 **Implémentation technique :** Les cases de saisie sont des `<input>` dans un `<foreignObject>` SVG unique englobant toute la grille. Pas de foreignObject par case (performance).
 
 **Passage entre modes — deux flux :**
@@ -378,7 +386,7 @@ Actions disponibles selon la pièce :
 | Pièce | Actions |
 |---|---|
 | Jeton | Déplacer, Couleur, Supprimer (micro-confirmation « Sûr? ») |
-| Boîte | Déplacer, Supprimer (micro-confirmation « Sûr? ») |
+| Boîte | Nommer, Valeur, Copier (grisé si vide), Couleur, Supprimer (micro-confirmation « Sûr? ») |
 | Étiquette | Éditer, Déplacer, Supprimer (micro-confirmation « Sûr? ») |
 | Flèche | Éditer étiquette, Supprimer (micro-confirmation « Sûr? ») |
 | Barre | **Niveau 1 (L1) :** Nommer, Taille (sous-menu : 1×-5×), Copier [N], Supprimer (micro-confirmation « Sûr? ») — **Niveau 2 (L2 « Plus... ») :** Valeur, Fraction, Grouper/Dégrouper, Couleur |
@@ -844,7 +852,8 @@ Toutes les fonctionnalités décrites dans les sections 1 à 16 sont implément�
 |---|---|---|
 | ~~**Droite numérique**~~ | ✅ Livré — placement, marqueurs cliquables avec labels, context actions min/max/pas/largeur. | — |
 | ~~**Multiplication multi-chiffres complète**~~ | ✅ Livré — lignes intermédiaires auto-générées pour multiplicateur multi-chiffres. | — |
-| ~~**Division longue en colonnes**~~ | ✅ Livré — format crochet québécois, reste, étapes ajoutables. | — |
+| ~~**Division longue en colonnes**~~ | ✅ Livré — format crochet québécois, reste, étapes ajoutables. Support décimal (sélecteur Entier/dixièmes/centièmes, auto-détection, verrouillage). | — |
+| ~~**Copier la Boîte**~~ | ✅ Livré — duplique boîte + jetons enfants, couleur cyclique, grisé si vide. | — |
 | ~~**Phrases-réponses à trous**~~ | ✅ Livré — 6 templates de phrases avec blancs remplissables. | — |
 
 ### v1.2 — Accessibilité comorbidités — Livré

@@ -18,6 +18,8 @@ interface ContextActionsProps {
   onStartDivisionCalc: (id: string) => void;
   onResizeBar: (id: string, multiplier: number) => void;
   onDuplicateBar: (id: string, count: number) => void;
+  onDuplicateBoite: (id: string, count: number) => void;
+  boiteHasChildren?: boolean;
   onChangeColor: (id: string, couleur: CouleurPiece) => void;
   onDuplicateJetons: (id: string, count: number) => void;
   freeJetonCount?: number;
@@ -44,6 +46,8 @@ export function ContextActions({
   onStartDivisionCalc,
   onResizeBar,
   onDuplicateBar,
+  onDuplicateBoite,
+  boiteHasChildren = false,
   onChangeColor,
   onDuplicateJetons,
   freeJetonCount = 0,
@@ -197,6 +201,11 @@ export function ContextActions({
           <CtxBtn onClick={() => onStartEditValue(piece.id)}>
             Valeur
           </CtxBtn>
+          {!piece.locked && (
+            <CtxBtn onClick={() => onDuplicateBoite(piece.id, 1)} disabled={!boiteHasChildren}>
+              Copier
+            </CtxBtn>
+          )}
           {/* Color buttons */}
           {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
             <button key={c} onClick={() => onEditPiece(piece.id, { couleur: c })}

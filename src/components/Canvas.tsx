@@ -7,7 +7,7 @@ import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
 import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau } from '../model/types';
-import { isBarre, isDroiteNumerique, isTableau } from '../model/types';
+import { isBarre, isBoite, isDroiteNumerique, isTableau } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
@@ -732,6 +732,65 @@ export function Canvas({
     onSelectPiece(null);
   }, [pieces, dispatch, onSelectPiece]);
 
+  // Duplicate boite (with children)
+  const handleDuplicateBoite = useCallback((id: string, _count: number) => {
+    const source = pieces.find(p => p.id === id);
+    if (!source || !isBoite(source)) return;
+
+    const sourceChildren = pieces.filter(
+      p => p.type === 'jeton' && (p as any).parentId === id
+    );
+    if (sourceChildren.length === 0) return;
+
+    const colorOrder: CouleurPiece[] = ['bleu', 'rouge', 'vert', 'jaune'];
+    const sourceColorIdx = colorOrder.indexOf(source.couleur);
+    const gap = 10; // mm
+    const maxX = CANVAS_WIDTH_MM - 15;
+
+    const newBoiteId = generateId();
+
+    // Place to the right; fall back below if overflow
+    let bx = source.x + source.width + gap;
+    let by = source.y;
+    if (bx + source.width > maxX) {
+      bx = source.x;
+      by = source.y + source.height + gap;
+    }
+
+    const dx = bx - source.x;
+    const dy = by - source.y;
+
+    const newPieces: Piece[] = [];
+
+    newPieces.push({
+      id: newBoiteId,
+      type: 'boite',
+      x: bx,
+      y: by,
+      locked: false,
+      width: source.width,
+      height: source.height,
+      label: '',
+      value: '',
+      couleur: colorOrder[(sourceColorIdx + 1) % colorOrder.length],
+    } as Boite);
+
+    for (const child of sourceChildren) {
+      newPieces.push({
+        id: generateId(),
+        type: 'jeton',
+        x: child.x + dx,
+        y: child.y + dy,
+        locked: false,
+        couleur: (child as any).couleur ?? 'bleu',
+        parentId: newBoiteId,
+      } as any);
+    }
+
+    dispatch({ type: 'PLACE_PIECES', pieces: newPieces });
+    onSelectPiece(null);
+  }, [pieces, dispatch, onSelectPiece]);
+
   // Edit piece (generic)
   const handleEditPiece = useCallback((id: string, changes: Record<string, unknown>) => {
     dispatch({ type: 'EDIT_PIECE', id, changes });
@@ -1377,6 +1436,8 @@ export function Canvas({
           onStartDivisionCalc={(id) => { setDivisionCalcPieceId(id); onSelectPiece(null); }}
           onResizeBar={handleResizeBar}
           onDuplicateBar={handleDuplicateBar}
+          onDuplicateBoite={handleDuplicateBoite}
+          boiteHasChildren={selectedPiece.type === 'boite' && pieces.some(p => p.type === 'jeton' && (p as any).parentId === selectedPiece.id)}
           onChangeColor={handleChangeColor}
           onDuplicateJetons={handleDuplicateJetons}
           freeJetonCount={freeJetonCount}
