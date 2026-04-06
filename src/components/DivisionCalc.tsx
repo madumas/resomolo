@@ -99,7 +99,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
   const [decimalPos, setDecimalPos] = useState<number | null>(initialDecPos);
   const [decimalLocked, setDecimalLocked] = useState(false);
   const [dividend, setDividend] = useState<Row>(savedData?.dividend || numToRow(initialDividend, DIV_COLS, initialDecPos));
-  const [divisor, setDivisor] = useState<Row>(savedData?.divisor || numToRow(initialDivisor, DIVISOR_COLS));
+  const [divisor, setDivisor] = useState<Row>(savedData?.divisor || numToRow(initialDivisor, DIVISOR_COLS, initialDecPos));
   const [quotient, setQuotient] = useState<Row>(savedData?.quotient || emptyRow(DIV_COLS));
   const [remainder, setRemainder] = useState(savedData?.remainder || '');
   const [steps, setSteps] = useState<DivisionStep[]>(savedData?.steps || [emptyStep()]);
@@ -179,6 +179,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         return [...Array(-shift).fill(''), ...row.slice(0, shift)];
       };
       setDividend(shiftRow);
+      setDivisor(shiftRow);
       setQuotient(shiftRow);
       setSteps(prev => prev.map(s => ({
         product: shiftRow(s.product),
@@ -314,7 +315,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
 
   const commit = () => {
     const dividendStr = decimalPos !== null ? rowToNumWithDecimal(dividend, decimalPos, DIV_COLS) : rowToNum(dividend);
-    const divisorStr = rowToNum(divisor);
+    const divisorStr = decimalPos !== null ? rowToNumWithDecimal(divisor, decimalPos, DIVISOR_COLS) : rowToNum(divisor);
     const quotientStr = decimalPos !== null ? rowToNumWithDecimal(quotient, decimalPos, DIV_COLS) : rowToNum(quotient);
     // J4: don't commit "0 ÷ 0 = 0" for empty grids
     const dividendRaw = rowToNum(dividend);
@@ -498,15 +499,19 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           {/* Divisor */}
           <div style={{ display: 'flex', gap: GAP, marginBottom: 0 }}>
             {divisor.map((d, col) => (
-              <CellInput
-                key={`divisor-${col}`}
-                cellId={`divisor-${col}`}
-                refCb={el => setCellRef(`divisor-${col}`, el)}
-                value={d}
-                onChange={v => handleCellChange(divisor, setDivisor, 'divisor', col, v)}
-                onKeyDown={e => handleKeyDown('divisor', col, e, DIVISOR_COLS)}
-                colIdx={col}
-              />
+              <React.Fragment key={`divisor-${col}`}>
+                {decimalPos !== null && col === DIVISOR_COLS - decimalPos && (
+                  <span style={decimalSepStyle}>,</span>
+                )}
+                <CellInput
+                  cellId={`divisor-${col}`}
+                  refCb={el => setCellRef(`divisor-${col}`, el)}
+                  value={d}
+                  onChange={v => handleCellChange(divisor, setDivisor, 'divisor', col, v)}
+                  onKeyDown={e => handleKeyDown('divisor', col, e, DIVISOR_COLS)}
+                  colIdx={col}
+                />
+              </React.Fragment>
             ))}
           </div>
 
