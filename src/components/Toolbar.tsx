@@ -20,35 +20,39 @@ interface ToolbarProps {
 type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
 
 // Mode Simplifié : outils essentiels + Déplacer à la fin
+// Progression : concret → proportionnel → calcul
 const SIMPLE_TOOLS: ToolDef[] = [
-  // Modéliser
+  // Concret
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
+  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  // Proportionnel
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
   { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
-  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
-  // Calculer — essentiels à chaque problème
+  // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
   // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
 
-// Mode Complet : groupé par fonction, Déplacer toujours dernier
+// Mode Complet : concret → proportionnel → structuré → calculer → annoter
 const ALL_TOOLS: ToolDef[] = [
-  // Modéliser
+  // Concret
   { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
+  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  // Proportionnel
   { type: 'barre', label: 'Barre', Icon: BarreIcon },
   { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
-  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+  // Structuré
   { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
   { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
+  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
   // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
   // Annoter
   { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
   { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
-  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
   // Naviguer (toujours dernier)
   { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
 ];
@@ -103,9 +107,11 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
         {/* Tools except Déplacer, with group separators in complete mode */}
         {visibleTools.filter(t => t.type !== 'deplacer').map((tool, i, arr) => {
-          // Add separator between groups: after Droite/Boîte (modéliser), after Réponse (calculer)
+          // Separators between groups: concret|proportionnel|structuré|calculer|annoter
           const prevType = i > 0 ? arr[i - 1].type : null;
           const needsSep = showAll && (
+            (tool.type === 'barre' && prevType === 'boite') ||
+            (tool.type === 'droiteNumerique' && prevType === 'schema') ||
             (tool.type === 'calcul' && prevType !== 'calcul') ||
             (tool.type === 'etiquette' && prevType !== 'etiquette')
           );
