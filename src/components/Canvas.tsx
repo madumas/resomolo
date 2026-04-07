@@ -249,12 +249,60 @@ export function Canvas({
     if (now - lastClickTime.current < tol.clickDebounceMs) return;
     lastClickTime.current = now;
 
-    // If editing, commit current value (blur triggers commit) then close
+    // If editing, commit current value then close — but for arbre, allow clicking
+    // another node directly (commit + switch in one click, like spreadsheet cells).
     if (editingPieceId) {
+      // Check if clicking another arbre node/level in the same piece
+      const editingArbre = editingArbreField && pieces.find(p => p.id === editingPieceId);
+      const nextArbreField = editingArbre && svgRef.current && (() => {
+        const pos = pointerToMm(e, svgRef.current!);
+        const arbre = editingArbre as Arbre;
+        if (!isArbre(arbre)) return null;
+        const treeLayout = computeTreeLayout(arbre.levels);
+        const relX = pos.x - arbre.x;
+        const relY = pos.y - arbre.y;
+        const hitPad = 4;
+        for (let ni = 0; ni < treeLayout.nodes.length; ni++) {
+          const node = treeLayout.nodes[ni];
+          if (Math.abs(relX - node.x) <= ARBRE_NODE_W_MM / 2 + hitPad &&
+              Math.abs(relY - node.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+            return { type: 'node' as const, levelIndex: node.levelIndex, optionIndex: node.optionIndex, nodeIndex: ni };
+          }
+        }
+        for (let li = 0; li < arbre.levels.length; li++) {
+          const firstNode = treeLayout.nodes.find(n => n.levelIndex === li);
+          if (firstNode && relX < 0 && Math.abs(relY - firstNode.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+            return { type: 'level' as const, levelIndex: li };
+          }
+        }
+        return null;
+      })();
+
+      if (nextArbreField) {
+        // Commit current input value directly (without blur → onStopEdit cycle)
+        const input = document.activeElement;
+        if (input instanceof HTMLInputElement) {
+          const arbre = editingArbre as Arbre;
+          const value = input.value;
+          if (editingArbreField.type === 'node') {
+            const newLevels = arbre.levels.map((l, i) => i === editingArbreField.levelIndex
+              ? { ...l, options: l.options.map((o, j) => j === editingArbreField.optionIndex ? value : o) } : l);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
+          } else {
+            const newLevels = arbre.levels.map((l, i) => i === editingArbreField.levelIndex ? { ...l, name: value } : l);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
+          }
+        }
+        // Switch field without closing editor — single render, no flash
+        setEditingArbreField(nextArbreField as any);
+        return;
+      }
+
+      // Normal case: commit and close
       if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
-        document.activeElement.blur(); // blur triggers commit -> onCommit -> onStopEdit
+        document.activeElement.blur();
       } else {
-        onStopEdit(); // only call directly if no input was focused
+        onStopEdit();
       }
       return;
     }
