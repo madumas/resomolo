@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
-import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { UI_BG, UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY } from '../config/theme';
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
@@ -50,7 +50,7 @@ const ALL_TOOLS: ToolDef[] = [
   { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
   { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
   { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
-  { type: 'diagrammeLigne', label: 'Ligne', Icon: DiagrammeLigneIcon },
+  { type: 'diagrammeLigne', label: 'Ligne brisée', Icon: DiagrammeLigneIcon },
   // Calculer
   { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
   { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
@@ -63,6 +63,16 @@ const ALL_TOOLS: ToolDef[] = [
 ];
 
 const SIMPLE_TYPES: Set<string> = new Set(SIMPLE_TOOLS.map(t => t.type));
+
+// Group membership for inter-group spacing (Gestalt proximity, ratio 3:1)
+const TOOL_GROUP: Record<string, string> = {
+  jeton: 'concret', boite: 'concret',
+  barre: 'proportionnel', schema: 'proportionnel',
+  droiteNumerique: 'structure', arbre: 'structure', tableau: 'structure',
+  diagrammeBandes: 'structure', diagrammeLigne: 'structure',
+  calcul: 'calculer', reponse: 'calculer',
+  etiquette: 'annoter', inconnue: 'annoter', fleche: 'annoter',
+};
 
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
   const [showMore, setShowMore] = useState(false);
@@ -110,29 +120,24 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           <Logo height={32} />
         </button>
         <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
-        {/* Tools except Déplacer, with group separators in complete mode */}
+        {/* Tools except Déplacer, with inter-group spacing (24px gap = 16px margin + 8px gap) */}
         {visibleTools.filter(t => t.type !== 'deplacer').map((tool, i, arr) => {
-          // Separators between groups: concret|proportionnel|structuré|calculer|annoter
+          // First tool of a new group gets extra margin for visual grouping (Gestalt proximity, ratio 3:1)
           const prevType = i > 0 ? arr[i - 1].type : null;
-          const needsSep = showAll && (
-            (tool.type === 'barre' && prevType === 'boite') ||
-            (tool.type === 'droiteNumerique' && prevType === 'schema') ||
-            (tool.type === 'calcul' && prevType !== 'calcul') ||
-            (tool.type === 'etiquette' && prevType !== 'etiquette')
-          );
+          const isGroupStart = i > 0 && prevType !== null &&
+            TOOL_GROUP[tool.type] !== TOOL_GROUP[prevType];
           return (
-            <React.Fragment key={tool.type}>
-              {needsSep && <div style={{ width: 1, height: 28, background: UI_BORDER, flexShrink: 0, opacity: 0.5 }} />}
-              <ToolButton
-                tool={tool}
-                active={activeTool === tool.type}
-                dimmed={!!dimmed && activeTool !== tool.type}
-                onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
-              />
-            </React.Fragment>
+            <ToolButton
+              key={tool.type}
+              tool={tool}
+              active={activeTool === tool.type}
+              dimmed={!!dimmed && activeTool !== tool.type}
+              onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
+              extraStyle={isGroupStart ? { marginLeft: 16 } : undefined}
+            />
           );
         })}
-        {/* ⋯ button between tools and Déplacer */}
+        {/* "Voir tout" button — visible affordance for hidden tools */}
         {!isComplet && !showAll && (
           <button
             onClick={() => setShowMore(true)}
@@ -144,19 +149,26 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
               justifyContent: 'center',
               gap: 2,
               padding: '4px 8px',
-              background: 'transparent',
-              border: '1px solid transparent',
-              borderRadius: 6,
+              background: UI_BG,
+              border: `1.5px dashed ${UI_PRIMARY}`,
+              borderRadius: 8,
               fontSize: 11,
-              color: UI_TEXT_SECONDARY,
+              fontWeight: 500,
+              color: UI_PRIMARY,
               minWidth: 44,
               height: 56,
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
-            <span style={{ fontSize: 9 }}>Plus</span>
+            {/* 2×2 grid icon */}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+              <rect x="11" y="3" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+              <rect x="3" y="11" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+              <rect x="11" y="11" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            <span style={{ fontSize: 10 }}>Voir tout</span>
           </button>
         )}
       </div>
@@ -201,11 +213,12 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
   );
 }
 
-function ToolButton({ tool, active, dimmed, onClick }: {
+function ToolButton({ tool, active, dimmed, onClick, extraStyle }: {
   tool: ToolDef;
   active: boolean;
   dimmed: boolean;
   onClick: () => void;
+  extraStyle?: React.CSSProperties;
 }) {
   return (
     <button
@@ -232,6 +245,7 @@ function ToolButton({ tool, active, dimmed, onClick }: {
         transition: 'opacity 0.3s',
         cursor: 'pointer',
         flexShrink: 0,
+        ...extraStyle,
       }}
     >
       <tool.Icon />

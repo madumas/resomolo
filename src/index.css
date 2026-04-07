@@ -63,6 +63,14 @@ svg g.piece-new {
   }
 }
 
+/* Tablet: 48px touch targets for TDC/DCD accessibility */
+@media (min-width: 501px) and (max-width: 1024px) {
+  [data-testid="toolbar"] button {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+}
+
 @media print {
   [data-testid="toolbar"],
   [data-testid="status-bar"],
