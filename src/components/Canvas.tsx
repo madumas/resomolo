@@ -207,7 +207,16 @@ export function Canvas({
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
-  const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
+  const baseViewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
+  // Extend viewBox to show all content (scroll-free), but Ranger targets baseViewBoxHeight
+  const contentBottom = useMemo(() => {
+    if (pieces.length === 0) return 0;
+    return pieces.reduce((max, p) => {
+      const b = getPieceBounds(p, referenceUnitMm);
+      return Math.max(max, b.y + b.h);
+    }, 0) + 15;
+  }, [pieces, referenceUnitMm]);
+  const viewBoxHeight = Math.max(baseViewBoxHeight, contentBottom);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
@@ -954,7 +963,7 @@ export function Canvas({
   // R7: Ranger button — arrange pieces with animation
   const handleArrange = useCallback(() => {
     if (isArranging) return;
-    const moves = computeArrangement(pieces, referenceUnitMm, viewBoxHeight);
+    const moves = computeArrangement(pieces, referenceUnitMm, baseViewBoxHeight);
     if (moves.length === 0) return;
 
     setIsArranging(true);
