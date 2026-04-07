@@ -62,16 +62,22 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
   }
 
   // Try layout with decreasing vertical gaps until it fits
+  const pieceMap = new Map(movable.map(p => [p.id, p]));
   for (const vGap of [V_GAP, 8, 4, 2]) {
     const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected);
-    const maxY = moves.reduce((m, mv) => Math.max(m, mv.y), 0);
-    if (maxY < maxHeight - MARGIN || vGap === 2) {
+    // maxBottom = lowest piece bottom edge (y + height)
+    const maxBottom = moves.reduce((m, mv) => {
+      const p = pieceMap.get(mv.id);
+      const h = p ? getPieceHeight(p) : 20;
+      return Math.max(m, mv.y + h);
+    }, 0);
+    if (maxBottom < maxHeight - MARGIN || vGap === 2) {
       // Clamp: if content still overflows, compress vertically to fit
-      if (maxY >= maxHeight - MARGIN) {
-        const contentHeight = maxY - MARGIN;
-        const availableHeight = maxHeight - 2 * MARGIN;
-        if (contentHeight > 0 && availableHeight > 0) {
-          const scale = availableHeight / contentHeight;
+      if (maxBottom >= maxHeight - MARGIN) {
+        const contentSpan = maxBottom - MARGIN;
+        const available = maxHeight - 2 * MARGIN;
+        if (contentSpan > 0 && available > 0) {
+          const scale = available / contentSpan;
           for (const m of moves) {
             m.y = MARGIN + (m.y - MARGIN) * scale;
           }
