@@ -68,6 +68,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [showLabelNudge, setShowLabelNudge] = useState(false);
   const labelNudgeShownRef = useRef(false);
   const skipFirstSettingsSave = useRef(true);
+  const problemJustSelected = useRef(false);
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
   const [inactivityRelanceIndex, setInactivityRelanceIndex] = useState(0);
 
@@ -99,6 +100,15 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const hasPieces = pieces.length > 0;
   const isAmorcage = hasProblem && !hasPieces && !hasHighlights;
   const isPostHighlight = hasProblem && !hasPieces && hasHighlights;
+
+  // Auto-collapse problem zone when first piece is placed (free canvas space)
+  const prevHadPieces = useRef(hasPieces);
+  useEffect(() => {
+    if (hasPieces && !prevHadPieces.current && hasProblem && !settings.problemAlwaysVisible) {
+      setProblemExpanded(false);
+    }
+    prevHadPieces.current = hasPieces;
+  }, [hasPieces, hasProblem, settings.problemAlwaysVisible]);
 
   // Activity counter — incremented on every dispatch to reset inactivity timer (I2 fix)
   const [activityTick, setActivityTick] = useState(0);
@@ -294,9 +304,13 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     return () => clearTimeout(timer);
   }, [unlabeledBars.length, tutorial.isActive]);
 
-  // When tutorial is done, show problem selector
+  // When tutorial is done, show problem selector — but not if a problem was just selected
   useEffect(() => {
     if (tutorial.isDone) {
+      if (problemJustSelected.current) {
+        problemJustSelected.current = false;
+        return;
+      }
       dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: '', readOnly: false });
       setShowProblemSelector(true);
     }
@@ -400,6 +414,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
 
   // Select a problem
   const handleSelectProblem = useCallback((preset: ProblemPreset) => {
+    problemJustSelected.current = true;
     tutorial.skipTutorial();
     dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: preset.text, readOnly: preset.text.length > 0 });
     setShowProblemSelector(false);

@@ -27,7 +27,7 @@ async function boot() {
 
   // 3. État initial
   let initialUndoManager: UndoManager = createInitialUndoManager();
-  let problemZoneActive = false;
+  let problemZoneActive = true;
 
   if (shared) {
     // URL partagée — construire l'état directement

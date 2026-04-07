@@ -120,7 +120,7 @@ export function ProblemZone({
     // No problem text — show edit option or nothing
     if (onTextChange) {
       return (
-        <div style={{
+        <div data-testid="problem-zone" style={{
           padding: '8px 16px',
           background: '#F2F0F8',
           borderBottom: '1px solid #E8E5F0',

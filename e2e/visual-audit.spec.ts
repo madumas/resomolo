@@ -3181,8 +3181,8 @@ test.describe('Visual audit — full flow', () => {
   test('107 — Mobile portrait accès outils', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await navigateAndReady(page);
-    // Vérifier que les outils essentiels sont accessibles
-    const toolbar = page.locator('[data-testid="toolbar"]');
+    // Vérifier que les outils essentiels sont accessibles (mobile toolbar en bas)
+    const toolbar = page.locator('[data-testid="mobile-toolbar"]');
     await expect(toolbar).toBeVisible();
     await page.screenshot({ path: shot('164-mobile-portrait.png'), fullPage: true });
   });

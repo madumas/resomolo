@@ -73,7 +73,9 @@ test.describe('Modification du problème', () => {
     const preset = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button:has-text("Pommes de Léa")');
     await expect(preset).toBeVisible({ timeout: 3000 });
     await preset.click();
-    await page.waitForTimeout(500);
+    // Wait for dialog to close before interacting with problem zone
+    await page.locator('[role="dialog"][aria-label="Banque de problèmes"]').waitFor({ state: 'hidden', timeout: 5000 });
+    await page.waitForTimeout(300);
 
     // Le problème devrait être affiché en compact — cliquer pour ouvrir en expanded
     const problemZone = page.locator('[data-testid="problem-zone"]');
@@ -91,7 +93,8 @@ test.describe('Modification du problème', () => {
     await openProblemSelector(page);
     const preset = page.locator('[role="dialog"][aria-label="Banque de problèmes"] button:has-text("Pommes de Léa")');
     await preset.click();
-    await page.waitForTimeout(500);
+    await page.locator('[role="dialog"][aria-label="Banque de problèmes"]').waitFor({ state: 'hidden', timeout: 5000 });
+    await page.waitForTimeout(300);
 
     // Ouvrir en mode expanded
     const problemZone = page.locator('[data-testid="problem-zone"]');
