@@ -1,10 +1,8 @@
-/** Capture: Calcul (expression, colonnes, division) + Réponse */
+/** Capture: Calcul (3 modes) + Réponse — base + exemples */
 import { makeBrowser, fresh, tool, click, esc, snap, edit } from './helpers.mjs';
 
 const { browser, page } = await makeBrowser();
 
-// Helper: place calcul at (120,60), edit, then click at (130,70) to select it.
-// The hit-zone is offset ~+10mm from placement due to snap + piece sizing.
 async function placeAndSelectCalcul(expr) {
   await tool(page, 'calcul');
   await click(page, 120, 60);
@@ -14,8 +12,8 @@ async function placeAndSelectCalcul(expr) {
   await page.waitForTimeout(500);
 }
 
-// ── CALCUL expression — 28 × 4 = 112 ───────────
-console.log('Calcul expression');
+// ── CALCUL expression base — 28 × 4 = 112 ─────
+console.log('Calcul expression (base)');
 await fresh(page);
 await tool(page, 'calcul');
 await click(page, 120, 60);
@@ -23,8 +21,8 @@ await edit(page, '28 * 4 = 112');
 await esc(page);
 await snap(page, 'catalogue-calcul-expression.png', { x: 70, y: 48, w: 140, h: 30 });
 
-// ── CALCUL colonnes — 347 + 256 ─────────────────
-console.log('Calcul colonnes');
+// ── CALCUL colonnes base — 347 + 256 ───────────
+console.log('Calcul colonnes (base)');
 await fresh(page);
 await placeAndSelectCalcul('347 + 256');
 const ctx1 = page.locator('[data-testid="context-actions"]');
@@ -38,8 +36,8 @@ if (await ctx1.isVisible({ timeout: 2000 }).catch(() => false)) {
   console.log('  SKIP: colonnes — could not select calcul piece');
 }
 
-// ── CALCUL division — 156 ÷ 12 ─────────────────
-console.log('Calcul division');
+// ── CALCUL division base — 156 ÷ 12 ───────────
+console.log('Calcul division (base)');
 await fresh(page);
 await placeAndSelectCalcul('156 / 12');
 const ctx2 = page.locator('[data-testid="context-actions"]');
@@ -53,14 +51,32 @@ if (await ctx2.isVisible({ timeout: 2000 }).catch(() => false)) {
   console.log('  SKIP: division — could not select calcul piece');
 }
 
-// ── RÉPONSE ─────────────────────────────────────
-console.log('Réponse');
+// ── CALCUL exemple — "28 × 4 =" (non rempli) ──
+console.log('Calcul (exemple)');
+await fresh(page);
+await tool(page, 'calcul');
+await click(page, 120, 60);
+await edit(page, '28 × 4 =');
+await esc(page);
+await snap(page, 'exemple-calcul.png', { x: 70, y: 48, w: 140, h: 30 });
+
+// ── RÉPONSE base ───────────────────────────────
+console.log('Réponse (base)');
 await fresh(page);
 await tool(page, 'reponse');
 await click(page, 140, 60);
 await edit(page, 'Mia a 5 autocollants de plus que Noah.');
 await esc(page);
 await snap(page, 'catalogue-reponse.png', { x: 50, y: 38, w: 250, h: 42 });
+
+// ── RÉPONSE exemple — "En tout, il y a 24 bonbons." ─
+console.log('Réponse (exemple)');
+await fresh(page);
+await tool(page, 'reponse');
+await click(page, 140, 60);
+await edit(page, 'En tout, il y a 24 bonbons.');
+await esc(page);
+await snap(page, 'exemple-reponse.png', { x: 50, y: 38, w: 250, h: 42 });
 
 await browser.close();
 console.log('Done: calculer');

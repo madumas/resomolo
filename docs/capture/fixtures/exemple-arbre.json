@@ -1,0 +1,37 @@
+{
+  "probleme": "Pile ou face, puis rouge ou bleu. Combien de résultats possibles?",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "arbre-1",
+      "type": "arbre",
+      "x": 60,
+      "y": 30,
+      "locked": false,
+      "levels": [
+        { "name": "Pièce", "options": ["Pile", "Face"] },
+        { "name": "Couleur", "options": ["Rouge", "Bleu"] }
+      ]
+    },
+    {
+      "id": "calc-1",
+      "type": "calcul",
+      "x": 60,
+      "y": 150,
+      "locked": false,
+      "expression": "2 × 2 = 4"
+    },
+    {
+      "id": "rep-1",
+      "type": "reponse",
+      "x": 220,
+      "y": 150,
+      "locked": false,
+      "text": "Il y a 4 résultats possibles.",
+      "template": null
+    }
+  ]
+}

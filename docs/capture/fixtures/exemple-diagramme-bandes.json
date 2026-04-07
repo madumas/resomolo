@@ -1,0 +1,25 @@
+{
+  "probleme": "Fruits préférés de la classe.",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "bandes-1",
+      "type": "diagrammeBandes",
+      "x": 15,
+      "y": 15,
+      "locked": false,
+      "title": "Fruits préférés",
+      "yAxisLabel": "Votes",
+      "width": 120,
+      "height": 90,
+      "categories": [
+        { "label": "Pommes", "value": 12, "couleur": "bleu" },
+        { "label": "Bananes", "value": 8, "couleur": "jaune" },
+        { "label": "Raisins", "value": 5, "couleur": "rouge" }
+      ]
+    }
+  ]
+}

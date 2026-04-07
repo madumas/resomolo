@@ -139,6 +139,45 @@ export async function snap(page, filename, region) {
   console.log(`  OK: ${filename}`);
 }
 
+/** Load a fixture state via the slot system, then reload */
+export async function loadFixture(page, modelisationState) {
+  const slotId = 'capture-fixture';
+  const undoManager = { past: [], current: modelisationState, future: [] };
+  const slotJson = JSON.stringify({ version: 1, data: undoManager });
+  const registry = { slots: [{ id: slotId, name: 'Fixture', createdAt: Date.now(), updatedAt: Date.now() }], activeSlotId: slotId, nextNumber: 2 };
+  const registryJson = JSON.stringify(registry);
+
+  await page.evaluate(({ registryJson, slotJson, slotId }) => {
+    // Write to localStorage mirrors (synchronous, always available)
+    localStorage.setItem('resomolo_ls_registry', registryJson);
+    localStorage.setItem('resomolo_ls_slot_' + slotId, slotJson);
+    // Write to IDB via raw API
+    return new Promise((resolve) => {
+      const req = indexedDB.open('keyval-store');
+      req.onupgradeneeded = () => req.result.createObjectStore('keyval');
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction('keyval', 'readwrite');
+        const store = tx.objectStore('keyval');
+        store.put(registryJson, 'resomolo_registry');
+        store.put(slotJson, 'resomolo_slot_' + slotId);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); resolve(); };
+      };
+      req.onerror = () => resolve();
+    });
+  }, { registryJson, slotJson, slotId });
+
+  await page.waitForTimeout(200);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-testid="canvas-svg"]', { timeout: 10000 });
+  for (const t of ['Compris', 'Passer', 'OK', 'Fermer'])
+    await page.locator(`button:has-text("${t}")`).click().catch(() => {});
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+  svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
+}
+
 export async function makeBrowser() {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch();

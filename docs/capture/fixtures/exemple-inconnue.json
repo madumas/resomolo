@@ -1,0 +1,50 @@
+{
+  "probleme": "Léa a 14 billes, Maxime en a 9. Combien de plus?",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "barre-lea",
+      "type": "barre",
+      "x": 55,
+      "y": 35,
+      "locked": false,
+      "couleur": "bleu",
+      "sizeMultiplier": 3,
+      "label": "Léa",
+      "value": "14",
+      "divisions": null,
+      "coloredParts": [],
+      "showFraction": false,
+      "groupId": "grp-1",
+      "groupLabel": ""
+    },
+    {
+      "id": "barre-max",
+      "type": "barre",
+      "x": 55,
+      "y": 65,
+      "locked": false,
+      "couleur": "rouge",
+      "sizeMultiplier": 2,
+      "label": "Maxime",
+      "value": "9",
+      "divisions": null,
+      "coloredParts": [],
+      "showFraction": false,
+      "groupId": "grp-1",
+      "groupLabel": ""
+    },
+    {
+      "id": "inconnue-1",
+      "type": "inconnue",
+      "x": 185,
+      "y": 50,
+      "locked": false,
+      "text": "?",
+      "attachedTo": null
+    }
+  ]
+}

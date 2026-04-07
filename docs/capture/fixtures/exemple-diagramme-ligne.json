@@ -1,0 +1,27 @@
+{
+  "probleme": "La température cette semaine.",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "ligne-1",
+      "type": "diagrammeLigne",
+      "x": 15,
+      "y": 15,
+      "locked": false,
+      "title": "Température",
+      "yAxisLabel": "°C",
+      "width": 120,
+      "height": 90,
+      "points": [
+        { "label": "Lun", "value": 2 },
+        { "label": "Mar", "value": 5 },
+        { "label": "Mer", "value": 8 },
+        { "label": "Jeu", "value": 4 },
+        { "label": "Ven", "value": 6 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "probleme": "8 + 5 = ? Montre-le sur la droite.",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "droite-1",
+      "type": "droiteNumerique",
+      "x": 30,
+      "y": 40,
+      "locked": false,
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "markers": [8, 13],
+      "width": 200
+    }
+  ]
+}
