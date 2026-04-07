@@ -63,7 +63,7 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
 
   // Try layout with decreasing vertical gaps until it fits
   for (const vGap of [V_GAP, 8, 4, 2]) {
-    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected, maxHeight);
+    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected);
     const maxY = moves.reduce((m, mv) => Math.max(m, mv.y), 0);
     if (maxY < maxHeight - MARGIN || vGap === 2) {
       // Add parented jetons: keep their relative offset from parent boîte
@@ -79,7 +79,6 @@ function layoutWithGap(
   referenceUnitMm: number,
   vGap: number,
   flecheConnected: Set<string>,
-  maxHeight = 350,
 ): ArrangementMove[] {
   const moves: ArrangementMove[] = [];
   let currentX = MARGIN;
@@ -87,9 +86,7 @@ function layoutWithGap(
   let rowMaxHeight = 0;
   const FLECHE_EXTRA = 30; // extra horizontal space between fleche-connected pieces
 
-  // Layout all types except reponse in normal flow
   for (const type of LAYOUT_ORDER) {
-    if (type === 'reponse') continue; // handled separately below
     const group = groups.get(type);
     if (!group || group.length === 0) continue;
 
@@ -107,31 +104,12 @@ function layoutWithGap(
         rowMaxHeight = 0;
       }
 
-      moves.push({ id: piece.id, x: currentX, y: currentY });
+      // Réponse: align right on its row
+      const px = type === 'reponse' ? Math.max(currentX, CANVAS_MAX_X - w) : currentX;
+      moves.push({ id: piece.id, x: px, y: currentY });
       const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
       currentX += w + H_GAP + extra;
       rowMaxHeight = Math.max(rowMaxHeight, h);
-    }
-  }
-
-  // Place Réponse(s) bottom-right — use available space on current row, or next row
-  const reponses = groups.get('reponse');
-  if (reponses && reponses.length > 0) {
-    for (const piece of reponses) {
-      const w = getPieceWidth(piece, referenceUnitMm);
-      const h = getPieceHeight(piece);
-      const rightX = CANVAS_MAX_X - w;
-
-      // Try to fit on current row (right-aligned) if there's enough horizontal space
-      if (rightX >= currentX + H_GAP) {
-        moves.push({ id: piece.id, x: rightX, y: currentY });
-        rowMaxHeight = Math.max(rowMaxHeight, h);
-      } else {
-        // Wrap to next row, right-aligned
-        currentY += rowMaxHeight + vGap;
-        rowMaxHeight = h;
-        moves.push({ id: piece.id, x: rightX, y: currentY });
-      }
     }
   }
 
