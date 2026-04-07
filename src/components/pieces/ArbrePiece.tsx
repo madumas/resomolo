@@ -8,7 +8,6 @@ import { computeTreeLayout } from '../../engine/arbre-layout';
 // SVG font tiers (mm) — harmonized across all pieces
 const T1 = 7;   // content: node labels
 const T2 = 6;   // labels: level names, leaf counter
-const T3 = 5;   // annotation: buttons
 
 interface ArbrePieceProps {
   piece: Arbre;
@@ -105,45 +104,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
         );
       })}
 
-      {/* [+] add level button — only visible when selected and not locked */}
-      {isSelected && !piece.locked && (() => {
-        const lastLevelNodes = nodes.filter(n => n.levelIndex === piece.levels.length - 1);
-        if (lastLevelNodes.length === 0) return null;
-        const btnY = y + lastLevelNodes[0].y + nh / 2 + 8;
-        return (
-          <g data-arbre-action="add-level" style={{ cursor: 'pointer' }}>
-            <rect x={x + width / 2 - 12} y={btnY} width={24} height={10} rx={3}
-              fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
-            <text x={x + width / 2} y={btnY + 5.5}
-              textAnchor="middle" dominantBaseline="central"
-              fontSize={T3 * ts} fill="#7028e0" fontWeight={600}>
-              + Niveau
-            </text>
-          </g>
-        );
-      })()}
-
-      {/* [+] add option buttons — only visible when selected and not locked */}
-      {isSelected && !piece.locked && piece.levels.map((_level, li) => {
-        const levelNodes = nodes.filter(n => n.levelIndex === li);
-        if (levelNodes.length === 0) return null;
-        const lastNode = levelNodes[levelNodes.length - 1];
-        const btnX = x + lastNode.x + nw / 2 + 4;
-        const btnCY = y + lastNode.y;
-        return (
-          <g key={`add-opt-${li}`}
-            data-arbre-action="add-option" data-level-index={li}
-            style={{ cursor: 'pointer' }}>
-            <circle cx={btnX + 5} cy={btnCY} r={5}
-              fill="#EDE0FA" stroke="#7028e0" strokeWidth={0.5} />
-            <text x={btnX + 5} y={btnCY + 0.5}
-              textAnchor="middle" dominantBaseline="central"
-              fontSize={T1 * ts} fill="#7028e0" fontWeight={700}>
-              +
-            </text>
-          </g>
-        );
-      })}
+      {/* Structure buttons removed — all structural actions via context menu */}
 
       {/* Leaf counter — always visible */}
       <text x={x + width} y={y + height + 10}

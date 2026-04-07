@@ -24,7 +24,7 @@ import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
-import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap, onAddNode } from '../engine/sound';
+import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
 import { createSmoothingState, smooth } from '../engine/smoothing';
 import type { SmoothingState } from '../engine/smoothing';
@@ -270,33 +270,6 @@ export function Canvas({
       dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
       setMode({ type: 'idle' });
       return;
-    }
-
-    // Arbre "+" buttons — handle before general hit test
-    const arbreActionEl = (e.target as Element).closest?.('[data-arbre-action]');
-    if (arbreActionEl && selectedPieceId) {
-      const arbrePiece = pieces.find(p => p.id === selectedPieceId);
-      if (arbrePiece && isArbre(arbrePiece) && !arbrePiece.locked) {
-        const action = arbreActionEl.getAttribute('data-arbre-action');
-        if (action === 'add-level' && arbrePiece.levels.length < 4) {
-          const newLevels = [...arbrePiece.levels, { name: '', options: ['', ''] }];
-          dispatch({ type: 'EDIT_PIECE', id: arbrePiece.id, changes: { levels: newLevels } });
-          onAddNode();
-          return;
-        }
-        if (action === 'add-option') {
-          const li = Number(arbreActionEl.getAttribute('data-level-index'));
-          const level = arbrePiece.levels[li];
-          if (level && level.options.length < 6) {
-            const newLevels = arbrePiece.levels.map((l, i) =>
-              i === li ? { ...l, options: [...l.options, ''] } : l
-            );
-            dispatch({ type: 'EDIT_PIECE', id: arbrePiece.id, changes: { levels: newLevels } });
-            onAddNode();
-          }
-          return;
-        }
-      }
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)

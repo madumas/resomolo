@@ -85,6 +85,14 @@ export function ContextActions({
 
   // Arbre submenu state
   const [arbreSubmenu, setArbreSubmenu] = useState<'none' | 'gabarit' | 'niveaux'>('none');
+  // Anti-bounce for stepper buttons (200ms debounce to prevent accidental double-taps)
+  const lastStepperClick = React.useRef(0);
+  const stepperDebounce = (fn: () => void) => {
+    const now = Date.now();
+    if (now - lastStepperClick.current < 200) return;
+    lastStepperClick.current = now;
+    fn();
+  };
 
   // Schema submenu state
   const [schemaSubmenu, setSchemaSubmenu] = useState<'none' | 'type' | 'taille'>('none');
@@ -115,12 +123,14 @@ export function ContextActions({
 
   const MAX_ACTIONS_WIDTH = Math.min(380, canvasRect.width - 16);
 
-  // Position: center horizontally on piece, above it (or below if no space).
-  // Clamp anchor so the panel (centered via transform) stays within canvas.
+  // Position: center horizontally on piece, above or below — pick side with more space.
   const halfMax = MAX_ACTIONS_WIDTH / 2;
   const anchorX = Math.max(halfMax + 8, Math.min(pieceBounds.centerX, canvasRect.width - halfMax - 8));
-  const anchorY = pieceBounds.top >= 80 ? pieceBounds.top - 6 : pieceBounds.bottom + 6;
-  const placeAbove = pieceBounds.top >= 80;
+  const spaceAbove = pieceBounds.top - 8;
+  const spaceBelow = canvasRect.height - pieceBounds.bottom - 8;
+  const placeAbove = spaceAbove > spaceBelow && spaceAbove >= 120;
+  const anchorY = placeAbove ? pieceBounds.top - 6 : pieceBounds.bottom + 6;
+  const maxH = placeAbove ? spaceAbove : spaceBelow;
 
   return (
     <div
@@ -140,8 +150,7 @@ export function ContextActions({
         zIndex: 50,
         flexWrap: 'wrap',
         maxWidth: MAX_ACTIONS_WIDTH,
-        // Prevent overflow off canvas edges
-        maxHeight: canvasRect.height - 16,
+        maxHeight: Math.max(100, maxH),
       }}
       onPointerDown={e => e.stopPropagation()}
     >
@@ -574,7 +583,7 @@ export function ContextActions({
         </>
       )}
 
-      {/* Arbre — premier niveau */}
+      {/* Arbre — L1: compact actions */}
       {isArbre(piece) && arbreSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => setArbreSubmenu('gabarit')}>Gabarit</CtxBtn>
@@ -586,6 +595,11 @@ export function ContextActions({
               onAddNode();
             }
           }} disabled={piece.levels.length >= 4}>+ Niveau</CtxBtn>
+          <CtxBtn onClick={() => {
+            if (piece.levels.length > 1) {
+              onEditPiece(piece.id, { levels: piece.levels.slice(0, -1) });
+            }
+          }} disabled={piece.levels.length <= 1} destructive>Retirer niveau</CtxBtn>
         </>
       )}
       {/* Arbre — sous-menu Gabarit (templates) */}
@@ -607,22 +621,34 @@ export function ContextActions({
           ))}
         </>
       )}
-      {/* Arbre — sous-menu Niveaux (ajuster options par niveau) */}
+
+      {/* Arbre — sous-menu Niveaux (stepper per level, full-width rows) */}
       {isArbre(piece) && arbreSubmenu === 'niveaux' && (
         <>
           <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
           {piece.levels.map((level, li) => (
-            <React.Fragment key={li}>
-              <CtxBtn onClick={() => {
+            <div key={li} style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}>
+              <button onClick={() => stepperDebounce(() => {
                 if (level.options.length > 1) {
                   const newLevels = piece.levels.map((l, i) =>
                     i === li ? { ...l, options: l.options.slice(0, -1) } : l
                   );
                   onEditPiece(piece.id, { levels: newLevels });
                 }
-              }} disabled={level.options.length <= 1}>−</CtxBtn>
-              <CtxBtn onClick={() => {}} disabled>{level.name || `Choix ${li + 1}`} ×{level.options.length}</CtxBtn>
-              <CtxBtn onClick={() => {
+              })} disabled={level.options.length <= 1} style={{
+                minWidth: 44, minHeight: 44, borderRadius: 6,
+                border: `1px solid ${level.options.length > 1 ? UI_BORDER : '#E0E0E0'}`,
+                background: level.options.length > 1 ? UI_BG : '#F0F0F0',
+                color: level.options.length > 1 ? UI_TEXT_SECONDARY : '#C0C0C0',
+                cursor: level.options.length > 1 ? 'pointer' : 'default',
+                fontSize: 16, fontWeight: 700, opacity: level.options.length <= 1 ? 0.5 : 1,
+              }}>−</button>
+              <span style={{
+                flex: 1, textAlign: 'center', fontSize: 13,
+                color: level.name ? UI_TEXT_SECONDARY : '#B0A8C0',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{level.name || `Choix ${li + 1}`} — {level.options.length} branche{level.options.length > 1 ? 's' : ''}</span>
+              <button onClick={() => stepperDebounce(() => {
                 if (level.options.length < 6) {
                   const newLevels = piece.levels.map((l, i) =>
                     i === li ? { ...l, options: [...l.options, ''] } : l
@@ -630,8 +656,15 @@ export function ContextActions({
                   onEditPiece(piece.id, { levels: newLevels });
                   onAddNode();
                 }
-              }} disabled={level.options.length >= 6}>+</CtxBtn>
-            </React.Fragment>
+              })} disabled={level.options.length >= 6} style={{
+                minWidth: 44, minHeight: 44, borderRadius: 6,
+                border: `1px solid ${level.options.length < 6 ? UI_BORDER : '#E0E0E0'}`,
+                background: level.options.length < 6 ? UI_BG : '#F0F0F0',
+                color: level.options.length < 6 ? UI_TEXT_SECONDARY : '#C0C0C0',
+                cursor: level.options.length < 6 ? 'pointer' : 'default',
+                fontSize: 16, fontWeight: 700, opacity: level.options.length >= 6 ? 0.5 : 1,
+              }}>+</button>
+            </div>
           ))}
         </>
       )}
@@ -774,8 +807,8 @@ export function ContextActions({
         <CtxBtn onClick={() => onStartEdit(piece.id)}>Texte</CtxBtn>
       )}
 
-      {/* Delete — micro-confirmation "Sûr?" (2s timer) */}
-      {onDeletePiece && !piece.locked && (
+      {/* Delete — micro-confirmation "Sûr?" (2s timer). Hidden inside submenus. */}
+      {onDeletePiece && !piece.locked && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && (
         <CtxBtn
           testId="ctx-delete"
           destructive
