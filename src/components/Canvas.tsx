@@ -217,8 +217,8 @@ export function Canvas({
       return Math.max(max, b.y + b.h);
     }, 0) + 15;
   }, [pieces, referenceUnitMm]);
-  // During arrangement animation, use pre-computed target height to avoid jump
-  const viewBoxHeight = Math.max(baseViewBoxHeight, isArranging ? arrangeTargetBottom : contentBottom);
+  // During arrangement animation, use max of current and target to prevent any viewBox shrink/jump
+  const viewBoxHeight = Math.max(baseViewBoxHeight, contentBottom, isArranging ? arrangeTargetBottom : 0);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
