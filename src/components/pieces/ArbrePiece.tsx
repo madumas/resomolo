@@ -55,17 +55,28 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
         const nx = x + node.x - nw / 2;
         const ny = y + node.y - nh / 2;
         const isLeaf = node.levelIndex === piece.levels.length - 1;
+        const isEmpty = !node.label;
+        const displayLabel = isEmpty ? '...' : node.label;
         return (
-          <g key={`n-${i}`}>
+          <g key={`n-${i}`} style={isSelected ? { cursor: 'text' } : undefined}>
+            {/* Invisible hit area — enlarged by 4mm padding for TDC accessibility */}
+            {isSelected && (
+              <rect x={nx - 4} y={ny - 4} width={nw + 8} height={nh + 8}
+                fill="transparent" />
+            )}
             <rect x={nx} y={ny} width={nw} height={nh} rx={2.5}
               fill={isLeaf ? 'rgba(24, 95, 165, 0.12)' : 'rgba(85, 80, 106, 0.08)'}
               stroke={isLeaf ? '#185FA5' : '#55506A'}
-              strokeWidth={0.6} />
+              strokeWidth={0.6}
+              strokeDasharray={isEmpty ? '3 2' : undefined} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={Math.min(T1, nw / Math.max(1, node.label.length) * 1.4) * ts}
-              fill="#1E1A2E" fontWeight={600}>
-              {node.label}
+              fontSize={Math.min(T1, nw / Math.max(1, displayLabel.length) * 1.4) * ts}
+              fill={isEmpty ? '#B0A8C0' : '#1E1A2E'}
+              fontWeight={isEmpty ? 400 : 600}
+              opacity={isEmpty ? 0.65 : 1}
+              data-edit-target={`${piece.id}-node-${node.levelIndex}-${node.optionIndex}`}>
+              {displayLabel}
             </text>
           </g>
         );
@@ -75,18 +86,26 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
       {piece.levels.map((level, li) => {
         const firstNode = nodes.find(n => n.levelIndex === li);
         if (!firstNode) return null;
+        const nameEmpty = !level.name;
+        const displayName = nameEmpty ? 'Nom du choix' : level.name;
         return (
-          <text key={`lvl-${li}`}
-            x={x - 6} y={y + firstNode.y + 1}
-            textAnchor="end" dominantBaseline="central"
-            fontSize={T2 * ts} fill="#55506A" fontWeight={500}>
-            {level.name}
-          </text>
+          <g key={`lvl-${li}`} style={isSelected ? { cursor: 'text' } : undefined}>
+            <text
+              x={x - 6} y={y + firstNode.y + 1}
+              textAnchor="end" dominantBaseline="central"
+              fontSize={T2 * ts}
+              fill={nameEmpty ? '#B0A8C0' : '#55506A'}
+              fontWeight={500}
+              opacity={nameEmpty ? 0.5 : 1}
+              data-edit-target={`${piece.id}-level-${li}`}>
+              {displayName}
+            </text>
+          </g>
         );
       })}
 
-      {/* [+] add level button below the last level — always visible (R8) */}
-      {(() => {
+      {/* [+] add level button below the last level — visible when not locked */}
+      {!piece.locked && (() => {
         const lastLevelNodes = nodes.filter(n => n.levelIndex === piece.levels.length - 1);
         if (lastLevelNodes.length === 0) return null;
         const btnY = y + lastLevelNodes[0].y + nh / 2 + 8;
@@ -104,8 +123,8 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
         );
       })()}
 
-      {/* [+] add option buttons on each level — always visible (R8) */}
-      {piece.levels.map((_level, li) => {
+      {/* [+] add option buttons on each level — visible when not locked */}
+      {!piece.locked && piece.levels.map((_level, li) => {
         const levelNodes = nodes.filter(n => n.levelIndex === li);
         if (levelNodes.length === 0) return null;
         const lastNode = levelNodes[levelNodes.length - 1];

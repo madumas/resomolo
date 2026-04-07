@@ -484,6 +484,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     pieces.some(p => p.type === 'reponse' && 'text' in p && ((p as any).text?.length || 0) > 3)
   ) {
     statusMessage = 'Tu as écrit ta réponse. Relis le problème pour vérifier.';
+  } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'arbre') {
+    statusMessage = 'Clique sur un nœud pour le renommer';
   } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'droiteNumerique') {
     statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {

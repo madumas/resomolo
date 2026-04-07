@@ -7,7 +7,7 @@ import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
 import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue, DiagrammeBandes } from '../model/types';
-import { isBarre, isBoite, isDroiteNumerique, isTableau } from '../model/types';
+import { isBarre, isBoite, isDroiteNumerique, isTableau, isArbre, ARBRE_NODE_W_MM, ARBRE_NODE_H_MM } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
@@ -24,7 +24,7 @@ import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
-import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap } from '../engine/sound';
+import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap, onAddNode } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
 import { createSmoothingState, smooth } from '../engine/smoothing';
 import type { SmoothingState } from '../engine/smoothing';
@@ -191,6 +191,12 @@ export function Canvas({
 
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
+  const [editingArbreField, setEditingArbreField] = useState<
+    | { type: 'node'; levelIndex: number; optionIndex: number }
+    | { type: 'level'; levelIndex: number }
+    | null
+  >(null);
+  useEffect(() => { if (!editingPieceId) setEditingArbreField(null); }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
@@ -255,6 +261,33 @@ export function Canvas({
       dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
       setMode({ type: 'idle' });
       return;
+    }
+
+    // Arbre "+" buttons — handle before general hit test
+    const arbreActionEl = (e.target as Element).closest?.('[data-arbre-action]');
+    if (arbreActionEl && selectedPieceId) {
+      const arbrePiece = pieces.find(p => p.id === selectedPieceId);
+      if (arbrePiece && isArbre(arbrePiece) && !arbrePiece.locked) {
+        const action = arbreActionEl.getAttribute('data-arbre-action');
+        if (action === 'add-level' && arbrePiece.levels.length < 4) {
+          const newLevels = [...arbrePiece.levels, { name: '', options: ['', ''] }];
+          dispatch({ type: 'EDIT_PIECE', id: arbrePiece.id, changes: { levels: newLevels } });
+          onAddNode();
+          return;
+        }
+        if (action === 'add-option') {
+          const li = Number(arbreActionEl.getAttribute('data-level-index'));
+          const level = arbrePiece.levels[li];
+          if (level && level.options.length < 6) {
+            const newLevels = arbrePiece.levels.map((l, i) =>
+              i === li ? { ...l, options: [...l.options, ''] } : l
+            );
+            dispatch({ type: 'EDIT_PIECE', id: arbrePiece.id, changes: { levels: newLevels } });
+            onAddNode();
+          }
+          return;
+        }
+      }
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
@@ -395,6 +428,47 @@ export function Canvas({
           onStartEdit(hitPiece.id);
         } else {
           // First click — select to show context actions
+          onSelectPiece(hitPiece.id);
+        }
+        return;
+      }
+      // Arbre — 1st click selects, 2nd click on node/level enters edit mode
+      if (isArbre(hitPiece)) {
+        if (hitPiece.id === selectedPieceId) {
+          const arbre = hitPiece as Arbre;
+          const treeLayout = computeTreeLayout(arbre.levels);
+          const relX = pos.x - arbre.x;
+          const relY = pos.y - arbre.y;
+          const hitPad = 4; // mm — enlarged hit area for TDC
+
+          // Check nodes
+          let found = false;
+          for (const node of treeLayout.nodes) {
+            if (Math.abs(relX - node.x) <= ARBRE_NODE_W_MM / 2 + hitPad &&
+                Math.abs(relY - node.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+              setEditingArbreField({ type: 'node', levelIndex: node.levelIndex, optionIndex: node.optionIndex });
+              onStartEdit(hitPiece.id);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            // Check level names (left of tree)
+            for (let li = 0; li < arbre.levels.length; li++) {
+              const firstNode = treeLayout.nodes.find(n => n.levelIndex === li);
+              if (firstNode && relX < 0 && Math.abs(relY - firstNode.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+                setEditingArbreField({ type: 'level', levelIndex: li });
+                onStartEdit(hitPiece.id);
+                found = true;
+                break;
+              }
+            }
+          }
+          if (!found) {
+            // Click on arbre but not on a specific node/level — keep selected
+            onSelectPiece(hitPiece.id);
+          }
+        } else {
           onSelectPiece(hitPiece.id);
         }
         return;
@@ -1414,24 +1488,54 @@ export function Canvas({
           placeholder = 'Texte de la flèche...';
           fieldKey = 'label';
           svgFontSizeMm = 5;
+        } else if (piece.type === 'arbre' && editingArbreField) {
+          const arbre = piece as Arbre;
+          if (editingArbreField.type === 'node') {
+            const { levelIndex, optionIndex } = editingArbreField;
+            initialValue = arbre.levels[levelIndex]?.options[optionIndex] ?? '';
+            placeholder = 'Ex: Soupe, Rouge...';
+            fieldKey = `__arbre_node_${levelIndex}_${optionIndex}`;
+            svgFontSizeMm = 7; // T1
+          } else {
+            const { levelIndex } = editingArbreField;
+            initialValue = arbre.levels[levelIndex]?.name ?? '';
+            placeholder = 'Ex: Entrée, Plat...';
+            fieldKey = `__arbre_level_${levelIndex}`;
+            svgFontSizeMm = 6; // T2
+          }
         } else {
           return null;
         }
 
         // Position editor by querying the actual rendered SVG text element.
-        // data-edit-target attributes: pieceId for direct text, pieceId-label/value for bar fields.
-        const editTargetId = piece.type === 'barre'
-          ? `${piece.id}-${editingBarField || 'label'}`
-          : piece.id;
+        // data-edit-target attributes: pieceId for direct text, pieceId-suffix for multi-field pieces.
+        let editTargetId: string;
+        if (piece.type === 'barre' || piece.type === 'boite') {
+          editTargetId = `${piece.id}-${editingBarField || 'label'}`;
+        } else if (piece.type === 'arbre' && editingArbreField) {
+          editTargetId = editingArbreField.type === 'node'
+            ? `${piece.id}-node-${editingArbreField.levelIndex}-${editingArbreField.optionIndex}`
+            : `${piece.id}-level-${editingArbreField.levelIndex}`;
+        } else {
+          editTargetId = piece.id;
+        }
         const targetEl = svgEl.querySelector(`[data-edit-target="${editTargetId}"]`);
         const targetRect = targetEl?.getBoundingClientRect();
+
+        // Determine editor minWidth based on piece type
+        const editorMinWidth = (piece.type === 'arbre' && editingArbreField?.type === 'node') ? 120 : 200;
 
         if (targetRect && targetRect.width > 0) {
           // Position editor aligned with the SVG text element
           const isRightAligned = piece.type === 'barre' && editingBarField !== 'value';
+          const isCentered = piece.type === 'arbre' && editingArbreField?.type === 'node';
           if (isRightAligned) {
             // Bar label: text-anchor=end — editor right edge at the text right edge
-            editorLeft = targetRect.right - canvasRect.left - 200;
+            editorLeft = targetRect.right - canvasRect.left - editorMinWidth;
+          } else if (isCentered) {
+            // Arbre node: center editor on the node
+            const targetCenterX = (targetRect.left + targetRect.right) / 2 - canvasRect.left;
+            editorLeft = targetCenterX - editorMinWidth / 2;
           } else {
             editorLeft = targetRect.left - canvasRect.left;
           }
@@ -1474,12 +1578,65 @@ export function Canvas({
             isCalcul={isCalcul}
             monospace={isCalcul}
             fontSize={svgFontSizeMm * mmToPx}
+            maxLength={piece.type === 'arbre' ? (editingArbreField?.type === 'node' ? 20 : 30) : undefined}
+            minWidth={editorMinWidth}
             onCommit={(value) => {
-              dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
+              if (piece.type === 'arbre' && editingArbreField) {
+                const arbre = piece as Arbre;
+                const newLevels = editingArbreField.type === 'node'
+                  ? arbre.levels.map((l, i) => i === editingArbreField.levelIndex
+                    ? { ...l, options: l.options.map((o, j) => j === editingArbreField.optionIndex ? value : o) } : l)
+                  : arbre.levels.map((l, i) => i === editingArbreField.levelIndex ? { ...l, name: value } : l);
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
+              } else {
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
+              }
               if (piece.type === 'reponse' && value.length > 0) onAcknowledge();
+              setEditingArbreField(null);
               onStopEdit();
             }}
-            onCancel={onStopEdit}
+            onTab={piece.type === 'arbre' && editingArbreField?.type === 'node' ? (value) => {
+              // Commit current node, then advance to next empty node
+              const arbre = piece as Arbre;
+              const { levelIndex, optionIndex } = editingArbreField;
+              const newLevels = arbre.levels.map((l, i) =>
+                i === levelIndex ? { ...l, options: l.options.map((o, j) => j === optionIndex ? value : o) } : l
+              );
+              dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
+              // Find next empty node (same level first, then next levels)
+              let nextField: { type: 'node'; levelIndex: number; optionIndex: number } | null = null;
+              for (let li = levelIndex; li < newLevels.length; li++) {
+                const startOi = li === levelIndex ? optionIndex + 1 : 0;
+                for (let oi = startOi; oi < newLevels[li].options.length; oi++) {
+                  if (!newLevels[li].options[oi]) {
+                    nextField = { type: 'node', levelIndex: li, optionIndex: oi };
+                    break;
+                  }
+                }
+                if (nextField) break;
+              }
+              // Wrap around: check levels before current
+              if (!nextField) {
+                for (let li = 0; li <= levelIndex; li++) {
+                  const endOi = li === levelIndex ? optionIndex : newLevels[li].options.length;
+                  for (let oi = 0; oi < endOi; oi++) {
+                    if (!newLevels[li].options[oi]) {
+                      nextField = { type: 'node', levelIndex: li, optionIndex: oi };
+                      break;
+                    }
+                  }
+                  if (nextField) break;
+                }
+              }
+              if (nextField) {
+                setEditingArbreField(nextField);
+                // Re-trigger edit (editingPieceId stays the same, field changes)
+              } else {
+                setEditingArbreField(null);
+                onStopEdit();
+              }
+            } : undefined}
+            onCancel={() => { setEditingArbreField(null); onStopEdit(); }}
             onColumnCalc={piece.type === 'calcul' ? () => {
               onStopEdit();
               setColumnCalcPieceId(editingPieceId);
@@ -2086,14 +2243,17 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, onCommit, onCancel, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
   fontSize?: number;
   monospace?: boolean;
+  maxLength?: number;
+  minWidth?: number;
   onCommit: (value: string) => void;
   onCancel: () => void;
+  onTab?: (value: string) => void;
   onColumnCalc?: () => void;
   onDivisionCalc?: () => void;
 }) {
@@ -2143,7 +2303,9 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
           value={value}
           placeholder={placeholder}
           onChange={e => setValue(e.target.value)}
+          maxLength={maxLength}
           onKeyDown={e => {
+            if (e.key === 'Tab' && onTab) { e.preventDefault(); e.stopPropagation(); if (!committed.current) { committed.current = true; onTab(value); } return; }
             if (e.key === 'Enter') { commit(); e.stopPropagation(); }
             if (e.key === 'Escape') { onCancel(); e.stopPropagation(); }
           }}
@@ -2153,7 +2315,7 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
             commit();
           }}
           style={{
-            minWidth: 200,
+            minWidth: minWidth,
             height: Math.max(28, fontSize * 1.8),
             border: `2px solid #7028e0`,
             borderRadius: 6,
@@ -2585,8 +2747,8 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number },
     case 'arbre':
       return { id, type: 'arbre', x: pos.x, y: pos.y, locked: false,
         levels: [
-          { name: 'Niveau 1', options: ['A', 'B'] },
-          { name: 'Niveau 2', options: ['1', '2'] },
+          { name: '', options: ['', ''] },
+          { name: '', options: ['', ''] },
         ] };
     case 'schema': {
       const defaults = getGabaritDefaults('parties-tout', referenceUnitMm); // R3: default parties-tout

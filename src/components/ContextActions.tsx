@@ -581,7 +581,7 @@ export function ContextActions({
           <CtxBtn onClick={() => setArbreSubmenu('niveaux')}>Niveaux {piece.levels.length}</CtxBtn>
           <CtxBtn onClick={() => {
             if (piece.levels.length < 4) {
-              const newLevels = [...piece.levels, { name: `Niveau ${piece.levels.length + 1}`, options: ['A', 'B'] }];
+              const newLevels = [...piece.levels, { name: '', options: ['', ''] }];
               onEditPiece(piece.id, { levels: newLevels });
               onAddNode();
             }
@@ -593,11 +593,11 @@ export function ContextActions({
         <>
           <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
           {[
-            { label: '2×2', levels: [{ name: 'Niveau 1', options: ['A', 'B'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
-            { label: '2×3', levels: [{ name: 'Niveau 1', options: ['A', 'B'] }, { name: 'Niveau 2', options: ['1', '2', '3'] }] },
-            { label: '3×2', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
-            { label: '3×3', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C'] }, { name: 'Niveau 2', options: ['1', '2', '3'] }] },
-            { label: '4×2', levels: [{ name: 'Niveau 1', options: ['A', 'B', 'C', 'D'] }, { name: 'Niveau 2', options: ['1', '2'] }] },
+            { label: '2×2', levels: [{ name: '', options: ['', ''] }, { name: '', options: ['', ''] }] },
+            { label: '2×3', levels: [{ name: '', options: ['', ''] }, { name: '', options: ['', '', ''] }] },
+            { label: '3×2', levels: [{ name: '', options: ['', '', ''] }, { name: '', options: ['', ''] }] },
+            { label: '3×3', levels: [{ name: '', options: ['', '', ''] }, { name: '', options: ['', '', ''] }] },
+            { label: '4×2', levels: [{ name: '', options: ['', '', '', ''] }, { name: '', options: ['', ''] }] },
           ].map(t => (
             <CtxBtn key={t.label} onClick={() => {
               onEditPiece(piece.id, { levels: t.levels });
@@ -613,11 +613,11 @@ export function ContextActions({
           <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
           {piece.levels.map((level, li) => (
             <React.Fragment key={li}>
-              <CtxBtn onClick={() => {}} disabled>{level.name}: {level.options.length}</CtxBtn>
+              <CtxBtn onClick={() => {}} disabled>{level.name || `Choix ${li + 1}`}: {level.options.length}</CtxBtn>
               <CtxBtn onClick={() => {
                 if (level.options.length < 6) {
                   const newLevels = piece.levels.map((l, i) =>
-                    i === li ? { ...l, options: [...l.options, String.fromCharCode(65 + l.options.length)] } : l
+                    i === li ? { ...l, options: [...l.options, ''] } : l
                   );
                   onEditPiece(piece.id, { levels: newLevels });
                   onAddNode();
