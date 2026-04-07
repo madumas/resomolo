@@ -513,6 +513,12 @@ export function Canvas({
         }
         return;
       }
+      // Boîte — 2nd click edits value (same pattern as bar)
+      if (isBoite(hitPiece) && hitPiece.id === selectedPieceId) {
+        setEditingBarField('value');
+        onStartEdit(hitPiece.id);
+        return;
+      }
       if (tableauEditorPieceId) closeTableauEditor();
       onSelectPiece(hitPiece.id);
       return;
@@ -919,8 +925,8 @@ export function Canvas({
       locked: false,
       width: source.width,
       height: source.height,
-      label: '',
-      value: '',
+      label: source.label,
+      value: source.value,
       couleur: colorOrder[(sourceColorIdx + 1) % colorOrder.length],
     } as Boite);
 
