@@ -74,17 +74,6 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
       return Math.max(m, mv.y + h);
     }, 0);
     if (maxBottom < maxHeight - MARGIN_BOTTOM || vGap === 2) {
-      // Gentle compression only — don't compress below 0.75 (too much overlap)
-      if (maxBottom >= maxHeight - MARGIN_BOTTOM) {
-        const contentSpan = maxBottom - MARGIN;
-        const available = maxHeight - MARGIN - MARGIN_BOTTOM;
-        if (contentSpan > 0 && available > 0) {
-          const scale = Math.max(0.75, available / contentSpan);
-          for (const m of moves) {
-            m.y = MARGIN + (m.y - MARGIN) * scale;
-          }
-        }
-      }
       addParentedJetons(pieces, moves, parentedJetonIds);
       return moves;
     }
