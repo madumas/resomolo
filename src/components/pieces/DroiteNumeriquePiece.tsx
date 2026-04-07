@@ -29,7 +29,9 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
   const safeStep = Math.max(0.1, step);
   const numTicks = Math.floor((max - min) / safeStep) + 1;
   const tickSpacing = numTicks > 1 ? width / (numTicks - 1) : width;
-  const labelEvery = numTicks > 50 ? 10 : numTicks > 20 ? 5 : 1;
+  // Increase label skip when textScale makes labels wider to avoid overlap
+  const scaledTicks = numTicks * ts;
+  const labelEvery = scaledTicks > 50 ? 10 : scaledTicks > 20 ? 5 : numTicks > 10 && ts > 1.2 ? 2 : 1;
   const h = 20; // total height including labels
 
   return (

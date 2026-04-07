@@ -467,14 +467,14 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = AMORCAGE_POST_HIGHLIGHT;
   } else if (!hasPieces) {
     statusMessage = AMORCAGE_NO_PROBLEM;
-  } else if (settings.sessionTimerEnabled && sessionTimer.alerted) {
-    statusMessage = 'Tu travailles depuis un moment — prends une pause si tu veux';
-    statusVariant = 'relance';
   } else if (showCheckRelance) {
     statusMessage = 'Relis le problème. Est-ce que ta réponse répond à la question?';
     statusVariant = 'relance';
   } else if (showInactivityRelance) {
     statusMessage = RELANCE_QUESTIONS[inactivityRelanceIndex];
+    statusVariant = 'relance';
+  } else if (settings.sessionTimerEnabled && sessionTimer.alerted) {
+    statusMessage = 'Tu travailles depuis un moment — prends une pause si tu veux';
     statusVariant = 'relance';
   } else if (showLabelNudge) {
     statusMessage = 'Tu peux nommer tes barres en cliquant dessus → Nommer';
@@ -488,7 +488,11 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {
     statusMessage = 'Choisis une action, ou clique ailleurs pour désélectionner';
-  } else if (pieces.filter(p => !p.locked && p.type !== 'fleche').length >= 8) {
+  } else if ((() => {
+    // Suggest "Ranger" when movable pieces occupy >60% of canvas width heuristically
+    const movable = pieces.filter(p => !p.locked && p.type !== 'fleche' && p.type !== 'etiquette' && p.type !== 'inconnue');
+    return movable.length >= 5 && movable.filter(p => p.type === 'barre' || p.type === 'schema' || p.type === 'diagrammeBandes' || p.type === 'diagrammeLigne' || p.type === 'droiteNumerique' || p.type === 'arbre').length >= 3;
+  })()) {
     statusMessage = 'Beaucoup de pièces — essaie le bouton Ranger en bas à droite du canevas';
   } else {
     statusMessage = 'Clique sur une pièce pour la sélectionner';

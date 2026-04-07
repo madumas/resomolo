@@ -1060,7 +1060,7 @@ export function Canvas({
         {deleteConfirmId && (() => {
           const piece = pieces.find(p => p.id === deleteConfirmId);
           if (!piece) return null;
-          const b = getPieceBounds(piece, referenceUnitMm, 2);
+          const b = getPieceBounds(piece, referenceUnitMm, 2, textScale);
           return (
             <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={3}
               fill="rgba(200, 40, 40, 0.12)" stroke="#C82828" strokeWidth={1.5}
@@ -1299,7 +1299,7 @@ export function Canvas({
         {arrowFromId && ghostCursorMm && (() => {
           const fromPiece = pieces.find(p => p.id === arrowFromId);
           if (!fromPiece) return null;
-          const fromBounds = getPieceBounds(fromPiece, referenceUnitMm, 2);
+          const fromBounds = getPieceBounds(fromPiece, referenceUnitMm, 2, textScale);
           const fromEdge = getEdgePoint(fromPiece, ghostCursorMm, referenceUnitMm);
 
           // Determine target: snap to hovered piece edge, or use cursor
@@ -1331,7 +1331,7 @@ export function Canvas({
                 markerEnd="url(#arrowhead-ghost)" />
               {/* Target snap indicator */}
               {snapToTarget && (() => {
-                const tb = getPieceBounds(pieces.find(p => p.id === hoveredPieceId)!, referenceUnitMm, 2);
+                const tb = getPieceBounds(pieces.find(p => p.id === hoveredPieceId)!, referenceUnitMm, 2, textScale);
                 return (
                   <rect x={tb.x} y={tb.y} width={tb.w} height={tb.h} rx={3}
                     fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={1}
@@ -1797,7 +1797,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
     case 'barre': return { x: piece.x + piece.sizeMultiplier * referenceUnitMm - 6, y: piece.y - 8 };
     case 'boite': return { x: piece.x + (piece as Boite).width - 6, y: piece.y - 2 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 5.5 + 10) - 6, y: piece.y - 12 };
-    case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) - 6, y: piece.y - 2 };
+    case 'calcul': return { x: piece.x + getCalculWidth(piece) - 6, y: piece.y - 2 };
     case 'reponse': return { x: piece.x + getReponseWidth(piece as Reponse) - 6, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width - 4, y: piece.y - 14 };
     case 'arbre': {
@@ -1971,7 +1971,7 @@ function CalculPiece({ piece, isSelected, textScale = 1 }: {
 }) {
   const ts = textScale;
   const displayText = formatExpr(piece.expression) || '…';
-  const w = Math.max(80, piece.expression.length * 7 * ts + 16);
+  const w = getCalculWidth(piece, ts);
   const h = 20;
 
   return (
@@ -2019,7 +2019,7 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
         templateText += blanks[i] || '____';
       }
     }
-    const w = Math.max(120, templateText.length * 3.2 + 20);
+    const w = Math.max(120, templateText.length * 3.2 * ts + 20);
     const h = 22;
 
     // Build tspan segments for the template
@@ -2063,7 +2063,7 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
   }
 
   // Free-form mode (original behavior)
-  const w = Math.max(100, piece.text.length * 5.5 + 24);
+  const w = Math.max(100, piece.text.length * 5.5 * ts + 24);
   const h = 26;
 
   return (
@@ -2285,7 +2285,11 @@ function parseExpression(expr: string): { op1: string; op2: string; operator: st
 
 // === Reponse width helper ===
 
-function getReponseWidth(piece: Reponse): number {
+function getCalculWidth(piece: Piece & { type: 'calcul' }, ts = 1): number {
+  return Math.max(80, piece.expression.length * 7 * ts + 16);
+}
+
+function getReponseWidth(piece: Reponse, ts = 1): number {
   if (piece.template) {
     const parts = piece.template.split('___');
     const blanks = piece.text ? piece.text.split('|') : [];
@@ -2296,9 +2300,9 @@ function getReponseWidth(piece: Reponse): number {
         templateText += blanks[i] || '____';
       }
     }
-    return Math.max(120, templateText.length * 4.5 + 24);
+    return Math.max(120, templateText.length * 4.5 * ts + 24);
   }
-  return Math.max(100, piece.text.length * 5.5 + 24);
+  return Math.max(100, piece.text.length * 5.5 * ts + 24);
 }
 
 // === Hit test ===
@@ -2412,9 +2416,9 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
              pos.y >= piece.y - p && pos.y <= piece.y + piece.height + p;
     }
     case 'calcul': {
-      const w = Math.max(80, piece.expression.length * 5 + 10);
+      const w = getCalculWidth(piece);
       return pos.x >= piece.x - p && pos.x <= piece.x + w + p &&
-             pos.y >= piece.y - p && pos.y <= piece.y + 12 + p;
+             pos.y >= piece.y - p && pos.y <= piece.y + 20 + p;
     }
     case 'reponse': {
       const w = getReponseWidth(piece);
@@ -2480,13 +2484,13 @@ function distanceToSegment(p: {x:number,y:number}, a: {x:number,y:number}, b: {x
 }
 
 /** Get the bounding box {x, y, w, h} of a piece with optional padding. */
-function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: number; y: number; w: number; h: number } {
+function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0, ts = 1): { x: number; y: number; w: number; h: number } {
   switch (piece.type) {
     case 'jeton': return { x: piece.x - 5 - pad, y: piece.y - 5 - pad, w: 10 + 2 * pad, h: 10 + 2 * pad };
     case 'barre': return { x: piece.x - pad, y: piece.y - pad, w: piece.sizeMultiplier * referenceUnitMm + 2 * pad, h: BAR_HEIGHT_MM + 2 * pad };
     case 'boite': return { x: piece.x - pad, y: piece.y - pad, w: piece.width + 2 * pad, h: piece.height + 2 * pad };
-    case 'calcul': return { x: piece.x - pad, y: piece.y - pad, w: Math.max(80, piece.expression.length * 7 + 16) + 2 * pad, h: 20 + 2 * pad };
-    case 'reponse': return { x: piece.x - pad, y: piece.y - pad, w: getReponseWidth(piece as Reponse) + 2 * pad, h: 26 + 2 * pad };
+    case 'calcul': return { x: piece.x - pad, y: piece.y - pad, w: getCalculWidth(piece, ts) + 2 * pad, h: 20 + 2 * pad };
+    case 'reponse': return { x: piece.x - pad, y: piece.y - pad, w: getReponseWidth(piece as Reponse, ts) + 2 * pad, h: 26 + 2 * pad };
     case 'etiquette': return { x: piece.x - pad, y: piece.y - 7 - pad, w: Math.max(30, piece.text.length * 5.5 + 10) + 2 * pad, h: 10 + 2 * pad };
     case 'droiteNumerique': return { x: piece.x - pad, y: piece.y - 10 - pad, w: (piece as DroiteNumerique).width + 2 * pad, h: 20 + 2 * pad };
     case 'tableau': return { x: piece.x - pad, y: piece.y - pad, w: (piece as Tableau).cols * TABLEAU_CELL_W + 2 * pad, h: (piece as Tableau).rows * TABLEAU_CELL_H + 2 * pad };
@@ -2505,7 +2509,7 @@ function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: 
     case 'jeton': return { x: piece.x, y: piece.y };
     case 'barre': return { x: piece.x + (piece.sizeMultiplier * referenceUnitMm) / 2, y: piece.y + BAR_HEIGHT_MM / 2 };
     case 'boite': return { x: piece.x + piece.width / 2, y: piece.y + piece.height / 2 };
-    case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) / 2, y: piece.y + 7 };
+    case 'calcul': return { x: piece.x + getCalculWidth(piece) / 2, y: piece.y + 7 };
     case 'reponse': return { x: piece.x + getReponseWidth(piece) / 2, y: piece.y + 11 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 5.5 + 10) / 2, y: piece.y - 2 };
     case 'droiteNumerique': return { x: piece.x + (piece as DroiteNumerique).width / 2, y: piece.y };
@@ -2527,7 +2531,7 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
     case 'jeton': return { x: piece.x, y: piece.y }; // circle — center is fine
     case 'barre': bx = piece.x; by = piece.y; bw = piece.sizeMultiplier * refUnit; bh = BAR_HEIGHT_MM; break;
     case 'boite': bx = piece.x; by = piece.y; bw = piece.width; bh = piece.height; break;
-    case 'calcul': bx = piece.x; by = piece.y; bw = Math.max(80, piece.expression.length * 7 + 16); bh = 20; break;
+    case 'calcul': bx = piece.x; by = piece.y; bw = getCalculWidth(piece); bh = 20; break;
     case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 26; break;
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 5.5 + 10); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;

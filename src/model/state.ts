@@ -393,8 +393,8 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
       const remainder = jetonIds.length % groupCount;
       const perRow = Math.min(perGroup, 5);
       const rows = perGroup > 0 ? Math.ceil(perGroup / perRow) : 1;
-      const boiteW = Math.max(60, perRow * 10 + 16);
-      const boiteH = Math.max(40, rows * 10 + 20);
+      const boiteW = Math.max(60, perRow * 12 + 16);
+      const boiteH = Math.max(40, rows * 12 + 20);
       const gap = 10;
       const maxRowWidth = CANVAS_WIDTH_MM - 30;
       // Clamp startX so at least one boîte fits
@@ -436,8 +436,8 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
             const row = Math.floor(ji / perRow);
             pieces[idx] = {
               ...pieces[idx],
-              x: boite.x + 8 + col * 10,
-              y: boite.y + 16 + row * 10,
+              x: boite.x + 8 + col * 12,
+              y: boite.y + 16 + row * 12,
               parentId: boite.id,
             } as Piece;
           }
