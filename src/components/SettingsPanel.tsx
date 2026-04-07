@@ -68,6 +68,8 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           />
         </SettingGroup>
 
+        <SectionDivider label="Motricité" />
+
         {/* Tolérance */}
         <SettingGroup label="Tolérance de clic">
           <ButtonGroup<ToleranceProfile>
@@ -132,6 +134,8 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
         )}
 
         {/* Session timer */}
+        <SectionDivider label="Session" />
+
         <SettingGroup label="Minuteur de session">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <ToggleBtn
@@ -159,6 +163,8 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
         </SettingGroup>
 
         {/* Text scale */}
+        <SectionDivider label="Affichage" />
+
         <SettingGroup label="Taille du texte">
           <ButtonGroup<`${TextScale}`>
             options={[
@@ -188,6 +194,8 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
         </SettingGroup>
 
         {/* Sound mode */}
+        <SectionDivider label="Audio" />
+
         <SettingGroup label="Sons">
           <ButtonGroup<SoundMode>
             options={[
@@ -216,6 +224,8 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
         )}
 
         {/* Dominant hand */}
+        <SectionDivider label="Interface" />
+
         <SettingGroup label="Main dominante">
           <ButtonGroup<DominantHand>
             options={[
@@ -403,6 +413,24 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
 }
 
 // --- Sub-components ---
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div style={{
+      borderTop: `1px solid ${UI_BORDER}`,
+      marginTop: 8,
+      marginBottom: 12,
+      paddingTop: 10,
+      fontSize: 11,
+      fontWeight: 700,
+      color: UI_TEXT_SECONDARY,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.05em',
+    }}>
+      {label}
+    </div>
+  );
+}
 
 function SettingGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (

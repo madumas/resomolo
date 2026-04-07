@@ -60,7 +60,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
               strokeWidth={isZero ? 2.5 : (i % labelEvery === 0 ? 0.7 : 0.3)} />
             {(i % labelEvery === 0 || isZero) && (
               <text x={tx} y={y + 9} textAnchor="middle"
-                fontSize={(isZero ? 7 : 6) * ts}
+                fontSize={(isZero ? 8 : 7) * ts}
                 fontWeight={isZero ? 700 : 500}
                 fill={isZero ? '#7028E0' : '#55506A'}>
                 {val}

@@ -467,6 +467,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = AMORCAGE_POST_HIGHLIGHT;
   } else if (!hasPieces) {
     statusMessage = AMORCAGE_NO_PROBLEM;
+  } else if (settings.sessionTimerEnabled && sessionTimer.alerted) {
+    statusMessage = 'Tu travailles depuis un moment — prends une pause si tu veux';
+    statusVariant = 'relance';
   } else if (showCheckRelance) {
     statusMessage = 'Relis le problème. Est-ce que ta réponse répond à la question?';
     statusVariant = 'relance';
@@ -485,6 +488,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {
     statusMessage = 'Choisis une action, ou clique ailleurs pour désélectionner';
+  } else if (pieces.filter(p => !p.locked && p.type !== 'fleche').length >= 8) {
+    statusMessage = 'Beaucoup de pièces — essaie le bouton Ranger en bas à droite du canevas';
   } else {
     statusMessage = 'Clique sur une pièce pour la sélectionner';
   }

@@ -1832,9 +1832,9 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
     case 'etiquette':
       inner = <EtiquettePiece piece={piece} isSelected={isSelected} />; break;
     case 'calcul':
-      inner = <CalculPiece piece={piece} isSelected={isSelected} />; break;
+      inner = <CalculPiece piece={piece} isSelected={isSelected} textScale={textScale} />; break;
     case 'reponse':
-      inner = <ReponsePiece piece={piece} isSelected={isSelected}
+      inner = <ReponsePiece piece={piece} isSelected={isSelected} textScale={textScale}
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
       inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale} />; break;
@@ -1866,7 +1866,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
 }
 
 function JetonPiece({ piece, isSelected, highContrast }: { piece: Piece & { type: 'jeton' }; isSelected: boolean; highContrast?: boolean }) {
-  const r = 4;
+  const r = 5;
   const color = getPieceColor(piece.couleur, highContrast);
   return (
     <circle
@@ -1964,12 +1964,14 @@ function BoitePiece({ piece, isSelected, highContrast }: { piece: Boite; isSelec
   );
 }
 
-function CalculPiece({ piece, isSelected }: {
+function CalculPiece({ piece, isSelected, textScale = 1 }: {
   piece: Piece & { type: 'calcul' };
   isSelected: boolean;
+  textScale?: number;
 }) {
+  const ts = textScale;
   const displayText = formatExpr(piece.expression) || '…';
-  const w = Math.max(80, piece.expression.length * 7 + 16);
+  const w = Math.max(80, piece.expression.length * 7 * ts + 16);
   const h = 20;
 
   return (
@@ -1982,7 +1984,7 @@ function CalculPiece({ piece, isSelected }: {
       />
       <text
         x={piece.x + 6} y={piece.y + h / 2}
-        dominantBaseline="central" fontSize={8}
+        dominantBaseline="central" fontSize={8 * ts}
         fontFamily="'Consolas', 'Courier New', monospace"
         fill={piece.expression ? COLORS.text : '#9CA3AF'}
         data-edit-target={piece.id}
@@ -1993,12 +1995,14 @@ function CalculPiece({ piece, isSelected }: {
   );
 }
 
-function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
+function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScale = 1 }: {
   piece: Piece & { type: 'reponse' };
   isSelected: boolean;
   reponseIndex?: number;
   totalReponses?: number;
+  textScale?: number;
 }) {
+  const ts = textScale;
   const numbered = (totalReponses ?? 0) > 1 && reponseIndex != null;
   const hasTemplate = !!piece.template;
 
@@ -2040,10 +2044,10 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
           stroke={COLORS.reponseBorder}
           strokeWidth={isSelected ? 1 : 0.7}
         />
-        <text x={piece.x + 6} y={piece.y + 7} fontSize={5} fill={COLORS.primary}>
+        <text x={piece.x + 6} y={piece.y + 7} fontSize={5 * ts} fill={COLORS.primary}>
           {numbered ? `Réponse ${reponseIndex! + 1} (à trous)` : 'Réponse (à trous)'}
         </text>
-        <text x={piece.x + 6} y={piece.y + 18} fontSize={7} data-edit-target={piece.id}>
+        <text x={piece.x + 6} y={piece.y + 18} fontSize={7 * ts} data-edit-target={piece.id}>
           {segments.map((seg, i) => (
             <tspan
               key={i}
@@ -2070,10 +2074,10 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses }: {
         stroke={COLORS.reponseBorder}
         strokeWidth={isSelected ? 1 : 0.7}
       />
-      <text x={piece.x + 6} y={piece.y + 7} fontSize={5} fill={COLORS.primary}>
+      <text x={piece.x + 6} y={piece.y + 7} fontSize={5 * ts} fill={COLORS.primary}>
         {numbered ? `Réponse ${reponseIndex! + 1}` : 'Réponse'}
       </text>
-      <text x={piece.x + 6} y={piece.y + 18} fontSize={7} fill={piece.text ? COLORS.text : '#9CA3AF'}
+      <text x={piece.x + 6} y={piece.y + 18} fontSize={7 * ts} fill={piece.text ? COLORS.text : '#9CA3AF'}
         data-edit-target={piece.id}>
         {piece.text || '…'}
       </text>
@@ -2478,7 +2482,7 @@ function distanceToSegment(p: {x:number,y:number}, a: {x:number,y:number}, b: {x
 /** Get the bounding box {x, y, w, h} of a piece with optional padding. */
 function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0): { x: number; y: number; w: number; h: number } {
   switch (piece.type) {
-    case 'jeton': return { x: piece.x - 8 + pad, y: piece.y - 8 + pad, w: 16 - 2 * pad, h: 16 - 2 * pad };
+    case 'jeton': return { x: piece.x - 5 - pad, y: piece.y - 5 - pad, w: 10 + 2 * pad, h: 10 + 2 * pad };
     case 'barre': return { x: piece.x - pad, y: piece.y - pad, w: piece.sizeMultiplier * referenceUnitMm + 2 * pad, h: BAR_HEIGHT_MM + 2 * pad };
     case 'boite': return { x: piece.x - pad, y: piece.y - pad, w: piece.width + 2 * pad, h: piece.height + 2 * pad };
     case 'calcul': return { x: piece.x - pad, y: piece.y - pad, w: Math.max(80, piece.expression.length * 7 + 16) + 2 * pad, h: 20 + 2 * pad };

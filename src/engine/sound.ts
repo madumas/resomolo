@@ -156,7 +156,7 @@ export function onUndoSound() {
 }
 
 export function onAttach() {
-  if (mode === 'full') { soundAttach(); haptic(20); }
+  if (mode !== 'off') { soundAttach(); haptic(20); }
 }
 
 export function onSubdivide() {
