@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY } from '../config/theme';
@@ -19,80 +19,135 @@ interface ToolbarProps {
 
 type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
 
-// Mode Simplifié : outils essentiels + Déplacer à la fin
-// Progression : concret → proportionnel → calcul
-const SIMPLE_TOOLS: ToolDef[] = [
-  // Concret
-  { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
-  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
-  // Proportionnel
-  { type: 'barre', label: 'Barre', Icon: BarreIcon },
-  { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
-  // Calculer
-  { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
-  { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
-  // Annoter
-  { type: 'inconnue', label: 'Inconnue', Icon: InconnueIcon },
-  // Naviguer (toujours dernier)
-  { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
-];
+// === Tool group definitions (source of truth) ===
+// Labels = verbes d'action familiers dès le 1er cycle (consensus pédago + neuropsych)
+// Colors = palette daltonien-safe (bleu/jaune/orange/violet/rose, pas vert/gris)
 
-// Mode Complet : concret → proportionnel → structuré → calculer → annoter
-const ALL_TOOLS: ToolDef[] = [
-  // Concret
-  { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
-  { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
-  // Proportionnel
-  { type: 'barre', label: 'Barre', Icon: BarreIcon },
-  { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
-  // Structuré
-  { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
-  { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
-  { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
-  { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
-  { type: 'diagrammeLigne', label: 'Ligne brisée', Icon: DiagrammeLigneIcon },
-  // Calculer
-  { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
-  { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
-  // Annoter
-  { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
-  { type: 'inconnue', label: 'Inconnue', Icon: InconnueIcon },
-  { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
-  // Naviguer (toujours dernier)
-  { type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon },
-];
-
-const SIMPLE_TYPES: Set<string> = new Set(SIMPLE_TOOLS.map(t => t.type));
-
-// Group membership for inter-group spacing (Gestalt proximity, ratio 3:1)
-const TOOL_GROUP: Record<string, string> = {
-  jeton: 'concret', boite: 'concret',
-  barre: 'proportionnel', schema: 'proportionnel',
-  droiteNumerique: 'structure', arbre: 'structure', tableau: 'structure',
-  diagrammeBandes: 'structure', diagrammeLigne: 'structure',
-  calcul: 'calculer', reponse: 'calculer',
-  etiquette: 'annoter', inconnue: 'annoter', fleche: 'annoter',
+type ToolGroup = {
+  id: string;
+  label: string;
+  color: string;
+  tools: ToolDef[];
+  /** Tool types shown inline (always visible, not only in popover) */
+  inlineTools: string[];
+  /** Included in Essentiel mode? (false = Complet only) */
+  essentiel: boolean;
 };
 
+const TOOL_GROUPS: ToolGroup[] = [
+  {
+    id: 'compter', label: 'Compter', color: '#E8F0FE', essentiel: true,
+    tools: [
+      { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
+      { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+    ],
+    inlineTools: ['jeton', 'boite'],
+  },
+  {
+    id: 'comparer', label: 'Comparer', color: '#FFF8E1', essentiel: true,
+    tools: [
+      { type: 'barre', label: 'Barre', Icon: BarreIcon },
+      { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
+    ],
+    inlineTools: ['barre', 'schema'],
+  },
+  {
+    id: 'organiser', label: 'Organiser', color: '#FFF3E0', essentiel: false,
+    tools: [
+      { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
+      { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
+      { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
+      { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
+      { type: 'diagrammeLigne', label: 'Ligne brisée', Icon: DiagrammeLigneIcon },
+      { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
+    ],
+    inlineTools: ['droiteNumerique'],
+  },
+  {
+    id: 'calculer', label: 'Calculer', color: '#F3E8FD', essentiel: true,
+    tools: [
+      { type: 'calcul', label: 'Calcul', Icon: CalculIcon },
+      { type: 'reponse', label: 'Réponse', Icon: ReponseIcon },
+    ],
+    inlineTools: ['calcul', 'reponse'],
+  },
+  {
+    id: 'annoter', label: 'Annoter', color: '#FCE4EC', essentiel: true,
+    tools: [
+      { type: 'etiquette', label: 'Étiquette', Icon: EtiquetteIcon },
+      { type: 'inconnue', label: 'Inconnue', Icon: InconnueIcon },
+    ],
+    inlineTools: ['etiquette', 'inconnue'],
+  },
+];
+
+// Group membership lookup for inter-group spacing
+const TOOL_GROUP_ID: Record<string, string> = {};
+for (const g of TOOL_GROUPS) for (const t of g.tools) TOOL_GROUP_ID[t.type] = g.id;
+
+// Inline tools (always directly visible in toolbar, not behind a popover)
+const INLINE_TYPES: Set<string> = new Set(TOOL_GROUPS.flatMap(g => g.inlineTools));
+
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
-  const [showMore, setShowMore] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const isComplet = toolbarMode === 'complet';
-  // Show all tools if: complet mode, user clicked ⋯, or active tool is not in simple set
-  const showAll = isComplet || showMore || (activeTool !== null && !SIMPLE_TYPES.has(activeTool as string));
 
-  let visibleTools = showAll ? ALL_TOOLS : SIMPLE_TOOLS;
+  // Build visible groups filtered by mode + availablePieces
+  const visibleGroups = TOOL_GROUPS
+    .filter(g => isComplet || g.essentiel)
+    .map(g => {
+      if (!availablePieces) return g;
+      const filtered = g.tools.filter(t => availablePieces.includes(t.type));
+      return filtered.length > 0 ? { ...g, tools: filtered } : null;
+    })
+    .filter((g): g is ToolGroup => g !== null);
 
-  // Filter tools if availablePieces is set (always keep 'deplacer')
-  if (availablePieces) {
-    visibleTools = visibleTools.filter(t => t.type === 'deplacer' || availablePieces.includes(t.type));
-  }
+  // Inline tools: always visible directly in toolbar
+  const inlineTools = visibleGroups.flatMap(g =>
+    g.tools.filter(t => INLINE_TYPES.has(t.type))
+  );
+
+  // Groups that have popover-only tools (i.e. tools not shown inline)
+  const groupsWithPopover = visibleGroups.filter(g =>
+    g.tools.some(t => !INLINE_TYPES.has(t.type))
+  );
+
+  // Close popover when clicking outside
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!openGroup) return;
+    const handler = (e: PointerEvent) => {
+      // Close if click is outside the toolbar entirely
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setOpenGroup(null);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [openGroup]);
+
+  // Close popover on Escape
+  useEffect(() => {
+    if (!openGroup) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenGroup(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [openGroup]);
+
+  // When a tool is selected from popover, close it
+  const handleSelectTool = (tool: ToolType) => {
+    setOpenGroup(null);
+    onSelectTool(tool);
+  };
 
   return (
     <>
     {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
-    <div data-testid="toolbar" role="toolbar" aria-label="Outils de modélisation" style={{
+    <div ref={toolbarRef} data-testid="toolbar" role="toolbar" aria-label="Outils de modélisation" style={{
       display: 'flex',
       padding: '0 8px',
       background: UI_SURFACE,
@@ -102,14 +157,14 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
       height: 64,
       fontSize: 13,
     }}>
-      {/* Zone gauche : logo + outils (scrollable) */}
+      {/* Zone gauche : logo + inline tools + category buttons */}
       <div style={{
         display: 'flex',
         padding: '0 8px',
         gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flex: 1,
-        overflow: 'hidden',
+        overflow: 'visible',
         height: '100%',
       }}>
         <button
@@ -120,12 +175,12 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           <Logo height={32} />
         </button>
         <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
-        {/* Tools except Déplacer, with inter-group spacing (24px gap = 16px margin + 8px gap) */}
-        {visibleTools.filter(t => t.type !== 'deplacer').map((tool, i, arr) => {
-          // First tool of a new group gets extra margin for visual grouping (Gestalt proximity, ratio 3:1)
+
+        {/* Inline tools with inter-group spacing */}
+        {inlineTools.map((tool, i, arr) => {
           const prevType = i > 0 ? arr[i - 1].type : null;
           const isGroupStart = i > 0 && prevType !== null &&
-            TOOL_GROUP[tool.type] !== TOOL_GROUP[prevType];
+            TOOL_GROUP_ID[tool.type] !== TOOL_GROUP_ID[prevType];
           return (
             <ToolButton
               key={tool.type}
@@ -137,10 +192,44 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             />
           );
         })}
-        {/* "Voir tout" button — visible affordance for hidden tools */}
-        {!isComplet && !showAll && (
+
+        {/* Separator between inline tools and category buttons */}
+        {groupsWithPopover.length > 0 && (
+          <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
+        )}
+
+        {/* Category buttons with popovers */}
+        {groupsWithPopover.map(group => {
+          const popoverTools = group.tools.filter(t => !INLINE_TYPES.has(t.type));
+          const hasActiveTool = group.tools.some(t => t.type === activeTool);
+          const activeToolInGroup = hasActiveTool ? group.tools.find(t => t.type === activeTool) : null;
+          const isOpen = openGroup === group.id;
+
+          return (
+            <div key={group.id} style={{ position: 'relative', flexShrink: 0 }}>
+              <ToolGroupButton
+                group={group}
+                activeToolInGroup={activeToolInGroup}
+                isOpen={isOpen}
+                dimmed={!!dimmed}
+                onClick={() => setOpenGroup(isOpen ? null : group.id)}
+              />
+              {isOpen && (
+                <ToolGroupPopover
+                  group={group}
+                  tools={popoverTools}
+                  activeTool={activeTool}
+                  onSelectTool={(t) => handleSelectTool(activeTool === t ? null : t)}
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {/* "Voir tout" — switches to Complet mode */}
+        {!isComplet && (
           <button
-            onClick={() => setShowMore(true)}
+            onClick={() => onModeChange('complet')}
             aria-label="Plus d'outils"
             style={{
               display: 'flex',
@@ -161,7 +250,6 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
               flexShrink: 0,
             }}
           >
-            {/* 2×2 grid icon */}
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <rect x="3" y="3" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
               <rect x="11" y="3" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -183,7 +271,6 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         marginLeft: MIN_BUTTON_GAP_PX,
         height: '100%',
       }}>
-        {/* Déplacer — position fixe, ne bouge jamais */}
         <ToolButton
           tool={{ type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon }}
           active={activeTool === 'deplacer'}
@@ -212,6 +299,135 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
     </>
   );
 }
+
+// === Category group button (shows micro-icons of contained tools) ===
+
+function ToolGroupButton({ group, activeToolInGroup, isOpen, dimmed, onClick }: {
+  group: ToolGroup;
+  activeToolInGroup: ToolDef | null | undefined;
+  isOpen: boolean;
+  dimmed: boolean;
+  onClick: () => void;
+}) {
+  const hasActive = !!activeToolInGroup;
+  return (
+    <button
+      data-testid={`group-${group.id}`}
+      aria-label={group.label}
+      aria-haspopup="true"
+      aria-expanded={isOpen}
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
+        padding: '4px 6px',
+        background: hasActive ? '#EDE0FA' : group.color,
+        border: hasActive ? `2px solid ${UI_PRIMARY}` : isOpen ? `1.5px solid ${UI_PRIMARY}` : `1px solid ${UI_BORDER}`,
+        borderRadius: 8,
+        minWidth: 64,
+        height: 56,
+        cursor: 'pointer',
+        flexShrink: 0,
+        opacity: dimmed && !hasActive ? 0.5 : 1,
+        transition: 'opacity 0.3s',
+        position: 'relative',
+      }}
+    >
+      {/* Always show chevron — label stays stable */}
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: hasActive ? UI_PRIMARY : UI_TEXT_PRIMARY }}>
+        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span style={{
+        fontSize: 10,
+        fontWeight: 500,
+        color: hasActive ? UI_PRIMARY : UI_TEXT_PRIMARY,
+        whiteSpace: 'nowrap',
+      }}>
+        {group.label}
+      </span>
+      {/* Active tool indicator dot */}
+      {hasActive && (
+        <div style={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: UI_PRIMARY,
+        }} />
+      )}
+    </button>
+  );
+}
+
+// === Popover showing tools within a category ===
+
+function ToolGroupPopover({ group, tools, activeTool, onSelectTool }: {
+  group: ToolGroup;
+  tools: ToolDef[];
+  activeTool: ToolType;
+  onSelectTool: (tool: NonNullable<ToolType>) => void;
+}) {
+  return (
+    <div
+      role="menu"
+      style={{
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        marginTop: 0,
+        background: UI_SURFACE,
+        border: `1px solid ${UI_BORDER}`,
+        borderRadius: 10,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+        zIndex: 50,
+        padding: 6,
+        display: 'grid',
+        gridTemplateColumns: `repeat(${Math.min(tools.length, 3)}, auto)`,
+        gap: 4,
+        animation: 'popover-slide-down 150ms ease-out',
+      }}
+    >
+      {tools.map(tool => (
+        <button
+          key={tool.type}
+          role="menuitem"
+          data-testid={`tool-${tool.type}`}
+          aria-label={tool.label}
+          aria-pressed={activeTool === tool.type}
+          onClick={() => onSelectTool(tool.type)}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            padding: '6px 10px',
+            background: activeTool === tool.type ? '#EDE0FA' : group.color + '80',
+            border: activeTool === tool.type ? `2px solid ${UI_PRIMARY}` : `1px solid ${UI_BORDER}`,
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 500,
+            color: activeTool === tool.type ? UI_PRIMARY : UI_TEXT_PRIMARY,
+            minWidth: 64,
+            minHeight: 64,
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          <tool.Icon />
+          <span>{tool.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// === Individual tool button ===
 
 function ToolButton({ tool, active, dimmed, onClick, extraStyle }: {
   tool: ToolDef;

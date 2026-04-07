@@ -87,20 +87,46 @@ export async function selectPieceById(page: Page, pieceId: string): Promise<void
 
 /**
  * Select a tool by clicking its toolbar button.
- * Auto-expands the toolbar if the tool is hidden (simplified mode).
+ * Handles inline tools, category popovers, and mode expansion.
  */
 export async function selectTool(page: Page, tool: string): Promise<void> {
   const btn = page.locator(`[data-testid="tool-${tool}"]`);
-  if (!await btn.isVisible({ timeout: 500 }).catch(() => false)) {
-    // Tool is hidden — click ⋯ to expand
-    const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
-    if (await moreBtn.isVisible({ timeout: 500 }).catch(() => false)) {
-      await moreBtn.click();
-      await page.waitForTimeout(200);
+
+  // 1. Tool directly visible (inline)
+  if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
+    await btn.click();
+    await page.waitForTimeout(100);
+    return;
+  }
+
+  // 2. Try expanding toolbar ("Voir tout" → switches to Complet mode)
+  const moreBtn = page.locator('[data-testid="toolbar"] button[aria-label="Plus d\'outils"]');
+  if (await moreBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+    await moreBtn.click();
+    await page.waitForTimeout(200);
+  }
+
+  // 3. Tool visible after expansion
+  if (await btn.isVisible({ timeout: 300 }).catch(() => false)) {
+    await btn.click();
+    await page.waitForTimeout(100);
+    return;
+  }
+
+  // 4. Tool is in a category popover — click through group buttons
+  const groups = page.locator('[data-testid="toolbar"] [data-testid^="group-"]');
+  const groupCount = await groups.count();
+  for (let i = 0; i < groupCount; i++) {
+    await groups.nth(i).click();
+    await page.waitForTimeout(200);
+    if (await btn.isVisible({ timeout: 300 }).catch(() => false)) {
+      await btn.click();
+      await page.waitForTimeout(100);
+      return;
     }
   }
-  await btn.click();
-  await page.waitForTimeout(100);
+
+  throw new Error(`Tool "${tool}" not found in toolbar or category popovers`);
 }
 
 /**

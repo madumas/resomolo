@@ -54,12 +54,30 @@ export async function click(page, xMm, yMm) {
 
 export async function tool(page, name) {
   const btn = page.locator(`[data-testid="tool-${name}"]`);
-  if (!await btn.isVisible().catch(() => false)) {
-    await page.locator('button:has-text("+Plus"), button[aria-label="Plus d\'outils"]').first().click().catch(() => {});
-    await page.waitForTimeout(200);
+  if (await btn.isVisible().catch(() => false)) {
+    await btn.click();
+    await page.waitForTimeout(150);
+    return;
   }
-  await btn.click();
-  await page.waitForTimeout(150);
+  // Try "Voir tout" / mode expansion
+  await page.locator('button[aria-label="Plus d\'outils"]').first().click().catch(() => {});
+  await page.waitForTimeout(200);
+  if (await btn.isVisible().catch(() => false)) {
+    await btn.click();
+    await page.waitForTimeout(150);
+    return;
+  }
+  // Try category popovers
+  const groups = page.locator('[data-testid="toolbar"] [data-testid^="group-"]');
+  for (let i = 0; i < await groups.count(); i++) {
+    await groups.nth(i).click();
+    await page.waitForTimeout(200);
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click();
+      await page.waitForTimeout(150);
+      return;
+    }
+  }
 }
 
 export async function ctxClick(page, text) {

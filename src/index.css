@@ -45,6 +45,12 @@ svg g.piece-new {
   animation: piece-pop 150ms ease-out;
 }
 
+/* Toolbar category popover slide-down */
+@keyframes popover-slide-down {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 /* Mobile portrait: larger touch targets + toolbar grid layout */
 @media (max-width: 500px) and (orientation: portrait) {
   button {
