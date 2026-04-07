@@ -4170,4 +4170,118 @@ test.describe('Visual audit — full flow', () => {
     const zeroTick = page.locator('[data-testid="canvas-svg"] line[stroke="#7028E0"]');
     expect.soft(await zeroTick.count()).toBeGreaterThan(0);
   });
+
+  // ── Mobile bottom toolbar tests ──────────────────────────────────────
+
+  test('132 — Mobile portrait : bottom toolbar visible, top toolbar cachée', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await navigateAndReady(page);
+
+    // Top toolbar should be hidden
+    const topToolbar = page.locator('[data-testid="toolbar"]');
+    await expect(topToolbar).not.toBeVisible({ timeout: 2000 });
+
+    // Bottom mobile toolbar should be visible
+    const mobileToolbar = page.locator('[data-testid="mobile-toolbar"]');
+    await expect(mobileToolbar).toBeVisible({ timeout: 2000 });
+
+    await page.screenshot({ path: shot('230-mobile-bottom-toolbar.png'), fullPage: true });
+  });
+
+  test('133 — Mobile portrait : outils essentiels accessibles dans bottom bar', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await navigateAndReady(page);
+
+    // 5 essential tools + "Tout" + Déplacer should be in the bottom bar
+    const mobileToolbar = page.locator('[data-testid="mobile-toolbar"]');
+    for (const tool of ['jeton', 'barre', 'calcul', 'reponse', 'inconnue', 'deplacer']) {
+      const btn = mobileToolbar.locator(`[data-testid="tool-${tool}"]`);
+      await expect(btn).toBeVisible({ timeout: 1000 });
+    }
+
+    // Touch targets >= 48px
+    const buttons = mobileToolbar.locator('button');
+    const count = await buttons.count();
+    for (let i = 0; i < count; i++) {
+      const box = await buttons.nth(i).boundingBox();
+      expect(box).toBeTruthy();
+      if (box) {
+        expect(box.width).toBeGreaterThanOrEqual(48);
+        expect(box.height).toBeGreaterThanOrEqual(48);
+      }
+    }
+  });
+
+  test('134 — Mobile portrait : drawer ouvre tous les outils par groupe', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await navigateAndReady(page);
+
+    // Click "Tout" button to open drawer
+    const toutBtn = page.locator('[data-testid="mobile-toolbar"] button[aria-label="Plus d\'outils"]');
+    await expect(toutBtn).toBeVisible();
+    await toutBtn.click();
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('231-mobile-drawer-open.png'), fullPage: true });
+
+    // Drawer should show tools not in the bottom bar (e.g. boite, schema, etiquette)
+    for (const tool of ['boite', 'schema', 'etiquette']) {
+      await expect(page.locator(`[data-testid="tool-${tool}"]`)).toBeVisible({ timeout: 1000 });
+    }
+  });
+
+  test('135 — Mobile portrait : sélection outil depuis drawer ferme le drawer', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await navigateAndReady(page);
+
+    // Open drawer
+    const toutBtn = page.locator('[data-testid="mobile-toolbar"] button[aria-label="Plus d\'outils"]');
+    await toutBtn.click();
+    await page.waitForTimeout(300);
+
+    // Select Schema from drawer
+    const schemaBtn = page.locator('[data-testid="tool-schema"]');
+    await expect(schemaBtn).toBeVisible();
+    await schemaBtn.click();
+    await page.waitForTimeout(300);
+
+    // Drawer should be closed (schema not visible anymore — it's not in the bottom bar)
+    await expect(schemaBtn).not.toBeVisible({ timeout: 1000 });
+
+    // Status bar should confirm the tool is active
+    const status = page.locator('[data-testid="status-bar"]');
+    await expect(status).toContainText(/schéma/i, { timeout: 2000 });
+
+    await page.screenshot({ path: shot('232-mobile-after-drawer-select.png'), fullPage: true });
+  });
+
+  test('136 — Mobile portrait : placement pièce via bottom toolbar', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await navigateAndReady(page);
+
+    // Select jeton from bottom bar
+    await selectTool(page, 'jeton');
+    await page.waitForTimeout(200);
+
+    // Place on canvas
+    await clickCanvas(page, 100, 60);
+    await page.waitForTimeout(400);
+
+    // Verify piece was placed (jetons render as circles in SVG)
+    const circles = page.locator('[data-testid="canvas-svg"] circle');
+    expect(await circles.count()).toBeGreaterThanOrEqual(1);
+
+    await page.screenshot({ path: shot('233-mobile-piece-placed.png'), fullPage: true });
+  });
+
+  test('137 — Desktop non affecté : top toolbar visible, pas de mobile toolbar', async ({ page }) => {
+    // Default viewport is 1366x768
+    await navigateAndReady(page);
+
+    const topToolbar = page.locator('[data-testid="toolbar"]');
+    await expect(topToolbar).toBeVisible();
+
+    const mobileToolbar = page.locator('[data-testid="mobile-toolbar"]');
+    await expect(mobileToolbar).not.toBeVisible({ timeout: 1000 });
+  });
 });
