@@ -74,6 +74,15 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
       return Math.max(m, mv.y + h);
     }, 0);
     if (maxBottom < maxHeight - MARGIN_BOTTOM || vGap === 2) {
+      // Clamp: no piece may extend below viewBox — overlap is acceptable
+      const limit = maxHeight - MARGIN_BOTTOM;
+      for (const m of moves) {
+        const p = pieceMap.get(m.id);
+        const h = p ? getPieceHeight(p) : 20;
+        if (m.y + h > limit) {
+          m.y = Math.max(MARGIN, limit - h);
+        }
+      }
       addParentedJetons(pieces, moves, parentedJetonIds);
       return moves;
     }

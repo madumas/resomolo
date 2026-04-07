@@ -198,7 +198,6 @@ export function Canvas({
   >(null);
   useEffect(() => { if (!editingPieceId) setEditingArbreField(null); }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
-  const [arrangeTargetBottom, setArrangeTargetBottom] = useState(0);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
@@ -208,17 +207,7 @@ export function Canvas({
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
-  const baseViewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
-  // Extend viewBox to show all content (scroll-free), but Ranger targets baseViewBoxHeight
-  const contentBottom = useMemo(() => {
-    if (pieces.length === 0) return 0;
-    return pieces.reduce((max, p) => {
-      const b = getPieceBounds(p, referenceUnitMm);
-      return Math.max(max, b.y + b.h);
-    }, 0) + 15;
-  }, [pieces, referenceUnitMm]);
-  // During arrangement animation, use max of current and target to prevent any viewBox shrink/jump
-  const viewBoxHeight = Math.max(baseViewBoxHeight, contentBottom, isArranging ? arrangeTargetBottom : 0);
+  const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
@@ -965,16 +954,9 @@ export function Canvas({
   // R7: Ranger button — arrange pieces with animation
   const handleArrange = useCallback(() => {
     if (isArranging) return;
-    const moves = computeArrangement(pieces, referenceUnitMm, baseViewBoxHeight);
+    const moves = computeArrangement(pieces, referenceUnitMm, viewBoxHeight);
     if (moves.length === 0) return;
 
-    // Pre-compute target viewBox height to avoid jump at end of animation
-    const targetBottom = moves.reduce((max, mv) => {
-      const p = pieces.find(pp => pp.id === mv.id);
-      const h = p ? getPieceBounds(p, referenceUnitMm).h : 20;
-      return Math.max(max, mv.y + h);
-    }, 0) + 15;
-    setArrangeTargetBottom(Math.max(targetBottom, contentBottom));
     setIsArranging(true);
 
     // Capture starting positions
