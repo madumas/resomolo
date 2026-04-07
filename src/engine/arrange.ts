@@ -1,5 +1,6 @@
-import type { Piece, Fleche } from '../model/types';
+import type { Piece, Fleche, Arbre } from '../model/types';
 import { BAR_HEIGHT_MM, JETON_DIAMETER_MM } from '../model/types';
+import { computeTreeLayout } from './arbre-layout';
 
 const V_GAP = 15; // mm vertical gap between groups
 const H_GAP = 10; // mm horizontal gap between pieces in a row
@@ -170,9 +171,8 @@ function getPieceWidth(piece: Piece, referenceUnitMm: number): number {
     case 'reponse': return Math.max(100, piece.text.length * 4 + 20);
     case 'tableau': return (piece as any).cols * 12;
     case 'arbre': {
-      const levels = (piece as any).levels || [];
-      const leafCount = levels.reduce((acc: number, l: any) => acc * Math.max(1, (l.options || []).length), 1);
-      return Math.max(60, Math.min(24, leafCount) * 28);
+      const tl = computeTreeLayout((piece as Arbre).levels);
+      return tl.width;
     }
     case 'schema': {
       const bars = (piece as any).bars || [];
@@ -197,8 +197,8 @@ function getPieceHeight(piece: Piece): number {
     case 'reponse': return 22;
     case 'tableau': return (piece as any).rows * 10;
     case 'arbre': {
-      const levels = (piece as any).levels || [];
-      return Math.max(12, levels.length * 30);
+      const tl = computeTreeLayout((piece as Arbre).levels);
+      return tl.height;
     }
     case 'schema': {
       const bars = (piece as any).bars || [];
