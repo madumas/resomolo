@@ -1685,11 +1685,91 @@ export function Canvas({
           editorTop = pt.y - canvasRect.top;
         }
 
-        // Clamp editor position — ensure buttons don't overflow canvas bottom
         const isCalcul = piece.type === 'calcul';
-        const editorTotalHeight = isCalcul ? 100 : 40; // input + operator buttons
+
+        // Piece-matched editor — overlay exactly on piece visual area
+        const pieceBorderRadius = Math.round(3 * mmToPx);
+        let editorMinWidth = 200;
+        let editorFixedHeight: number | undefined;
+        let editorPaddingLeft: number | undefined;
+        let editorTextAlign: 'center' | 'left' | 'right' | undefined;
+        let editorFontWeight: number | string | undefined;
+        let editorFixedWidth = false;
+
+        // Helper: set editor to match an SVG rect (in mm) via CTM
+        const overlayOnBounds = (bx: number, by: number, bw: number, bh: number) => {
+          const tl = new DOMPoint(bx, by).matrixTransform(ctm);
+          const br = new DOMPoint(bx + bw, by + bh).matrixTransform(ctm);
+          editorLeft = tl.x - canvasRect.left;
+          editorTop = tl.y - canvasRect.top;
+          editorMinWidth = Math.max(60, Math.round(br.x - tl.x));
+          editorFixedHeight = Math.round(br.y - tl.y);
+          editorFixedWidth = true;
+        };
+
+        if (isArbreNode && targetRect) {
+          editorMinWidth = targetRect.width;
+        } else if (isArbreLevel) {
+          editorMinWidth = 150;
+        } else if (isCalcul) {
+          const b = getPieceBounds(piece, referenceUnitMm, 0, textScale);
+          overlayOnBounds(b.x, b.y, b.w, b.h);
+          editorPaddingLeft = Math.round(6 * mmToPx);
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'reponse') {
+          const b = getPieceBounds(piece, referenceUnitMm, 0, textScale);
+          overlayOnBounds(b.x, b.y, b.w, b.h);
+          editorPaddingLeft = Math.round(6 * mmToPx);
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'etiquette') {
+          const b = getPieceBounds(piece, referenceUnitMm, 0, textScale);
+          overlayOnBounds(b.x, b.y, b.w, b.h);
+          editorPaddingLeft = Math.round(2 * mmToPx);
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'barre' && editingBarField === 'value') {
+          // Overlay on bar rect, centered text
+          const bw = (piece as Barre).sizeMultiplier * referenceUnitMm;
+          overlayOnBounds(piece.x, piece.y, bw, BAR_HEIGHT_MM);
+          editorTextAlign = 'center';
+          editorFontWeight = 600;
+        } else if (piece.type === 'barre') {
+          // Label left of bar — overlay on bar rect height, ending at bar left edge
+          const barH = BAR_HEIGHT_MM;
+          const labelW = Math.max(40, (piece as Barre).label.length * 6 + 16);
+          overlayOnBounds(piece.x - labelW - 4, piece.y, labelW, barH);
+          editorTextAlign = 'right';
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'boite' && editingBarField === 'value') {
+          // Overlay on boite rect, centered text
+          overlayOnBounds(piece.x, piece.y, (piece as Boite).width, (piece as Boite).height);
+          editorTextAlign = 'center';
+          editorFontWeight = 600;
+        } else if (piece.type === 'boite') {
+          // Label above boite — editor spans box width above it
+          overlayOnBounds(piece.x, piece.y - 10, (piece as Boite).width, 10);
+          editorPaddingLeft = Math.round(4 * mmToPx);
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'inconnue') {
+          overlayOnBounds(piece.x - 6, piece.y - 6, 12, 12);
+          editorTextAlign = 'center';
+          editorFontWeight = 700;
+        } else if (piece.type === 'fleche') {
+          // Position at arrow midpoint — use targetRect if available, else fallback
+          if (targetRect && targetRect.width > 0) {
+            editorMinWidth = Math.max(80, targetRect.width + 20);
+            editorFixedWidth = true;
+          }
+          editorFontWeight = 'normal';
+        } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
+          // Title above diagram — width of piece
+          const pw = (piece as DiagrammeBandes).width || 120;
+          overlayOnBounds(piece.x, piece.y - 8, pw, 8);
+          editorFontWeight = 'normal';
+        }
+
+        // Clamp after repositioning
         editorLeft = Math.max(8, editorLeft);
-        editorTop = Math.max(8, Math.min(editorTop, canvasRect.height - editorTotalHeight - 8));
+        editorTop = Math.max(8, Math.min(editorTop, canvasRect.height - (isCalcul ? 100 : 40) - 8));
 
         return (
           <InlineEditor
@@ -1700,12 +1780,16 @@ export function Canvas({
             placeholder={placeholder}
             isCalcul={isCalcul}
             monospace={isCalcul}
-            fontSize={svgFontSizeMm * mmToPx}
+            fontSize={svgFontSizeMm * textScale * mmToPx}
             maxLength={piece.type === 'arbre' ? (editingArbreField?.type === 'node' ? 20 : 30) : undefined}
-            minWidth={isArbreNode && targetRect ? targetRect.width : isArbreLevel ? 150 : 200}
-            fixedHeight={isArbreNode && targetRect ? targetRect.height : undefined}
-            textAlign={isArbreNode ? 'center' : undefined}
+            minWidth={editorMinWidth}
+            fixedHeight={isArbreNode && targetRect ? targetRect.height : editorFixedHeight}
+            textAlign={isArbreNode ? 'center' : editorTextAlign}
             compact={isArbreNode}
+            fixedWidth={editorFixedWidth}
+            borderRadiusPx={pieceBorderRadius}
+            paddingLeftPx={editorPaddingLeft}
+            fontWeight={editorFontWeight}
             onCommit={(value) => {
               if (piece.type === 'arbre' && editingArbreField) {
                 const arbre = piece as Arbre;
@@ -2355,7 +2439,7 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, fixedHeight, textAlign, compact, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, fixedWidth, fixedHeight, textAlign, compact, borderRadiusPx, paddingLeftPx, fontWeight, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
@@ -2363,9 +2447,13 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
   monospace?: boolean;
   maxLength?: number;
   minWidth?: number;
+  fixedWidth?: boolean;
   fixedHeight?: number;
   textAlign?: 'center' | 'left' | 'right';
   compact?: boolean;
+  borderRadiusPx?: number;
+  paddingLeftPx?: number;
+  fontWeight?: number | string;
   onCommit: (value: string) => void;
   onCancel: () => void;
   onTab?: (value: string) => void;
@@ -2405,6 +2493,10 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
     }, 0);
   };
 
+  const resolvedRadius = compact ? 3 : (borderRadiusPx ?? 6);
+  const resolvedWeight = fontWeight ?? 600;
+  const useWidth = fixedWidth || !!fixedHeight;
+
   return (
     <div
       style={{ position: 'absolute', left, top, zIndex: 20 }}
@@ -2430,15 +2522,15 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
             commit();
           }}
           style={{
-            width: fixedHeight ? minWidth : undefined,
-            minWidth: fixedHeight ? undefined : minWidth,
+            width: useWidth ? minWidth : undefined,
+            minWidth: useWidth ? undefined : minWidth,
             height: fixedHeight || Math.max(28, fontSize * 1.8),
             border: `2px solid #7028e0`,
-            borderRadius: compact ? 3 : 6,
-            padding: compact ? '0 2px' : '2px 28px 2px 6px',
+            borderRadius: resolvedRadius,
+            padding: compact ? '0 2px' : `2px 28px 2px ${paddingLeftPx ?? 6}px`,
             fontSize: Math.round(fontSize),
             fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
-            fontWeight: 600,
+            fontWeight: resolvedWeight,
             textAlign: textAlign || 'left',
             background: '#fff',
             outline: 'none',
