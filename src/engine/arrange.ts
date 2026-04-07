@@ -114,20 +114,24 @@ function layoutWithGap(
     }
   }
 
-  // Place Réponse(s) bottom-right — anchored to maxHeight, not after content
+  // Place Réponse(s) bottom-right — use available space on current row, or next row
   const reponses = groups.get('reponse');
   if (reponses && reponses.length > 0) {
-    // Calculate total height needed for réponses
-    const reponseHeights = reponses.map(p => getPieceHeight(p));
-    const totalReponseH = reponseHeights.reduce((s, h) => s + h, 0) + (reponses.length - 1) * vGap;
-    // Anchor from bottom of viewBox, but not above the content
-    const contentBottom = currentY + rowMaxHeight;
-    const reponseY = Math.max(contentBottom + vGap, maxHeight - MARGIN - totalReponseH);
-    let ry = reponseY;
-    for (let i = 0; i < reponses.length; i++) {
-      const w = getPieceWidth(reponses[i], referenceUnitMm);
-      moves.push({ id: reponses[i].id, x: CANVAS_MAX_X - w, y: ry });
-      ry += reponseHeights[i] + vGap;
+    for (const piece of reponses) {
+      const w = getPieceWidth(piece, referenceUnitMm);
+      const h = getPieceHeight(piece);
+      const rightX = CANVAS_MAX_X - w;
+
+      // Try to fit on current row (right-aligned) if there's enough horizontal space
+      if (rightX >= currentX + H_GAP) {
+        moves.push({ id: piece.id, x: rightX, y: currentY });
+        rowMaxHeight = Math.max(rowMaxHeight, h);
+      } else {
+        // Wrap to next row, right-aligned
+        currentY += rowMaxHeight + vGap;
+        rowMaxHeight = h;
+        moves.push({ id: piece.id, x: rightX, y: currentY });
+      }
     }
   }
 
