@@ -63,7 +63,7 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
 
   // Try layout with decreasing vertical gaps until it fits
   for (const vGap of [V_GAP, 8, 4, 2]) {
-    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected);
+    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected, maxHeight);
     const maxY = moves.reduce((m, mv) => Math.max(m, mv.y), 0);
     if (maxY < maxHeight - MARGIN || vGap === 2) {
       // Add parented jetons: keep their relative offset from parent boîte
@@ -79,6 +79,7 @@ function layoutWithGap(
   referenceUnitMm: number,
   vGap: number,
   flecheConnected: Set<string>,
+  maxHeight = 350,
 ): ArrangementMove[] {
   const moves: ArrangementMove[] = [];
   let currentX = MARGIN;
@@ -113,16 +114,20 @@ function layoutWithGap(
     }
   }
 
-  // Place Réponse(s) bottom-right — anchored to the last row
+  // Place Réponse(s) bottom-right — anchored to maxHeight, not after content
   const reponses = groups.get('reponse');
   if (reponses && reponses.length > 0) {
-    // Start a new row for réponses
-    currentY += rowMaxHeight + vGap;
-    for (const piece of reponses) {
-      const w = getPieceWidth(piece, referenceUnitMm);
-      // Align right: x = CANVAS_MAX_X - width
-      moves.push({ id: piece.id, x: CANVAS_MAX_X - w, y: currentY });
-      currentY += getPieceHeight(piece) + vGap;
+    // Calculate total height needed for réponses
+    const reponseHeights = reponses.map(p => getPieceHeight(p));
+    const totalReponseH = reponseHeights.reduce((s, h) => s + h, 0) + (reponses.length - 1) * vGap;
+    // Anchor from bottom of viewBox, but not above the content
+    const contentBottom = currentY + rowMaxHeight;
+    const reponseY = Math.max(contentBottom + vGap, maxHeight - MARGIN - totalReponseH);
+    let ry = reponseY;
+    for (let i = 0; i < reponses.length; i++) {
+      const w = getPieceWidth(reponses[i], referenceUnitMm);
+      moves.push({ id: reponses[i].id, x: CANVAS_MAX_X - w, y: ry });
+      ry += reponseHeights[i] + vGap;
     }
   }
 
