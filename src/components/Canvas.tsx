@@ -198,6 +198,7 @@ export function Canvas({
   >(null);
   useEffect(() => { if (!editingPieceId) setEditingArbreField(null); }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
+  const [arrangeTargetBottom, setArrangeTargetBottom] = useState(0);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
@@ -216,7 +217,8 @@ export function Canvas({
       return Math.max(max, b.y + b.h);
     }, 0) + 15;
   }, [pieces, referenceUnitMm]);
-  const viewBoxHeight = Math.max(baseViewBoxHeight, contentBottom);
+  // During arrangement animation, use pre-computed target height to avoid jump
+  const viewBoxHeight = Math.max(baseViewBoxHeight, isArranging ? arrangeTargetBottom : contentBottom);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
@@ -966,6 +968,13 @@ export function Canvas({
     const moves = computeArrangement(pieces, referenceUnitMm, baseViewBoxHeight);
     if (moves.length === 0) return;
 
+    // Pre-compute target viewBox height to avoid jump at end of animation
+    const targetBottom = moves.reduce((max, mv) => {
+      const p = pieces.find(pp => pp.id === mv.id);
+      const h = p ? getPieceBounds(p, referenceUnitMm).h : 20;
+      return Math.max(max, mv.y + h);
+    }, 0) + 15;
+    setArrangeTargetBottom(Math.max(targetBottom, contentBottom));
     setIsArranging(true);
 
     // Capture starting positions
