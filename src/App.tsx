@@ -13,6 +13,8 @@ import { useTutorial } from './hooks/useTutorial';
 import { useSessionTimer } from './hooks/useSessionTimer';
 import { useTTS } from './hooks/useTTS';
 import { Toolbar } from './components/Toolbar';
+import { MobileToolbar } from './components/MobileToolbar';
+import { useViewport } from './hooks/useViewport';
 import { ActionBar } from './components/ActionBar';
 import { ProblemZone } from './components/ProblemZone';
 import { Canvas } from './components/Canvas';
@@ -39,6 +41,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [undoManager, setUndoManager] = useState<UndoManager>(
     () => initialUndoManager
   );
+  const { isMobilePortrait } = useViewport();
   const [activeTool, setActiveTool] = useState<ToolType>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [editingPieceId, setEditingPieceId] = useState<string | null>(null);
@@ -513,26 +516,18 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       style={{ display: 'flex', flexDirection: 'column', height: '100%', zoom: settings.textScale !== 1 ? settings.textScale : undefined }}
       onContextMenu={e => e.preventDefault()}
     >
-      {/* Mobile portrait advisory */}
-      {typeof window !== 'undefined' && window.innerWidth < 500 && window.innerHeight > window.innerWidth && (
-        <div style={{
-          padding: '6px 16px', background: '#FEF3C7', borderBottom: '1px solid #F59E0B',
-          fontSize: 12, color: '#92400E', textAlign: 'center', flexShrink: 0,
-        }}>
-          Pour une meilleure expérience, tourne ton appareil en mode paysage.
-        </div>
+      {/* Toolbar en haut (desktop/tablette) ou en bas (mobile portrait) */}
+      {!isMobilePortrait && (
+        <Toolbar
+          activeTool={activeTool}
+          toolbarMode={settings.toolbarMode}
+          onSelectTool={handleSelectTool}
+          onModeChange={(mode) => setSettings(prev => ({ ...prev, toolbarMode: mode }))}
+          onNewProblem={() => setShowProblemSelector(true)}
+          dimmed={isAmorcage}
+          availablePieces={current.availablePieces}
+        />
       )}
-
-      {/* Toolbar en haut — comme GéoMolo */}
-      <Toolbar
-        activeTool={activeTool}
-        toolbarMode={settings.toolbarMode}
-        onSelectTool={handleSelectTool}
-        onModeChange={(mode) => setSettings(prev => ({ ...prev, toolbarMode: mode }))}
-        onNewProblem={() => setShowProblemSelector(true)}
-        dimmed={isAmorcage}
-        availablePieces={current.availablePieces}
-      />
 
       {/* Status bar — sous la toolbar, comme GéoMolo */}
       <StatusBar
@@ -577,7 +572,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       />}
 
       {/* Canvas */}
-      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', paddingBottom: isMobilePortrait ? 64 : 0 }}>
         <Canvas
           pieces={pieces}
           referenceUnitMm={current.referenceUnitMm}
@@ -644,6 +639,17 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
         activeProfile={settings.activeProfile}
       />
+
+      {/* Mobile bottom toolbar */}
+      {isMobilePortrait && (
+        <MobileToolbar
+          activeTool={activeTool}
+          toolbarMode={settings.toolbarMode}
+          onSelectTool={handleSelectTool}
+          dimmed={isAmorcage}
+          availablePieces={current.availablePieces}
+        />
+      )}
 
       {/* Adult guide overlay */}
       {showAdultGuide && <AdultGuide onClose={handleCloseAdultGuide} />}

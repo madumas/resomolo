@@ -17,13 +17,13 @@ interface ToolbarProps {
   availablePieces?: string[] | null;
 }
 
-type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
+export type ToolDef = { type: NonNullable<ToolType>; label: string; Icon: React.ComponentType };
 
 // === Tool group definitions (source of truth) ===
 // Labels = verbes d'action familiers dès le 1er cycle (consensus pédago + neuropsych)
 // Colors = palette daltonien-safe (bleu/jaune/orange/violet/rose, pas vert/gris)
 
-type ToolGroup = {
+export type ToolGroup = {
   id: string;
   label: string;
   color: string;
@@ -34,7 +34,7 @@ type ToolGroup = {
   essentiel: boolean;
 };
 
-const TOOL_GROUPS: ToolGroup[] = [
+export const TOOL_GROUPS: ToolGroup[] = [
   {
     id: 'compter', label: 'Compter', color: '#E8F0FE', essentiel: true,
     tools: [

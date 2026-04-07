@@ -51,6 +51,12 @@ svg g.piece-new {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile toolbar drawer slide-up */
+@keyframes mobile-drawer-up {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+
 /* Mobile portrait: larger touch targets + toolbar grid layout */
 @media (max-width: 500px) and (orientation: portrait) {
   button {

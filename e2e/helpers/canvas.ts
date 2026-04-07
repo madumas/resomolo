@@ -114,7 +114,7 @@ export async function selectTool(page: Page, tool: string): Promise<void> {
   }
 
   // 4. Tool is in a category popover — click through group buttons
-  const groups = page.locator('[data-testid="toolbar"] [data-testid^="group-"]');
+  const groups = page.locator('[data-testid^="group-"]');
   const groupCount = await groups.count();
   for (let i = 0; i < groupCount; i++) {
     await groups.nth(i).click();
@@ -126,7 +126,19 @@ export async function selectTool(page: Page, tool: string): Promise<void> {
     }
   }
 
-  throw new Error(`Tool "${tool}" not found in toolbar or category popovers`);
+  // 5. Mobile toolbar drawer — click "Plus d'outils" on mobile-toolbar
+  const mobilePlus = page.locator('[data-testid="mobile-toolbar"] button[aria-label="Plus d\'outils"]');
+  if (await mobilePlus.isVisible({ timeout: 500 }).catch(() => false)) {
+    await mobilePlus.click();
+    await page.waitForTimeout(300);
+    if (await btn.isVisible({ timeout: 300 }).catch(() => false)) {
+      await btn.click();
+      await page.waitForTimeout(100);
+      return;
+    }
+  }
+
+  throw new Error(`Tool "${tool}" not found in toolbar, popovers, or mobile drawer`);
 }
 
 /**
