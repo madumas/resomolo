@@ -86,11 +86,12 @@ function layoutWithGap(
   let rowMaxHeight = 0;
   const FLECHE_EXTRA = 30; // extra horizontal space between fleche-connected pieces
 
+  // Layout all types except reponse in normal flow
   for (const type of LAYOUT_ORDER) {
+    if (type === 'reponse') continue; // handled separately below
     const group = groups.get(type);
     if (!group || group.length === 0) continue;
 
-    // Sort: barres and others by y then x (already sorted for jetons by color above)
     if (type !== 'jeton') {
       group.sort((a, b) => a.y - b.y || a.x - b.x);
     }
@@ -99,7 +100,6 @@ function layoutWithGap(
       const w = getPieceWidth(piece, referenceUnitMm);
       const h = getPieceHeight(piece);
 
-      // Wrap to next row if this piece doesn't fit horizontally
       if (currentX + w > CANVAS_MAX_X && currentX > MARGIN) {
         currentX = MARGIN;
         currentY += rowMaxHeight + vGap;
@@ -110,6 +110,19 @@ function layoutWithGap(
       const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
       currentX += w + H_GAP + extra;
       rowMaxHeight = Math.max(rowMaxHeight, h);
+    }
+  }
+
+  // Place Réponse(s) bottom-right — anchored to the last row
+  const reponses = groups.get('reponse');
+  if (reponses && reponses.length > 0) {
+    // Start a new row for réponses
+    currentY += rowMaxHeight + vGap;
+    for (const piece of reponses) {
+      const w = getPieceWidth(piece, referenceUnitMm);
+      // Align right: x = CANVAS_MAX_X - width
+      moves.push({ id: piece.id, x: CANVAS_MAX_X - w, y: currentY });
+      currentY += getPieceHeight(piece) + vGap;
     }
   }
 
