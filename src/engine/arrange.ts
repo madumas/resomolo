@@ -114,9 +114,10 @@ function layoutWithGap(
         rowMaxHeight = 0;
       }
 
-      // Réponse: align right on its row
+      // Réponse: align right + bottom of its row
       const px = type === 'reponse' ? Math.max(currentX, CANVAS_MAX_X - w) : currentX;
-      moves.push({ id: piece.id, x: px, y: currentY });
+      const py = type === 'reponse' && rowMaxHeight > h ? currentY + rowMaxHeight - h : currentY;
+      moves.push({ id: piece.id, x: px, y: py });
       const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
       currentX += w + H_GAP + extra;
       rowMaxHeight = Math.max(rowMaxHeight, h);
