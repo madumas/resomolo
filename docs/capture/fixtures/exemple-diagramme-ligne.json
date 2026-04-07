@@ -16,11 +16,9 @@
       "width": 120,
       "height": 90,
       "points": [
-        { "label": "Lun", "value": 2 },
-        { "label": "Mar", "value": 5 },
-        { "label": "Mer", "value": 8 },
-        { "label": "Jeu", "value": 4 },
-        { "label": "Ven", "value": 6 }
+        { "label": "Lun", "value": 3 },
+        { "label": "Mar", "value": 7 },
+        { "label": "Mer", "value": 5 }
       ]
     }
   ]
