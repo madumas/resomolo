@@ -1503,6 +1503,11 @@ export function Canvas({
             fieldKey = `__arbre_level_${levelIndex}`;
             svgFontSizeMm = 6; // T2
           }
+        } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
+          initialValue = (piece as any).title ?? '';
+          placeholder = 'Titre du diagramme...';
+          fieldKey = 'title';
+          svgFontSizeMm = 5.5;
         } else {
           return null;
         }

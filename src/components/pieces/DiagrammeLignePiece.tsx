@@ -54,12 +54,12 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
         fill="#FAFAFA" stroke={isSelected ? 'none' : '#E0DDE8'} strokeWidth={0.5} />
 
       {/* Title */}
-      {title && (
-        <text x={x + width / 2} y={y + 5} textAnchor="middle" dominantBaseline="central"
-          fontSize={T2 * ts} fontWeight="600" fill="#1E1A2E">
-          {title}
-        </text>
-      )}
+      <text x={x + width / 2} y={y + 5} textAnchor="middle" dominantBaseline="central"
+        fontSize={T2 * ts} fontWeight="600" fill={title ? '#1E1A2E' : '#B0A8C0'}
+        opacity={title ? 1 : 0.5}
+        data-edit-target={piece.id}>
+        {title || 'Titre...'}
+      </text>
 
       {/* Horizontal grid lines */}
       {ticks.map((v, i) => (

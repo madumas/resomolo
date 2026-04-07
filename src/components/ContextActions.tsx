@@ -613,7 +613,15 @@ export function ContextActions({
           <CtxBtn onClick={() => setArbreSubmenu('none')} back>←</CtxBtn>
           {piece.levels.map((level, li) => (
             <React.Fragment key={li}>
-              <CtxBtn onClick={() => {}} disabled>{level.name || `Choix ${li + 1}`}: {level.options.length}</CtxBtn>
+              <CtxBtn onClick={() => {
+                if (level.options.length > 1) {
+                  const newLevels = piece.levels.map((l, i) =>
+                    i === li ? { ...l, options: l.options.slice(0, -1) } : l
+                  );
+                  onEditPiece(piece.id, { levels: newLevels });
+                }
+              }} disabled={level.options.length <= 1}>−</CtxBtn>
+              <CtxBtn onClick={() => {}} disabled>{level.name || `Choix ${li + 1}`} ×{level.options.length}</CtxBtn>
               <CtxBtn onClick={() => {
                 if (level.options.length < 6) {
                   const newLevels = piece.levels.map((l, i) =>
@@ -623,14 +631,6 @@ export function ContextActions({
                   onAddNode();
                 }
               }} disabled={level.options.length >= 6}>+</CtxBtn>
-              <CtxBtn onClick={() => {
-                if (level.options.length > 1) {
-                  const newLevels = piece.levels.map((l, i) =>
-                    i === li ? { ...l, options: l.options.slice(0, -1) } : l
-                  );
-                  onEditPiece(piece.id, { levels: newLevels });
-                }
-              }} disabled={level.options.length <= 1}>−</CtxBtn>
             </React.Fragment>
           ))}
         </>
