@@ -94,6 +94,13 @@ export function ContextActions({
     fn();
   };
 
+  // Diagramme submenu states
+  const [bandesSubmenu, setBandesSubmenu] = useState<'none' | 'data'>('none');
+  const [ligneSubmenu, setLigneSubmenu] = useState<'none' | 'data'>('none');
+  // Local editing state for inline inputs (initialized from piece data when submenu opens)
+  const [editingCategories, setEditingCategories] = useState<{ label: string; value: number; couleur: string }[]>([]);
+  const [editingPoints, setEditingPoints] = useState<{ label: string; value: number }[]>([]);
+
   // Schema submenu state
   const [schemaSubmenu, setSchemaSubmenu] = useState<'none' | 'type' | 'taille'>('none');
 
@@ -113,6 +120,8 @@ export function ContextActions({
     setDroiteSubmenu('none');
     setTableauSubmenu('none');
     setArbreSubmenu('none');
+    setBandesSubmenu('none');
+    setLigneSubmenu('none');
     setSchemaSubmenu('none');
   }, [piece.id]);
 
@@ -133,6 +142,11 @@ export function ContextActions({
   const maxH = placeAbove ? spaceAbove : spaceBelow;
 
   return (
+    <>
+    {/* Hide native number input spinners — too small for TDC accessibility */}
+    <style>{`[data-testid="context-actions"] input[type="number"]::-webkit-inner-spin-button,
+[data-testid="context-actions"] input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+[data-testid="context-actions"] input[type="number"] { -moz-appearance: textfield; }`}</style>
     <div
       data-testid="context-actions"
       style={{
@@ -739,23 +753,14 @@ export function ContextActions({
         </>
       )}
 
-      {/* DiagrammeBandes — actions contextuelles */}
-      {isDiagrammeBandes(piece) && (
+      {/* DiagrammeBandes — L1 compact */}
+      {isDiagrammeBandes(piece) && bandesSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
-          {piece.categories.map((cat, i) => (
-            <CtxBtn key={`cat-${i}`} onClick={() => {
-              const newLabel = prompt('Catégorie :', cat.label);
-              if (newLabel === null) return;
-              const newValue = prompt('Valeur :', String(cat.value));
-              if (newValue === null) return;
-              const parsed = parseFloat(newValue);
-              if (isNaN(parsed)) return;
-              const newCats = [...piece.categories];
-              newCats[i] = { ...newCats[i], label: newLabel, value: parsed };
-              onEditPiece(piece.id, { categories: newCats });
-            }}>{cat.label}: {cat.value}</CtxBtn>
-          ))}
+          <CtxBtn onClick={() => {
+            setEditingCategories(piece.categories.map(c => ({ ...c })));
+            setBandesSubmenu('data');
+          }}>Données {piece.categories.length}</CtxBtn>
           {piece.categories.length < CHART_MAX_CATEGORIES && (
             <CtxBtn onClick={() => {
               const partColors = ['bleu', 'rouge', 'vert', 'jaune'] as const;
@@ -766,28 +771,57 @@ export function ContextActions({
           {piece.categories.length > 1 && (
             <CtxBtn onClick={() => {
               onEditPiece(piece.id, { categories: piece.categories.slice(0, -1) });
-            }}>− Bande</CtxBtn>
+            }} destructive>Retirer bande</CtxBtn>
           )}
         </>
       )}
+      {/* DiagrammeBandes — sous-menu Données (inline inputs per category) */}
+      {isDiagrammeBandes(piece) && bandesSubmenu === 'data' && (
+        <>
+          <CtxBtn onClick={() => {
+            onEditPiece(piece.id, { categories: editingCategories as any });
+            setBandesSubmenu('none');
+          }} back>←</CtxBtn>
+          {editingCategories.map((cat, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}
+              onPointerDown={e => e.stopPropagation()}>
+              <input type="text" value={cat.label} placeholder="Nom..."
+                onChange={e => {
+                  const updated = [...editingCategories];
+                  updated[i] = { ...updated[i], label: e.target.value };
+                  setEditingCategories(updated);
+                }}
+                onBlur={() => onEditPiece(piece.id, { categories: editingCategories as any })}
+                style={{
+                  flex: 1, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                  border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                  outline: 'none',
+                }} />
+              <input type="number" value={cat.value} min={0}
+                onChange={e => {
+                  const updated = [...editingCategories];
+                  updated[i] = { ...updated[i], value: parseFloat(e.target.value) || 0 };
+                  setEditingCategories(updated);
+                }}
+                onBlur={() => onEditPiece(piece.id, { categories: editingCategories as any })}
+                style={{
+                  width: 64, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                  border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                  textAlign: 'right', outline: 'none',
+                }} />
+            </div>
+          ))}
+        </>
+      )}
 
-      {/* DiagrammeLigne — actions contextuelles */}
-      {piece.type === 'diagrammeLigne' && (
+      {/* DiagrammeLigne — L1 compact */}
+      {piece.type === 'diagrammeLigne' && ligneSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
-          {(piece as any).points.map((pt: any, i: number) => (
-            <CtxBtn key={`pt-${i}`} onClick={() => {
-              const newLabel = prompt('Étiquette :', pt.label);
-              if (newLabel === null) return;
-              const newValue = prompt('Valeur :', String(pt.value));
-              if (newValue === null) return;
-              const parsed = parseFloat(newValue);
-              if (isNaN(parsed)) return;
-              const newPts = [...(piece as any).points];
-              newPts[i] = { ...newPts[i], label: newLabel, value: parsed };
-              onEditPiece(piece.id, { points: newPts });
-            }}>{pt.label}: {pt.value}</CtxBtn>
-          ))}
+          <CtxBtn onClick={() => {
+            setEditingPoints((piece as any).points.map((p: any) => ({ ...p })));
+            setLigneSubmenu('data');
+          }}>Points {(piece as any).points.length}</CtxBtn>
           {(piece as any).points.length < CHART_MAX_CATEGORIES && (
             <CtxBtn onClick={() => {
               const newPt = { label: '', value: 0 };
@@ -797,8 +831,46 @@ export function ContextActions({
           {(piece as any).points.length > 1 && (
             <CtxBtn onClick={() => {
               onEditPiece(piece.id, { points: (piece as any).points.slice(0, -1) });
-            }}>− Point</CtxBtn>
+            }} destructive>Retirer point</CtxBtn>
           )}
+        </>
+      )}
+      {/* DiagrammeLigne — sous-menu Points (inline inputs per point) */}
+      {piece.type === 'diagrammeLigne' && ligneSubmenu === 'data' && (
+        <>
+          <CtxBtn onClick={() => {
+            onEditPiece(piece.id, { points: editingPoints });
+            setLigneSubmenu('none');
+          }} back>←</CtxBtn>
+          {editingPoints.map((pt, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}
+              onPointerDown={e => e.stopPropagation()}>
+              <input type="text" value={pt.label} placeholder="Nom..."
+                onChange={e => {
+                  const updated = [...editingPoints];
+                  updated[i] = { ...updated[i], label: e.target.value };
+                  setEditingPoints(updated);
+                }}
+                onBlur={() => onEditPiece(piece.id, { points: editingPoints })}
+                style={{
+                  flex: 1, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                  border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                  outline: 'none',
+                }} />
+              <input type="number" value={pt.value} min={0}
+                onChange={e => {
+                  const updated = [...editingPoints];
+                  updated[i] = { ...updated[i], value: parseFloat(e.target.value) || 0 };
+                  setEditingPoints(updated);
+                }}
+                onBlur={() => onEditPiece(piece.id, { points: editingPoints })}
+                style={{
+                  width: 64, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                  border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                  textAlign: 'right', outline: 'none',
+                }} />
+            </div>
+          ))}
         </>
       )}
 
@@ -808,7 +880,7 @@ export function ContextActions({
       )}
 
       {/* Delete — micro-confirmation "Sûr?" (2s timer). Hidden inside submenus. */}
-      {onDeletePiece && !piece.locked && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && (
+      {onDeletePiece && !piece.locked && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && (
         <CtxBtn
           testId="ctx-delete"
           destructive
@@ -824,6 +896,7 @@ export function ContextActions({
         </CtxBtn>
       )}
     </div>
+    </>
   );
 }
 
