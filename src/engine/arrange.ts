@@ -4,7 +4,7 @@ import { BAR_HEIGHT_MM, JETON_DIAMETER_MM } from '../model/types';
 const V_GAP = 15; // mm vertical gap between groups
 const H_GAP = 10; // mm horizontal gap between pieces in a row
 const MARGIN = 15; // mm from canvas edge
-const CANVAS_MAX_X = 480; // mm (CANVAS_WIDTH_MM - margin)
+const CANVAS_MAX_X = 470; // mm (CANVAS_WIDTH_MM - 2*margin)
 
 export interface ArrangementMove {
   id: string;
@@ -81,7 +81,9 @@ function layoutWithGap(
   flecheConnected: Set<string>,
 ): ArrangementMove[] {
   const moves: ArrangementMove[] = [];
+  let currentX = MARGIN;
   let currentY = MARGIN;
+  let rowMaxHeight = 0;
   const FLECHE_EXTRA = 30; // extra horizontal space between fleche-connected pieces
 
   for (const type of LAYOUT_ORDER) {
@@ -93,13 +95,11 @@ function layoutWithGap(
       group.sort((a, b) => a.y - b.y || a.x - b.x);
     }
 
-    let currentX = MARGIN;
-    let rowMaxHeight = 0;
-
     for (const piece of group) {
       const w = getPieceWidth(piece, referenceUnitMm);
       const h = getPieceHeight(piece);
 
+      // Wrap to next row if this piece doesn't fit horizontally
       if (currentX + w > CANVAS_MAX_X && currentX > MARGIN) {
         currentX = MARGIN;
         currentY += rowMaxHeight + vGap;
@@ -107,13 +107,10 @@ function layoutWithGap(
       }
 
       moves.push({ id: piece.id, x: currentX, y: currentY });
-      // Extra spacing if this piece is connected by a flèche
       const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
       currentX += w + H_GAP + extra;
       rowMaxHeight = Math.max(rowMaxHeight, h);
     }
-
-    currentY += rowMaxHeight + vGap;
   }
 
   return moves;

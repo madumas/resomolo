@@ -192,7 +192,7 @@ export function Canvas({
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [editingBarField, setEditingBarField] = useState<'label' | 'value' | null>(null);
   const [editingArbreField, setEditingArbreField] = useState<
-    | { type: 'node'; levelIndex: number; optionIndex: number }
+    | { type: 'node'; levelIndex: number; optionIndex: number; nodeIndex: number }
     | { type: 'level'; levelIndex: number }
     | null
   >(null);
@@ -207,7 +207,16 @@ export function Canvas({
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
-  const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
+  const baseViewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
+  // Extend viewBox if pieces are placed below the visible area
+  const maxPieceBottom = useMemo(() => {
+    if (pieces.length === 0) return 0;
+    return pieces.reduce((max, p) => {
+      const b = getPieceBounds(p, referenceUnitMm);
+      return Math.max(max, b.y + b.h);
+    }, 0);
+  }, [pieces, referenceUnitMm]);
+  const viewBoxHeight = Math.max(baseViewBoxHeight, maxPieceBottom + 20);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
@@ -432,43 +441,42 @@ export function Canvas({
         }
         return;
       }
-      // Arbre — 1st click selects, 2nd click on node/level enters edit mode
-      if (isArbre(hitPiece)) {
-        if (hitPiece.id === selectedPieceId) {
-          const arbre = hitPiece as Arbre;
-          const treeLayout = computeTreeLayout(arbre.levels);
-          const relX = pos.x - arbre.x;
-          const relY = pos.y - arbre.y;
-          const hitPad = 4; // mm — enlarged hit area for TDC
+      // Arbre — click on node/level enters edit mode directly (like tableau cells)
+      if (isArbre(hitPiece) && !activeTool) {
+        const arbre = hitPiece as Arbre;
+        const treeLayout = computeTreeLayout(arbre.levels);
+        const relX = pos.x - arbre.x;
+        const relY = pos.y - arbre.y;
+        const hitPad = 4; // mm — enlarged hit area for TDC
 
-          // Check nodes
-          let found = false;
-          for (const node of treeLayout.nodes) {
-            if (Math.abs(relX - node.x) <= ARBRE_NODE_W_MM / 2 + hitPad &&
-                Math.abs(relY - node.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
-              setEditingArbreField({ type: 'node', levelIndex: node.levelIndex, optionIndex: node.optionIndex });
+        // Check nodes
+        let found = false;
+        for (let ni = 0; ni < treeLayout.nodes.length; ni++) {
+          const node = treeLayout.nodes[ni];
+          if (Math.abs(relX - node.x) <= ARBRE_NODE_W_MM / 2 + hitPad &&
+              Math.abs(relY - node.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+            setEditingArbreField({ type: 'node', levelIndex: node.levelIndex, optionIndex: node.optionIndex, nodeIndex: ni });
+            onSelectPiece(hitPiece.id);
+            onStartEdit(hitPiece.id);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          // Check level names (left of tree)
+          for (let li = 0; li < arbre.levels.length; li++) {
+            const firstNode = treeLayout.nodes.find(n => n.levelIndex === li);
+            if (firstNode && relX < 0 && Math.abs(relY - firstNode.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
+              setEditingArbreField({ type: 'level', levelIndex: li });
+              onSelectPiece(hitPiece.id);
               onStartEdit(hitPiece.id);
               found = true;
               break;
             }
           }
-          if (!found) {
-            // Check level names (left of tree)
-            for (let li = 0; li < arbre.levels.length; li++) {
-              const firstNode = treeLayout.nodes.find(n => n.levelIndex === li);
-              if (firstNode && relX < 0 && Math.abs(relY - firstNode.y) <= ARBRE_NODE_H_MM / 2 + hitPad) {
-                setEditingArbreField({ type: 'level', levelIndex: li });
-                onStartEdit(hitPiece.id);
-                found = true;
-                break;
-              }
-            }
-          }
-          if (!found) {
-            // Click on arbre but not on a specific node/level — keep selected
-            onSelectPiece(hitPiece.id);
-          }
-        } else {
+        }
+        if (!found) {
+          // Click on arbre but not on a specific node/level — just select
           onSelectPiece(hitPiece.id);
         }
         return;
@@ -1519,7 +1527,7 @@ export function Canvas({
           editTargetId = `${piece.id}-${editingBarField || 'label'}`;
         } else if (piece.type === 'arbre' && editingArbreField) {
           editTargetId = editingArbreField.type === 'node'
-            ? `${piece.id}-node-${editingArbreField.levelIndex}-${editingArbreField.optionIndex}`
+            ? `${piece.id}-node-${editingArbreField.nodeIndex}`
             : `${piece.id}-level-${editingArbreField.levelIndex}`;
         } else {
           editTargetId = piece.id;
@@ -1527,27 +1535,22 @@ export function Canvas({
         const targetEl = svgEl.querySelector(`[data-edit-target="${editTargetId}"]`);
         const targetRect = targetEl?.getBoundingClientRect();
 
-        // Determine editor minWidth based on piece type
-        const editorMinWidth = (piece.type === 'arbre' && editingArbreField?.type === 'node') ? 120 : 200;
+        // Determine editor dimensions based on piece type
+        const isArbreNode = piece.type === 'arbre' && editingArbreField?.type === 'node';
+        const isArbreLevel = piece.type === 'arbre' && editingArbreField?.type === 'level';
 
         if (targetRect && targetRect.width > 0) {
-          // Position editor aligned with the SVG text element
+          // Position editor aligned with the SVG element
           const isRightAligned = piece.type === 'barre' && editingBarField !== 'value';
-          const isCentered = piece.type === 'arbre' && editingArbreField?.type === 'node';
           if (isRightAligned) {
-            // Bar label: text-anchor=end — editor right edge at the text right edge
-            editorLeft = targetRect.right - canvasRect.left - editorMinWidth;
-          } else if (isCentered) {
-            // Arbre node: center editor on the node
-            const targetCenterX = (targetRect.left + targetRect.right) / 2 - canvasRect.left;
-            editorLeft = targetCenterX - editorMinWidth / 2;
+            editorLeft = targetRect.right - canvasRect.left - 200;
           } else {
+            // Align with target element left edge (arbre nodes: rect left edge)
             editorLeft = targetRect.left - canvasRect.left;
           }
-          // Vertically center on the text element
-          const targetCenterY = (targetRect.top + targetRect.bottom) / 2 - canvasRect.top;
-          const editorH = Math.max(28, svgFontSizeMm * mmToPx * 1.8);
-          editorTop = targetCenterY - editorH / 2;
+          // Vertically align with target element
+          const editorH = isArbreNode ? targetRect.height : Math.max(28, svgFontSizeMm * mmToPx * 1.8);
+          editorTop = (isArbreNode ? targetRect.top - canvasRect.top : (targetRect.top + targetRect.bottom) / 2 - canvasRect.top - editorH / 2);
         } else {
           // Fallback: use SVG transform (new piece with no rendered text yet)
           let fallbackX = piece.x;
@@ -1584,7 +1587,10 @@ export function Canvas({
             monospace={isCalcul}
             fontSize={svgFontSizeMm * mmToPx}
             maxLength={piece.type === 'arbre' ? (editingArbreField?.type === 'node' ? 20 : 30) : undefined}
-            minWidth={editorMinWidth}
+            minWidth={isArbreNode && targetRect ? targetRect.width : isArbreLevel ? 150 : 200}
+            fixedHeight={isArbreNode && targetRect ? targetRect.height : undefined}
+            textAlign={isArbreNode ? 'center' : undefined}
+            compact={isArbreNode}
             onCommit={(value) => {
               if (piece.type === 'arbre' && editingArbreField) {
                 const arbre = piece as Arbre;
@@ -1601,41 +1607,27 @@ export function Canvas({
               onStopEdit();
             }}
             onTab={piece.type === 'arbre' && editingArbreField?.type === 'node' ? (value) => {
-              // Commit current node, then advance to next empty node
+              // Commit current node, then advance to next empty node in layout order
               const arbre = piece as Arbre;
-              const { levelIndex, optionIndex } = editingArbreField;
+              const { levelIndex, optionIndex, nodeIndex } = editingArbreField;
               const newLevels = arbre.levels.map((l, i) =>
                 i === levelIndex ? { ...l, options: l.options.map((o, j) => j === optionIndex ? value : o) } : l
               );
               dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
-              // Find next empty node (same level first, then next levels)
-              let nextField: { type: 'node'; levelIndex: number; optionIndex: number } | null = null;
-              for (let li = levelIndex; li < newLevels.length; li++) {
-                const startOi = li === levelIndex ? optionIndex + 1 : 0;
-                for (let oi = startOi; oi < newLevels[li].options.length; oi++) {
-                  if (!newLevels[li].options[oi]) {
-                    nextField = { type: 'node', levelIndex: li, optionIndex: oi };
-                    break;
-                  }
-                }
-                if (nextField) break;
-              }
-              // Wrap around: check levels before current
-              if (!nextField) {
-                for (let li = 0; li <= levelIndex; li++) {
-                  const endOi = li === levelIndex ? optionIndex : newLevels[li].options.length;
-                  for (let oi = 0; oi < endOi; oi++) {
-                    if (!newLevels[li].options[oi]) {
-                      nextField = { type: 'node', levelIndex: li, optionIndex: oi };
-                      break;
-                    }
-                  }
-                  if (nextField) break;
+              // Find next empty node in layout order (wraps around)
+              const layout = computeTreeLayout(newLevels);
+              const nodes = layout.nodes;
+              let nextField: { type: 'node'; levelIndex: number; optionIndex: number; nodeIndex: number } | null = null;
+              for (let offset = 1; offset < nodes.length; offset++) {
+                const ni = (nodeIndex + offset) % nodes.length;
+                const n = nodes[ni];
+                if (!newLevels[n.levelIndex].options[n.optionIndex]) {
+                  nextField = { type: 'node', levelIndex: n.levelIndex, optionIndex: n.optionIndex, nodeIndex: ni };
+                  break;
                 }
               }
               if (nextField) {
                 setEditingArbreField(nextField);
-                // Re-trigger edit (editingPieceId stays the same, field changes)
               } else {
                 setEditingArbreField(null);
                 onStopEdit();
@@ -2248,7 +2240,7 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, fixedHeight, textAlign, compact, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
@@ -2256,6 +2248,9 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
   monospace?: boolean;
   maxLength?: number;
   minWidth?: number;
+  fixedHeight?: number;
+  textAlign?: 'center' | 'left' | 'right';
+  compact?: boolean;
   onCommit: (value: string) => void;
   onCancel: () => void;
   onTab?: (value: string) => void;
@@ -2320,19 +2315,23 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
             commit();
           }}
           style={{
-            minWidth: minWidth,
-            height: Math.max(28, fontSize * 1.8),
+            width: fixedHeight ? minWidth : undefined,
+            minWidth: fixedHeight ? undefined : minWidth,
+            height: fixedHeight || Math.max(28, fontSize * 1.8),
             border: `2px solid #7028e0`,
-            borderRadius: 6,
-            padding: '2px 28px 2px 6px',
+            borderRadius: compact ? 3 : 6,
+            padding: compact ? '0 2px' : '2px 28px 2px 6px',
             fontSize: Math.round(fontSize),
             fontFamily: monospace ? "'Consolas', 'Courier New', monospace" : 'inherit',
+            fontWeight: 600,
+            textAlign: textAlign || 'left',
             background: '#fff',
             outline: 'none',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            boxSizing: 'border-box' as const,
           }}
         />
-        {value && (
+        {value && !compact && (
           <button
             data-clear-btn="true"
             tabIndex={-1}

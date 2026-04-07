@@ -49,10 +49,12 @@ describe('computeArrangement', () => {
     const calculMove = moves.find(m => m.id === 'c1')!;
     const reponseMove = moves.find(m => m.id === 'r1')!;
 
-    // barres should be highest (smallest y)
-    expect(barreMove.y).toBeLessThan(jetonMove.y);
-    expect(jetonMove.y).toBeLessThan(calculMove.y);
-    expect(calculMove.y).toBeLessThan(reponseMove.y);
+    // barres should be placed before jetons before calculs before reponse (left-to-right or top-to-bottom)
+    // With compact horizontal layout, pieces may share a row — check (y, x) ordering
+    const pos = (m: { x: number; y: number }) => m.y * 1000 + m.x;
+    expect(pos(barreMove)).toBeLessThan(pos(jetonMove));
+    expect(pos(jetonMove)).toBeLessThan(pos(calculMove));
+    expect(pos(calculMove)).toBeLessThan(pos(reponseMove));
   });
 
   it('maintains spacing between pieces', () => {
