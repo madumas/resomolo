@@ -1,0 +1,32 @@
+{
+  "probleme": "35 bonbons : 20 rouges et 15 bleus.",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "schema-1",
+      "type": "schema",
+      "x": 40,
+      "y": 30,
+      "locked": false,
+      "gabarit": "parties-tout",
+      "totalLabel": "35",
+      "totalValue": 35,
+      "referenceWidth": 60,
+      "bars": [
+        {
+          "label": "",
+          "value": null,
+          "sizeMultiplier": 1,
+          "couleur": "bleu",
+          "parts": [
+            { "label": "20", "value": 20, "couleur": "bleu" },
+            { "label": "15", "value": 15, "couleur": "rouge" }
+          ]
+        }
+      ]
+    }
+  ]
+}

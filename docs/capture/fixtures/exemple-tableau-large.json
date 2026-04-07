@@ -1,0 +1,25 @@
+{
+  "probleme": "Sondage : quel est ton fruit préféré?",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "availablePieces": null,
+  "pieces": [
+    {
+      "id": "tab-1",
+      "type": "tableau",
+      "x": 40,
+      "y": 30,
+      "locked": false,
+      "rows": 4,
+      "cols": 2,
+      "cells": [
+        ["Fruit", "Votes"],
+        ["Pomme", "12"],
+        ["Banane", "8"],
+        ["Raisin", "5"]
+      ],
+      "headerRow": true
+    }
+  ]
+}
