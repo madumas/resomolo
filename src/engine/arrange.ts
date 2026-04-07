@@ -66,7 +66,17 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
     const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected);
     const maxY = moves.reduce((m, mv) => Math.max(m, mv.y), 0);
     if (maxY < maxHeight - MARGIN || vGap === 2) {
-      // Add parented jetons: keep their relative offset from parent boîte
+      // Clamp: if content still overflows, compress vertically to fit
+      if (maxY >= maxHeight - MARGIN) {
+        const contentHeight = maxY - MARGIN;
+        const availableHeight = maxHeight - 2 * MARGIN;
+        if (contentHeight > 0 && availableHeight > 0) {
+          const scale = availableHeight / contentHeight;
+          for (const m of moves) {
+            m.y = MARGIN + (m.y - MARGIN) * scale;
+          }
+        }
+      }
       addParentedJetons(pieces, moves, parentedJetonIds);
       return moves;
     }
