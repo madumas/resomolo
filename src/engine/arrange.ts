@@ -4,6 +4,7 @@ import { BAR_HEIGHT_MM, JETON_DIAMETER_MM } from '../model/types';
 const V_GAP = 15; // mm vertical gap between groups
 const H_GAP = 10; // mm horizontal gap between pieces in a row
 const MARGIN = 15; // mm from canvas edge
+const MARGIN_BOTTOM = 30; // mm from canvas bottom (room for Ranger button)
 const CANVAS_MAX_X = 470; // mm (CANVAS_WIDTH_MM - 2*margin)
 
 export interface ArrangementMove {
@@ -71,11 +72,11 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
       const h = p ? getPieceHeight(p) : 20;
       return Math.max(m, mv.y + h);
     }, 0);
-    if (maxBottom < maxHeight - MARGIN || vGap === 2) {
+    if (maxBottom < maxHeight - MARGIN_BOTTOM || vGap === 2) {
       // Clamp: if content still overflows, compress vertically to fit
-      if (maxBottom >= maxHeight - MARGIN) {
+      if (maxBottom >= maxHeight - MARGIN_BOTTOM) {
         const contentSpan = maxBottom - MARGIN;
-        const available = maxHeight - 2 * MARGIN;
+        const available = maxHeight - MARGIN - MARGIN_BOTTOM;
         if (contentSpan > 0 && available > 0) {
           const scale = available / contentSpan;
           for (const m of moves) {
