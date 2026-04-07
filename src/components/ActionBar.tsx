@@ -3,17 +3,15 @@ import { canUndo, canRedo } from '../model/undo';
 import type { UndoManager, DominantHand, SettingsProfile } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_PRIMARY, UI_DESTRUCTIVE, UI_TEXT_SECONDARY, UI_SURFACE, UI_DISABLED_BG } from '../config/theme';
-import { UndoIcon, RedoIcon, DeleteIcon, FocusIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
+import { UndoIcon, RedoIcon, FocusIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
 import { AboutDialog } from './AboutDialog';
 
 interface ActionBarProps {
   undoManager: UndoManager;
-  deleteMode: boolean;
   focusMode: boolean;
   dominantHand?: DominantHand;
   onUndo: () => void;
   onRedo: () => void;
-  onToggleDeleteMode: () => void;
   onToggleFocusMode: () => void;
   onRecommencer: () => void;
   onShowGuide: () => void;
@@ -29,12 +27,10 @@ interface ActionBarProps {
 
 export function ActionBar({
   undoManager,
-  deleteMode,
   focusMode,
   dominantHand = 'right',
   onUndo,
   onRedo,
-  onToggleDeleteMode,
   onToggleFocusMode,
   onRecommencer,
   onShowGuide,
@@ -80,17 +76,6 @@ export function ActionBar({
       </ActionBtn>
 
       <Separator />
-
-      {/* Delete mode toggle */}
-      <ActionBtn
-        onClick={onToggleDeleteMode}
-        active={deleteMode}
-        destructive
-        title="Supprimer — cliquer sur un élément"
-        aria-pressed={deleteMode}
-      >
-        <DeleteIcon /> Supprimer
-      </ActionBtn>
 
       {/* Focus mode toggle */}
       <ActionBtn

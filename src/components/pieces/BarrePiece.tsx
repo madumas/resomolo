@@ -74,37 +74,6 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
       >
         {hasValue ? piece.value : ' '}
       </text>
-      {/* Fraction label (stacked notation) — auto when showFraction + colored parts */}
-      {piece.showFraction && piece.divisions && piece.coloredParts.length > 0 && (
-        <g>
-          <text
-            x={piece.x + w / 2}
-            y={piece.y + h + 5}
-            textAnchor="middle"
-            fontSize={7 * ts}
-            fill="#55506A"
-          >
-            {piece.coloredParts.length}
-          </text>
-          <line
-            x1={piece.x + w / 2 - 5}
-            y1={piece.y + h + 7}
-            x2={piece.x + w / 2 + 5}
-            y2={piece.y + h + 7}
-            stroke="#55506A"
-            strokeWidth={0.5}
-          />
-          <text
-            x={piece.x + w / 2}
-            y={piece.y + h + 12}
-            textAnchor="middle"
-            fontSize={7 * ts}
-            fill="#55506A"
-          >
-            {piece.divisions}
-          </text>
-        </g>
-      )}
       {/* Part labels under each subdivision when showFraction */}
       {piece.showFraction && piece.divisions && piece.divisions > 1 && (
         Array.from({ length: piece.divisions }, (_, i) => {

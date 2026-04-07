@@ -36,8 +36,6 @@ interface CanvasProps {
   selectedPieceId: string | null;
   editingPieceId: string | null;
   jetonQuantity: number;
-  deleteMode: boolean;
-  deleteConfirmId: string | null;
   toleranceProfile: ToleranceProfile;
   cursorSmoothing: boolean;
   smoothingAlpha: number;
@@ -46,7 +44,6 @@ interface CanvasProps {
   onSetTool: (tool: ToolType) => void;
   onStartEdit: (id: string) => void;
   onStopEdit: () => void;
-  onDeleteClick: (id: string) => void;
   arrowFromId?: string | null;
   onSetArrowFrom?: (id: string) => void;
   onArrowCreated?: () => void;
@@ -66,14 +63,40 @@ type InteractionMode =
   | { type: 'idle' }
   | { type: 'moving'; pieceId: string };
 
+const JETON_SPACING_MM = 12; // minimum distance between jeton centers
+
+/** Find nearest non-overlapping position for a jeton, spiraling outward. */
+function findNonOverlappingPosition(
+  pos: { x: number; y: number },
+  existingJetons: readonly { x: number; y: number }[],
+  spacing: number = JETON_SPACING_MM,
+): { x: number; y: number } {
+  const overlaps = (x: number, y: number) =>
+    existingJetons.some(j => Math.hypot(j.x - x, j.y - y) < spacing);
+
+  if (!overlaps(pos.x, pos.y)) return pos;
+
+  // Spiral outward: 10 rings × 12 angles = 120 attempts max
+  for (let ring = 1; ring <= 10; ring++) {
+    for (let angle = 0; angle < 360; angle += 30) {
+      const rad = (angle * Math.PI) / 180;
+      const candidate = snapToGrid(
+        pos.x + ring * spacing * Math.cos(rad),
+        pos.y + ring * spacing * Math.sin(rad),
+      );
+      if (!overlaps(candidate.x, candidate.y)) return candidate;
+    }
+  }
+  // Fallback: offset below
+  return { x: pos.x, y: pos.y + spacing };
+}
+
 function getCanvasCursor(
   activeTool: ToolType,
-  deleteMode: boolean,
   isMoving: boolean,
   isHoveringPiece: boolean,
 ): string {
   if (isMoving) return 'grabbing';
-  if (deleteMode) return 'crosshair';
   if (!activeTool && isHoveringPiece) return 'pointer';
   if (activeTool === 'deplacer') return 'grab';
   if (activeTool) return 'crosshair';
@@ -87,8 +110,6 @@ export function Canvas({
   selectedPieceId,
   editingPieceId,
   jetonQuantity,
-  deleteMode,
-  deleteConfirmId,
   toleranceProfile: _toleranceProfile,
   cursorSmoothing: _cursorSmoothing,
   smoothingAlpha: _smoothingAlpha,
@@ -97,7 +118,6 @@ export function Canvas({
   onSetTool,
   onStartEdit,
   onStopEdit,
-  onDeleteClick,
   arrowFromId,
   onSetArrowFrom,
   onArrowCreated,
@@ -338,12 +358,6 @@ export function Canvas({
     }
 
     if (hitPiece) {
-      // Delete mode — handle delete click
-      if (deleteMode) {
-        if (tableauEditorPieceId) closeTableauEditor();
-        onDeleteClick(hitPiece.id);
-        return;
-      }
       // Equalizing mode — apply source bar's size to target bar
       if (equalizingFromId && isBarre(hitPiece) && hitPiece.id !== equalizingFromId) {
         const sourceBar = pieces.find(p => p.id === equalizingFromId);
@@ -386,7 +400,7 @@ export function Canvas({
         return; // don't re-select
       }
       // Tableau — toggle in-place editing (only when no tool is active)
-      if (isTableau(hitPiece) && !deleteMode && !activeTool) {
+      if (isTableau(hitPiece) && !activeTool) {
         // Calculate which cell was clicked
         const clickedCol = Math.floor((pos.x - hitPiece.x) / TABLEAU_CELL_W);
         const clickedRow = Math.floor((pos.y - hitPiece.y) / TABLEAU_CELL_H);
@@ -398,6 +412,12 @@ export function Canvas({
         tableauClickedCell.current = { row: clickedRow, col: clickedCol };
         setTableauEditorPieceId(hitPiece.id);
         onSelectPiece(hitPiece.id);
+        return;
+      }
+      // Bar — 2nd click edits value (unless subdivided — those toggle coloring)
+      if (isBarre(hitPiece) && hitPiece.id === selectedPieceId && !hitPiece.divisions) {
+        setEditingBarField('value');
+        onStartEdit(hitPiece.id);
         return;
       }
       // Subdivision toggle — clicking on a subdivided bar that is already selected
@@ -498,12 +518,6 @@ export function Canvas({
       return;
     }
 
-    // Delete mode — click on empty space exits
-    if (deleteMode) {
-      onSelectPiece(null);
-      return;
-    }
-
     // Equalizing mode — click on empty space cancels
     if (equalizingFromId) {
       onSetEqualizingFromId?.(null);
@@ -535,14 +549,17 @@ export function Canvas({
           return snapped.x >= p.x && snapped.x <= p.x + (p as any).width &&
                  snapped.y >= p.y && snapped.y <= p.y + (p as any).height;
         });
+        const existingJetons = pieces.filter(p => p.type === 'jeton');
         for (let i = 0; i < jetonQuantity; i++) {
           const col = i % perRow;
           const row = Math.floor(i / perRow);
+          const intended = { x: snapped.x + col * spacing, y: snapped.y + row * spacing };
+          const safe = findNonOverlappingPosition(intended, [...existingJetons, ...jetons]);
           jetons.push({
             id: generateId(),
             type: 'jeton',
-            x: snapped.x + col * spacing,
-            y: snapped.y + row * spacing,
+            x: safe.x,
+            y: safe.y,
             locked: false,
             couleur: 'bleu',
             parentId: targetBoite ? targetBoite.id : null,
@@ -550,7 +567,7 @@ export function Canvas({
         }
         dispatch({ type: 'PLACE_PIECES', pieces: jetons });
         onPlace();
-        onSetTool(null);
+        // Keep jeton tool active for rapid placement
       } else if (activeTool === 'reponse' && pieces.filter(p => p.type === 'reponse').length >= 2) {
         // Max 2 réponses — select first existing
         const existing = pieces.find(p => p.type === 'reponse');
@@ -594,6 +611,11 @@ export function Canvas({
           if (boite) {
             (piece as any).parentId = boite.id;
           }
+          // Auto-place to avoid overlapping existing jetons
+          const existingJetons = pieces.filter(p => p.type === 'jeton');
+          const safe = findNonOverlappingPosition({ x: piece.x, y: piece.y }, existingJetons);
+          piece.x = safe.x;
+          piece.y = safe.y;
         }
         // B7: Auto-attach étiquette/inconnue to nearby piece
         if (piece.type === 'etiquette' || piece.type === 'inconnue') {
@@ -612,12 +634,14 @@ export function Canvas({
         onPlace(); // sound + haptic
         setLastPlacedId(piece.id);
         setTimeout(() => setLastPlacedId(null), 200);
-        // Always deactivate tool after placement (one action at a time — simpler for children)
-        onSetTool(null);
-        // Auto-edit text pieces; auto-select others to show context actions
+        // Jeton: keep tool active for rapid placement; other tools: deactivate after placement
+        if (activeTool !== 'jeton') {
+          onSetTool(null);
+        }
+        // Auto-edit text pieces; auto-select others (skip for jeton in rapid placement)
         if (piece.type === 'calcul' || piece.type === 'reponse' || piece.type === 'etiquette' || piece.type === 'inconnue') {
           onStartEdit(piece.id);
-        } else {
+        } else if (activeTool !== 'jeton') {
           onSelectPiece(piece.id);
         }
       }
@@ -627,7 +651,7 @@ export function Canvas({
       onSelectPiece(null);
     }
   }, [pieces, activeTool, referenceUnitMm, dispatch, onSelectPiece, onSetTool, mode, tol,
-      editingPieceId, deleteMode, jetonQuantity, onStartEdit, onStopEdit, onDeleteClick,
+      editingPieceId, jetonQuantity, onStartEdit, onStopEdit,
       arrowFromId, onSetArrowFrom, onArrowCreated,
       equalizingFromId, onSetEqualizingFromId, groupingBarId, onSetGroupingBarId, selectedPieceId,
       tableauEditorPieceId, closeTableauEditor]);
@@ -668,7 +692,13 @@ export function Canvas({
     if ((activeTool === 'fleche' && arrowFromId) ||
         (activeTool && activeTool !== 'deplacer' && activeTool !== 'fleche')) {
       const snapped = snapToGrid(rawPos.x, rawPos.y);
-      setGhostCursorMm(snapped);
+      // Jeton ghost: show at auto-placed position to preview actual landing spot
+      if (activeTool === 'jeton') {
+        const existingJetons = pieces.filter(p => p.type === 'jeton');
+        setGhostCursorMm(findNonOverlappingPosition(snapped, existingJetons));
+      } else {
+        setGhostCursorMm(snapped);
+      }
       // For fleche: hit-test to detect target piece (skip source + other arrows)
       if (activeTool === 'fleche' && arrowFromId) {
         let found: string | null = null;
@@ -685,7 +715,7 @@ export function Canvas({
     }
 
     // Hover hit-test for cursor affordance (idle mode only)
-    if (!activeTool && !deleteMode) {
+    if (!activeTool) {
       const pos = snapToGrid(rawPos.x, rawPos.y);
       let found: string | null = null;
       for (const piece of pieces) {
@@ -716,7 +746,7 @@ export function Canvas({
         setDnGhostMarker(null);
       }
     }
-  }, [mode, pieces, referenceUnitMm, tol, activeTool, deleteMode, _cursorSmoothing, dispatch, arrowFromId, selectedPieceId]);
+  }, [mode, pieces, referenceUnitMm, tol, activeTool, _cursorSmoothing, dispatch, arrowFromId, selectedPieceId]);
 
   // Pointer up — finalize move ONLY for touch/pen (finger lift = put down).
   // Mouse uses click-click (pick up on pointerDown, put down on next pointerDown).
@@ -780,13 +810,19 @@ export function Canvas({
     const toAdd = targetTotal - 1; // source already counts as 1
     if (toAdd <= 0) return;
     const spacing = 10;
+    const existingJetons = pieces.filter(p => p.type === 'jeton');
     const newJetons: Piece[] = [];
     for (let i = 1; i <= toAdd; i++) {
+      const intended = {
+        x: source.x + (i % 10) * spacing,
+        y: source.y + Math.floor(i / 10) * spacing,
+      };
+      const safe = findNonOverlappingPosition(intended, [...existingJetons, ...newJetons]);
       newJetons.push({
         id: generateId(),
         type: 'jeton',
-        x: source.x + (i % 10) * spacing,
-        y: source.y + Math.floor(i / 10) * spacing,
+        x: safe.x,
+        y: safe.y,
         locked: false,
         couleur: source.couleur,
         parentId: source.parentId, // I2: preserve parentId from source jeton
@@ -832,11 +868,11 @@ export function Canvas({
         locked: false,
         couleur: colorOrder[(sourceColorIdx + i) % colorOrder.length],
         sizeMultiplier: source.sizeMultiplier,
-        label: '',
-        value: '', // don't copy value — each bar gets its own
-        divisions: null,
-        coloredParts: [],
-        showFraction: false,
+        label: source.label,
+        value: source.value,
+        divisions: source.divisions,
+        coloredParts: [...source.coloredParts],
+        showFraction: source.showFraction,
                groupId: null,
         groupLabel: null,
       });
@@ -1005,7 +1041,7 @@ export function Canvas({
         position: 'relative',
         zIndex: 1, // context actions (z-index:10) must escape above status bar
         overflow: 'hidden',
-        cursor: getCanvasCursor(activeTool, deleteMode, mode.type === 'moving', !!hoveredPieceId),
+        cursor: getCanvasCursor(activeTool, mode.type === 'moving', !!hoveredPieceId),
       }}
     >
       <svg
@@ -1146,20 +1182,6 @@ export function Canvas({
           </g>
           );
         })}
-
-        {/* Delete confirmation overlay — red highlight on piece pending deletion */}
-        {deleteConfirmId && (() => {
-          const piece = pieces.find(p => p.id === deleteConfirmId);
-          if (!piece) return null;
-          const b = getPieceBounds(piece, referenceUnitMm, 2, textScale);
-          return (
-            <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={3}
-              fill="rgba(200, 40, 40, 0.12)" stroke="#C82828" strokeWidth={1.5}
-              style={{ pointerEvents: 'none' }}>
-              <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite" />
-            </rect>
-          );
-        })()}
 
         {/* Group brackets */}
         {(() => {
@@ -1951,7 +1973,7 @@ export function Canvas({
       })()}
 
       {/* Tableau cell inputs overlay — HTML positioned over SVG cells */}
-      {tableauEditorPieceId && !deleteMode && (() => {
+      {tableauEditorPieceId && (() => {
         const piece = pieces.find(p => p.id === tableauEditorPieceId);
         if (!piece || piece.type !== 'tableau') return null;
         const t = piece as Tableau;

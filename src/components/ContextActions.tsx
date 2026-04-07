@@ -364,7 +364,7 @@ export function ContextActions({
         </>
       )}
 
-      {/* Jeton: color + duplicate */}
+      {/* Jeton: color + duplicate + delete */}
       {isJeton(piece) && (
         <>
           <ColorRow pieceId={piece.id} current={piece.couleur} onChange={onChangeColor} />
@@ -382,6 +382,14 @@ export function ContextActions({
                 </CtxBtn>
               ))}
             </>
+          )}
+          {onDeletePiece && !showRepartir && (
+            <CtxBtn testId="ctx-delete-jeton" destructive onClick={() => {
+              if (deleteConfirm) { onDeletePiece(piece.id); }
+              else { setDeleteConfirm(true); }
+            }}>
+              {deleteConfirm ? 'Sûr?' : 'Supprimer'}
+            </CtxBtn>
           )}
         </>
       )}
@@ -880,7 +888,7 @@ export function ContextActions({
       )}
 
       {/* Delete — micro-confirmation "Sûr?" (2s timer). Hidden inside submenus. */}
-      {onDeletePiece && !piece.locked && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && (
+      {onDeletePiece && !piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && (
         <CtxBtn
           testId="ctx-delete"
           destructive

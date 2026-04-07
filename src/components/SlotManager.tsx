@@ -127,7 +127,7 @@ export function SlotManager({
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {registry.slots.map(slot => {
+            {[...registry.slots].sort((a, b) => b.createdAt - a.createdAt).map(slot => {
               const isActive = slot.id === activeSlotId;
               const isEditing = editingId === slot.id;
               const isDeleting = deletingId === slot.id;

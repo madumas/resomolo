@@ -26,8 +26,8 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
-import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, STATUS_DELETE_MODE, STATUS_DELETE_CONFIRM } from './config/messages';
-import { onDelete, onUndoSound, setSoundMode, setGainMultiplier } from './engine/sound';
+import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
+import { onUndoSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import type { ProblemPreset } from './config/problems';
 
 interface AppProps {
@@ -54,9 +54,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [showRelance, setShowRelance] = useState(false);
   const [relanceIndex, setRelanceIndex] = useState(0);
   const [arrowFromId, setArrowFromId] = useState<string | null>(null);
-  const [deleteMode, setDeleteMode] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [equalizingFromId, setEqualizingFromId] = useState<string | null>(null);
   const [groupingBarId, setGroupingBarId] = useState<string | null>(null);
   const [settings, setSettings] = useState<Settings>(initialSettings);
@@ -143,14 +141,12 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     });
     setSelectedPieceId(null);
     setEditingPieceId(null);
-    setDeleteConfirmId(null);
   }, []);
 
   const handleRedo = useCallback(() => {
     setUndoManager(prev => canRedo(prev) ? redo(prev) : prev);
     setSelectedPieceId(null);
     setEditingPieceId(null);
-    setDeleteConfirmId(null);
   }, []);
 
   // Sync sound/font/spacing — always (including first render with pre-loaded settings)
@@ -221,9 +217,6 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           setEqualizingFromId(null);
         } else if (groupingBarId) {
           setGroupingBarId(null);
-        } else if (deleteMode) {
-          setDeleteMode(false);
-          setDeleteConfirmId(null);
         } else if (selectedPieceId) {
           setSelectedPieceId(null);
           if (activeTool) setActiveTool(null);
@@ -234,7 +227,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, equalizingFromId, groupingBarId, deleteMode, handleUndo, handleRedo]);
+  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, equalizingFromId, groupingBarId, handleUndo, handleRedo]);
 
   // Relance timer — sequential questions (P0-2, P0-3)
   useEffect(() => {
@@ -316,12 +309,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     }
   }, [tutorial.isDone, dispatch]);
 
-  // Tool selection — exit delete mode when selecting a tool
+  // Tool selection
   const handleSelectTool = useCallback((tool: ToolType) => {
-    if (tool) {
-      setDeleteMode(false);
-      setDeleteConfirmId(null);
-    }
     setArrowFromId(null);
     setEqualizingFromId(null);
     setGroupingBarId(null);
@@ -329,35 +318,6 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setSelectedPieceId(null);
     setEditingPieceId(null);
   }, []);
-
-  // Delete mode toggle
-  const handleToggleDeleteMode = useCallback(() => {
-    setDeleteMode(prev => {
-      const next = !prev;
-      if (next) {
-        setActiveTool(null);
-        setSelectedPieceId(null);
-        setEditingPieceId(null);
-      }
-      setDeleteConfirmId(null);
-      return next;
-    });
-  }, []);
-
-  // Delete click handler — called from Canvas when in delete mode
-  const handleDeleteClick = useCallback((pieceId: string) => {
-    if (deleteConfirmId === pieceId) {
-      // Second click — confirm delete
-      dispatch({ type: 'DELETE_PIECE', id: pieceId });
-      onDelete(); // neutral sound
-      setDeleteConfirmId(null);
-      setSelectedPieceId(null);
-    } else {
-      // First click — request confirmation
-      setDeleteConfirmId(pieceId);
-      setSelectedPieceId(pieceId);
-    }
-  }, [deleteConfirmId, dispatch]);
 
   // Recommencer
   const handleRecommencer = useCallback(() => {
@@ -372,8 +332,6 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         setSelectedPieceId(null);
         setEditingPieceId(null);
         setActiveTool(null);
-        setDeleteMode(false);
-        setDeleteConfirmId(null);
         setConfirmDialog(null);
       },
     });
@@ -413,27 +371,30 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }, [dispatch]);
 
   // Select a problem
-  const handleSelectProblem = useCallback((preset: ProblemPreset) => {
+  const handleSelectProblem = useCallback(async (preset: ProblemPreset) => {
     problemJustSelected.current = true;
     tutorial.skipTutorial();
+    // If current work has pieces, preserve it by creating a new slot
+    if (pieces.length > 0) {
+      await slotManager.createNewSlot();
+    } else {
+      slotManager.ensureSlot();
+    }
     dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: preset.text, readOnly: preset.text.length > 0 });
     setShowProblemSelector(false);
     setProblemZoneActive(true);
     setSelectedPieceId(null);
     setEditingPieceId(null);
     setActiveTool(null);
-    setDeleteMode(false);
-    // Ensure a slot exists for auto-save persistence
-    slotManager.ensureSlot();
     // Auto-name slot from problem (if slot still has default name)
     if (slotManager.activeSlotId && preset.text) {
       const active = slotManager.registry.slots.find(s => s.id === slotManager.activeSlotId);
-      if (active && /^Modélisation \d+$/.test(active.name)) {
+      if (active && /^Travail \d+$/.test(active.name)) {
         const name = preset.title || (preset.text.length > 40 ? preset.text.slice(0, 40) + '…' : preset.text);
         slotManager.renameSlot(active.id, name);
       }
     }
-  }, [dispatch, tutorial, slotManager]);
+  }, [dispatch, tutorial, slotManager, pieces.length]);
 
   // Highlight handlers
   const handleHighlightAdd = useCallback((h: Highlight) => {
@@ -452,18 +413,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   let statusMessage: string;
   let statusVariant: 'default' | 'relance' = 'default';
 
-  if (deleteMode) {
-    if (deleteConfirmId) {
-      const confirmPiece = pieces.find(p => p.id === deleteConfirmId);
-      const confirmLabel = confirmPiece
-        ? ('label' in confirmPiece && confirmPiece.label) || confirmPiece.type
-        : 'cet élément';
-      statusMessage = STATUS_DELETE_CONFIRM(confirmLabel);
-    } else {
-      statusMessage = STATUS_DELETE_MODE;
-    }
-    if (deleteConfirmId) statusVariant = 'relance'; // use orange for confirm
-  } else if (equalizingFromId) {
+  if (equalizingFromId) {
     statusMessage = 'Clique sur la barre à redimensionner';
   } else if (groupingBarId) {
     statusMessage = 'Clique sur les barres à ajouter au groupe.';
@@ -549,9 +499,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         message={statusMessage}
         variant={statusVariant}
         cancelLabel={groupingBarId ? '✓ Terminer' : undefined}
-        onCancel={(activeTool || deleteMode || equalizingFromId || groupingBarId) ? () => {
-          if (deleteMode) { setDeleteMode(false); setDeleteConfirmId(null); }
-          else if (equalizingFromId) setEqualizingFromId(null);
+        onCancel={(activeTool || equalizingFromId || groupingBarId) ? () => {
+          if (equalizingFromId) setEqualizingFromId(null);
           else if (groupingBarId) setGroupingBarId(null);
           else if (activeTool) { setActiveTool(null); setArrowFromId(null); }
         } : undefined}
@@ -595,13 +544,11 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           selectedPieceId={selectedPieceId}
           editingPieceId={editingPieceId}
           jetonQuantity={jetonQuantity}
-          deleteMode={deleteMode}
-          deleteConfirmId={deleteConfirmId}
           toleranceProfile={settings.toleranceProfile}
           cursorSmoothing={settings.cursorSmoothing}
           smoothingAlpha={settings.smoothingAlpha}
           dispatch={dispatch}
-          onSelectPiece={id => { setSelectedPieceId(id); setEditingPieceId(null); setDeleteConfirmId(null); }}
+          onSelectPiece={id => { setSelectedPieceId(id); setEditingPieceId(null); }}
           onSetTool={handleSelectTool}
           onStartEdit={id => { setSelectedPieceId(id); setEditingPieceId(id); }}
           onStopEdit={() => {
@@ -612,7 +559,6 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
               setSelectedPieceId(null);
             }
           }}
-          onDeleteClick={handleDeleteClick}
           arrowFromId={arrowFromId}
           onSetArrowFrom={setArrowFromId}
           onArrowCreated={() => setArrowFromId(null)}
@@ -633,12 +579,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       {/* Action bar en bas — comme GéoMolo */}
       <ActionBar
         undoManager={undoManager}
-        deleteMode={deleteMode}
         focusMode={focusMode}
         dominantHand={settings.dominantHand}
         onUndo={handleUndo}
         onRedo={handleRedo}
-        onToggleDeleteMode={handleToggleDeleteMode}
         onToggleFocusMode={() => setFocusMode(f => !f)}
         onRecommencer={handleRecommencer}
         onShowGuide={() => setShowAdultGuide(true)}
