@@ -1749,10 +1749,6 @@ export function Canvas({
           overlayOnBounds(piece.x, piece.y - 10, (piece as Boite).width, 10);
           editorPaddingLeft = Math.round(4 * mmToPx);
           editorFontWeight = 'normal';
-        } else if (piece.type === 'inconnue') {
-          overlayOnBounds(piece.x - 6, piece.y - 6, 12, 12);
-          editorTextAlign = 'center';
-          editorFontWeight = 700;
         } else if (piece.type === 'fleche') {
           // Position at arrow midpoint — use targetRect if available, else fallback
           if (targetRect && targetRect.width > 0) {

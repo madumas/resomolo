@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY } from '../config/theme';
 import { TOOL_GROUPS } from './Toolbar';
