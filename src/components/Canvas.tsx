@@ -664,12 +664,9 @@ export function Canvas({
       return;
     }
 
-    // Ghost cursor tracking for fleche (with arrowFromId) and large piece placement
+    // Ghost cursor tracking for fleche (with arrowFromId) and piece placement
     if ((activeTool === 'fleche' && arrowFromId) ||
-        activeTool === 'droiteNumerique' ||
-        activeTool === 'tableau' ||
-        activeTool === 'arbre' ||
-        activeTool === 'schema') {
+        (activeTool && activeTool !== 'deplacer' && activeTool !== 'fleche')) {
       const snapped = snapToGrid(rawPos.x, rawPos.y);
       setGhostCursorMm(snapped);
       // For fleche: hit-test to detect target piece (skip source + other arrows)
@@ -1261,8 +1258,8 @@ export function Canvas({
           />
         )}
 
-        {/* Ghost: large piece placement preview (droiteNumerique / tableau) */}
-        {ghostCursorMm && !arrowFromId && (activeTool === 'droiteNumerique' || activeTool === 'tableau' || activeTool === 'arbre' || activeTool === 'schema') && (
+        {/* Ghost: piece placement preview */}
+        {ghostCursorMm && !arrowFromId && activeTool && activeTool !== 'deplacer' && activeTool !== 'fleche' && (
           <g pointerEvents="none" aria-hidden="true">
             {activeTool === 'droiteNumerique' && (() => {
               const gw = 200;
@@ -1350,6 +1347,112 @@ export function Canvas({
                   <text x={gx + gw / 2} y={gy + gh + 10} textAnchor="middle"
                     fontSize={3.5} fill="#7028e0" opacity={0.5}>
                     schéma
+                  </text>
+                </>
+              );
+            })()}
+            {/* Ghost: Jeton — small circle */}
+            {activeTool === 'jeton' && (
+              <circle cx={ghostCursorMm.x} cy={ghostCursorMm.y} r={5}
+                fill="rgba(112, 40, 224, 0.1)" stroke="#7028e0" strokeWidth={0.8}
+                strokeDasharray="3 3" opacity={0.4} />
+            )}
+            {/* Ghost: Boîte — dashed container */}
+            {activeTool === 'boite' && (
+              <rect x={ghostCursorMm.x} y={ghostCursorMm.y} width={60} height={40} rx={2}
+                fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                strokeDasharray="3 2" opacity={0.4} />
+            )}
+            {/* Ghost: Barre — horizontal bar */}
+            {activeTool === 'barre' && (
+              <rect x={ghostCursorMm.x} y={ghostCursorMm.y}
+                width={referenceUnitMm} height={BAR_HEIGHT_MM} rx={1}
+                fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                strokeDasharray="4 4" opacity={0.4} />
+            )}
+            {/* Ghost: Calcul — code-style rect */}
+            {activeTool === 'calcul' && (
+              <>
+                <rect x={ghostCursorMm.x} y={ghostCursorMm.y} width={80} height={20} rx={3}
+                  fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                  strokeDasharray="4 4" opacity={0.4} />
+                <text x={ghostCursorMm.x + 6} y={ghostCursorMm.y + 10}
+                  dominantBaseline="central" fontSize={8}
+                  fontFamily="'Consolas', 'Courier New', monospace"
+                  fill="#7028e0" opacity={0.35}>
+                  …
+                </text>
+              </>
+            )}
+            {/* Ghost: Réponse — answer box */}
+            {activeTool === 'reponse' && (
+              <>
+                <rect x={ghostCursorMm.x} y={ghostCursorMm.y} width={100} height={26} rx={3}
+                  fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                  strokeDasharray="4 4" opacity={0.4} />
+                <text x={ghostCursorMm.x + 6} y={ghostCursorMm.y + 9}
+                  fontSize={5} fill="#7028e0" opacity={0.35}>
+                  Réponse
+                </text>
+              </>
+            )}
+            {/* Ghost: Étiquette — small label */}
+            {activeTool === 'etiquette' && (
+              <rect x={ghostCursorMm.x - 2} y={ghostCursorMm.y - 7} width={30} height={10} rx={1.5}
+                fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                strokeDasharray="3 3" opacity={0.4} />
+            )}
+            {/* Ghost: Inconnue — circle with ? */}
+            {activeTool === 'inconnue' && (
+              <>
+                <circle cx={ghostCursorMm.x} cy={ghostCursorMm.y} r={6}
+                  fill="rgba(112, 40, 224, 0.08)" stroke="#7028e0" strokeWidth={0.8}
+                  strokeDasharray="3 3" opacity={0.4} />
+                <text x={ghostCursorMm.x} y={ghostCursorMm.y}
+                  textAnchor="middle" dominantBaseline="central"
+                  fontSize={8} fontWeight="700" fill="#7028e0" opacity={0.4}>
+                  ?
+                </text>
+              </>
+            )}
+            {/* Ghost: Diagramme à bandes */}
+            {activeTool === 'diagrammeBandes' && (() => {
+              const gw = 120, gh = 90;
+              const gx = ghostCursorMm.x - gw / 2;
+              const gy = ghostCursorMm.y - gh / 2;
+              return (
+                <>
+                  <rect x={gx} y={gy} width={gw} height={gh} rx={2}
+                    fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                    strokeDasharray="4 4" opacity={0.4} />
+                  <rect x={gx + 25} y={gy + 40} width={15} height={30} fill="#7028e0" opacity={0.1} />
+                  <rect x={gx + 50} y={gy + 25} width={15} height={45} fill="#7028e0" opacity={0.1} />
+                  <rect x={gx + 75} y={gy + 50} width={15} height={20} fill="#7028e0" opacity={0.1} />
+                  <text x={gx + gw / 2} y={gy + gh + 6} textAnchor="middle"
+                    fontSize={3.5} fill="#7028e0" opacity={0.5}>
+                    bandes
+                  </text>
+                </>
+              );
+            })()}
+            {/* Ghost: Diagramme à ligne brisée */}
+            {activeTool === 'diagrammeLigne' && (() => {
+              const gw = 120, gh = 90;
+              const gx = ghostCursorMm.x - gw / 2;
+              const gy = ghostCursorMm.y - gh / 2;
+              return (
+                <>
+                  <rect x={gx} y={gy} width={gw} height={gh} rx={2}
+                    fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={0.8}
+                    strokeDasharray="4 4" opacity={0.4} />
+                  <polyline points={`${gx + 25},${gy + 55} ${gx + 55},${gy + 35} ${gx + 85},${gy + 60}`}
+                    fill="none" stroke="#7028e0" strokeWidth={1} opacity={0.15} />
+                  <circle cx={gx + 25} cy={gy + 55} r={2} fill="#7028e0" opacity={0.15} />
+                  <circle cx={gx + 55} cy={gy + 35} r={2} fill="#7028e0" opacity={0.15} />
+                  <circle cx={gx + 85} cy={gy + 60} r={2} fill="#7028e0" opacity={0.15} />
+                  <text x={gx + gw / 2} y={gy + gh + 6} textAnchor="middle"
+                    fontSize={3.5} fill="#7028e0" opacity={0.5}>
+                    ligne brisée
                   </text>
                 </>
               );
