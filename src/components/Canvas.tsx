@@ -207,16 +207,7 @@ export function Canvas({
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
-  const baseViewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
-  // Extend viewBox if pieces are placed below the visible area
-  const maxPieceBottom = useMemo(() => {
-    if (pieces.length === 0) return 0;
-    return pieces.reduce((max, p) => {
-      const b = getPieceBounds(p, referenceUnitMm);
-      return Math.max(max, b.y + b.h);
-    }, 0);
-  }, [pieces, referenceUnitMm]);
-  const viewBoxHeight = Math.max(baseViewBoxHeight, maxPieceBottom + 20);
+  const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
