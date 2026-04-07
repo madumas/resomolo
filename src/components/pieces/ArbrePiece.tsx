@@ -68,14 +68,15 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
               fill={isLeaf ? 'rgba(24, 95, 165, 0.12)' : 'rgba(85, 80, 106, 0.08)'}
               stroke={isLeaf ? '#185FA5' : '#55506A'}
               strokeWidth={0.6}
-              strokeDasharray={isEmpty ? '3 2' : undefined} />
+              strokeDasharray={isEmpty ? '3 2' : undefined}
+              data-edit-target={`${piece.id}-node-${i}`} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
               fontSize={Math.min(T1, nw / Math.max(1, displayLabel.length) * 1.4) * ts}
               fill={isEmpty ? '#B0A8C0' : '#1E1A2E'}
               fontWeight={isEmpty ? 400 : 600}
               opacity={isEmpty ? 0.65 : 1}
-              data-edit-target={`${piece.id}-node-${node.levelIndex}-${node.optionIndex}`}>
+              pointerEvents="none">
               {displayLabel}
             </text>
           </g>
