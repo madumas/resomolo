@@ -5,10 +5,12 @@ set -euo pipefail
 # merges dev into main, runs npm version, pushes with tags.
 #
 # Usage:
-#   ./scripts/release.sh          # auto-detect bump (patch or minor)
-#   ./scripts/release.sh patch    # force patch
-#   ./scripts/release.sh minor    # force minor
-#   ./scripts/release.sh major    # force major
+#   ./scripts/release.sh              # auto-detect bump, confirmation interactive
+#   ./scripts/release.sh patch        # force patch, confirmation interactive
+#   ./scripts/release.sh minor        # force minor, confirmation interactive
+#   ./scripts/release.sh major        # force major, confirmation interactive
+#   ./scripts/release.sh --yes        # auto-detect bump, sans confirmation
+#   ./scripts/release.sh minor --yes  # force minor, sans confirmation
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,6 +18,17 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 die() { echo -e "${RED}Erreur: $1${NC}" >&2; exit 1; }
+
+# Parse arguments
+AUTO_CONFIRM=false
+BUMP_ARG=""
+for arg in "$@"; do
+  case "$arg" in
+    --yes|-y) AUTO_CONFIRM=true ;;
+    patch|minor|major) BUMP_ARG="$arg" ;;
+    *) die "Argument inconnu: $arg" ;;
+  esac
+done
 
 # Must be in repo root
 cd "$(git rev-parse --show-toplevel)"
@@ -34,8 +47,8 @@ else
 fi
 
 # Auto-detect bump from conventional commits
-if [[ -n "${1:-}" ]]; then
-  BUMP="$1"
+if [[ -n "$BUMP_ARG" ]]; then
+  BUMP="$BUMP_ARG"
   echo -e "Bump forcé: ${GREEN}${BUMP}${NC}"
 else
   FEAT_COUNT=$(git log "$RANGE" --oneline --grep="^feat" | wc -l | tr -d ' ')
@@ -61,8 +74,12 @@ git log "$RANGE" --oneline
 echo ""
 
 # Confirm
-read -rp "Continuer avec npm version ${BUMP}? [o/N] " REPLY
-[[ "$REPLY" =~ ^[oOyY]$ ]] || { echo "Annulé."; exit 0; }
+if [[ "$AUTO_CONFIRM" == true ]]; then
+  echo -e "${GREEN}Mode non-interactif (--yes) — on continue.${NC}"
+else
+  read -rp "Continuer avec npm version ${BUMP}? [o/N] " REPLY
+  [[ "$REPLY" =~ ^[oOyY]$ ]] || { echo "Annulé."; exit 0; }
+fi
 
 # Merge dev into main
 echo -e "\n${GREEN}Merge dev → main...${NC}"
