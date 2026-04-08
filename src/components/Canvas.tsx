@@ -136,6 +136,7 @@ export function Canvas({
   const svgRef = useRef<SVGSVGElement>(null);
   const lastClickTime = useRef(0);
   const [mode, setMode] = useState<InteractionMode>({ type: 'idle' });
+  const activePointerId = useRef<number | null>(null);
   const [columnCalcPieceId, setColumnCalcPieceId] = useState<string | null>(null);
   const [divisionCalcPieceId, setDivisionCalcPieceId] = useState<string | null>(null);
   const [tableauEditorPieceId, setTableauEditorPieceId] = useState<string | null>(null);
@@ -459,6 +460,11 @@ export function Canvas({
       }
       // Move tool — start moving the piece
       if (activeTool === 'deplacer') {
+        // Capture pointer for reliable touch drag (prevents browser scroll stealing events)
+        if (e.pointerType !== 'mouse' && svgRef.current) {
+          svgRef.current.setPointerCapture(e.pointerId);
+          activePointerId.current = e.pointerId;
+        }
         handleStartMove(hitPiece.id, pos);
         return;
       }
@@ -768,6 +774,11 @@ export function Canvas({
     setMode({ type: 'idle' });
     setAlignGuide(null);
     originalMovePos.current = null;
+    // Release pointer capture
+    if (activePointerId.current !== null && svgRef.current) {
+      try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* already released */ }
+      activePointerId.current = null;
+    }
   }, [mode, pieces, referenceUnitMm, tol.barAlignSnapMm, dispatch]);
 
   // Start moving a piece (pick-up) — records offset between cursor and piece origin
@@ -793,6 +804,10 @@ export function Canvas({
         }
         setMode({ type: 'idle' });
         originalMovePos.current = null;
+        if (activePointerId.current !== null && svgRef.current) {
+          try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* already released */ }
+          activePointerId.current = null;
+        }
       }
     };
     window.addEventListener('keydown', handler, true); // capture phase — before App.tsx
@@ -1057,7 +1072,7 @@ export function Canvas({
         aria-label={`Canevas de modélisation — ${pieces.length} pièce${pieces.length !== 1 ? 's' : ''}`}
         aria-roledescription="Espace de travail interactif"
         viewBox={`0 0 ${CANVAS_WIDTH_MM} ${viewBoxHeight}`}
-        style={{ width: '100%', height: '100%', display: 'block' }}
+        style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
