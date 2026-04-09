@@ -11,6 +11,7 @@ export interface ColumnCalcData {
   decimalPosition: number | null; // number of decimal places (null = integer mode)
   borrow?: boolean[]; // borrow indicator per op1 cell (subtraction only)
   carryBorrow?: boolean[]; // borrow indicator per carry cell (subtraction cascading)
+  addCarry?: string[]; // carry row for addition of intermediates (multiplication)
 }
 
 interface ColumnCalcProps {
@@ -90,6 +91,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   const [operator, setOperator] = useState(savedData?.operator || initialOperator || '+');
   const [borrow, setBorrow] = useState<boolean[]>(savedData?.borrow || Array(NUM_COLS).fill(false));
   const [carryBorrow, setCarryBorrow] = useState<boolean[]>(savedData?.carryBorrow || Array(NUM_COLS).fill(false));
+  const [addCarry, setAddCarry] = useState<Row>(savedData?.addCarry || emptyRow());
   const [lastModified, setLastModified] = useState<{ cellId: string; prevValue: string } | null>(null);
   const initialDecPos = detectDecimalPosition(initialOp1)
     ?? detectDecimalPosition(initialOp2)
@@ -139,6 +141,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     else if (rowName === 'op2') setOp2(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName === 'result') setResult(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName === 'carry') setCarry(prev => { const n = [...prev]; n[col] = value; return n; });
+    else if (rowName === 'addCarry') setAddCarry(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName.startsWith('int')) {
       const intIdx = parseInt(rowName.replace('int', ''));
       setIntermediates(prev => {
@@ -179,6 +182,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       setOp2(shiftRow);
       setResult(shiftRow);
       setCarry(shiftRow);
+      setAddCarry(shiftRow);
       setIntermediates(prev => prev.map(r => shiftRow(r)));
     }
     setDecimalPosition(newDecPos);
@@ -256,6 +260,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       e.preventDefault();
       const allRows = ['carry', 'op1', 'op2'];
       if (needsIntermediates) {
+        allRows.push('addCarry');
         for (let i = 0; i < numIntermediates; i++) allRows.push(`int${i}`);
       }
       allRows.push('result');
@@ -296,6 +301,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       decimalPosition,
       borrow: [...borrow],
       carryBorrow: [...carryBorrow],
+      addCarry: [...addCarry],
     };
     onCommit(expr || '', data);
   };
@@ -413,6 +419,30 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       {/* Intermediate lines (for multi-digit multiplication) */}
       {needsIntermediates && (
         <>
+          {/* Addition carry row — above intermediates */}
+          <div style={{ display: 'flex', gap: GAP, marginBottom: 4, marginTop: 8, alignItems: 'center' }}>
+            <div style={{ width: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF' }}>
+              +
+            </div>
+            {addCarry.map((d, col) => (
+              <React.Fragment key={`addCarry-${col}`}>
+                {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+                  <span style={decimalSepStyle}>,</span>
+                )}
+                <input
+                  ref={el => setCellRef(`addCarry-${col}`, el)}
+                  data-cell={`addCarry-${col}`}
+                  type="text" inputMode="decimal" maxLength={1}
+                  value={d}
+                  onChange={e => handleCellChange(addCarry, setAddCarry, 'addCarry', col, e.target.value)}
+                  onKeyDown={e => handleKeyDown('addCarry', col, e)}
+                  onFocus={e => e.target.select()}
+                  placeholder="·"
+                  style={carryStyle}
+                />
+              </React.Fragment>
+            ))}
+          </div>
           {intermediates.slice(0, numIntermediates).map((intRow, intIdx) => (
             <div key={`int-${intIdx}`} style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
               <div style={{ width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9CA3AF' }}>
