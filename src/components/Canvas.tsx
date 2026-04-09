@@ -1928,9 +1928,10 @@ export function Canvas({
         // ptTop used for left positioning
         // Parse existing expression to pre-fill the grid
         const parsed = parseExpression(piece.expression);
-        // Restore saved column data if available
+        // Restore saved column data if available — invalidate if expression was edited
         const rawData = piece.columnData ? JSON.parse(piece.columnData) : undefined;
-        const savedData = rawData?.type === 'division' ? undefined : rawData as ColumnCalcData | undefined;
+        const rawSaved = rawData?.type === 'division' ? undefined : rawData as ColumnCalcData | undefined;
+        const savedData = (rawSaved && parsed && rawSaved.operator !== parsed.operator) ? undefined : rawSaved;
 
         return (
           <ColumnCalc

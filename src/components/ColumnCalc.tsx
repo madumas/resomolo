@@ -9,6 +9,8 @@ export interface ColumnCalcData {
   intermediates: string[][]; // intermediate lines for multi-digit multiplication
   operator: string;
   decimalPosition: number | null; // number of decimal places (null = integer mode)
+  borrow?: boolean[]; // borrow indicator per op1 cell (subtraction only)
+  carryBorrow?: boolean[]; // borrow indicator per carry cell (subtraction cascading)
 }
 
 interface ColumnCalcProps {
@@ -23,7 +25,7 @@ interface ColumnCalcProps {
   onCancel: () => void;
 }
 
-const OPERATORS = ['+', '−', '×', '÷'];
+const OPERATORS = ['+', '−', '×'];
 const NUM_COLS = 6; // 6 columns for intermediate results
 const CELL = 48;
 const GAP = 4;
@@ -86,6 +88,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     savedData?.intermediates || [emptyRow()]
   );
   const [operator, setOperator] = useState(savedData?.operator || initialOperator || '+');
+  const [borrow, setBorrow] = useState<boolean[]>(savedData?.borrow || Array(NUM_COLS).fill(false));
+  const [carryBorrow, setCarryBorrow] = useState<boolean[]>(savedData?.carryBorrow || Array(NUM_COLS).fill(false));
   const [lastModified, setLastModified] = useState<{ cellId: string; prevValue: string } | null>(null);
   const initialDecPos = detectDecimalPosition(initialOp1)
     ?? detectDecimalPosition(initialOp2)
@@ -290,6 +294,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       op1: [...op1], op2: [...op2], result: [...result],
       carry: [...carry], intermediates: intermediates.map(r => [...r]), operator,
       decimalPosition,
+      borrow: [...borrow],
+      carryBorrow: [...carryBorrow],
     };
     onCommit(expr || '', data);
   };
@@ -301,7 +307,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         background: '#fff', border: '2px solid #7028e0',
         borderRadius: 10, padding: 16,
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 20,
-        maxHeight: 'calc(100% - 16px)', overflowY: 'auto',
+        maxHeight: 'calc(100% - 16px)', overflowY: 'auto', touchAction: 'manipulation',
       }}
       onPointerDown={e => e.stopPropagation()}
     >
@@ -318,17 +324,37 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
             {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
               <span style={decimalSepStyle}>,</span>
             )}
-            <input
-              ref={el => setCellRef(`carry-${col}`, el)}
-              data-cell={`carry-${col}`}
-              type="text" inputMode="decimal" maxLength={1}
-              value={d}
-              onChange={e => handleCellChange(carry, setCarry, 'carry', col, e.target.value)}
-              onKeyDown={e => handleKeyDown('carry', col, e)}
-              onFocus={e => e.target.select()}
-              placeholder="·"
-              style={carryStyle}
-            />
+            <div style={{ position: 'relative' }}>
+              {carryBorrow[col] && d !== '' && (
+                <span style={{
+                  position: 'absolute', left: 2, top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: 12, fontWeight: 700, color: '#9060C0',
+                  pointerEvents: 'none', fontFamily: 'monospace', zIndex: 1,
+                }}>1</span>
+              )}
+              <input
+                ref={el => setCellRef(`carry-${col}`, el)}
+                data-cell={`carry-${col}`}
+                type="text" inputMode="decimal" maxLength={1}
+                value={d}
+                onChange={e => handleCellChange(carry, setCarry, 'carry', col, e.target.value)}
+                onKeyDown={e => handleKeyDown('carry', col, e)}
+                onFocus={e => e.target.select()}
+                onPointerDown={operator === '−' && d !== '' ? (e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  if (e.clientX - rect.left < rect.width / 2) {
+                    e.preventDefault();
+                    setCarryBorrow(prev => { const n = [...prev]; n[col] = !n[col]; return n; });
+                  }
+                } : undefined}
+                placeholder="·"
+                style={{
+                  ...carryStyle,
+                  border: carryBorrow[col] && d !== '' ? '1px dashed #9060C0' : carryStyle.border,
+                }}
+              />
+            </div>
           </React.Fragment>
         ))}
       </div>
@@ -341,16 +367,31 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
             {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
               <span style={decimalSepStyle}>,</span>
             )}
-            <CellInput cellId={`op1-${col}`} refCb={el => setCellRef(`op1-${col}`, el)}
-              value={d} onChange={v => handleCellChange(op1, setOp1, 'op1', col, v)}
-              onKeyDown={e => handleKeyDown('op1', col, e)} />
+            <div style={{ position: 'relative' }}>
+              {borrow[col] && (
+                <span style={{
+                  position: 'absolute', left: 3, top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: 16, fontWeight: 700, color: '#9060C0',
+                  pointerEvents: 'none', fontFamily: 'monospace', zIndex: 1,
+                }}>1</span>
+              )}
+              <CellInput cellId={`op1-${col}`} refCb={el => setCellRef(`op1-${col}`, el)}
+                value={d} onChange={v => handleCellChange(op1, setOp1, 'op1', col, v)}
+                onKeyDown={e => handleKeyDown('op1', col, e)}
+                strikethrough={operator === '−' && carry[col] !== ''}
+                borrowActive={borrow[col]}
+                onBorrowToggle={operator === '−' && d !== '' ? () => {
+                  setBorrow(prev => { const n = [...prev]; n[col] = !n[col]; return n; });
+                } : undefined} />
+            </div>
           </React.Fragment>
         ))}
       </div>
 
       {/* Operator + Operand 2 */}
       <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
-        <select value={operator} onChange={e => setOperator(e.target.value)}
+        <select value={operator} onChange={e => { setOperator(e.target.value); if (e.target.value !== '−') { setBorrow(Array(NUM_COLS).fill(false)); setCarryBorrow(Array(NUM_COLS).fill(false)); } }}
           style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', fontFamily: 'monospace' }}>
           {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
         </select>
@@ -475,31 +516,41 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   );
 }
 
-function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId }: {
+function CellInput({ value, onChange, onKeyDown, refCb, bold, cellId, strikethrough, borrowActive, onBorrowToggle }: {
   value: string; onChange: (v: string) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   refCb: (el: HTMLInputElement | null) => void; bold?: boolean;
-  cellId?: string;
+  cellId?: string; strikethrough?: boolean; borrowActive?: boolean;
+  onBorrowToggle?: () => void;
 }) {
   return (
     <input ref={refCb} type="text" inputMode="decimal" maxLength={1}
       data-cell={cellId}
       value={value} onChange={e => onChange(e.target.value)}
       onKeyDown={onKeyDown} onFocus={e => e.target.select()}
+      onPointerDown={onBorrowToggle ? (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        if (e.clientX - rect.left < rect.width / 2) {
+          e.preventDefault();
+          onBorrowToggle();
+        }
+      } : undefined}
       style={{
         width: CELL, height: CELL, fontSize: 28,
         fontWeight: bold ? 700 : 400, textAlign: 'center',
-        border: `2px solid ${value ? '#D5D0E0' : '#E8E5F0'}`, borderRadius: 6,
+        border: `2px solid ${borrowActive ? '#9060C0' : value ? '#D5D0E0' : '#E8E5F0'}`, borderRadius: 6,
         fontFamily: "'Consolas', 'Courier New', monospace",
         outline: 'none', background: value ? '#FAFCFF' : '#F8F7FC',
         opacity: value ? 1 : 0.5,
+        textDecoration: strikethrough ? 'line-through' : 'none',
         transition: 'opacity 0.2s, border-color 0.2s, background 0.2s',
       }} />
   );
 }
 
+
 const carryStyle: React.CSSProperties = {
-  width: CELL, height: CELL * 0.65, fontSize: 18, textAlign: 'center',
+  width: CELL, height: CELL * 0.79, fontSize: 18, textAlign: 'center',
   border: '1px dashed #D5D0E0', background: '#FEF9EF', borderRadius: 4,
   color: '#9060C0', fontFamily: 'monospace', outline: 'none',
 };
