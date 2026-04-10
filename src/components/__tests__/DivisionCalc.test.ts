@@ -20,37 +20,37 @@ describe('detectDecimalPosition', () => {
 });
 
 describe('numToRow with decimal', () => {
-  it('places "12.60" correctly with decimalPos=2 in 6 cols', () => {
-    expect(numToRow('12.60', 6, 2)).toEqual(['', '', '1', '2', '6', '0']);
+  it('places "12.60" correctly with decimalPos=2 in 4 cols', () => {
+    expect(numToRow('12.60', 4, 2)).toEqual(['1', '2', '6', '0']);
   });
-  it('places "3" in integer mode (6 cols)', () => {
-    expect(numToRow('3', 6, null)).toEqual(['', '', '', '', '', '3']);
+  it('places "3" in integer mode (4 cols)', () => {
+    expect(numToRow('3', 4, null)).toEqual(['', '', '', '3']);
   });
-  it('places "3" without decimalPos (6 cols)', () => {
-    expect(numToRow('3', 6)).toEqual(['', '', '', '', '', '3']);
+  it('places "3" without decimalPos (4 cols)', () => {
+    expect(numToRow('3', 4)).toEqual(['', '', '', '3']);
   });
-  it('places "2.5" with decimalPos=1 in 6 cols', () => {
-    expect(numToRow('2.5', 6, 1)).toEqual(['', '', '', '', '2', '5']);
+  it('places "2.5" with decimalPos=1 in 4 cols', () => {
+    expect(numToRow('2.5', 4, 1)).toEqual(['', '', '2', '5']);
   });
   it('returns empty row for undefined', () => {
-    expect(numToRow(undefined, 6)).toEqual(['', '', '', '', '', '']);
+    expect(numToRow(undefined, 4)).toEqual(['', '', '', '']);
   });
 });
 
 describe('rowToNumWithDecimal', () => {
   it('returns "12,60" for decimalPos=2', () => {
-    expect(rowToNumWithDecimal(['', '', '1', '2', '6', '0'], 2, 6)).toBe('12,60');
+    expect(rowToNumWithDecimal(['1', '2', '6', '0'], 2, 4)).toBe('12,60');
   });
   it('returns "4,20" preserving trailing zero', () => {
-    expect(rowToNumWithDecimal(['', '', '', '4', '2', '0'], 2, 6)).toBe('4,20');
+    expect(rowToNumWithDecimal(['', '4', '2', '0'], 2, 4)).toBe('4,20');
   });
   it('returns "24" in integer mode (null)', () => {
-    expect(rowToNumWithDecimal(['', '', '', '', '2', '4'], null, 6)).toBe('24');
+    expect(rowToNumWithDecimal(['', '', '2', '4'], null, 4)).toBe('24');
   });
   it('returns "0" for empty row in integer mode', () => {
-    expect(rowToNumWithDecimal(['', '', '', '', '', ''], null, 6)).toBe('0');
+    expect(rowToNumWithDecimal(['', '', '', ''], null, 4)).toBe('0');
   });
   it('returns "2,5" for decimalPos=1', () => {
-    expect(rowToNumWithDecimal(['', '', '', '', '2', '5'], 1, 6)).toBe('2,5');
+    expect(rowToNumWithDecimal(['', '', '2', '5'], 1, 4)).toBe('2,5');
   });
 });

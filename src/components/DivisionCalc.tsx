@@ -3,17 +3,17 @@ import { onSnap } from '../engine/sound';
 
 export interface DivisionCalcData {
   type: 'division';
-  dividend: string[];      // digits of dividend (6 cells)
+  dividend: string[];      // digits of dividend (4 cells)
   divisor: string[];       // digits of divisor (3 cells)
-  quotient: string[];      // digits of quotient (6 cells)
+  quotient: string[];      // digits of quotient (4 cells)
   remainder: string;       // final remainder (1-2 digits)
   steps: DivisionStep[];   // variable number of division steps
   decimalPos?: number | null; // null=integer, 1=dixièmes, 2=centièmes — applies to dividend AND quotient
 }
 
 interface DivisionStep {
-  product: string[];       // product partial (6 cells)
-  partialRemainder: string[]; // remainder after subtraction (6 cells)
+  product: string[];       // product partial (4 cells)
+  partialRemainder: string[]; // remainder after subtraction (4 cells)
 }
 
 interface DivisionCalcProps {
@@ -26,7 +26,7 @@ interface DivisionCalcProps {
   onCancel: () => void;
 }
 
-const DIV_COLS = 6;     // dividend/quotient columns
+const DIV_COLS = 4;     // dividend/quotient columns
 const DIVISOR_COLS = 3; // divisor columns
 const CELL = 48;
 const GAP = 4;
@@ -416,6 +416,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
         <div>
           {/* Dividend row */}
           <div style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
+            <div style={{ width: minusColWidth, flexShrink: 0 }} /> {/* spacer to align with "−" column */}
             {dividend.map((d, col) => (
               <React.Fragment key={`dividend-${col}`}>
                 {decimalPos !== null && col === DIV_COLS - decimalPos && (
