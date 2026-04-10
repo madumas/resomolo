@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "name": "catalogue-jeton",
+  "probleme": "",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {"id":"b1","type":"jeton","x":20,"y":20,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b2","type":"jeton","x":35,"y":20,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b3","type":"jeton","x":50,"y":20,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b4","type":"jeton","x":20,"y":35,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b5","type":"jeton","x":35,"y":35,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b6","type":"jeton","x":50,"y":35,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b7","type":"jeton","x":20,"y":50,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b8","type":"jeton","x":35,"y":50,"locked":false,"couleur":"bleu","parentId":null},
+
+    {"id":"r1","type":"jeton","x":90,"y":20,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r2","type":"jeton","x":105,"y":20,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r3","type":"jeton","x":120,"y":20,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r4","type":"jeton","x":90,"y":35,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r5","type":"jeton","x":105,"y":35,"locked":false,"couleur":"rouge","parentId":null}
+  ],
+  "availablePieces": null
+}

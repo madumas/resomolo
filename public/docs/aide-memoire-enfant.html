@@ -80,12 +80,12 @@
     border-radius: 6px;
     margin: 2mm auto;
     width: 80%;
-    min-height: 25mm;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #999;
-    font-size: 11px;
+    overflow: hidden;
+  }
+  .img-block img {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .help-tip {
@@ -119,35 +119,35 @@
   <div class="card">
     <div class="card-num">1</div>
     <h2>Lis le problème</h2>
-    <div class="img-block"><!-- TODO: capture — zone problème avec surlignage --></div>
-    <p><!-- TODO: instruction courte — surligner les nombres et mots importants --></p>
+    <div class="img-block"><img src="images/aide-memoire-surlignage.png" alt="Zone problème avec des mots surlignés en bleu et orange"></div>
+    <p>Clique sur les nombres importants — ils deviennent <strong style="color:#2563EB">bleus</strong>. Clique sur la question — elle devient <strong style="color:#EA580C">orange</strong>.</p>
   </div>
 
   <div class="card">
     <div class="card-num">2</div>
     <h2>Place tes pièces</h2>
-    <div class="img-block"><!-- TODO: capture — barre d'outils avec pièces --></div>
-    <p><!-- TODO: instruction courte — cliquer sur un outil, cliquer dans l'espace --></p>
+    <div class="img-block"><img src="images/aide-memoire-toolbar.png" alt="Barre d'outils avec les pièces"></div>
+    <p>Clique sur une pièce dans la barre en haut, puis clique dans l'espace blanc pour la poser.</p>
   </div>
 
   <div class="card">
     <div class="card-num">3</div>
     <h2>Construis ton idée</h2>
-    <div class="img-block"><!-- TODO: capture — modélisation en cours --></div>
-    <p><!-- TODO: instruction courte — déplacer, modifier, relier --></p>
+    <div class="img-block"><img src="images/aide-memoire-modelisation.png" alt="Modélisation en cours avec barres, inconnue et calcul"></div>
+    <p>Clique sur une pièce pour la modifier. Utilise Déplacer pour la bouger. Tu peux ajouter des noms, des couleurs et des flèches.</p>
   </div>
 
   <div class="card">
     <div class="card-num">4</div>
     <h2>Écris ta réponse</h2>
-    <div class="img-block"><!-- TODO: capture — pièce Réponse --></div>
-    <p><!-- TODO: instruction courte — placer la pièce Réponse et écrire --></p>
+    <div class="img-block"><img src="images/exemple-reponse.png" alt="Pièce Réponse avec une phrase-réponse complète"></div>
+    <p>Place la pièce <strong>Réponse</strong> et écris ta réponse en phrase complète.</p>
   </div>
 
 </div>
 
 <div class="help-tip">
-  <!-- TODO: raccourci d'urgence (Ctrl+Z pour annuler, ESC pour désélectionner) -->
+  <strong>Au secours!</strong> Appuie sur <strong>Ctrl+Z</strong> pour annuler. Appuie sur <strong>Échap</strong> pour tout désélectionner. Ton travail est sauvegardé automatiquement.
 </div>
 
 <div class="footer">

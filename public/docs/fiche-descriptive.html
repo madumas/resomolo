@@ -85,7 +85,85 @@
     color: #999;
   }
 
-  /* TODO: compléter les styles selon le contenu final */
+  strong { color: #5B21B6; }
+
+  .category-box {
+    background: #F5F3FF;
+    border: 2px solid #5B21B6;
+    border-radius: 6px;
+    padding: 2.5mm 4mm;
+    margin: 2mm 0 3mm;
+    font-size: 12.5px;
+  }
+  .category-box strong { font-size: 13px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin: 2mm 0;
+  }
+  th {
+    background: #5B21B6;
+    color: #fff;
+    padding: 2mm;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 1.5mm 2mm;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  tr:nth-child(even) td { background: #FAF8FF; }
+
+  p { margin-bottom: 1.5mm; }
+  ul, ol { padding-left: 5mm; margin-bottom: 1.5mm; }
+  li { margin-bottom: 1mm; }
+
+  .principles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 4mm;
+  }
+  .principle {
+    padding: 2mm 3mm;
+    border-left: 3px solid #7028e0;
+    background: #FAFCFF;
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+  }
+  .principle h3 {
+    color: #5B21B6;
+    margin-bottom: 0.5mm;
+    font-size: 11.5px;
+  }
+  .principle p {
+    font-size: 11px;
+    margin-bottom: 0;
+    line-height: 1.35;
+  }
+
+  .tech-list {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  .tech-list li { margin-bottom: 0.8mm; }
+
+  .not-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1mm 3mm;
+    font-size: 11px;
+    list-style: none;
+    padding: 0;
+  }
+  .not-list li::before {
+    content: "\2715  ";
+    color: #C82828;
+    font-weight: 700;
+  }
+
+  @media print { body { max-width: none; } }
 </style>
 </head>
 <body>
@@ -96,49 +174,138 @@
 </div>
 
 <p class="lead">
-  <!-- TODO: paragraphe d'introduction — résumé en 2-3 lignes de ce qu'est RésoMolo -->
-  RésoMolo est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre.
+  RésoMolo est un espace de travail numérique où l'enfant du primaire modélise visuellement un problème mathématique avant de le résoudre. L'enfant décide quoi représenter et comment; l'outil produit les pièces visuelles. C'est aussi utile pour l'enfant qui comprend le problème mais qui ne sait pas comment s'y prendre ou comment organiser sa démarche.
 </p>
 
+<div class="category-box">
+  <strong>Catégorie d'aide :</strong> Aide technologique pouvant servir de mesure d'adaptation dans le cadre d'un plan d'intervention. Compense la difficulté de représentation et d'organisation spatiale en résolution de problèmes mathématiques. Ne modifie pas les attentes du programme. L'outil retire la barrière motrice et la surcharge cognitive de la mise en page sans donner un avantage sur la compétence évaluée.
+</div>
+
 <h2>En bref</h2>
-<!-- TODO: tableau ou liste — public cible, cycles visés, stack, accès -->
+<ul>
+  <li><strong>Public cible :</strong> Élèves du primaire, 2<sup>e</sup> et 3<sup>e</sup> cycles (8-12 ans), particulièrement ceux ayant des difficultés motrices, de coordination ou de mise en action, mais aussi des difficultés en lecture, en attention ou de l'anxiété de performance</li>
+  <li><strong>Discipline :</strong> Mathématiques — Résoudre une situation-problème (compétence 1 PFEQ)</li>
+  <li><strong>Accès :</strong> resomolo.ca — gratuit, aucun compte, aucune installation, fonctionne hors ligne</li>
+  <li><strong>Pièces :</strong> 14 pièces sémantiques en 5 groupes (Concret, Proportionnel, Structuré, Calculer, Annoter)</li>
+  <li><strong>Modes :</strong> Simplifié (2<sup>e</sup> cycle, pièces essentielles) / Complet (3<sup>e</sup> cycle, toutes les pièces)</li>
+</ul>
 
 <h2>Ce que fait l'enfant</h2>
-<!-- TODO: décrire le flux — lire le problème, surligner, placer des pièces, construire le raisonnement -->
+<ol>
+  <li><strong>Lire et surligner le problème</strong> — L'enfant clique sur les mots et les nombres pour les surligner en 4 couleurs : <span style="color:#2563EB">bleu</span> (données connues), <span style="color:#EA580C">orange</span> (question), <span style="color:#16A34A">vert</span> (mots de relation), <span style="color:#6B7280">gris</span> (information superflue).</li>
+  <li><strong>Placer des pièces</strong> — Un clic dans la barre d'outils, un clic dans l'espace de travail. Chaque pièce représente un élément du problème (quantités, relations, groupes).</li>
+  <li><strong>Construire sa modélisation</strong> — L'enfant déplace, modifie, nomme et relie ses pièces pour rendre visible son raisonnement.</li>
+  <li><strong>Calculer et répondre</strong> — L'enfant pose son calcul (en ligne ou en colonnes) et écrit sa réponse en phrase complète.</li>
+</ol>
+<div class="callout">
+  L'outil ne guide jamais le raisonnement. Il confirme les actions (« Barre placée », « 3 jetons ajoutés ») sans jamais dire si c'est correct ou non. C'est la même logique qu'une feuille de papier qui compenserait le geste moteur.
+</div>
 
 <h2>Les pièces sémantiques</h2>
-<!-- TODO: tableau des 10 pièces (jeton, boîte, étiquette, flèche, barre, droite numérique, grille de calcul, tableau, calcul, réponse) avec cycle d'introduction -->
+<table>
+  <thead>
+    <tr><th>Groupe</th><th>Pièce</th><th>Rôle</th><th>Mode</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="2"><strong>Concret</strong></td><td>Jeton</td><td>Représenter une unité (un-pour-un)</td><td>S + C</td></tr>
+    <tr><td>Boîte</td><td>Grouper des jetons (sacs, paquets, dizaines)</td><td>S + C</td></tr>
+    <tr><td rowspan="2"><strong>Proportionnel</strong></td><td>Barre</td><td>Représenter une quantité par la longueur</td><td>S + C</td></tr>
+    <tr><td>Schéma</td><td>Modèle en barres (parties, comparaison, groupes, transformation)</td><td>S + C</td></tr>
+    <tr><td rowspan="5"><strong>Structuré</strong></td><td>Droite numérique</td><td>Sauts, repérage, intervalles</td><td>C</td></tr>
+    <tr><td>Arbre</td><td>Décomposition, dénombrement, probabilités</td><td>C</td></tr>
+    <tr><td>Tableau</td><td>Données, régularités, proportionnalité</td><td>C</td></tr>
+    <tr><td>Diagramme à bandes</td><td>Comparer des catégories</td><td>C</td></tr>
+    <tr><td>Diagramme à ligne brisée</td><td>Évolution dans le temps</td><td>C</td></tr>
+    <tr><td rowspan="2"><strong>Calculer</strong></td><td>Calcul</td><td>Expression en ligne ou opération en colonnes (÷ crochet québécois)</td><td>S + C</td></tr>
+    <tr><td>Réponse</td><td>Phrase-réponse complète</td><td>S + C</td></tr>
+    <tr><td rowspan="3"><strong>Annoter</strong></td><td>Étiquette</td><td>Nommer un élément (texte libre)</td><td>C</td></tr>
+    <tr><td>Inconnue</td><td>Marquer ce qu'on cherche ( ? )</td><td>S + C</td></tr>
+    <tr><td>Flèche</td><td>Relier deux pièces, indiquer une relation</td><td>C</td></tr>
+  </tbody>
+</table>
+<p style="font-size:10px; color:#666;">S = mode Simplifié, C = mode Complet. Voir le <em>Catalogue des pièces</em> pour le détail de chaque pièce.</p>
 
 <h2>Principes de conception</h2>
-<div class="two-col">
-  <div>
+<div class="principles">
+  <div class="principle">
     <h3>L'enfant raisonne, l'outil dessine</h3>
-    <!-- TODO -->
+    <p>Avec du papier, l'enfant doit simultanément comprendre le problème, imaginer une représentation, dessiner un schéma lisible et calculer. Quand le dessin accapare toute l'attention, il n'en reste plus pour le raisonnement. RésoMolo produit les représentations; l'enfant décide lesquelles utiliser et ce qu'elles signifient.</p>
   </div>
-  <div>
+  <div class="principle">
     <h3>Espace libre, pas séquence imposée</h3>
-    <!-- TODO -->
+    <p>Aucune étape obligatoire. L'enfant utilise les pièces qu'il veut, dans l'ordre qu'il veut. Un enfant peut commencer par la réponse et remonter vers les données. Un autre commence par des jetons. L'outil ne juge pas la méthode.</p>
   </div>
-  <div>
+  <div class="principle">
     <h3>Accessible à tous</h3>
-    <!-- TODO -->
+    <p>Chaque action se fait en clics distincts. Nulle part il n'y a de glisser-déposer obligatoire, de double-clic, de clic droit ou de geste de précision. Le doigt peut atterrir loin de la cible — l'outil corrige. Un son et une vibration confirment chaque action.</p>
   </div>
-  <div>
+  <div class="principle">
     <h3>Aligné PFEQ</h3>
-    <!-- TODO -->
+    <p>Vocabulaire, types de problèmes (ajout, retrait, comparaison, groupement, partage, multi-étapes) et modes de représentation correspondent au Programme de formation de l'école québécoise. La banque intégrée propose une trentaine de problèmes classés par cycle et catégorie.</p>
   </div>
+</div>
+<div class="principle" style="margin-top:2mm;">
+  <h3>Se tromper ne coûte rien</h3>
+  <p>100 niveaux d'annulation, sauvegarde constante, aucune perte de travail. Quand la peur de l'erreur disparaît, l'enfant ose essayer.</p>
+</div>
+<div class="principle" style="margin-top:2mm;">
+  <h3>Zéro obstacle avant de commencer</h3>
+  <p>Pas de compte, pas d'installation, ça marche hors ligne. Un enfant qui a déjà dépensé de l'énergie pour s'asseoir et ouvrir son appareil n'a pas besoin d'un mot de passe en plus.</p>
 </div>
 
 <div class="page-break"></div>
 
+<div class="header">
+  <span class="logo"><span class="logo-reso">Réso</span><span class="logo-molo">Molo</span></span>
+  <h1>Référence technique</h1>
+</div>
+
 <h2>Compensations techniques</h2>
-<!-- TODO: détailler les compensations d'accessibilité — clic (pas drag), snap, grandes cibles 44×44, pas de right-click, etc. -->
+<div class="two-col">
+  <div>
+    <h3>Motricité et interaction</h3>
+    <ul class="tech-list">
+      <li>Clic simple partout — pas de glisser-déposer obligatoire</li>
+      <li>Cibles minimales : 44 × 44 px (norme WCAG)</li>
+      <li>Zone de tolérance : 7 / 10,5 / 14 mm (configurable)</li>
+      <li>Lissage du pointeur (profils Aide maximale)</li>
+      <li>Grille d'alignement : 5 mm avec aimant</li>
+      <li>Anti-tremblement et anti-double-clic</li>
+      <li>Surlignage mot par mot par clic (pas de sélection par glisser)</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Organisation et rétroaction</h3>
+    <ul class="tech-list">
+      <li>Sons de rétroaction : désactivé / réduit / complet</li>
+      <li>Vibration haptique (30 ms) sur appareils compatibles</li>
+      <li>Questions de relance après inactivité (« Que sais-tu? », « Que cherches-tu? »)</li>
+      <li>Minuteur de session configurable (5-60 min)</li>
+      <li>100 niveaux d'annulation (Ctrl+Z)</li>
+      <li>Sauvegarde automatique continue (IndexedDB)</li>
+      <li>Main dominante gauche/droite</li>
+      <li>Taille de police : 1×, 1,25×, 1,5×</li>
+    </ul>
+  </div>
+</div>
 
 <h2>Profils d'accessibilité</h2>
-<!-- TODO: lister les profils si applicable (TDC, lecture, attention, etc.) -->
+<p>Cinq profils préréglés dans Paramètres (⚙️) → Profil. Chaque paramètre reste ajustable individuellement.</p>
+<table>
+  <thead>
+    <tr><th>Profil</th><th>Tolérance</th><th>Lissage</th><th>Relance</th><th>Sons</th><th>Texte</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Aide légère</strong></td><td>Normale</td><td>Désactivé</td><td>45 s</td><td>Réduit</td><td>1×</td></tr>
+    <tr><td><strong>Aide maximale</strong></td><td>Très large</td><td>Activé</td><td>30 s</td><td>Complet</td><td>1,25×</td></tr>
+    <tr><td><strong>Aide + Minuterie</strong></td><td>Large</td><td>Désactivé</td><td>30 s</td><td>Réduit</td><td>1×</td></tr>
+    <tr><td><strong>Aide + Gros texte</strong></td><td>Normale</td><td>Désactivé</td><td>45 s</td><td>Complet</td><td>1,5×</td></tr>
+    <tr><td><strong>Personnalisé</strong></td><td colspan="5" style="color:#666;">(valeurs manuelles)</td></tr>
+  </tbody>
+</table>
 
 <h2>Ce que l'outil ne fait PAS</h2>
-<ul>
+<ul class="not-list">
   <li>Ne résout pas le problème</li>
   <li>Ne valide pas la modélisation de l'élève</li>
   <li>Ne donne pas d'indices sur la solution</li>
@@ -149,10 +316,6 @@
 
 <h2>Compatibilité</h2>
 <p>Chromebook, iPad, ordinateur. Rien à installer. Fonctionne hors ligne. Aucun compte. Aucune collecte de données.</p>
-
-<div class="callout">
-  Suggestions générées par IA, à valider par un professionnel qualifié. Cet outil ne constitue pas un avis professionnel.
-</div>
 
 <div class="footer">
   <strong>resomolo.ca</strong> · info@allomolo.ca · <span class="doc-version">v0.8.0</span>

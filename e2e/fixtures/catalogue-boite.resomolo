@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "catalogue-boite",
+  "probleme": "",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {"id":"box1","type":"boite","x":15,"y":10,"locked":false,"width":80,"height":55,"label":"sac 1","value":"","couleur":"bleu"},
+    {"id":"j1","type":"jeton","x":28,"y":22,"locked":false,"couleur":"bleu","parentId":"box1"},
+    {"id":"j2","type":"jeton","x":45,"y":22,"locked":false,"couleur":"bleu","parentId":"box1"},
+    {"id":"j3","type":"jeton","x":62,"y":22,"locked":false,"couleur":"bleu","parentId":"box1"},
+    {"id":"j4","type":"jeton","x":28,"y":39,"locked":false,"couleur":"bleu","parentId":"box1"},
+    {"id":"j5","type":"jeton","x":45,"y":39,"locked":false,"couleur":"bleu","parentId":"box1"},
+    {"id":"j6","type":"jeton","x":62,"y":39,"locked":false,"couleur":"bleu","parentId":"box1"}
+  ],
+  "availablePieces": null
+}

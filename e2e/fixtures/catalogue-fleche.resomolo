@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "name": "catalogue-fleche",
+  "probleme": "",
+  "problemeReadOnly": false,
+  "problemeHighlights": [],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {"id":"j1","type":"jeton","x":25,"y":35,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"j2","type":"jeton","x":135,"y":35,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"e1","type":"etiquette","x":15,"y":18,"locked":false,"text":"Léo","attachedTo":null},
+    {"id":"e2","type":"etiquette","x":125,"y":18,"locked":false,"text":"Mia","attachedTo":null},
+    {"id":"f1","type":"fleche","x":0,"y":0,"locked":false,"fromId":"j1","toId":"j2","label":"donne"}
+  ],
+  "availablePieces": null
+}

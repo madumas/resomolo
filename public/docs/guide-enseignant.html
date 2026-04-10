@@ -67,6 +67,32 @@
     justify-content: center;
   }
 
+  h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1A2433;
+    margin: 3mm 0 1.5mm;
+  }
+
+  p, li { margin-bottom: 1.5mm; }
+  ul, ol { padding-left: 5mm; }
+  strong { color: #5B21B6; }
+
+  .img-block img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .img-block.small { max-width: 240px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4mm;
+    align-items: start;
+  }
+  .two-col-text { min-width: 0; }
+
   .callout {
     background: #F5F3FF;
     border-left: 3px solid #7028e0;
@@ -76,18 +102,13 @@
   }
 
   .img-block {
-    border: 1px solid #e0e0e0;
+    border: 1px solid #ddd;
     border-radius: 6px;
-    padding: 2mm;
+    overflow: hidden;
+    background: #FAFCFF;
     margin: 2mm 0;
-    text-align: center;
-    color: #999;
-    font-size: 11px;
-    min-height: 30mm;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
+  .img-block.full { max-width: 100%; }
 
   .page-break { page-break-before: always; }
 
@@ -108,33 +129,118 @@
   <h1>Guide enseignant</h1>
 </div>
 
-<h2>Ouvrir l'outil</h2>
-<ol class="steps">
-  <li><!-- TODO: étapes d'accès — URL, PWA, aucun compte --></li>
-  <li><!-- TODO: choisir un mode (libre / avec énoncé) --></li>
-</ol>
+<h2>Démarrer</h2>
 
-<div class="img-block"><!-- TODO: capture d'écran — vue d'ensemble de l'interface --></div>
+<h3>Ouvrir RésoMolo</h3>
+<p>Ouvrir <strong>resomolo.ca</strong> dans Chrome, Edge ou Safari sur le Chromebook, l'iPad ou l'ordinateur de l'élève. Rien à installer. L'outil fonctionne aussi hors ligne après la première visite.</p>
 
-<h2>Proposer un problème</h2>
-<!-- TODO: comment coller/saisir un énoncé, ou laisser l'enfant en mode libre -->
+<div class="img-block"><img src="images/guide-vue-ensemble.png" alt="Interface RésoMolo au premier lancement"></div>
 
-<h2>Observer la modélisation</h2>
-<!-- TODO: ce que l'enseignant voit — les pièces placées par l'enfant, la trace de raisonnement -->
+<div class="two-col">
+  <div class="two-col-text">
+    <h3>Choisir le mode d'affichage</h3>
+    <p>En haut à droite de la barre d'outils, un menu permet de choisir :</p>
+    <ul>
+      <li><strong>Simplifié</strong> : pièces essentielles — Jeton, Boîte, Barre, Schéma, Calcul, Réponse, Inconnue (correspond au 2<sup>e</sup> cycle)</li>
+      <li><strong>Complet</strong> : toutes les pièces, incluant Droite numérique, Arbre, Tableau, Diagrammes, Étiquette et Flèche (correspond au 3<sup>e</sup> cycle)</li>
+    </ul>
+    <p>Le mode peut être changé à tout moment.</p>
+  </div>
+  <div class="img-block small">
+    <img src="images/guide-mode-selector.png" alt="Menu déroulant Simplifié / Complet">
+  </div>
+</div>
 
-<h2>Récupérer le travail</h2>
-<!-- TODO: export image / partage / sauvegarde locale -->
+<h3>Le tutoriel intégré</h3>
+<p>À la première utilisation, un court tutoriel guide l'élève directement dans la barre de statut : placer un jeton, annuler, replacer. L'élève apprend les gestes de base par l'action, en quelques secondes.</p>
 
-<div class="page-break"></div>
-
-<h2>Profils d'accessibilité</h2>
-<!-- TODO: quels profils existent, comment les activer, pour quels élèves -->
-
-<h2>En évaluation</h2>
-<!-- TODO: comment utiliser l'outil en contexte d'évaluation — ce qu'il montre, ce qu'il ne montre pas -->
+<h3>La barre de statut</h3>
+<p>La barre sous les outils guide l'élève à chaque étape en langage simple :</p>
+<div class="img-block"><img src="images/guide-barre-statut.png" alt="Barre de statut montrant l'instruction en cours"></div>
+<p>L'élève n'a qu'à suivre l'instruction affichée.</p>
 
 <div class="callout">
-  RésoMolo ne valide pas les réponses. La modélisation de l'élève est sa trace de raisonnement — c'est l'enseignant qui évalue.
+  Pour un élève ayant des difficultés motrices, configurer un profil d'accessibilité <em>avant</em> la première utilisation : ouvrir <strong>Paramètres</strong> (⚙️) → sélectionner un profil (Aide légère, Aide maximale, etc.). Observer l'élève pendant les premières utilisations pour ajuster au besoin.
+</div>
+
+<h2>Proposer un problème</h2>
+<p>Trois façons de proposer un problème à l'élève :</p>
+<ol class="steps">
+  <li><strong>Banque intégrée :</strong> Cliquer <strong>Problèmes</strong> dans la barre d'outils. Filtrer par cycle et catégorie (addition, soustraction, multiplication, division, multi-étapes, comparaison, partage…). L'élève choisit un problème et l'énoncé s'affiche dans la zone problème.
+  <div class="img-block" style="margin-top:2mm;"><img src="images/guide-banque-problemes.png" alt="Banque de problèmes avec filtres par cycle et catégorie"></div></li>
+  <li><strong>Copier-coller :</strong> L'élève (ou l'enseignant) tape ou colle un énoncé directement dans la zone problème en haut de l'écran.</li>
+  <li><strong>Lien ou QR code :</strong> L'enseignant prépare un problème (avec ou sans pièces de départ), puis le partage. L'élève ouvre le lien et travaille directement (voir <em>Préparer et partager</em> ci-dessous).</li>
+</ol>
+<p>L'enfant peut aussi travailler en <strong>mode libre</strong> (zone problème vide) quand le problème est dans un cahier d'exercices physique.</p>
+
+<h3>Le surlignage</h3>
+<p>Quand l'énoncé est affiché, l'outil propose comme premier geste de surligner les mots importants en cliquant dessus. Quatre couleurs : <span style="color:#2563EB">bleu</span> (données), <span style="color:#EA580C">orange</span> (question), <span style="color:#16A34A">vert</span> (contexte relationnel), <span style="color:#6B7280">gris</span> (superflu). Ce premier geste brise l'inertie de la page blanche et aide l'enfant à structurer sa lecture.</p>
+<div class="img-block"><img src="images/aide-memoire-surlignage.png" alt="Zone problème avec données surlignées en bleu et question en orange"></div>
+
+<h2>Préparer et partager un problème</h2>
+<ol class="steps">
+  <li>Ouvrir RésoMolo et écrire ou coller l'énoncé dans la zone problème. Au besoin, placer des pièces de départ verrouillées comme échafaudage.</li>
+  <li>Cliquer <strong>Partager</strong> (en bas à droite) → <strong>Lien &amp; QR code</strong>.</li>
+  <li>Copier le lien et le coller dans Google Classroom, Microsoft Teams ou un courriel — ou afficher le code QR au tableau.</li>
+</ol>
+<p>L'élève ouvre le lien et voit l'énoncé (et les pièces de départ, s'il y en a). Il travaille directement dans son navigateur.</p>
+
+<div class="img-block"><img src="images/guide-share-panel.png" alt="Panneau de partage avec lien et QR code"></div>
+
+<h2>Observer la modélisation</h2>
+<p>La modélisation de l'élève est sa trace de raisonnement. L'enseignant peut observer :</p>
+<ul>
+  <li><strong>Quelles pièces sont utilisées :</strong> des jetons (pensée concrète), des barres (pensée proportionnelle), un tableau (organisation structurée)?</li>
+  <li><strong>Comment elles sont reliées :</strong> les flèches, les étiquettes et les inconnues montrent les liens que l'enfant perçoit entre les données.</li>
+  <li><strong>Ce qui est surligné :</strong> les couleurs dans la zone problème révèlent si l'enfant a identifié les données, la question et les informations superflues.</li>
+  <li><strong>Le calcul et la réponse :</strong> la pièce Calcul montre l'opération choisie; la pièce Réponse montre la phrase formulée.</li>
+</ul>
+<div class="callout">
+  Une modélisation « incorrecte » est précieuse : elle montre exactement où la compréhension a déraillé. C'est le point de départ de l'intervention, pas un échec.
+</div>
+
+<h2>Récupérer le travail de l'élève</h2>
+<ul>
+  <li><strong>Photo (PNG) :</strong> L'élève clique <strong>Partager</strong> → <strong>Photo (PNG)</strong>. L'image inclut le problème avec les surlignages et toutes les pièces, avec un filigrane daté. L'élève peut déposer l'image dans Google Classroom ou l'envoyer par courriel.</li>
+  <li><strong>Document (PDF) :</strong> L'élève clique <strong>Partager</strong> → <strong>Document (PDF)</strong>. Format lettre paysage, prêt à imprimer.</li>
+  <li><strong>Fichier .resomolo :</strong> L'élève exporte son travail complet (Paramètres → Exporter). Le fichier peut être rouvert dans RésoMolo pour continuer ou pour évaluation.</li>
+  <li><strong>Sauvegarde locale :</strong> Le travail est sauvegardé automatiquement dans le navigateur. L'élève retrouve ses travaux via <strong>Mes travaux</strong> (en bas à droite) en rouvrant resomolo.ca sur le même appareil.</li>
+</ul>
+
+<!-- ════════════════════════════════════════ PAGE 2 ════════════════════════════════════════ -->
+
+<div class="page-break"></div>
+<h2>En classe</h2>
+
+<h3>Profils d'accessibilité</h3>
+<div class="img-block small" style="float:right; margin-left:3mm;"><img src="images/guide-profils-rapides.png" alt="Paramètres avec sélecteur de profil rapide"></div>
+<p>Dans <strong>Paramètres</strong> (⚙️) → <strong>Profil</strong>, cinq profils préréglés :</p>
+<ul>
+  <li><strong>Aide légère :</strong> Réglages par défaut avec sons réduits. Pour les élèves ayant besoin d'une compensation minimale.</li>
+  <li><strong>Aide maximale :</strong> Zones de détection très larges, lissage du pointeur, texte agrandi (1,25×), sons complets, zone problème toujours visible. Pour les élèves ayant des difficultés motrices importantes.</li>
+  <li><strong>Aide + Minuterie :</strong> Minuteur de session activé, zones larges. Pour les élèves ayant besoin d'un cadre de temps.</li>
+  <li><strong>Aide + Gros texte :</strong> Police à 1,5×, sons complets. Pour les élèves ayant des difficultés de lecture.</li>
+  <li><strong>Personnalisé :</strong> L'enseignant ajuste chaque paramètre individuellement.</li>
+</ul>
+<p>Chaque paramètre (tolérance de clic, sons, taille du texte, main dominante, questions de relance, minuteur) reste ajustable individuellement après la sélection d'un profil. Observer l'élève pendant les premières utilisations pour ajuster au besoin.</p>
+
+<h3>En évaluation</h3>
+<p><strong>Ce que la modélisation montre :</strong></p>
+<ul>
+  <li>La capacité de l'élève à identifier les données, la question et les informations superflues (via le surlignage)</li>
+  <li>Le choix de représentation (concrète, proportionnelle, structurée)</li>
+  <li>L'organisation du raisonnement (liens entre les pièces)</li>
+  <li>L'opération choisie et la formulation de la réponse</li>
+</ul>
+<p><strong>Ce que l'outil ne donne pas :</strong></p>
+<ul>
+  <li>Aucune validation des réponses</li>
+  <li>Aucun indice sur l'opération à utiliser</li>
+  <li>Aucune suggestion de pièce</li>
+</ul>
+
+<div class="callout">
+  RésoMolo ne valide pas les réponses. La modélisation de l'élève est sa trace de raisonnement — elle remplace le schéma qu'il aurait dessiné sur papier. C'est l'enseignant qui évalue.
 </div>
 
 <div class="footer">
