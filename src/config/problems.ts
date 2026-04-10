@@ -142,7 +142,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     title: 'Pizza en pointes',
     text: 'Marie mange le quart d\'une pizza coupée en 8 pointes. Combien de pointes mange-t-elle?',
     cycle: 3,
-    category: 'division',
+    category: 'fraction',
     difficulty: 2,
   },
 
@@ -160,7 +160,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     title: 'Chandail en solde',
     text: 'Un chandail coûte 40 $. Il est en solde à 25 % de rabais. Quel est le prix en solde?',
     cycle: 3,
-    category: 'soustraction',
+    category: 'fraction',
     difficulty: 3,
   },
   {

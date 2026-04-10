@@ -2,6 +2,7 @@ import { get, set, del } from 'idb-keyval';
 import type { UndoManager } from './types';
 import type { SlotRegistry } from './slots';
 import { createEmptyRegistry, createSlotMetadata } from './slots';
+import { migrateUndoManager } from './persistence';
 
 const REGISTRY_KEY = 'resomolo_registry';
 const slotKey = (id: string) => `resomolo_slot_${id}`;
@@ -29,7 +30,11 @@ function lsRemove(key: string): void {
 export async function saveRegistry(registry: SlotRegistry): Promise<void> {
   const json = JSON.stringify(registry);
   lsSet(LS_REGISTRY_KEY, json);
-  await set(REGISTRY_KEY, json);
+  try {
+    await set(REGISTRY_KEY, json);
+  } catch (e) {
+    console.warn('RésoMolo: registry save failed', e);
+  }
 }
 
 export async function loadRegistry(): Promise<SlotRegistry> {
@@ -48,7 +53,11 @@ export async function loadRegistry(): Promise<SlotRegistry> {
 export async function saveSlotData(slotId: string, undoManager: UndoManager): Promise<void> {
   const json = JSON.stringify({ version: 1, data: undoManager });
   lsSet(lsSlotKey(slotId), json);
-  await set(slotKey(slotId), json);
+  try {
+    await set(slotKey(slotId), json);
+  } catch (e) {
+    console.warn('RésoMolo: slot save failed', e);
+  }
 }
 
 export async function loadSlotData(slotId: string): Promise<UndoManager | null> {
@@ -56,7 +65,8 @@ export async function loadSlotData(slotId: string): Promise<UndoManager | null> 
     const raw = await get<string>(slotKey(slotId)) || await get<string>(legacySlotKey(slotId));
     if (raw) {
       const parsed = JSON.parse(raw);
-      return parsed.data || parsed;
+      const um = parsed.data || parsed;
+      return migrateUndoManager(um) as UndoManager;
     }
   } catch { /* IDB failed */ }
   // Fallback: localStorage mirror
@@ -64,7 +74,8 @@ export async function loadSlotData(slotId: string): Promise<UndoManager | null> 
   if (lsRaw) {
     try {
       const parsed = JSON.parse(lsRaw);
-      return parsed.data || parsed;
+      const um = parsed.data || parsed;
+      return migrateUndoManager(um) as UndoManager;
     } catch { /* ignore */ }
   }
   return null;

@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Highlight, HighlightColor, Piece } from '../model/types';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 import { SpeakerIcon, StopCircleIcon } from './ToolIcons';
-import { SharePanel } from './SharePanel';
 
 interface ProblemZoneProps {
   text: string;
@@ -42,7 +41,7 @@ const PASTILLE_ORDER: HighlightColor[] = ['bleu', 'orange', 'vert', 'gris'];
 export function ProblemZone({
   text,
   highlights,
-  pieces,
+  pieces: _pieces,
   expanded,
   readOnly: _readOnly,
   onToggle,
@@ -315,22 +314,13 @@ export function ProblemZone({
         </div>
       </div>
 
-      {/* SharePanel removed — sharing is handled by ActionBar */}
-      {false && (
-        <SharePanel
-          problemText={text}
-          pieces={pieces}
-          onClose={() => {}}
-        />
-      )}
-
       {guidedReadingEnabled && sentences.length > 1 && currentSentenceIndex < sentences.length ? (
         <>
           {/* Current sentence with highlighting */}
           <div style={{ fontSize: 14, lineHeight: 1.8, color: UI_TEXT_PRIMARY, marginBottom: 8, background: '#F0EDFA', borderRadius: 6, padding: '4px 8px' }}>
             {(() => {
               const sentence = sentences[currentSentenceIndex];
-              const sentenceStart = text.indexOf(sentence);
+              const sentenceStart = text.indexOf(sentence, sentences.slice(0, currentSentenceIndex).reduce((off, s) => { const idx = text.indexOf(s, off); return idx >= 0 ? idx + s.length : off; }, 0));
               return tokenize(sentence).map((token, i) => {
                 const adjustedToken = { ...token, start: token.start + sentenceStart, end: token.end + sentenceStart };
                 const highlight = highlights.find(h => h.start <= adjustedToken.start && h.end >= adjustedToken.end);

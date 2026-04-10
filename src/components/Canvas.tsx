@@ -217,6 +217,8 @@ export function Canvas({
     | { type: 'level'; levelIndex: number }
     | null
   >(null);
+  const editingArbreFieldRef = useRef(editingArbreField);
+  useEffect(() => { editingArbreFieldRef.current = editingArbreField; }, [editingArbreField]);
   useEffect(() => { if (!editingPieceId) setEditingArbreField(null); }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
@@ -265,7 +267,8 @@ export function Canvas({
     // another node directly (commit + switch in one click, like spreadsheet cells).
     if (editingPieceId) {
       // Check if clicking another arbre node/level in the same piece
-      const editingArbre = editingArbreField && pieces.find(p => p.id === editingPieceId);
+      const curArbreField = editingArbreFieldRef.current;
+      const editingArbre = curArbreField && pieces.find(p => p.id === editingPieceId);
       const nextArbreField = editingArbre && svgRef.current && (() => {
         const pos = pointerToMm(e, svgRef.current!);
         const arbre = editingArbre as Arbre;
@@ -296,12 +299,12 @@ export function Canvas({
         if (input instanceof HTMLInputElement) {
           const arbre = editingArbre as Arbre;
           const value = input.value;
-          if (editingArbreField.type === 'node') {
-            const newLevels = arbre.levels.map((l, i) => i === editingArbreField.levelIndex
-              ? { ...l, options: l.options.map((o, j) => j === editingArbreField.optionIndex ? value : o) } : l);
+          if (curArbreField.type === 'node') {
+            const newLevels = arbre.levels.map((l, i) => i === curArbreField.levelIndex
+              ? { ...l, options: l.options.map((o, j) => j === curArbreField.optionIndex ? value : o) } : l);
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
           } else {
-            const newLevels = arbre.levels.map((l, i) => i === editingArbreField.levelIndex ? { ...l, name: value } : l);
+            const newLevels = arbre.levels.map((l, i) => i === curArbreField.levelIndex ? { ...l, name: value } : l);
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
           }
         }
@@ -963,8 +966,24 @@ export function Canvas({
 
   // Edit piece (generic)
   const handleEditPiece = useCallback((id: string, changes: Record<string, unknown>) => {
+    // When resizing a tableau that's being edited, merge DOM input values into the new cells
+    if (('rows' in changes || 'cols' in changes) && tableauEditorPieceId === id && Array.isArray(changes.cells)) {
+      const container = svgRef.current?.parentElement;
+      if (container) {
+        const inputs = container.querySelectorAll<HTMLInputElement>('input[data-tableau-cell]');
+        const newCells = (changes.cells as string[][]).map(r => [...r]);
+        inputs.forEach(input => {
+          const [rowStr, colStr] = (input.dataset.tableauCell || '').split('-');
+          const row = parseInt(rowStr), col = parseInt(colStr);
+          if (!isNaN(row) && !isNaN(col) && row < newCells.length && col < newCells[row].length) {
+            newCells[row][col] = input.value;
+          }
+        });
+        changes = { ...changes, cells: newCells };
+      }
+    }
     dispatch({ type: 'EDIT_PIECE', id, changes });
-  }, [dispatch]);
+  }, [dispatch, tableauEditorPieceId]);
 
   // Start equalizing — triggered from ContextActions
   const handleStartEqualizing = useCallback((id: string) => {
@@ -1006,6 +1025,8 @@ export function Canvas({
   const selectedPiece = selectedPieceId ? pieces.find(p => p.id === selectedPieceId) : null;
 
   // R7: Ranger button — arrange pieces with animation
+  const arrangeRafRef = useRef<number | null>(null);
+  useEffect(() => () => { if (arrangeRafRef.current) cancelAnimationFrame(arrangeRafRef.current); }, []);
   const handleArrange = useCallback(() => {
     if (isArranging) return;
     const moves = computeArrangement(pieces, referenceUnitMm, viewBoxHeight);
@@ -1035,13 +1056,14 @@ export function Canvas({
       }
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        arrangeRafRef.current = requestAnimationFrame(animate);
       } else {
         // Dispatch first — React re-renders pieces at final coords
         dispatch({ type: 'ARRANGE_PIECES', moves });
         setIsArranging(false);
         // Clean animation transforms AFTER React commit (next frame)
-        requestAnimationFrame(() => {
+        arrangeRafRef.current = requestAnimationFrame(() => {
+          arrangeRafRef.current = null;
           for (const move of moves) {
             const el = document.querySelector(`[data-piece-id="${move.id}"]`);
             if (el) el.removeAttribute('transform');
@@ -1050,7 +1072,7 @@ export function Canvas({
       }
     }
 
-    requestAnimationFrame(animate);
+    arrangeRafRef.current = requestAnimationFrame(animate);
   }, [pieces, referenceUnitMm, isArranging, dispatch]);
 
   return (

@@ -40,12 +40,13 @@ describe('emergency save — non-consuming behavior', () => {
 
     const first = loadEmergencySave();
     expect(first).not.toBeNull();
-    expect(first!.current.pieces).toHaveLength(1);
+    expect(first!.um.current.pieces).toHaveLength(1);
+    expect(first!.savedAt).toBeGreaterThan(0);
 
     // Second read should still return data (not consumed)
     const second = loadEmergencySave();
     expect(second).not.toBeNull();
-    expect(second!.current.pieces).toHaveLength(1);
+    expect(second!.um.current.pieces).toHaveLength(1);
   });
 
   test('clearEmergencySave removes the save', () => {

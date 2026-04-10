@@ -1,10 +1,14 @@
+import { useRef } from 'react';
 import { UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface AdultGuideProps {
   onClose: () => void;
 }
 
 export function AdultGuide({ onClose }: AdultGuideProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalBehavior(dialogRef, onClose);
   return (
     <div
       role="dialog"
@@ -32,6 +36,7 @@ export function AdultGuide({ onClose }: AdultGuideProps) {
           overflow: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
+        ref={dialogRef}
         onClick={e => e.stopPropagation()}
       >
         <h2 style={{ fontSize: 18, color: UI_PRIMARY, marginBottom: 16, fontWeight: 700 }}>

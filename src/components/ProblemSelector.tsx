@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PROBLEM_PRESETS, type ProblemPreset } from '../config/problems';
 import { UI_PRIMARY, UI_BG, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface ProblemSelectorProps {
   onSelect: (problem: ProblemPreset) => void;
@@ -31,6 +32,8 @@ const LIBRE_PRESET: ProblemPreset = {
 export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalBehavior(dialogRef, onClose);
 
   const filtered = PROBLEM_PRESETS.filter(p => {
     if (cycleFilter !== 'all' && p.cycle !== cycleFilter) return false;
@@ -55,6 +58,7 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
       }}
     >
       <div
+        ref={dialogRef}
         onClick={e => e.stopPropagation()}
         style={{
           background: '#fff',

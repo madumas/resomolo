@@ -167,6 +167,19 @@ export function ContextActions({
         maxHeight: Math.max(100, maxH),
       }}
       onPointerDown={e => e.stopPropagation()}
+      onBlur={e => {
+        if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget as Node)) {
+          setBarSubmenu('none');
+          setShowTemplateOptions(false);
+          setShowRepartir(false);
+          setDroiteSubmenu('none');
+          setTableauSubmenu('none');
+          setArbreSubmenu('none');
+          setBandesSubmenu('none');
+          setLigneSubmenu('none');
+          setSchemaSubmenu('none');
+        }
+      }}
     >
       {/* Edit (calcul) */}
       {piece.type === 'calcul' && (
@@ -323,7 +336,7 @@ export function ContextActions({
                 Diviser en
               </span>
               {[2, 3, 4, 5, 6, 8, 10, 12].map(n => (
-                <CtxBtn key={n} onClick={() => {
+                <CtxBtn key={n} aria-label={`Diviser en ${n} parties`} onClick={() => {
                   onEditPiece(piece.id, { divisions: n, coloredParts: [], showFraction: true });
                   onSubdivide();
                   setBarSubmenu('none');
@@ -335,25 +348,25 @@ export function ContextActions({
               <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}>
                 Fractions courantes
               </span>
-              <CtxBtn onClick={() => {
+              <CtxBtn aria-label="Fraction deux tiers" onClick={() => {
                 onEditPiece(piece.id, { divisions: 3, coloredParts: [0, 1], showFraction: true });
                 onSubdivide(); setBarSubmenu('none');
               }}>
                 2/3
               </CtxBtn>
-              <CtxBtn onClick={() => {
+              <CtxBtn aria-label="Fraction trois quarts" onClick={() => {
                 onEditPiece(piece.id, { divisions: 4, coloredParts: [0, 1, 2], showFraction: true });
                 onSubdivide(); setBarSubmenu('none');
               }}>
                 3/4
               </CtxBtn>
-              <CtxBtn onClick={() => {
+              <CtxBtn aria-label="Fraction deux cinquièmes" onClick={() => {
                 onEditPiece(piece.id, { divisions: 5, coloredParts: [0, 1], showFraction: true });
                 onSubdivide(); setBarSubmenu('none');
               }}>
                 2/5
               </CtxBtn>
-              <CtxBtn onClick={() => {
+              <CtxBtn aria-label="Fraction trois huitièmes" onClick={() => {
                 onEditPiece(piece.id, { divisions: 8, coloredParts: [0, 1, 2], showFraction: true });
                 onSubdivide(); setBarSubmenu('none');
               }}>
@@ -908,7 +921,7 @@ export function ContextActions({
   );
 }
 
-function CtxBtn({ children, onClick, active, destructive, back, disabled, testId, onPointerEnter, onPointerLeave }: {
+function CtxBtn({ children, onClick, active, destructive, back, disabled, testId, onPointerEnter, onPointerLeave, ...rest }: {
   children: React.ReactNode;
   onClick: () => void;
   active?: boolean;
@@ -918,7 +931,7 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, testId
   testId?: string;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
-}) {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -926,6 +939,7 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, testId
       onPointerLeave={onPointerLeave}
       disabled={disabled}
       data-testid={testId}
+      {...rest}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
         fontSize: back ? 14 : 13,

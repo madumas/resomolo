@@ -51,9 +51,17 @@ export function useTTS() {
     setCurrentCharIndex(-1);
   }, []);
 
-  // Cleanup on unmount
+  // Refresh voices when they become available (Chrome loads them asynchronously)
+  const [, setVoicesReady] = useState(0);
   useEffect(() => {
-    return () => { window.speechSynthesis?.cancel(); };
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    const handler = () => setVoicesReady(n => n + 1);
+    synth.addEventListener('voiceschanged', handler);
+    return () => {
+      synth.removeEventListener('voiceschanged', handler);
+      synth.cancel();
+    };
   }, []);
 
   return { speak, stop, isSpeaking, currentCharIndex };

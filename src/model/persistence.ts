@@ -6,7 +6,6 @@ const STORAGE_KEY = 'resomolo_slot';
 const SETTINGS_KEY = 'resomolo_settings';
 const EMERGENCY_KEY = 'resomolo_emergency';
 // Legacy keys for backward compat (migration reads these)
-const LEGACY_STORAGE_KEY = 'modelivite_slot';
 const LEGACY_SETTINGS_KEY = 'modelivite_settings';
 const LEGACY_EMERGENCY_KEY = 'modelivite_emergency';
 const STORAGE_VERSION = 1;
@@ -22,17 +21,24 @@ export async function saveToStorage(undoManager: UndoManager): Promise<void> {
 /** Synchronous emergency save via localStorage (for beforeunload). */
 export function saveEmergency(undoManager: UndoManager): void {
   try {
-    localStorage.setItem(EMERGENCY_KEY, JSON.stringify({ version: STORAGE_VERSION, data: undoManager }));
+    localStorage.setItem(EMERGENCY_KEY, JSON.stringify({ version: STORAGE_VERSION, data: undoManager, savedAt: Date.now() }));
   } catch { /* quota exceeded — best effort */ }
 }
 
+export interface EmergencySave {
+  um: UndoManager;
+  savedAt: number;
+}
+
 /** Check emergency save from localStorage. Does NOT consume it — kept as IDB fallback. */
-export function loadEmergencySave(): UndoManager | null {
+export function loadEmergencySave(): EmergencySave | null {
   try {
-    // Try new key first, then legacy
     const raw = localStorage.getItem(EMERGENCY_KEY) || localStorage.getItem(LEGACY_EMERGENCY_KEY);
     if (!raw) return null;
-    return parseStoredData(raw);
+    const parsed = JSON.parse(raw);
+    const um = extractUndoManager(parsed);
+    if (!um) return null;
+    return { um, savedAt: parsed.savedAt ?? 0 };
   } catch {
     return null;
   }
@@ -106,7 +112,7 @@ function migratePieces(pieces: any[]): any[] {
   });
 }
 
-function migrateUndoManager(um: any): any {
+export function migrateUndoManager(um: any): any {
   if (um?.current?.pieces) {
     um.current.pieces = migratePieces(um.current.pieces);
   }
@@ -119,9 +125,7 @@ function migrateUndoManager(um: any): any {
   return um;
 }
 
-function parseStoredData(raw: string): UndoManager | null {
-  const parsed = JSON.parse(raw);
-  // Versioned format: { version, data }
+function extractUndoManager(parsed: any): UndoManager | null {
   if (parsed && typeof parsed.version === 'number') {
     const um = parsed.data;
     if (um && um.current && Array.isArray(um.current.pieces)) {
@@ -134,21 +138,6 @@ function parseStoredData(raw: string): UndoManager | null {
     return migrateUndoManager(parsed) as UndoManager;
   }
   return null;
-}
-
-export async function loadFromStorage(): Promise<UndoManager | null> {
-  try {
-    // Check emergency save first (from last beforeunload)
-    const emergency = loadEmergencySave();
-    if (emergency) return emergency;
-    // Try new key first, then legacy
-    const raw = await get<string>(STORAGE_KEY) || await get<string>(LEGACY_STORAGE_KEY);
-    if (!raw) return null;
-    return parseStoredData(raw);
-  } catch (e) {
-    console.warn('RésoMolo: load failed', e);
-    return null;
-  }
 }
 
 export async function clearAllStorage(): Promise<void> {
@@ -231,7 +220,7 @@ export async function importModelisation(file: File): Promise<ModelisationState 
       problemeReadOnly: data.problemeReadOnly ?? false,
       problemeHighlights: data.problemeHighlights || [],
       referenceUnitMm: data.referenceUnitMm || 60,
-      pieces: data.pieces || [],
+      pieces: migratePieces(data.pieces || []),
       availablePieces: data.availablePieces ?? null,
     };
   } catch {

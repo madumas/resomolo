@@ -207,9 +207,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         else handleUndo();
       }
       if (e.key === 'Escape') {
-        if (showProblemSelector) {
-          setShowProblemSelector(false);
-        } else if (editingPieceId) {
+        if (editingPieceId) {
           setEditingPieceId(null);
         } else if (arrowFromId) {
           setArrowFromId(null);
@@ -296,6 +294,18 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     }, 5000);
     return () => clearTimeout(timer);
   }, [unlabeledBars.length, tutorial.isActive]);
+
+  // Test-only: allow e2e tests to inject state via custom event
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const um = (e as CustomEvent).detail;
+      if (um?.current?.pieces) {
+        dispatch({ type: 'RESTORE', undoManager: um });
+      }
+    };
+    window.addEventListener('test-restore', handler);
+    return () => window.removeEventListener('test-restore', handler);
+  }, [dispatch]);
 
   // When tutorial is done, show problem selector — but not if a problem was just selected
   useEffect(() => {

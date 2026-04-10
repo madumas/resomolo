@@ -183,4 +183,25 @@ describe('computePartLayout', () => {
     const layout = computePartLayout(s, REF);
     expect(layout.bars[0].multiplierLabel).toBeNull();
   });
+
+  it('parts with all value:0 distribute equally (no NaN)', () => {
+    const s = makeSchema({
+      bars: [{
+        label: '', value: null, sizeMultiplier: 1, couleur: 'bleu',
+        parts: [
+          { label: 'A', value: 0, couleur: 'bleu' },
+          { label: 'B', value: 0, couleur: 'rouge' },
+        ],
+      }],
+    });
+    const layout = computePartLayout(s, REF);
+    expect(layout.parts).toHaveLength(2);
+    for (const p of layout.parts) {
+      expect(Number.isNaN(p.x)).toBe(false);
+      expect(Number.isNaN(p.width)).toBe(false);
+      expect(p.width).toBeGreaterThan(0);
+    }
+    // Should be equal distribution
+    expect(layout.parts[0].width).toBeCloseTo(layout.parts[1].width);
+  });
 });

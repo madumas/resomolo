@@ -25,8 +25,8 @@ export interface Tolerances {
 }
 
 /** Max jeton padding so that two adjacent jetons' hit zones don't overlap.
- * Hit test uses radius 7mm (larger than visual JETON_DIAMETER/2 for accessibility).
- * (7 + padding) * 2 < JETON_SPACING → padding < JETON_SPACING/2 - 7
+ * Hit test uses radius 9mm (larger than visual JETON_DIAMETER/2 for accessibility).
+ * (9 + padding) * 2 < JETON_SPACING → padding < JETON_SPACING/2 - 9
  */
 const JETON_HIT_RADIUS = 9; // mm — larger than visual for accessibility
 const MAX_JETON_PADDING = Math.max(0, JETON_SPACING_MM / 2 - JETON_HIT_RADIUS - 0.1);

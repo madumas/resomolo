@@ -251,6 +251,14 @@ describe('reduceModelisation', () => {
       expect(currentModel(app).pieces).toEqual([]);
       expect(currentModel(app).problemeHighlights).toEqual([]);
     });
+
+    it('restores referenceUnitMm after auto-scale', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'big', sizeMultiplier: 50 }) });
+      expect(currentModel(app).referenceUnitMm).toBeLessThan(REFERENCE_UNIT_MM);
+      app = dispatch(app, { type: 'SET_PROBLEM_AND_CLEAR', text: 'New', readOnly: false });
+      expect(currentModel(app).referenceUnitMm).toBe(REFERENCE_UNIT_MM);
+    });
   });
 
   describe('CLEAR_PIECES', () => {
@@ -261,6 +269,14 @@ describe('reduceModelisation', () => {
       app = dispatch(app, { type: 'CLEAR_PIECES' });
 
       expect(currentModel(app).pieces).toEqual([]);
+    });
+
+    it('restores referenceUnitMm after auto-scale', () => {
+      let app = freshApp();
+      app = dispatch(app, { type: 'PLACE_PIECE', piece: makeBarre({ id: 'big', sizeMultiplier: 50 }) });
+      expect(currentModel(app).referenceUnitMm).toBeLessThan(REFERENCE_UNIT_MM);
+      app = dispatch(app, { type: 'CLEAR_PIECES' });
+      expect(currentModel(app).referenceUnitMm).toBe(REFERENCE_UNIT_MM);
     });
   });
 

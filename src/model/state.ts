@@ -86,27 +86,23 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
     case 'calcul': return { x: piece.x + Math.max(80, piece.expression.length * 5 + 10) / 2, y: piece.y + 7 };
     case 'reponse': return { x: piece.x + getReponseWidthSimple(piece) / 2, y: piece.y + 11 };
     case 'etiquette': return { x: piece.x + Math.max(30, piece.text.length * 4 + 8) / 2, y: piece.y - 2 };
-    case 'droiteNumerique': return { x: piece.x + (piece as any).width / 2, y: piece.y };
-    case 'tableau': return { x: piece.x + (piece as any).cols * 12 / 2, y: piece.y + (piece as any).rows * 10 / 2 };
+    case 'droiteNumerique': return { x: piece.x + piece.width / 2, y: piece.y };
+    case 'tableau': return { x: piece.x + piece.cols * 12 / 2, y: piece.y + piece.rows * 10 / 2 };
     case 'arbre': {
-      // Simplified: estimate width from leaf count product
-      const levels = (piece as any).levels || [];
-      const leafCount = levels.reduce((acc: number, l: any) => acc * Math.max(1, (l.options || []).length), 1);
+      const leafCount = piece.levels.reduce((acc, l) => acc * Math.max(1, l.options.length), 1);
       const w = Math.max(60, leafCount * 28);
-      const h = Math.max(12, levels.length * 30);
+      const h = Math.max(12, piece.levels.length * 30);
       return { x: piece.x + w / 2, y: piece.y + h / 2 };
     }
     case 'schema': {
-      const bars = (piece as any).bars || [];
-      const maxSm = bars.reduce((m: number, b: any) => Math.max(m, b.sizeMultiplier || 1), 1);
+      const maxSm = piece.bars.reduce((m, b) => Math.max(m, b.sizeMultiplier || 1), 1);
       const w = maxSm * referenceUnitMm;
-      const h = Math.max(15, bars.length * 23);
+      const h = Math.max(15, piece.bars.length * 23);
       return { x: piece.x + w / 2, y: piece.y + h / 2 };
     }
-    case 'inconnue': return { x: piece.x, y: piece.y }; // center-origin like jeton
-    case 'diagrammeBandes':
-    case 'diagrammeLigne':
-      return { x: piece.x + ((piece as any).width || 120) / 2, y: piece.y + ((piece as any).height || 90) / 2 };
+    case 'inconnue': return { x: piece.x, y: piece.y };
+    case 'diagrammeBandes': return { x: piece.x + piece.width / 2, y: piece.y + piece.height / 2 };
+    case 'diagrammeLigne': return { x: piece.x + piece.width / 2, y: piece.y + piece.height / 2 };
     default: return { x: piece.x, y: piece.y };
   }
 }
@@ -156,9 +152,9 @@ function autoResizeBoite(state: ModelisationState): ModelisationState {
 function getAllBarMultipliers(pieces: Piece[]): number[] {
   const multipliers: number[] = [];
   for (const p of pieces) {
-    if (p.type === 'barre') multipliers.push((p as any).sizeMultiplier);
+    if (p.type === 'barre') multipliers.push(p.sizeMultiplier);
     if (p.type === 'schema') {
-      for (const bar of ((p as any).bars || [])) {
+      for (const bar of p.bars) {
         multipliers.push(bar.sizeMultiplier || 1);
       }
     }
@@ -366,12 +362,14 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
         problemeReadOnly: action.readOnly,
         problemeHighlights: [],
         pieces: [],
+        referenceUnitMm: REFERENCE_UNIT_MM,
       };
 
     case 'CLEAR_PIECES':
       return {
         ...state,
         pieces: [],
+        referenceUnitMm: REFERENCE_UNIT_MM,
       };
 
     // I1: Atomic ungroup operation (replaces N individual EDIT_PIECE dispatches)
@@ -379,7 +377,7 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
       return {
         ...state,
         pieces: state.pieces.map(p =>
-          p.type === 'barre' && (p as any).groupId === action.groupId
+          p.type === 'barre' && p.groupId === action.groupId
             ? { ...p, groupId: null, groupLabel: null } as Piece
             : p
         ),

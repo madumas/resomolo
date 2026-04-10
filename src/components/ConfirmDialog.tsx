@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { UI_PRIMARY, UI_SURFACE, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export interface ConfirmDialogProps {
   readonly title: string;
@@ -20,21 +21,8 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    cancelRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onCancel();
-      }
-    };
-    window.addEventListener('keydown', handler, true);
-    return () => window.removeEventListener('keydown', handler, true);
-  }, [onCancel]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalBehavior(dialogRef, onCancel, { initialFocusRef: cancelRef });
 
   return (
     <div
@@ -58,6 +46,7 @@ export function ConfirmDialog({
           maxWidth: 400,
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
+        ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

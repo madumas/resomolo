@@ -2,7 +2,7 @@
  * About dialog — accessible via clic sur le logo dans la toolbar.
  */
 
-import { useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   UI_SURFACE,
   UI_BORDER,
@@ -11,22 +11,15 @@ import {
   UI_PRIMARY,
 } from '../config/theme';
 import { Logo } from './Logo';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface AboutDialogProps {
   readonly onClose: () => void;
 }
 
 export function AboutDialog({ onClose }: AboutDialogProps) {
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handler, true);
-    return () => window.removeEventListener('keydown', handler, true);
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalBehavior(dialogRef, onClose);
 
   return (
     <div
@@ -53,6 +46,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
           fontFamily: 'system-ui, sans-serif',
           textAlign: 'center',
         }}
+        ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -138,13 +132,15 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
 
 function CopyButton() {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timerRef.current), []);
   return (
     <button
       onClick={async () => {
         try {
           await navigator.clipboard?.writeText('info@allomolo.ca');
           setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
+          timerRef.current = setTimeout(() => setCopied(false), 1500);
         } catch {
           /* clipboard non disponible */
         }

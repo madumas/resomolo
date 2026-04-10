@@ -34,10 +34,13 @@ export interface AxisConfig {
 export function computeAutoScale(values: number[]): AxisConfig {
   if (values.length === 0) return { min: 0, max: 10, step: 2 };
   const maxVal = Math.max(...values, 0);
-  if (maxVal === 0) return { min: 0, max: 10, step: 2 };
-  const niceMax = niceNumber(maxVal * 1.15, true);
-  const step = niceNumber(niceMax / 5, false);
-  return { min: 0, max: Math.max(niceMax, step), step: Math.max(step, 1) };
+  const minVal = Math.min(...values, 0);
+  if (maxVal === 0 && minVal === 0) return { min: 0, max: 10, step: 2 };
+  const niceMax = maxVal > 0 ? niceNumber(maxVal * 1.15, true) : 0;
+  const niceMin = minVal < 0 ? -niceNumber(Math.abs(minVal) * 1.15, true) : 0;
+  const range = niceMax - niceMin;
+  const step = niceNumber(range / 5, false);
+  return { min: niceMin, max: Math.max(niceMax, niceMin + step), step: Math.max(step, 1) };
 }
 
 /**

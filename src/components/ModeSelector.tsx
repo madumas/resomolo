@@ -37,6 +37,7 @@ export function ModeSelector({ mode, onChange }: ModeSelectorProps) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
           e.preventDefault();
           setOpen(true);
+          setFocusIndex(MODES.findIndex(m => m.value === mode));
         }
         return;
       }
@@ -61,13 +62,13 @@ export function ModeSelector({ mode, onChange }: ModeSelectorProps) {
           break;
       }
     },
-    [open, focusIndex, onChange],
+    [open, focusIndex, onChange, mode],
   );
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { const willOpen = !open; setOpen(willOpen); if (willOpen) setFocusIndex(MODES.findIndex(m => m.value === mode)); }}
         onKeyDown={handleKeyDown}
         role="combobox"
         aria-expanded={open}

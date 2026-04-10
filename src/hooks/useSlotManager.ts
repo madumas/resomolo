@@ -15,9 +15,11 @@ interface UseSlotManagerOptions {
 export function useSlotManager({ initialRegistry, undoManager, dispatch }: UseSlotManagerOptions) {
   const [registry, setRegistry] = useState<SlotRegistry>(initialRegistry);
 
-  // C1: Ref to always have latest undoManager for async operations
+  // Refs to always have latest values for async operations
   const undoManagerRef = useRef(undoManager);
   undoManagerRef.current = undoManager;
+  const registryRef = useRef(registry);
+  registryRef.current = registry;
 
   const switchSlot = useCallback(async (targetId: string): Promise<UndoManager> => {
     // Save current slot (C1: use ref for latest undoManager in async)
@@ -64,11 +66,7 @@ export function useSlotManager({ initialRegistry, undoManager, dispatch }: UseSl
 
   const removeSlot = useCallback(async (slotId: string) => {
     await deleteSlotData(slotId);
-    // I3: read registry via ref pattern — we need current value for async logic
-    // Use a promise to coordinate state update with async loads
-    let registrySnapshot: SlotRegistry | null = null;
-    setRegistry(prev => { registrySnapshot = prev; return prev; }); // read snapshot
-    const reg = registrySnapshot!;
+    const reg = registryRef.current;
     const remaining = reg.slots.filter(s => s.id !== slotId);
 
     let newRegistry: SlotRegistry;

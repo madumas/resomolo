@@ -59,13 +59,17 @@ async function boot() {
     const data = await loadSlotData(registry.activeSlotId);
     const emergency = loadEmergencySave();
     let finalData = data;
-    if (emergency && (!data || emergency.current.pieces.length > data.current.pieces.length)) {
-      finalData = emergency;
+    if (emergency) {
+      const slotMeta = registry.slots.find(s => s.id === registry.activeSlotId);
+      const slotUpdatedAt = slotMeta?.updatedAt ?? 0;
+      if (!data || emergency.savedAt > slotUpdatedAt) {
+        finalData = emergency.um;
+      }
     }
     if (finalData) {
       initialUndoManager = finalData;
       problemZoneActive = finalData.current.probleme.length > 0;
-      if (data) clearEmergencySave();
+      clearEmergencySave();
     }
   }
 

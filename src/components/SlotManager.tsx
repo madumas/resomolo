@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { SlotRegistry, SlotMetadata } from '../model/slots';
 import { MAX_SLOTS } from '../model/slots';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_SECONDARY, UI_TEXT_PRIMARY, UI_DESTRUCTIVE } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface SlotManagerProps {
   registry: SlotRegistry;
@@ -28,6 +29,19 @@ export function SlotManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const editingIdRef = useRef(editingId);
+  editingIdRef.current = editingId;
+  useModalBehavior(dialogRef, onClose, {
+    shouldCloseOnEscape: () => {
+      if (editingIdRef.current) {
+        setEditingId(null);
+        setEditName('');
+        return false;
+      }
+      return true;
+    },
+  });
 
   const startRename = (slot: SlotMetadata) => {
     setEditingId(slot.id);
@@ -74,6 +88,7 @@ export function SlotManager({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         style={{
           background: '#fff',
           borderRadius: 12,
@@ -249,6 +264,7 @@ export function SlotManager({
                     ) : (
                       <SlotBtn
                         destructive
+                        disabled={isActive}
                         onClick={() => { setDeletingId(slot.id); setEditingId(null); }}
                       >
                         Supprimer
@@ -287,14 +303,16 @@ export function SlotManager({
 
 // --- Sub-components ---
 
-function SlotBtn({ children, onClick, destructive }: {
+function SlotBtn({ children, onClick, destructive, disabled }: {
   children: React.ReactNode;
   onClick: () => void;
   destructive?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
         minWidth: 44,
         minHeight: MIN_BUTTON_SIZE_PX,
@@ -305,7 +323,8 @@ function SlotBtn({ children, onClick, destructive }: {
         background: '#fff',
         border: `1.5px solid ${destructive ? UI_DESTRUCTIVE : UI_BORDER}`,
         color: destructive ? UI_DESTRUCTIVE : UI_TEXT_SECONDARY,
-        cursor: 'pointer',
+        cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
         whiteSpace: 'nowrap',
       }}
     >

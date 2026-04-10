@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { generateShareUrl, generateQrDataUrl, copyTextToClipboard, copyImageToClipboard, downloadDataUrl } from '../engine/share';
@@ -13,6 +13,8 @@ interface SharePanelProps {
 export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState('');
 
@@ -34,7 +36,8 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
   const handleCopyLink = useCallback(async () => {
     await copyTextToClipboard(shareUrl);
     setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setLinkCopied(false), 2000);
   }, [shareUrl]);
 
   const handleCopyQr = useCallback(async () => {
@@ -42,7 +45,8 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
     const ok = await copyImageToClipboard(qrDataUrl);
     if (ok) {
       setQrCopied(true);
-      setTimeout(() => setQrCopied(false), 2000);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setQrCopied(false), 2000);
     }
   }, [qrDataUrl]);
 

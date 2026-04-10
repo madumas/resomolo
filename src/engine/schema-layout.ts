@@ -34,6 +34,7 @@ const LABEL_HEIGHT = 8;  // mm space for labels above/below
 // === Public API ===
 
 export function computeSchemaWidth(schema: Schema, referenceUnitMm: number): number {
+  if (schema.bars.length === 0) return 0;
   const maxBarWidth = schema.bars.reduce(
     (max, bar) => Math.max(max, bar.sizeMultiplier * referenceUnitMm),
     referenceUnitMm,
@@ -155,12 +156,14 @@ export function computePartLayout(
 
     // Parts within this bar
     if (bar.parts.length > 0) {
-      const totalPartsValue = bar.parts.reduce((s, p) => s + (p.value ?? 1), 0);
+      const rawTotal = bar.parts.reduce((s, p) => s + (p.value ?? 1), 0);
+      const equalDistribution = rawTotal === 0;
+      const totalPartsValue = equalDistribution ? bar.parts.length || 1 : rawTotal;
       let partX = 0;
 
       for (let pi = 0; pi < bar.parts.length; pi++) {
         const part = bar.parts[pi];
-        const partRatio = (part.value ?? 1) / totalPartsValue;
+        const partRatio = equalDistribution ? 1 / totalPartsValue : (part.value ?? 1) / totalPartsValue;
         const partWidth = barWidth * partRatio;
 
         parts.push({
@@ -180,8 +183,9 @@ export function computePartLayout(
 
     // Transformation marker: between the two parts
     if (schema.gabarit === 'transformation' && bar.parts.length >= 2 && bi === 0) {
-      const firstPartRatio = (bar.parts[0].value ?? 1) /
-        bar.parts.reduce((s, p) => s + (p.value ?? 1), 0);
+      const tmRaw = bar.parts.reduce((s, p) => s + (p.value ?? 1), 0);
+      const tmTotal = tmRaw || bar.parts.length || 1;
+      const firstPartRatio = tmRaw === 0 ? 1 / (bar.parts.length || 1) : (bar.parts[0].value ?? 1) / tmTotal;
       transformationMarker = {
         x: barWidth * firstPartRatio,
         y: barY,

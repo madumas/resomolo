@@ -1,6 +1,8 @@
+import { useRef } from 'react';
 import type { Settings, ToleranceProfile, SoundMode, TextScale, DominantHand, SettingsProfile, FontFamily, LetterSpacing, TTSRate } from '../model/types';
 import { SETTINGS_PROFILES } from '../model/types';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface SettingsPanelProps {
   settings: Settings;
@@ -12,6 +14,8 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ settings, onChange, onClose, onExport, onImport, onReset }: SettingsPanelProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalBehavior(dialogRef, onClose);
   const update = (patch: Partial<Settings>) => onChange({ ...settings, ...patch, activeProfile: 'custom' });
 
   const handleProfileChange = (profile: SettingsProfile) => {
@@ -47,6 +51,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
           overflow: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
+        ref={dialogRef}
         onClick={e => e.stopPropagation()}
       >
         <h2 style={{ fontSize: 18, color: UI_PRIMARY, marginBottom: 20, fontWeight: 700 }}>
