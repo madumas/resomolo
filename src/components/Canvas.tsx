@@ -243,10 +243,18 @@ export function Canvas({
 
   // Haptic flash fallback (iOS/Safari — no vibration API)
   const [hapticFlash, setHapticFlash] = useState(false);
+  const hapticTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
-    const handler = () => { setHapticFlash(true); setTimeout(() => setHapticFlash(false), 100); };
+    const handler = () => {
+      setHapticFlash(true);
+      clearTimeout(hapticTimerRef.current);
+      hapticTimerRef.current = setTimeout(() => setHapticFlash(false), 100);
+    };
     window.addEventListener('haptic-flash', handler);
-    return () => window.removeEventListener('haptic-flash', handler);
+    return () => {
+      window.removeEventListener('haptic-flash', handler);
+      clearTimeout(hapticTimerRef.current);
+    };
   }, []);
 
   // Ghost snap sound — play when ghost marker value changes or arrow snaps to target
@@ -1115,28 +1123,30 @@ export function Canvas({
         onKeyDown={(e) => {
           if (pieces.length === 0) return;
           const STEP = 5; // mm per arrow press
-          if (e.key === 'Tab') {
+          if (e.key === 'Tab' && selectedPieceId) {
+            // Only trap Tab when a piece is selected — otherwise let focus flow naturally
             e.preventDefault();
-            const idx = selectedPieceId ? pieces.findIndex(p => p.id === selectedPieceId) : -1;
+            const idx = pieces.findIndex(p => p.id === selectedPieceId);
             const next = e.shiftKey
               ? (idx <= 0 ? pieces.length - 1 : idx - 1)
-              : (idx < 0 || idx >= pieces.length - 1 ? 0 : idx + 1);
+              : (idx >= pieces.length - 1 ? 0 : idx + 1);
             onSelectPiece(pieces[next].id);
           } else if (e.key === 'Escape') {
             onSelectPiece(null);
           } else if (selectedPieceId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
+            const piece = pieces.find(p => p.id === selectedPieceId);
+            if (!piece) return;
             const dx = e.key === 'ArrowRight' ? STEP : e.key === 'ArrowLeft' ? -STEP : 0;
             const dy = e.key === 'ArrowDown' ? STEP : e.key === 'ArrowUp' ? -STEP : 0;
-            dispatch({ type: 'EDIT_PIECE', id: selectedPieceId, changes: { x: (pieces.find(p => p.id === selectedPieceId)?.x ?? 0) + dx, y: (pieces.find(p => p.id === selectedPieceId)?.y ?? 0) + dy } });
-          } else if (e.key === 'Delete' || e.key === 'Backspace') {
-            // Delete selected piece (if not locked)
-            if (selectedPieceId) {
-              const piece = pieces.find(p => p.id === selectedPieceId);
-              if (piece && !piece.locked) {
-                dispatch({ type: 'DELETE_PIECE', id: selectedPieceId });
-                onSelectPiece(null);
-              }
+            const newX = Math.max(0, Math.min(CANVAS_WIDTH_MM, piece.x + dx));
+            const newY = Math.max(0, Math.min(viewBoxHeight, piece.y + dy));
+            dispatch({ type: 'EDIT_PIECE', id: selectedPieceId, changes: { x: newX, y: newY } });
+          } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedPieceId) {
+            const piece = pieces.find(p => p.id === selectedPieceId);
+            if (piece && !piece.locked) {
+              dispatch({ type: 'DELETE_PIECE', id: selectedPieceId });
+              onSelectPiece(null);
             }
           }
         }}

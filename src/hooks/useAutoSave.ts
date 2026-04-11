@@ -23,6 +23,8 @@ export function useAutoSave(
   onSaved?: () => void,
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -40,7 +42,7 @@ export function useAutoSave(
       } else {
         saveToStorage(undoManager);
       }
-      onSaved?.();
+      onSavedRef.current?.();
     }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => {

@@ -217,6 +217,12 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     saveIndicatorTimer.current = setTimeout(() => setShowSaveIndicator(false), 2000);
   });
 
+  // Cleanup fatigue + save timers on unmount
+  useEffect(() => () => {
+    clearTimeout(fatigueNudgeTimer.current);
+    clearTimeout(saveIndicatorTimer.current);
+  }, []);
+
   // beforeunload
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {

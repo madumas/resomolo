@@ -286,7 +286,7 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('20-before-recommencer.png'), fullPage: true });
 
     // Click recommencer — ConfirmDialog appears
-    await page.locator('[data-testid="action-bar"] button:has-text("Recommencer")').click();
+    await page.locator('[data-testid="action-bar"] button:has-text("Tout effacer")').click();
     await page.waitForTimeout(300);
 
     // Screenshot the confirm dialog
@@ -1854,7 +1854,7 @@ test.describe('Visual audit — full flow', () => {
     }
 
     // Switch to gris pastille (superflu), then click "beau"
-    const grisBtn = pz.locator('button:has-text("Superflu")');
+    const grisBtn = pz.locator('button:has-text("Pas utile")');
     await expect.soft(grisBtn).toBeVisible({ timeout: 2000 });
     if (await grisBtn.isVisible({ timeout: 500 }).catch(() => false)) {
       await grisBtn.click();
