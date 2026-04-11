@@ -14,6 +14,7 @@ export async function getPxPerMm(page: Page): Promise<number> {
 
 /**
  * Click on the canvas at mm coordinates.
+ * Uses locator.click() to correctly handle CSS zoom/transforms.
  */
 export async function clickCanvas(page: Page, xMm: number, yMm: number): Promise<void> {
   const svg = page.locator('[data-testid="canvas-svg"]');
@@ -21,15 +22,15 @@ export async function clickCanvas(page: Page, xMm: number, yMm: number): Promise
   if (!box) throw new Error('SVG bounding box not found');
 
   const pxPerMm = box.width / CANVAS_WIDTH_MM;
-  const pageX = box.x + xMm * pxPerMm;
-  const pageY = box.y + yMm * pxPerMm;
+  const localX = xMm * pxPerMm;
+  const localY = yMm * pxPerMm;
 
-  expect(pageX).toBeGreaterThanOrEqual(box.x);
-  expect(pageX).toBeLessThanOrEqual(box.x + box.width);
-  expect(pageY).toBeGreaterThanOrEqual(box.y);
-  expect(pageY).toBeLessThanOrEqual(box.y + box.height);
+  expect(localX).toBeGreaterThanOrEqual(0);
+  expect(localX).toBeLessThanOrEqual(box.width);
+  expect(localY).toBeGreaterThanOrEqual(0);
+  expect(localY).toBeLessThanOrEqual(box.height);
 
-  await page.mouse.click(pageX, pageY);
+  await svg.click({ position: { x: localX, y: localY }, force: true });
   await page.waitForTimeout(200); // click debounce
 }
 
@@ -54,13 +55,19 @@ export async function waitForStatus(page: Page, text: string | RegExp): Promise<
 
 /**
  * Click on a piece at mm coordinates and assert context actions appear.
+ * If context actions are already visible (piece auto-selected after placement),
+ * returns immediately — clicking again would enter edit mode and hide them.
  * Retries once with a slight offset if the first click misses.
  */
 export async function selectPieceAt(page: Page, xMm: number, yMm: number): Promise<void> {
+  const ctx = page.locator('[data-testid="context-actions"]');
+
+  // Already selected (e.g. auto-selected after placement) — don't re-click
+  if (await ctx.isVisible({ timeout: 300 }).catch(() => false)) return;
+
   await clickCanvas(page, xMm, yMm);
   await page.waitForTimeout(300);
 
-  const ctx = page.locator('[data-testid="context-actions"]');
   if (await ctx.isVisible({ timeout: 500 }).catch(() => false)) return;
 
   // Retry with slight offset (piece may be slightly off)
