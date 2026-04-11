@@ -108,6 +108,9 @@ function migratePieces(pieces: any[]): any[] {
         height: p.height ?? 90,
       };
     }
+    if (p.type === 'droiteNumerique' && !p.bonds) {
+      return { ...p, bonds: [] };
+    }
     return p;
   });
 }

@@ -36,6 +36,8 @@ interface ContextActionsProps {
   onTableauPreview?: (rows: number | null, cols: number | null) => void;
   onDeletePiece?: (id: string) => void;
   onDismiss?: () => void;
+  onStartBondMode?: (pieceId: string) => void;
+  bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
 }
 
 export function ContextActions({
@@ -63,6 +65,8 @@ export function ContextActions({
   onTableauPreview,
   onDeletePiece,
   onDismiss: _onDismiss,
+  onStartBondMode,
+  bondMode,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
@@ -419,6 +423,31 @@ export function ContextActions({
         <>
           {droiteSubmenu === 'none' && (
             <>
+              {/* Bloc Contenu */}
+              {!piece.locked && (
+                <CtxBtn onClick={() => { onStartBondMode?.(piece.id); }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <svg viewBox="0 0 14 8" width={14} height={8} style={{ verticalAlign: 'middle' }}>
+                      <path d="M1 7 Q7 0 13 7" stroke="currentColor" fill="none" strokeWidth="1.5" />
+                    </svg>
+                    Saut
+                  </span>
+                </CtxBtn>
+              )}
+              {piece.markers.length > 0 && (
+                <CtxBtn onClick={() => onEditPiece(piece.id, { markers: [] })}>
+                  Effacer marqueurs
+                </CtxBtn>
+              )}
+              {(piece.bonds?.length ?? 0) > 0 && (
+                <CtxBtn onClick={() => onEditPiece(piece.id, { bonds: [] })} destructive>
+                  Effacer sauts
+                </CtxBtn>
+              )}
+              {/* Divider */}
+              <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '4px 0' }} />
+              <div style={{ fontSize: 10, color: '#9CA3AF', padding: '0 4px', marginBottom: 2 }}>Paramètres</div>
+              {/* Bloc Paramètres */}
               <CtxBtn onClick={() => setDroiteSubmenu('min')}>
                 Min: {piece.min}
               </CtxBtn>
@@ -431,11 +460,6 @@ export function ContextActions({
               <CtxBtn onClick={() => setDroiteSubmenu('largeur')}>
                 Largeur
               </CtxBtn>
-              {piece.markers.length > 0 && (
-                <CtxBtn onClick={() => onEditPiece(piece.id, { markers: [] })}>
-                  Effacer marqueurs
-                </CtxBtn>
-              )}
             </>
           )}
           {droiteSubmenu === 'min' && (

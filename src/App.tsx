@@ -27,7 +27,7 @@ import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
 import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
-import { onUndoSound, setSoundMode, setGainMultiplier } from './engine/sound';
+import { onUndoSound, onBond, setSoundMode, setGainMultiplier } from './engine/sound';
 import type { ProblemPreset } from './config/problems';
 
 interface AppProps {
@@ -57,6 +57,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [focusMode, setFocusMode] = useState(false);
   const [equalizingFromId, setEqualizingFromId] = useState<string | null>(null);
   const [groupingBarId, setGroupingBarId] = useState<string | null>(null);
+  const [bondMode, setBondMode] = useState<{ pieceId: string; fromVal: number | null; chainCount: number } | null>(null);
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [showSettings, setShowSettings] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<Omit<ConfirmDialogProps, 'onCancel'> | null>(null);
@@ -248,6 +249,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           setEditingPieceId(null);
         } else if (arrowFromId) {
           setArrowFromId(null);
+        } else if (bondMode) {
+          setBondMode(null);
         } else if (equalizingFromId) {
           setEqualizingFromId(null);
         } else if (groupingBarId) {
@@ -262,7 +265,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, equalizingFromId, groupingBarId, handleUndo, handleRedo]);
+  }, [selectedPieceId, activeTool, editingPieceId, arrowFromId, bondMode, equalizingFromId, groupingBarId, handleUndo, handleRedo]);
 
   // Relance timer — sequential questions (P0-2, P0-3)
   useEffect(() => {
@@ -361,10 +364,30 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setArrowFromId(null);
     setEqualizingFromId(null);
     setGroupingBarId(null);
+    setBondMode(null);
     setActiveTool(tool);
     setSelectedPieceId(null);
     setEditingPieceId(null);
   }, []);
+
+  // Bond mode handlers
+  const handleStartBondMode = useCallback((pieceId: string) => {
+    setBondMode({ pieceId, fromVal: null, chainCount: 0 });
+  }, []);
+
+  const handleSetBondFrom = useCallback((val: number) => {
+    setBondMode(prev => prev ? { ...prev, fromVal: val } : null);
+  }, []);
+
+  const handleBondCreated = useCallback((pieceId: string, from: number, to: number) => {
+    dispatch({ type: 'ADD_BOND', pieceId, from, to, toolbarMode: settings.toolbarMode });
+    onBond(bondMode?.chainCount ?? 0);
+    if (settings.toolbarMode === 'complet') {
+      setBondMode(prev => prev ? { ...prev, fromVal: to, chainCount: prev.chainCount + 1 } : null);
+    } else {
+      setBondMode(null);
+    }
+  }, [settings.toolbarMode, bondMode?.chainCount, dispatch]);
 
   // Recommencer
   const handleRecommencer = useCallback(() => {
@@ -460,7 +483,15 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   let statusMessage: string;
   let statusVariant: 'default' | 'relance' = 'default';
 
-  if (equalizingFromId) {
+  if (bondMode && bondMode.fromVal === null) {
+    statusMessage = 'Clique sur le point de départ du saut.';
+    statusVariant = 'relance';
+  } else if (bondMode && bondMode.fromVal !== null) {
+    statusMessage = settings.toolbarMode === 'essentiel'
+      ? 'Clique sur le point d\'arrivée.'
+      : 'Clique sur le point d\'arrivée. Échap pour annuler.';
+    statusVariant = 'relance';
+  } else if (equalizingFromId) {
     statusMessage = 'Clique sur la barre à redimensionner';
   } else if (groupingBarId) {
     statusMessage = 'Clique sur les barres à ajouter au groupe.';
@@ -545,9 +576,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       <StatusBar
         message={statusMessage}
         variant={statusVariant}
-        cancelLabel={groupingBarId ? '✓ Terminer' : undefined}
-        onCancel={(activeTool || equalizingFromId || groupingBarId) ? () => {
-          if (equalizingFromId) setEqualizingFromId(null);
+        cancelLabel={bondMode ? '✓ Terminer' : groupingBarId ? '✓ Terminer' : undefined}
+        onCancel={(activeTool || equalizingFromId || groupingBarId || bondMode) ? () => {
+          if (bondMode) setBondMode(null);
+          else if (equalizingFromId) setEqualizingFromId(null);
           else if (groupingBarId) setGroupingBarId(null);
           else if (activeTool) { setActiveTool(null); setArrowFromId(null); }
         } : undefined}
@@ -621,6 +653,11 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           highContrast={settings.highContrast}
           textScale={settings.textScale}
           focusMode={focusMode}
+          bondMode={bondMode}
+          onStartBondMode={handleStartBondMode}
+          onSetBondFrom={handleSetBondFrom}
+          onBondCreated={handleBondCreated}
+          toolbarMode={settings.toolbarMode}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
       </div>

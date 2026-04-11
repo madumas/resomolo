@@ -211,3 +211,28 @@ export function onGhostSnap() {
   _lastGhostSnapTime = now;
   if (mode === 'full') { soundGhostSnap(); }
 }
+
+// Bond (jump on number line) — sweep triangle evoking movement
+function soundBond(baseFreq: number) {
+  try {
+    const c = getCtx();
+    if (c.state === 'suspended') c.resume();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.linearRampToValueAtTime(baseFreq + 200, now + 0.06);
+    g.gain.setValueAtTime(0.12 * gainMultiplier, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } catch { /* Audio not available */ }
+}
+
+export function onBond(chainIndex = 0) {
+  if (mode === 'off') return;
+  if (mode === 'reduced' && chainIndex > 0) return; // silent after first in chain
+  soundBond(400 + Math.min(chainIndex, 4) * 50);
+  haptic(25);
+}

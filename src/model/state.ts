@@ -1,4 +1,4 @@
-import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Inconnue, Reponse } from './types';
+import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Inconnue, Reponse, DroiteNumerique } from './types';
 import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM, CANVAS_WIDTH_MM } from './types';
 import { generateId } from './id';
 import { createUndoManager, pushState, undo as undoFn, redo as redoFn } from './undo';
@@ -37,6 +37,7 @@ export type Action =
   | { type: 'ARRANGE_PIECES'; moves: Array<{ id: string; x: number; y: number }> }
   | { type: 'UNGROUP_BARRES'; groupId: string }
   | { type: 'REPARTIR_JETONS'; jetonIds: string[]; groupCount: number; startX: number; startY: number }
+  | { type: 'ADD_BOND'; pieceId: string; from: number; to: number; toolbarMode: 'essentiel' | 'complet' }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'RESTORE'; undoManager: UndoManager };
@@ -313,6 +314,24 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
         newState = autoScaleReference(newState);
       }
       return newState;
+    }
+
+    case 'ADD_BOND': {
+      const { pieceId, from, to, toolbarMode } = action;
+      const diff = to - from;
+      const label = toolbarMode === 'essentiel'
+        ? `${Math.abs(diff)}`
+        : diff >= 0 ? `+${diff}` : `${diff}`;
+      return {
+        ...state,
+        pieces: state.pieces.map(p => {
+          if (p.id !== pieceId || p.type !== 'droiteNumerique') return p;
+          const dn = p as DroiteNumerique;
+          const newBond = { from, to, label };
+          const allMarkers = [...new Set([...dn.markers, from, to])].sort((a, b) => a - b);
+          return { ...dn, bonds: [...(dn.bonds ?? []), newBond], markers: allMarkers } as Piece;
+        }),
+      };
     }
 
     case 'DELETE_PIECE': {

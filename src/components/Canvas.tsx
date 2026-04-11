@@ -13,6 +13,7 @@ import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
+import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper } from '../engine/bonds';
 import { ArbrePiece } from './pieces/ArbrePiece';
 import { SchemaPiece } from './pieces/SchemaPiece';
 import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
@@ -57,6 +58,11 @@ interface CanvasProps {
   highContrast?: boolean;
   textScale?: number;
   focusMode?: boolean;
+  bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
+  onStartBondMode?: (pieceId: string) => void;
+  onSetBondFrom?: (val: number) => void;
+  onBondCreated?: (pieceId: string, from: number, to: number) => void;
+  toolbarMode?: 'essentiel' | 'complet';
 }
 
 type InteractionMode =
@@ -131,6 +137,11 @@ export function Canvas({
   highContrast,
   textScale = 1,
   focusMode,
+  bondMode,
+  onStartBondMode,
+  onSetBondFrom,
+  onBondCreated,
+  toolbarMode = 'essentiel',
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -404,15 +415,32 @@ export function Canvas({
         // Stay in grouping mode — click empty space or Escape to end
         return;
       }
+      // Bond mode — clicking on the droite creates a jump (start or end point)
+      if (bondMode && isDroiteNumerique(hitPiece) && hitPiece.id === bondMode.pieceId) {
+        const dn = hitPiece as DroiteNumerique;
+        const relX = pos.x - dn.x;
+        const ratio = relX / dn.width;
+        const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
+        const safeStep = Math.max(0.1, dn.step);
+        const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
+        const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+        if (bondMode.fromVal === null) {
+          onSetBondFrom?.(snapped);
+        } else if (Math.abs(snapped - bondMode.fromVal) > 1e-9) {
+          onBondCreated?.(bondMode.pieceId, bondMode.fromVal, snapped);
+        }
+        return;
+      }
       // DroiteNumerique marker toggle — clicking on a selected droite adds/removes a marker
-      if (isDroiteNumerique(hitPiece) && hitPiece.id === selectedPieceId) {
+      if (isDroiteNumerique(hitPiece) && hitPiece.id === selectedPieceId && !bondMode) {
         const dn = hitPiece as DroiteNumerique;
         const relX = pos.x - dn.x;
         const ratio = relX / dn.width;
         const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
         const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
         // Snap to nearest step
-        const snapped2 = Math.round((clamped - dn.min) / dn.step) * dn.step + dn.min;
+        const safeStep = Math.max(0.1, dn.step);
+        const snapped2 = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
         const markers = [...dn.markers];
         const idx = markers.findIndex(m => Math.abs(m - snapped2) < 0.001);
         if (idx >= 0) markers.splice(idx, 1);
@@ -999,8 +1027,25 @@ export function Canvas({
         changes = { ...changes, cells: newCells };
       }
     }
+    // When min/max/step changes on a droiteNumerique, filter/resnap bonds atomically
+    if ('min' in changes || 'max' in changes || 'step' in changes) {
+      const piece = pieces.find(p => p.id === id);
+      if (piece && isDroiteNumerique(piece) && (piece.bonds?.length ?? 0) > 0) {
+        const newMin = (changes.min ?? piece.min) as number;
+        const newMax = (changes.max ?? piece.max) as number;
+        const newStep = (changes.step ?? piece.step) as number;
+        let bonds = piece.bonds;
+        if ('min' in changes || 'max' in changes) {
+          bonds = filterBondsOnRangeChange(bonds, newMin, newMax);
+        }
+        if ('step' in changes) {
+          bonds = snapBondsHelper(bonds, newStep, newMin, newMax, toolbarMode ?? 'essentiel');
+        }
+        changes = { ...changes, bonds };
+      }
+    }
     dispatch({ type: 'EDIT_PIECE', id, changes });
-  }, [dispatch, tableauEditorPieceId]);
+  }, [dispatch, tableauEditorPieceId, pieces, toolbarMode]);
 
   // Start equalizing — triggered from ContextActions
   const handleStartEqualizing = useCallback((id: string) => {
@@ -1983,6 +2028,8 @@ export function Canvas({
           onTableauPreview={(rows, cols) => { setTableauPreviewRows(rows); setTableauPreviewCols(cols); }}
           onDeletePiece={(id) => { dispatch({ type: 'DELETE_PIECE', id }); onSelectPiece(null); }}
           onDismiss={() => onSelectPiece(null)}
+          onStartBondMode={onStartBondMode}
+          bondMode={bondMode}
         />
       )}
 
@@ -2303,7 +2350,8 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
       inner = <ReponsePiece piece={piece} isSelected={isSelected} textScale={textScale}
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
-      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale} />; break;
+      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale}
+        toleranceMultiplier={toleranceMultiplier} />; break;
     case 'arbre':
       inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} />; break;
     case 'schema':
@@ -3065,7 +3113,7 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number },
       return { id, type: 'reponse', x: pos.x, y: pos.y, locked: false, text: '', template: null };
     case 'droiteNumerique':
       return { id, type: 'droiteNumerique', x: pos.x, y: pos.y, locked: false,
-        min: 0, max: 10, step: 1, markers: [], width: 200 };
+        min: 0, max: 10, step: 1, markers: [], bonds: [], width: 200 };
     case 'tableau':
       return { id, type: 'tableau', x: pos.x, y: pos.y, locked: false,
         rows: 2, cols: 3, cells: Array.from({ length: 2 }, () => Array(3).fill('')), headerRow: true };

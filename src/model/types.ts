@@ -72,12 +72,19 @@ export interface Fleche extends PieceBase {
   label: string;
 }
 
+export interface Bond {
+  from: number;       // start value (snapped to step)
+  to: number;         // end value (snapped to step)
+  label: string;      // auto-computed or edited by child
+}
+
 export interface DroiteNumerique extends PieceBase {
   type: 'droiteNumerique';
   min: number;           // start value (default 0)
   max: number;           // end value (default 10)
   step: number;          // tick interval (default 1)
   markers: number[];     // positions marked by child
+  bonds: Bond[];         // jumps/arcs placed by child
   width: number;         // width in mm (default 200)
 }
 

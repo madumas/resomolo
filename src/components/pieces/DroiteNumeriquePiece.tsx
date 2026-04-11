@@ -1,12 +1,18 @@
 import type { DroiteNumerique } from '../../model/types';
+import { computeAllBondLevels, computeBondPath, getImplicitMarkers, isMarkerCoveredByPositiveBond } from '../../engine/bonds';
 
-export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
+export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selectedBondIndex, bondMode, bondFromVal, toleranceMultiplier = 1 }: {
   piece: DroiteNumerique;
   isSelected: boolean;
   textScale?: number;
+  selectedBondIndex?: number;
+  bondMode?: boolean;
+  bondFromVal?: number | null;
+  toleranceMultiplier?: number;
 }) {
   const ts = textScale;
   const { x, y, min, max, step, markers, width } = piece;
+  const bonds = piece.bonds ?? [];
 
   // C2: if min >= max, render fallback
   if (min >= max) {
@@ -34,12 +40,23 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
   const labelEvery = scaledTicks > 50 ? 10 : scaledTicks > 20 ? 5 : numTicks > 10 && ts > 1.2 ? 2 : 1;
   const h = 20; // total height including labels
 
+  // Bond levels for stacking
+  const bondLevels = computeAllBondLevels(bonds);
+  const pieceRect = { x, y, min, max, width };
+
+  // Merge explicit markers with implicit ones from bonds
+  const implicitMarkers = getImplicitMarkers(bonds);
+  const allMarkerVals = [...new Set([...markers, ...implicitMarkers])].sort((a, b) => a - b);
+
   return (
     <g>
-      {/* Selection highlight */}
+      {/* Selection highlight — bond-mode-pulse when in jump mode */}
       {isSelected && (
         <rect x={x - 2} y={y - 10} width={width + 4} height={h + 4} rx={2}
-          fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
+          fill="rgba(112, 40, 224, 0.06)"
+          stroke={bondMode ? '#185FA5' : '#7028e0'}
+          strokeWidth={1}
+          style={bondMode ? { animation: 'bond-mode-pulse 1.5s ease-in-out infinite' } : undefined} />
       )}
 
       {/* Main line */}
@@ -49,6 +66,51 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
       {/* Arrow heads at both ends */}
       <polygon points={`${x - 3},${y} ${x + 2},${y - 2} ${x + 2},${y + 2}`} fill="#55506A" />
       <polygon points={`${x + width + 3},${y} ${x + width - 2},${y - 2} ${x + width - 2},${y + 2}`} fill="#55506A" />
+
+      {/* Bond arcs — rendered before ticks so ticks are on top */}
+      {bonds.map((bond, i) => {
+        const info = computeBondPath(bond, pieceRect, bondLevels[i]);
+        if (!info.path) return null;
+        const isSel = selectedBondIndex === i;
+        return (
+          <g key={`bond-${i}`}>
+            {/* Invisible hit-test path (enlarged) */}
+            <path d={info.path} fill="none"
+              stroke="transparent"
+              strokeWidth={10 * toleranceMultiplier}
+              pointerEvents="stroke"
+              data-bond-index={i} />
+            {/* Visible arc */}
+            <path d={info.path} fill="none"
+              stroke={isSel ? '#7028E0' : '#185FA5'}
+              strokeWidth={isSel ? 2 : 1.5}
+              pointerEvents="none" />
+            {/* Label background */}
+            {bond.label && (
+              <rect
+                x={info.midX - (bond.label.length * 2.5 * ts + 2)}
+                y={info.cpY - 4 * ts}
+                width={bond.label.length * 5 * ts + 4}
+                height={8 * ts}
+                rx={2}
+                fill="rgba(255,255,255,0.85)"
+                pointerEvents="none" />
+            )}
+            {/* Label text */}
+            {bond.label && (
+              <text x={info.midX}
+                y={info.direction === -1 ? info.cpY - 1 : info.cpY + 6 * ts}
+                textAnchor="middle"
+                fontSize={7 * ts}
+                fontWeight={600}
+                fill={isSel ? '#7028E0' : '#185FA5'}
+                pointerEvents="none">
+                {bond.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
 
       {/* Tick marks and labels */}
       {Array.from({ length: numTicks }, (_, i) => {
@@ -72,14 +134,29 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1 }: {
         );
       })}
 
-      {/* Markers (child-placed dots) with value labels */}
-      {markers.map((val, i) => {
+      {/* Markers (child-placed dots + implicit bond endpoints) with value labels */}
+      {allMarkerVals.map((val, i) => {
         const mx = x + ((val - min) / (max - min)) * width;
+        const isExplicit = markers.includes(val);
+        const isBondFrom = bondFromVal !== null && bondFromVal !== undefined && Math.abs(val - bondFromVal) < 1e-9;
+        // Collision: if a positive bond arc covers this marker, move label below
+        const labelBelow = isMarkerCoveredByPositiveBond(val, bonds);
+        const labelY = labelBelow ? y + 9 + 7 * ts : y - 7;
+        const isBondEndpointSel = selectedBondIndex !== undefined && selectedBondIndex >= 0 &&
+          bonds[selectedBondIndex] && (
+            Math.abs(val - bonds[selectedBondIndex].from) < 1e-9 ||
+            Math.abs(val - bonds[selectedBondIndex].to) < 1e-9
+          );
         return (
-          <g key={i}>
-            <circle cx={mx} cy={y} r={4}
-              fill="#185FA5" stroke="#fff" strokeWidth={0.7} />
-            <text x={mx} y={y - 7} textAnchor="middle" fontSize={7 * ts} fontWeight={600} fill="#185FA5">
+          <g key={`m-${i}`}>
+            <circle cx={mx} cy={y}
+              r={isBondFrom ? 5.5 : isBondEndpointSel ? 5 : 4}
+              fill={isExplicit || isBondFrom ? '#185FA5' : 'rgba(24, 95, 165, 0.4)'}
+              stroke="#fff" strokeWidth={0.7}
+              style={isBondFrom ? { animation: 'marker-pulse 1.5s ease-in-out infinite' } : undefined} />
+            <text x={mx} y={labelY} textAnchor="middle"
+              fontSize={7 * ts} fontWeight={600}
+              fill={isExplicit ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
               {val}
             </text>
           </g>

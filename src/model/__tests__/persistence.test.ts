@@ -78,4 +78,42 @@ describe('importModelisation', () => {
     expect(result!.pieces).toHaveLength(1);
     expect(result!.pieces[0].id).toBe('p1');
   });
+
+  test('migrates droiteNumerique without bonds field', async () => {
+    const droite = {
+      id: 'dn1',
+      type: 'droiteNumerique',
+      x: 50, y: 200,
+      locked: false,
+      min: 0, max: 10, step: 1,
+      markers: [3, 7],
+      width: 200,
+      // no bonds field — should be migrated to []
+    };
+    const data = { version: 1, pieces: [droite] };
+    const file = new File([JSON.stringify(data)], 'droite-old.resomolo');
+    const result = await importModelisation(file);
+    expect(result).not.toBeNull();
+    expect((result!.pieces[0] as any).bonds).toEqual([]);
+    expect((result!.pieces[0] as any).markers).toEqual([3, 7]);
+  });
+
+  test('preserves droiteNumerique with bonds field', async () => {
+    const droite = {
+      id: 'dn1',
+      type: 'droiteNumerique',
+      x: 50, y: 200,
+      locked: false,
+      min: 0, max: 10, step: 1,
+      markers: [3, 7, 10],
+      bonds: [{ from: 3, to: 7, label: '4' }, { from: 7, to: 10, label: '3' }],
+      width: 200,
+    };
+    const data = { version: 1, pieces: [droite] };
+    const file = new File([JSON.stringify(data)], 'droite-bonds.resomolo');
+    const result = await importModelisation(file);
+    expect(result).not.toBeNull();
+    expect((result!.pieces[0] as any).bonds).toHaveLength(2);
+    expect((result!.pieces[0] as any).bonds[0].label).toBe('4');
+  });
 });
