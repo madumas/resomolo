@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "name": "expert-schema-transformation",
+  "probleme": "Il y avait 15 oiseaux sur la clôture. 6 se sont envolés. Combien en reste-t-il?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 12, "end": 14, "color": "bleu" },
+    { "start": 37, "end": 38, "color": "bleu" },
+    { "start": 57, "end": 79, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "schema-1",
+      "type": "schema",
+      "x": 40, "y": 25, "locked": false,
+      "gabarit": "transformation",
+      "totalLabel": "?",
+      "totalValue": null,
+      "referenceWidth": 60,
+      "bars": [
+        {
+          "label": "",
+          "value": null,
+          "sizeMultiplier": 1.5,
+          "couleur": "bleu",
+          "parts": [
+            { "label": "15", "value": 15, "couleur": "bleu" },
+            { "label": "−6", "value": 6, "couleur": "rouge" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 40, "y": 110, "locked": false,
+      "expression": "15 − 6 = 9"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 145, "locked": false,
+      "text": "Il reste 9 oiseaux sur la clôture.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

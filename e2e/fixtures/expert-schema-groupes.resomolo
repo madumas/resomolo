@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "name": "expert-schema-groupes",
+  "probleme": "Mia a 12 bonbons. Elle les partage également entre ses 3 amis. Combien chaque ami reçoit-il de bonbons?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 6, "end": 8, "color": "bleu" },
+    { "start": 56, "end": 57, "color": "bleu" },
+    { "start": 64, "end": 103, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "schema-1",
+      "type": "schema",
+      "x": 40, "y": 25, "locked": false,
+      "gabarit": "groupes-egaux",
+      "totalLabel": "12",
+      "totalValue": 12,
+      "referenceWidth": 60,
+      "bars": [
+        {
+          "label": "Ami 1",
+          "value": 4,
+          "sizeMultiplier": 0.4,
+          "couleur": "bleu",
+          "parts": []
+        },
+        {
+          "label": "Ami 2",
+          "value": 4,
+          "sizeMultiplier": 0.4,
+          "couleur": "bleu",
+          "parts": []
+        },
+        {
+          "label": "Ami 3",
+          "value": 4,
+          "sizeMultiplier": 0.4,
+          "couleur": "bleu",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 40, "y": 140, "locked": false,
+      "expression": "12 ÷ 3 = 4"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 175, "locked": false,
+      "text": "Chaque ami reçoit 4 bonbons.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

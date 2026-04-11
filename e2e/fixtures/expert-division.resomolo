@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "expert-division",
+  "probleme": "Une bibliothèque a 156 livres à placer sur 6 étagères. Combien de livres par étagère?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 22, "end": 25, "color": "bleu" },
+    { "start": 42, "end": 43, "color": "bleu" },
+    { "start": 55, "end": 86, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 60, "y": 30, "locked": false,
+      "expression": "156 ÷ 6 = 26",
+      "columnData": "{\"type\":\"division\",\"dividend\":[\"0\",\"1\",\"5\",\"6\"],\"divisor\":[\"\",\"\",\"6\"],\"quotient\":[\"\",\"0\",\"2\",\"6\"],\"remainder\":\"0\",\"steps\":[{\"product\":[\"0\",\"0\",\"1\",\"2\"],\"partialRemainder\":[\"0\",\"0\",\"3\",\"6\"]},{\"product\":[\"0\",\"0\",\"3\",\"6\"],\"partialRemainder\":[\"0\",\"0\",\"0\",\"0\"]}],\"decimalPos\":null}"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 60, "y": 120, "locked": false,
+      "text": "Il y a 26 livres par étagère.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

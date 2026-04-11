@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "name": "expert-canvas-dense",
+  "probleme": "Léa a 14 billes. Marc en a 9. Combien Léa a-t-elle de billes de plus que Marc?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 6, "end": 8, "color": "bleu" },
+    { "start": 23, "end": 24, "color": "bleu" },
+    { "start": 27, "end": 78, "color": "orange" }
+  ],
+  "referenceUnitMm": 40,
+  "pieces": [
+    {
+      "id": "barre-lea",
+      "type": "barre",
+      "x": 60, "y": 25, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 3.5,
+      "label": "Léa", "value": "14",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": null, "groupLabel": null
+    },
+    {
+      "id": "barre-marc",
+      "type": "barre",
+      "x": 60, "y": 55, "locked": false,
+      "couleur": "rouge", "sizeMultiplier": 2.25,
+      "label": "Marc", "value": "9",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": null, "groupLabel": null
+    },
+    {"id":"j1","type":"jeton","x":280,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"j2","type":"jeton","x":294,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"j3","type":"jeton","x":308,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"j4","type":"jeton","x":322,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {
+      "id": "inconnue-1",
+      "type": "inconnue",
+      "x": 175, "y": 40, "locked": false,
+      "text": "?", "attachedTo": null
+    },
+    {
+      "id": "etiquette-1",
+      "type": "etiquette",
+      "x": 280, "y": 10, "locked": false,
+      "text": "Comptage", "attachedTo": null
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 60, "y": 85, "locked": false,
+      "expression": "14 − 9 = 5"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 60, "y": 115, "locked": false,
+      "text": "Léa a 5 billes de plus que Marc.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

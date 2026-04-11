@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "name": "expert-addition",
+  "probleme": "Léa a 12 pommes. Marc lui en donne 8. Combien Léa a-t-elle de pommes maintenant?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 6, "end": 8, "color": "bleu" },
+    { "start": 35, "end": 36, "color": "bleu" },
+    { "start": 39, "end": 80, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {"id":"b1","type":"jeton","x":30,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b2","type":"jeton","x":44,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b3","type":"jeton","x":58,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b4","type":"jeton","x":72,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b5","type":"jeton","x":86,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b6","type":"jeton","x":100,"y":25,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b7","type":"jeton","x":30,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b8","type":"jeton","x":44,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b9","type":"jeton","x":58,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b10","type":"jeton","x":72,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b11","type":"jeton","x":86,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"b12","type":"jeton","x":100,"y":40,"locked":false,"couleur":"bleu","parentId":null},
+    {"id":"r1","type":"jeton","x":130,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r2","type":"jeton","x":144,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r3","type":"jeton","x":158,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r4","type":"jeton","x":172,"y":25,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r5","type":"jeton","x":130,"y":40,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r6","type":"jeton","x":144,"y":40,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r7","type":"jeton","x":158,"y":40,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"r8","type":"jeton","x":172,"y":40,"locked":false,"couleur":"rouge","parentId":null},
+    {"id":"e-lea","type":"etiquette","x":50,"y":12,"locked":false,"text":"Léa (12)","attachedTo":null},
+    {"id":"e-marc","type":"etiquette","x":135,"y":12,"locked":false,"text":"Marc (8)","attachedTo":null},
+    {"id":"calcul","type":"calcul","x":40,"y":65,"locked":false,"expression":"12 + 8 = 20"},
+    {"id":"reponse","type":"reponse","x":40,"y":100,"locked":false,"text":"Léa a 20 pommes maintenant.","template":null}
+  ],
+  "availablePieces": null
+}

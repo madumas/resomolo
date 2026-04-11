@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "name": "expert-comparaison",
+  "probleme": "Théo a 45 billes. Léa en a 28. Combien Théo a-t-il de billes de plus que Léa?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 8, "end": 10, "color": "bleu" },
+    { "start": 25, "end": 27, "color": "bleu" },
+    { "start": 29, "end": 77, "color": "orange" }
+  ],
+  "referenceUnitMm": 40,
+  "pieces": [
+    {
+      "id": "barre-theo",
+      "type": "barre",
+      "x": 60, "y": 30, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 4.5,
+      "label": "Théo", "value": "45",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": null, "groupLabel": null
+    },
+    {
+      "id": "barre-lea",
+      "type": "barre",
+      "x": 60, "y": 65, "locked": false,
+      "couleur": "rouge", "sizeMultiplier": 2.8,
+      "label": "Léa", "value": "28",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": null, "groupLabel": null
+    },
+    {
+      "id": "inconnue-diff",
+      "type": "inconnue",
+      "x": 180, "y": 48, "locked": false,
+      "text": "?", "attachedTo": null
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 60, "y": 110, "locked": false,
+      "expression": "45 − 28 = 17",
+      "columnData": "{\"op1\":[\"\",\"\",\"\",\"\",\"4\",\"5\"],\"op2\":[\"\",\"\",\"\",\"\",\"2\",\"8\"],\"result\":[\"\",\"\",\"\",\"\",\"1\",\"7\"],\"carry\":[\"\",\"\",\"\",\"\",\"\",\"\"],\"intermediates\":[],\"operator\":\"−\",\"decimalPosition\":null,\"borrow\":[false,false,false,false,true,false],\"carryBorrow\":[false,false,false,false,false,false],\"addCarry\":[\"\",\"\",\"\",\"\",\"\",\"\"]}"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 60, "y": 155, "locked": false,
+      "text": "Théo a 17 billes de plus que Léa.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

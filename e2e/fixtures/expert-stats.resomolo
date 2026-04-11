@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "name": "expert-stats",
+  "probleme": "Lundi, on a vendu 12 jus. Mardi, 18. Mercredi, 9. Jeudi, 15. Quel jour a-t-on vendu le plus de jus?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 20, "end": 22, "color": "bleu" },
+    { "start": 32, "end": 34, "color": "bleu" },
+    { "start": 46, "end": 47, "color": "bleu" },
+    { "start": 56, "end": 58, "color": "bleu" },
+    { "start": 60, "end": 99, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "diag-1",
+      "type": "diagrammeBandes",
+      "x": 15, "y": 15, "locked": false,
+      "title": "Vente de jus",
+      "yAxisLabel": "Nombre",
+      "width": 140, "height": 100,
+      "categories": [
+        { "label": "Lun", "value": 12, "couleur": "bleu" },
+        { "label": "Mar", "value": 18, "couleur": "rouge" },
+        { "label": "Mer", "value": 9, "couleur": "vert" },
+        { "label": "Jeu", "value": 15, "couleur": "jaune" }
+      ]
+    },
+    {
+      "id": "tableau-1",
+      "type": "tableau",
+      "x": 260, "y": 15, "locked": false,
+      "rows": 2, "cols": 5,
+      "cells": [
+        ["Jour", "Lun", "Mar", "Mer", "Jeu"],
+        ["Jus", "12", "18", "9", "15"]
+      ],
+      "headerRow": true
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 40, "y": 140, "locked": false,
+      "expression": "18 > 15 > 12 > 9"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 175, "locked": false,
+      "text": "C'est mardi qu'on a vendu le plus de jus (18).",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

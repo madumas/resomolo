@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "name": "expert-multi-etapes",
+  "probleme": "Une classe de 28 élèves va au musée. Le transport coûte 4 $ par élève. L'entrée coûte 6 $ par élève. Combien coûte la sortie en tout?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 16, "end": 18, "color": "bleu" },
+    { "start": 49, "end": 50, "color": "bleu" },
+    { "start": 74, "end": 75, "color": "bleu" },
+    { "start": 90, "end": 133, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "schema-1",
+      "type": "schema",
+      "x": 40, "y": 15, "locked": false,
+      "gabarit": "parties-tout",
+      "totalLabel": "?",
+      "totalValue": null,
+      "referenceWidth": 60,
+      "bars": [
+        {
+          "label": "",
+          "value": null,
+          "sizeMultiplier": 1,
+          "couleur": "bleu",
+          "parts": [
+            { "label": "Transport", "value": null, "couleur": "bleu" },
+            { "label": "Entrée", "value": null, "couleur": "rouge" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "calcul-1",
+      "type": "calcul",
+      "x": 40, "y": 80, "locked": false,
+      "expression": "28 × 4 = 112"
+    },
+    {
+      "id": "calcul-2",
+      "type": "calcul",
+      "x": 40, "y": 105, "locked": false,
+      "expression": "28 × 6 = 168"
+    },
+    {
+      "id": "calcul-3",
+      "type": "calcul",
+      "x": 40, "y": 130, "locked": false,
+      "expression": "112 + 168 = 280"
+    },
+    {
+      "id": "calcul-4",
+      "type": "calcul",
+      "x": 40, "y": 155, "locked": false,
+      "expression": "280 − 100 = 180"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 185, "locked": false,
+      "text": "La sortie coûte 280 $ en tout.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

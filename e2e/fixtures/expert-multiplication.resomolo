@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "name": "expert-multiplication",
+  "probleme": "Il y a 4 rangées de 6 chaises dans la classe. Combien y a-t-il de chaises en tout?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 7, "end": 8, "color": "bleu" },
+    { "start": 22, "end": 23, "color": "bleu" },
+    { "start": 47, "end": 83, "color": "orange" }
+  ],
+  "referenceUnitMm": 40,
+  "pieces": [
+    {
+      "id": "barre-1",
+      "type": "barre",
+      "x": 60, "y": 25, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 6,
+      "label": "Rangée 1", "value": "6",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": "grp-1", "groupLabel": "4 rangées"
+    },
+    {
+      "id": "barre-2",
+      "type": "barre",
+      "x": 60, "y": 50, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 6,
+      "label": "Rangée 2", "value": "6",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": "grp-1", "groupLabel": null
+    },
+    {
+      "id": "barre-3",
+      "type": "barre",
+      "x": 60, "y": 75, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 6,
+      "label": "Rangée 3", "value": "6",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": "grp-1", "groupLabel": null
+    },
+    {
+      "id": "barre-4",
+      "type": "barre",
+      "x": 60, "y": 100, "locked": false,
+      "couleur": "bleu", "sizeMultiplier": 6,
+      "label": "Rangée 4", "value": "6",
+      "divisions": null, "coloredParts": [], "showFraction": false,
+      "groupId": "grp-1", "groupLabel": null
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 60, "y": 140, "locked": false,
+      "expression": "4 × 6 = 24"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 60, "y": 185, "locked": false,
+      "text": "Il y a 24 chaises en tout.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}
