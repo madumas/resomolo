@@ -42,7 +42,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
       { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
       { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
     ],
-    inlineTools: ['jeton', 'boite'],
+    inlineTools: ['jeton', 'boite', 'diagrammeBandes'],
   },
   {
     id: 'comparer', label: 'Comparer', color: '#FFF8E1', essentiel: true,
