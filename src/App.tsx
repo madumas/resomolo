@@ -388,7 +388,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const handleReset = useCallback(() => {
     setConfirmDialog({
       title: 'Tout effacer?',
-      subtitle: 'Le tutoriel va recommencer.',
+      subtitle: 'Le tutoriel va reprendre.',
       confirmLabel: 'Oui, tout effacer',
       cancelLabel: 'Non, je continue',
       onConfirm: async () => {
