@@ -149,7 +149,7 @@ export function isUnitaryChain(bonds: Bond[], step: number, count = 3): boolean 
   if (bonds.length < count) return false;
   const safeStep = Math.max(0.1, step);
   const tail = bonds.slice(-count);
-  return tail.every(b => Math.abs(b.to - b.from - safeStep) < 1e-9 || Math.abs(b.to - b.from + safeStep) < 1e-9);
+  return tail.every(b => Math.abs(Math.abs(b.to - b.from) - safeStep) < 1e-6);
 }
 
 // --- Marker label collision ---

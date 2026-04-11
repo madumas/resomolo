@@ -164,6 +164,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     });
     setSelectedPieceId(null);
     setEditingPieceId(null);
+    setSelectedBondInfo(null);
     // Fatigue detection: track consecutive undos
     consecutiveUndos.current += 1;
     if (consecutiveUndos.current >= 3) {
@@ -177,6 +178,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setUndoManager(prev => canRedo(prev) ? redo(prev) : prev);
     setSelectedPieceId(null);
     setEditingPieceId(null);
+    setSelectedBondInfo(null);
   }, []);
 
   // Sync sound/font/spacing — always (including first render with pre-loaded settings)

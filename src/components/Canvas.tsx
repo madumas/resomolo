@@ -13,7 +13,7 @@ import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
-import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper, computeBondPath, computeAutoLabel } from '../engine/bonds';
+import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper, computeBondPath, computeAutoLabel, snapToStep } from '../engine/bonds';
 import { ArbrePiece } from './pieces/ArbrePiece';
 import { SchemaPiece } from './pieces/SchemaPiece';
 import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
@@ -388,10 +388,8 @@ export function Canvas({
       if (dn && isDroiteNumerique(dn) && hitTest(dn, pos, referenceUnitMm, tol.hitTestPaddingMm, tol.jetonHitPaddingMm, pieces)) {
         const relX = pos.x - dn.x;
         const ratio = relX / dn.width;
-        const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
-        const safeStep = Math.max(0.1, dn.step);
-        const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
-        const snappedVal = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+        const rawVal = dn.min + ratio * (dn.max - dn.min);
+        const snappedVal = snapToStep(rawVal, dn.min, dn.max, dn.step);
         if (bondMode.fromVal === null) {
           onSetBondFrom?.(snappedVal);
         } else if (Math.abs(snappedVal - bondMode.fromVal) > 1e-9) {
@@ -833,10 +831,8 @@ export function Canvas({
         if (dn && isDroiteNumerique(dn)) {
           const relX = rawPos.x - dn.x;
           const ratio = relX / dn.width;
-          const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
-          const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
-          const safeStep = Math.max(0.1, dn.step);
-          const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+          const rawVal = dn.min + ratio * (dn.max - dn.min);
+          const snapped = snapToStep(rawVal, dn.min, dn.max, dn.step);
           if (Math.abs(snapped - bondMode.fromVal) > 1e-9) {
             const info = computeBondPath({ from: bondMode.fromVal, to: snapped, label: '' }, { x: dn.x, y: dn.y, min: dn.min, max: dn.max, width: dn.width }, 0);
             const label = computeAutoLabel(toolbarMode, bondMode.fromVal, snapped);
