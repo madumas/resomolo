@@ -38,6 +38,8 @@ interface ContextActionsProps {
   onDismiss?: () => void;
   onStartBondMode?: (pieceId: string) => void;
   bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
+  selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
+  onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
 }
 
 export function ContextActions({
@@ -67,6 +69,8 @@ export function ContextActions({
   onDismiss: _onDismiss,
   onStartBondMode,
   bondMode,
+  selectedBondInfo,
+  onSelectBond,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
@@ -418,8 +422,37 @@ export function ContextActions({
         </CtxBtn>
       )}
 
-      {/* DroiteNumerique: min/max/step with inline preset buttons (no prompt()) */}
-      {isDroiteNumerique(piece) && (
+      {/* DroiteNumerique: bond selected — show bond-specific actions */}
+      {isDroiteNumerique(piece) && selectedBondInfo && selectedBondInfo.pieceId === piece.id && (
+        <>
+          <CtxBtn onClick={() => {
+            const bond = (piece.bonds ?? [])[selectedBondInfo.bondIndex];
+            if (!bond) return;
+            const newLabel = prompt('Étiquette du saut :', bond.label);
+            if (newLabel !== null) {
+              const bonds = [...(piece.bonds ?? [])];
+              bonds[selectedBondInfo.bondIndex] = { ...bond, label: newLabel };
+              onEditPiece(piece.id, { bonds });
+            }
+          }}>
+            Éditer
+          </CtxBtn>
+          <CtxBtn onClick={() => {
+            const bonds = [...(piece.bonds ?? [])];
+            bonds.splice(selectedBondInfo.bondIndex, 1);
+            onEditPiece(piece.id, { bonds });
+            onSelectBond?.(null);
+          }} destructive>
+            Supprimer
+          </CtxBtn>
+          <CtxBtn onClick={() => onSelectBond?.(null)} back>
+            ← Retour
+          </CtxBtn>
+        </>
+      )}
+
+      {/* DroiteNumerique: normal actions (not bond selected) */}
+      {isDroiteNumerique(piece) && !(selectedBondInfo && selectedBondInfo.pieceId === piece.id) && (
         <>
           {droiteSubmenu === 'none' && (
             <>

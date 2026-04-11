@@ -6,7 +6,7 @@ import { exportModelisationAsPng } from './engine/share';
 import { exportModelisationAsPdf } from './engine/pdf-export';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useSlotManager } from './hooks/useSlotManager';
-import type { UndoManager, ToolType, Highlight, Settings } from './model/types';
+import type { UndoManager, ToolType, Highlight, Settings, DroiteNumerique } from './model/types';
 import type { SlotRegistry } from './model/slots';
 import { canUndo, canRedo, undo, redo } from './model/undo';
 import { useTutorial } from './hooks/useTutorial';
@@ -28,6 +28,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
 import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
 import { onUndoSound, onBond, setSoundMode, setGainMultiplier } from './engine/sound';
+import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
 import type { ProblemPreset } from './config/problems';
 
 interface AppProps {
@@ -58,6 +59,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [equalizingFromId, setEqualizingFromId] = useState<string | null>(null);
   const [groupingBarId, setGroupingBarId] = useState<string | null>(null);
   const [bondMode, setBondMode] = useState<{ pieceId: string; fromVal: number | null; chainCount: number } | null>(null);
+  const [bondGhostInfo, setBondGhostInfo] = useState<{ fromVal: number; toVal: number } | null>(null);
+  const [selectedBondInfo, setSelectedBondInfo] = useState<{ pieceId: string; bondIndex: number } | null>(null);
+  const [bondNudgeMessage, setBondNudgeMessage] = useState<string | null>(null);
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [showSettings, setShowSettings] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<Omit<ConfirmDialogProps, 'onCancel'> | null>(null);
@@ -373,6 +377,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   // Bond mode handlers
   const handleStartBondMode = useCallback((pieceId: string) => {
     setBondMode({ pieceId, fromVal: null, chainCount: 0 });
+    setSelectedBondInfo(null);
   }, []);
 
   const handleSetBondFrom = useCallback((val: number) => {
@@ -388,6 +393,45 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       setBondMode(null);
     }
   }, [settings.toolbarMode, bondMode?.chainCount, dispatch]);
+
+  // Undo sync: when undo removes the last bond during chaining, recalibrate bondMode.fromVal
+  // Only active during chaining (chainCount > 0) — not on the initial start point click
+  useEffect(() => {
+    if (!bondMode || bondMode.fromVal === null || bondMode.chainCount === 0) return;
+    const piece = pieces.find(p => p.id === bondMode.pieceId);
+    if (!piece || piece.type !== 'droiteNumerique') { setBondMode(null); return; }
+    const dn = piece as DroiteNumerique;
+    const bonds = dn.bonds ?? [];
+    const lastBond = bonds[bonds.length - 1];
+    if (!lastBond || Math.abs(lastBond.to - bondMode.fromVal) > 1e-9) {
+      setBondMode(prev => prev ? {
+        ...prev,
+        fromVal: lastBond ? lastBond.to : null,
+        chainCount: Math.max(0, prev.chainCount - 1),
+      } : null);
+    }
+  }, [pieces, bondMode?.pieceId, bondMode?.fromVal, bondMode?.chainCount]);
+
+  // Nudge: anti-sequential counting + stacking message
+  useEffect(() => {
+    if (!bondMode) { setBondNudgeMessage(null); return; }
+    const piece = pieces.find(p => p.id === bondMode.pieceId) as DroiteNumerique | undefined;
+    if (!piece || !piece.bonds?.length) return;
+    // Check sequential counting (3+ unitary bonds)
+    if (isUnitaryChain(piece.bonds, piece.step)) {
+      setBondNudgeMessage('As-tu essayé un seul grand saut?');
+      const timer = setTimeout(() => setBondNudgeMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+    // Check stacking ≥ 3 levels
+    const levels = computeAllBondLevels(piece.bonds);
+    const maxLevel = Math.max(...levels, 0);
+    if (maxLevel >= 3) {
+      setBondNudgeMessage('Tu peux effacer des sauts pour simplifier.');
+      const timer = setTimeout(() => setBondNudgeMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [pieces, bondMode?.pieceId]);
 
   // Recommencer
   const handleRecommencer = useCallback(() => {
@@ -486,7 +530,18 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   if (bondMode && bondMode.fromVal === null) {
     statusMessage = 'Clique sur le point de départ du saut.';
     statusVariant = 'relance';
+  } else if (bondMode && bondMode.fromVal !== null && bondGhostInfo) {
+    // Dynamic message updating in real-time as cursor moves
+    const gFrom = bondGhostInfo.fromVal;
+    const gTo = bondGhostInfo.toVal;
+    const gDiff = Math.abs(gTo - gFrom);
+    const gDir = gTo >= gFrom ? 'avances' : 'recules';
+    statusMessage = settings.toolbarMode === 'essentiel'
+      ? `Saut depuis ${gFrom} — tu es sur ${gTo}, tu ${gDir} de ${gDiff}. Clique pour placer.`
+      : `Saut depuis ${gFrom} → sur ${gTo} (${gTo >= gFrom ? '+' : ''}${gTo - gFrom}). Clique pour placer.`;
+    statusVariant = 'relance';
   } else if (bondMode && bondMode.fromVal !== null) {
+    // Fallback static (cursor not on droite)
     statusMessage = settings.toolbarMode === 'essentiel'
       ? 'Clique sur le point d\'arrivée.'
       : 'Clique sur le point d\'arrivée. Échap pour annuler.';
@@ -532,6 +587,11 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = 'Tu as écrit ta réponse. Relis le problème pour vérifier.';
   } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'arbre') {
     statusMessage = 'Clique sur un nœud pour le renommer. Actions et gabarits à droite.';
+  } else if (bondNudgeMessage) {
+    statusMessage = bondNudgeMessage;
+    statusVariant = 'relance';
+  } else if (selectedBondInfo) {
+    statusMessage = 'Saut sélectionné. Tu peux éditer ou supprimer.';
   } else if (selectedPieceId && pieces.find(p => p.id === selectedPieceId)?.type === 'droiteNumerique') {
     statusMessage = 'Clique sur la droite pour placer un marqueur. Actions à droite.';
   } else if (selectedPieceId) {
@@ -629,7 +689,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           cursorSmoothing={settings.cursorSmoothing}
           smoothingAlpha={settings.smoothingAlpha}
           dispatch={dispatch}
-          onSelectPiece={id => { setSelectedPieceId(id); setEditingPieceId(null); }}
+          onSelectPiece={id => { setSelectedPieceId(id); setEditingPieceId(null); setSelectedBondInfo(null); }}
           onSetTool={handleSelectTool}
           onStartEdit={id => { setSelectedPieceId(id); setEditingPieceId(id); }}
           onStopEdit={() => {
@@ -657,6 +717,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           onStartBondMode={handleStartBondMode}
           onSetBondFrom={handleSetBondFrom}
           onBondCreated={handleBondCreated}
+          onBondGhostChange={setBondGhostInfo}
+          selectedBondInfo={selectedBondInfo}
+          onSelectBond={setSelectedBondInfo}
           toolbarMode={settings.toolbarMode}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}

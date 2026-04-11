@@ -13,7 +13,7 @@ import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
-import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper } from '../engine/bonds';
+import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper, computeBondPath, computeAutoLabel } from '../engine/bonds';
 import { ArbrePiece } from './pieces/ArbrePiece';
 import { SchemaPiece } from './pieces/SchemaPiece';
 import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
@@ -62,6 +62,9 @@ interface CanvasProps {
   onStartBondMode?: (pieceId: string) => void;
   onSetBondFrom?: (val: number) => void;
   onBondCreated?: (pieceId: string, from: number, to: number) => void;
+  onBondGhostChange?: (info: { fromVal: number; toVal: number } | null) => void;
+  selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
+  onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
   toolbarMode?: 'essentiel' | 'complet';
 }
 
@@ -141,6 +144,9 @@ export function Canvas({
   onStartBondMode,
   onSetBondFrom,
   onBondCreated,
+  onBondGhostChange,
+  selectedBondInfo,
+  onSelectBond,
   toolbarMode = 'essentiel',
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -157,6 +163,11 @@ export function Canvas({
   // Ghost preview states
   const [ghostCursorMm, setGhostCursorMm] = useState<{ x: number; y: number } | null>(null);
   const [dnGhostMarker, setDnGhostMarker] = useState<{ pieceId: string; val: number; xMm: number; isRemoval: boolean } | null>(null);
+  const [dnGhostBond, setDnGhostBond] = useState<{
+    pieceId: string; fromVal: number; toVal: number;
+    path: string; label: string; midX: number; labelY: number;
+  } | null>(null);
+  const lastGhostBondVal = useRef<number | null>(null);
 
   // Commit all tableau input values before closing the editor
   const closeTableauEditor = useCallback(() => {
@@ -351,6 +362,14 @@ export function Canvas({
     }
 
     if (!svgRef.current) return;
+
+    // Bond hit-test: check if click landed on an invisible bond arc path
+    const bondIdx = (e.target as SVGElement)?.dataset?.bondIndex;
+    if (bondIdx !== undefined && selectedPieceId && !bondMode) {
+      onSelectBond?.({ pieceId: selectedPieceId, bondIndex: parseInt(bondIdx) });
+      return;
+    }
+
     const pos = pointerToMm(e, svgRef.current);
     const snapped = snapToGrid(pos.x, pos.y);
 
@@ -360,6 +379,27 @@ export function Canvas({
       const finalPos = snapBarAlignment(adjusted, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
       dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
       setMode({ type: 'idle' });
+      return;
+    }
+
+    // Bond mode: force hit-test on the target droite first (ignore overlapping pieces)
+    if (bondMode) {
+      const dn = pieces.find(p => p.id === bondMode.pieceId);
+      if (dn && isDroiteNumerique(dn) && hitTest(dn, pos, referenceUnitMm, tol.hitTestPaddingMm, tol.jetonHitPaddingMm, pieces)) {
+        const relX = pos.x - dn.x;
+        const ratio = relX / dn.width;
+        const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
+        const safeStep = Math.max(0.1, dn.step);
+        const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
+        const snappedVal = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+        if (bondMode.fromVal === null) {
+          onSetBondFrom?.(snappedVal);
+        } else if (Math.abs(snappedVal - bondMode.fromVal) > 1e-9) {
+          onBondCreated?.(bondMode.pieceId, bondMode.fromVal, snappedVal);
+        }
+        return;
+      }
+      // Click outside the droite in bond mode — ignore silently (don't deselect)
       return;
     }
 
@@ -714,7 +754,8 @@ export function Canvas({
       editingPieceId, jetonQuantity, onStartEdit, onStopEdit,
       arrowFromId, onSetArrowFrom, onArrowCreated,
       equalizingFromId, onSetEqualizingFromId, groupingBarId, onSetGroupingBarId, selectedPieceId,
-      tableauEditorPieceId, closeTableauEditor]);
+      tableauEditorPieceId, closeTableauEditor,
+      bondMode, onSetBondFrom, onBondCreated, onSelectBond]);
 
   // Pointer move for pick-up/put-down + hover hit-test for cursor
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
@@ -786,9 +827,9 @@ export function Canvas({
       }
       setHoveredPieceId(found);
 
-      // Ghost marker for selected droiteNumerique
-      if (found && found === selectedPieceId) {
-        const dn = pieces.find(p => p.id === found);
+      // Ghost bond arc for bond mode (takes priority over ghost marker)
+      if (bondMode && bondMode.fromVal !== null && bondMode.pieceId) {
+        const dn = pieces.find(p => p.id === bondMode.pieceId);
         if (dn && isDroiteNumerique(dn)) {
           const relX = rawPos.x - dn.x;
           const ratio = relX / dn.width;
@@ -796,22 +837,67 @@ export function Canvas({
           const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
           const safeStep = Math.max(0.1, dn.step);
           const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
-          const mx = dn.x + ((snapped - dn.min) / (dn.max - dn.min)) * dn.width;
-          const isRemoval = dn.markers.some(m => Math.abs(m - snapped) < 0.001);
-          setDnGhostMarker({ pieceId: found, val: snapped, xMm: mx, isRemoval });
+          if (Math.abs(snapped - bondMode.fromVal) > 1e-9) {
+            const info = computeBondPath({ from: bondMode.fromVal, to: snapped, label: '' }, { x: dn.x, y: dn.y, min: dn.min, max: dn.max, width: dn.width }, 0);
+            const label = computeAutoLabel(toolbarMode, bondMode.fromVal, snapped);
+            const labelArcY = (dn.y + info.cpY) / 2;
+            const labelY = info.direction === -1 ? labelArcY - 2 : labelArcY + 4;
+            setDnGhostBond({ pieceId: bondMode.pieceId, fromVal: bondMode.fromVal, toVal: snapped, path: info.path, label, midX: info.midX, labelY });
+            // Ghost snap sound when value changes
+            if (lastGhostBondVal.current !== null && Math.abs(lastGhostBondVal.current - snapped) > 1e-9) {
+              onGhostSnap();
+            }
+            lastGhostBondVal.current = snapped;
+          } else {
+            setDnGhostBond(null);
+            lastGhostBondVal.current = null;
+          }
+          setDnGhostMarker(null);
+          onBondGhostChange?.({ fromVal: bondMode.fromVal, toVal: snapped });
+        } else {
+          setDnGhostBond(null);
+          onBondGhostChange?.(null);
+        }
+      } else if (bondMode) {
+        // Bond mode active but no fromVal yet — no ghost bond
+        setDnGhostBond(null);
+        setDnGhostMarker(null);
+        onBondGhostChange?.(null);
+      } else {
+        // Ghost marker for selected droiteNumerique (normal mode)
+        setDnGhostBond(null);
+        if (found && found === selectedPieceId) {
+          const dn = pieces.find(p => p.id === found);
+          if (dn && isDroiteNumerique(dn)) {
+            const relX = rawPos.x - dn.x;
+            const ratio = relX / dn.width;
+            const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
+            const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
+            const safeStep = Math.max(0.1, dn.step);
+            const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
+            const mx = dn.x + ((snapped - dn.min) / (dn.max - dn.min)) * dn.width;
+            const isRemoval = dn.markers.some(m => Math.abs(m - snapped) < 0.001);
+            setDnGhostMarker({ pieceId: found, val: snapped, xMm: mx, isRemoval });
+          } else {
+            setDnGhostMarker(null);
+          }
         } else {
           setDnGhostMarker(null);
         }
-      } else {
-        setDnGhostMarker(null);
       }
     }
-  }, [mode, pieces, referenceUnitMm, tol, activeTool, _cursorSmoothing, dispatch, arrowFromId, selectedPieceId]);
+  }, [mode, pieces, referenceUnitMm, tol, activeTool, _cursorSmoothing, dispatch, arrowFromId, selectedPieceId, bondMode, toolbarMode, onBondGhostChange]);
 
   // Pointer up — finalize move ONLY for touch/pen (finger lift = put down).
   // Mouse uses click-click (pick up on pointerDown, put down on next pointerDown).
   // This avoids drag-and-drop which requires too much precision for young children.
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    // Touch fallback for bond mode: finger lift = confirm bond at ghost position
+    if (bondMode && bondMode.fromVal !== null && dnGhostBond && e.pointerType !== 'mouse') {
+      onBondCreated?.(dnGhostBond.pieceId, dnGhostBond.fromVal, dnGhostBond.toVal);
+      setDnGhostBond(null);
+      return;
+    }
     if (mode.type !== 'moving' || !svgRef.current) return;
     if (e.pointerType === 'mouse') return; // mouse uses click-click, not drag
     const pos = pointerToMm(e, svgRef.current);
@@ -827,7 +913,7 @@ export function Canvas({
       try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* already released */ }
       activePointerId.current = null;
     }
-  }, [mode, pieces, referenceUnitMm, tol.barAlignSnapMm, dispatch]);
+  }, [mode, pieces, referenceUnitMm, tol.barAlignSnapMm, dispatch, bondMode, dnGhostBond, onBondCreated]);
 
   // Start moving a piece (pick-up) — records offset between cursor and piece origin
   const handleStartMove = useCallback((pieceId: string, cursorPos: { x: number; y: number }) => {
@@ -1265,7 +1351,10 @@ export function Canvas({
           return (
             <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier}
+                bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
+                bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
+                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
             </g>
           );
         })}
@@ -1296,7 +1385,10 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier}
+                bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
+                bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
+                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
             </g>
           );
         })}
@@ -1647,6 +1739,25 @@ export function Canvas({
                     {dnGhostMarker.val}
                   </text>
                 </g>
+              )}
+            </g>
+          );
+        })()}
+
+        {/* Ghost: bond arc preview during bond creation */}
+        {dnGhostBond && (() => {
+          return (
+            <g pointerEvents="none" aria-hidden="true">
+              <path d={dnGhostBond.path} fill="none"
+                stroke="#185FA5" strokeWidth={1.2}
+                strokeDasharray="3,2" opacity={0.4} />
+              {toolbarMode === 'complet' && dnGhostBond.label && (
+                <text x={dnGhostBond.midX} y={dnGhostBond.labelY}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={6} fontWeight={600}
+                  fill="#185FA5" opacity={0.4}>
+                  {dnGhostBond.label}
+                </text>
               )}
             </g>
           );
@@ -2030,6 +2141,8 @@ export function Canvas({
           onDismiss={() => onSelectPiece(null)}
           onStartBondMode={onStartBondMode}
           bondMode={bondMode}
+          selectedBondInfo={selectedBondInfo}
+          onSelectBond={onSelectBond}
         />
       )}
 
@@ -2325,7 +2438,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1 }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1, bondModeActive, bondFromVal, selectedBondIndex }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
@@ -2333,6 +2446,9 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
   highContrast?: boolean;
   textScale?: number;
   toleranceMultiplier?: number;
+  bondModeActive?: boolean;
+  bondFromVal?: number | null;
+  selectedBondIndex?: number;
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
@@ -2351,7 +2467,10 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
       inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale}
-        toleranceMultiplier={toleranceMultiplier} />; break;
+        toleranceMultiplier={toleranceMultiplier}
+        bondMode={bondModeActive}
+        bondFromVal={bondFromVal}
+        selectedBondIndex={selectedBondIndex} />; break;
     case 'arbre':
       inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} />; break;
     case 'schema':
