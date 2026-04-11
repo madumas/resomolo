@@ -187,6 +187,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
       {allMarkerVals.map((val, i) => {
         const mx = x + ((val - min) / (max - min)) * width;
         const isExplicit = markers.includes(val);
+        const isBondEndpoint = bonds.some(b => Math.abs(b.from - val) < 1e-9 || Math.abs(b.to - val) < 1e-9);
         const isBondFrom = bondFromVal !== null && bondFromVal !== undefined && Math.abs(val - bondFromVal) < 1e-9;
         const coveredByPositive = isMarkerCoveredByPositiveBond(val, bonds);
         const coveredByNegative = isMarkerCoveredByNegativeBond(val, bonds);
@@ -207,13 +208,13 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
           <g key={`m-${i}`}>
             <circle cx={mx} cy={y}
               r={isBondFrom ? 5.5 : isBondEndpointSel ? 5 : 4}
-              fill={isExplicit || isBondFrom ? '#185FA5' : 'rgba(24, 95, 165, 0.4)'}
+              fill={isExplicit || isBondEndpoint || isBondFrom ? '#185FA5' : 'rgba(24, 95, 165, 0.4)'}
               stroke="#fff" strokeWidth={0.7}
               style={isBondFrom ? { animation: 'marker-pulse 1.5s ease-in-out infinite' } : undefined} />
             {showMarkerLabel && (
               <text x={mx} y={markerLabelY} textAnchor="middle"
                 fontSize={7 * ts} fontWeight={600}
-                fill={isExplicit ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
+                fill={isExplicit || isBondEndpoint ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
                 {val}
               </text>
             )}
