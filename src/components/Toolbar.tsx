@@ -49,19 +49,19 @@ export const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { type: 'barre', label: 'Barre', Icon: BarreIcon },
       { type: 'schema', label: 'Schéma', Icon: SchemaIcon },
+      { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
     ],
-    inlineTools: ['barre', 'schema'],
+    inlineTools: ['barre', 'schema', 'droiteNumerique'],
   },
   {
     id: 'organiser', label: 'Organiser', color: '#FFF3E0', essentiel: false,
     tools: [
-      { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
       { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
       { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
       { type: 'diagrammeLigne', label: 'Ligne brisée', Icon: DiagrammeLigneIcon },
       { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
     ],
-    inlineTools: ['droiteNumerique'],
+    inlineTools: [],
   },
   {
     id: 'calculer', label: 'Calculer', color: '#F3E8FD', essentiel: true,
