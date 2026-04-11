@@ -164,8 +164,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
                   </text>
                 </>
               ) : null;
-            })()
-            )}
+            })()}
           </g>
         );
       })}
