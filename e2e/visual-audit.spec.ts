@@ -4274,6 +4274,230 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('233-mobile-piece-placed.png'), fullPage: true });
   });
 
+  // === Sauts (bonds) sur la droite numérique ===
+
+  test('138 — Droite numérique: créer un saut (bond) via mode saut', async ({ page }) => {
+    await navigateAndReady(page);
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique'); // toggle off
+
+    // Select the droite
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+
+    // Verify Saut button is visible
+    await expect(ctxActions.locator('button:has-text("Saut")')).toBeVisible({ timeout: 2000 });
+
+    // Click Saut
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+
+    // Status bar should show bond mode message
+    const status = await getStatusText(page);
+    expect(status).toContain('départ');
+
+    // Click start point (graduation 3 — droite is at x≈150, width=200, so 3/10 * 200 + 150 = 210)
+    await clickCanvas(page, 210, 200);
+    await page.waitForTimeout(300);
+
+    // Click end point (graduation 7 — 7/10 * 200 + 150 = 290)
+    await clickCanvas(page, 290, 200);
+    await page.waitForTimeout(400);
+
+    // Verify bond arc exists (SVG path elements inside the droite)
+    const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
+    expect(await bondPaths.count()).toBeGreaterThanOrEqual(1);
+
+    await page.screenshot({ path: shot('300-droite-bond-created.png'), fullPage: true });
+  });
+
+  test('139 — Droite numérique: enchaînement de sauts en mode Complet', async ({ page }) => {
+    await navigateAndReady(page);
+    // Switch to Complet mode
+    const modeBtn = page.locator('button:has-text("Simplifié")');
+    if (await modeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await modeBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique');
+
+    // Select and start bond mode
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+
+    // Bond 1: 2 → 5
+    await clickCanvas(page, 190, 200); // ~2
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 250, 200); // ~5
+    await page.waitForTimeout(300);
+
+    // In Complet mode, chaining should keep bond mode active
+    // Bond 2: 5 → 8 (just click end, start is auto-set)
+    await clickCanvas(page, 310, 200); // ~8
+    await page.waitForTimeout(400);
+
+    // Should have 2 bonds
+    const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
+    expect(await bondPaths.count()).toBeGreaterThanOrEqual(2);
+
+    // Click Terminer
+    const terminBtn = page.locator('[data-testid="status-bar"] button:has-text("Terminer")');
+    if (await terminBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await terminBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await page.screenshot({ path: shot('301-droite-bond-chaining.png'), fullPage: true });
+  });
+
+  test('140 — Droite numérique: bond supprimé via Effacer sauts après sélection droite', async ({ page }) => {
+    await navigateAndReady(page);
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique');
+
+    // Select droite and create a bond (3→7)
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 210, 200); // ~3
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 290, 200); // ~7
+    await page.waitForTimeout(400);
+
+    // Verify bond exists
+    const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
+    expect(await bondPaths.count()).toBeGreaterThanOrEqual(1);
+
+    // Re-select droite and use Effacer sauts
+    await selectPieceAt(page, 280, 200);
+    const effacerBtn = ctxActions.locator('button:has-text("Effacer sauts")');
+    await expect(effacerBtn).toBeVisible({ timeout: 2000 });
+    await effacerBtn.click();
+    await page.waitForTimeout(300);
+
+    // Bond should be removed
+    expect(await bondPaths.count()).toBe(0);
+
+    await page.screenshot({ path: shot('302-droite-bond-deleted.png'), fullPage: true });
+  });
+
+  test('141 — Droite numérique: Effacer sauts supprime tous les bonds', async ({ page }) => {
+    await navigateAndReady(page);
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique');
+
+    // Create 2 bonds
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 190, 200); // start ~2
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 240, 200); // end ~4
+    await page.waitForTimeout(400);
+
+    // Create another bond
+    await selectPieceAt(page, 280, 200);
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 270, 200); // start ~6
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 320, 200); // end ~9
+    await page.waitForTimeout(400);
+
+    // Verify 2 bonds
+    const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
+    expect(await bondPaths.count()).toBeGreaterThanOrEqual(2);
+
+    // Click Effacer sauts
+    await selectPieceAt(page, 280, 200);
+    const effacerBtn = ctxActions.locator('button:has-text("Effacer sauts")');
+    if (await effacerBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await effacerBtn.click();
+      await page.waitForTimeout(300);
+    }
+
+    // All bonds should be gone
+    expect(await bondPaths.count()).toBe(0);
+
+    await page.screenshot({ path: shot('303-droite-bonds-cleared.png'), fullPage: true });
+  });
+
+  test('142 — Droite numérique: context actions regroupées (Contenu + Paramètres)', async ({ page }) => {
+    await navigateAndReady(page);
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique');
+
+    // Select droite
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+
+    // Verify regrouped actions: Saut button + Paramètres label + Min/Max/Pas
+    await expect(ctxActions.locator('button:has-text("Saut")')).toBeVisible({ timeout: 2000 });
+    await expect(ctxActions.locator('text=Paramètres')).toBeVisible({ timeout: 2000 });
+    await expect(ctxActions.locator('button:has-text("Min:")')).toBeVisible({ timeout: 2000 });
+
+    await ctxActions.screenshot({ path: shot('304-droite-ctx-regrouped.png') });
+  });
+
+  test('143 — Droite numérique: changement max supprime bonds hors plage', async ({ page }) => {
+    await navigateAndReady(page);
+    // Place droite
+    await selectTool(page, 'droiteNumerique');
+    await clickCanvas(page, 250, 200);
+    await page.waitForTimeout(400);
+    await selectTool(page, 'droiteNumerique');
+
+    // Create bond 2→8
+    await selectPieceAt(page, 280, 200);
+    const ctxActions = page.locator('[data-testid="context-actions"]');
+    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await page.waitForTimeout(200);
+    await clickCanvas(page, 190, 200); // ~2
+    await page.waitForTimeout(300);
+    await clickCanvas(page, 310, 200); // ~8
+    await page.waitForTimeout(400);
+
+    // Verify bond exists
+    const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
+    expect(await bondPaths.count()).toBeGreaterThanOrEqual(1);
+
+    // Change max to 5 (bond 2→8 should be removed since 8 > 5)
+    await selectPieceAt(page, 280, 200);
+    await ctxActions.locator('button:has-text("Max:")').click();
+    await page.waitForTimeout(200);
+    const max5 = ctxActions.getByRole('button', { name: '5', exact: true });
+    if (await max5.isVisible({ timeout: 500 }).catch(() => false)) {
+      await max5.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Bond should be filtered out
+    expect(await bondPaths.count()).toBe(0);
+
+    await page.screenshot({ path: shot('305-droite-bond-max-filter.png'), fullPage: true });
+  });
+
   test('137 — Desktop non affecté : top toolbar visible, pas de mobile toolbar', async ({ page }) => {
     // Default viewport is 1366x768
     await navigateAndReady(page);
