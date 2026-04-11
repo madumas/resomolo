@@ -163,3 +163,13 @@ export function isMarkerCoveredByPositiveBond(val: number, bonds: Bond[]): boole
     return val >= lo && val <= hi;
   });
 }
+
+/** Check if a marker at `val` is covered by a negative bond arc (below the line). */
+export function isMarkerCoveredByNegativeBond(val: number, bonds: Bond[]): boolean {
+  return bonds.some(b => {
+    if (b.to >= b.from) return false; // positive bond = above, no collision with bottom labels
+    const lo = Math.min(b.from, b.to);
+    const hi = Math.max(b.from, b.to);
+    return val >= lo && val <= hi;
+  });
+}

@@ -388,7 +388,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
 
   const handleBondCreated = useCallback((pieceId: string, from: number, to: number) => {
     dispatch({ type: 'ADD_BOND', pieceId, from, to, toolbarMode: settings.toolbarMode });
-    onBond(bondMode?.chainCount ?? 0);
+    onBond(bondMode?.chainCount ?? 0, to >= from);
     if (settings.toolbarMode === 'complet') {
       setBondMode(prev => prev ? { ...prev, fromVal: to, chainCount: prev.chainCount + 1 } : null);
     } else {

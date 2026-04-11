@@ -213,7 +213,8 @@ export function onGhostSnap() {
 }
 
 // Bond (jump on number line) — sweep triangle evoking movement
-function soundBond(baseFreq: number) {
+// Positive bonds sweep UP in frequency, negative bonds sweep DOWN
+function soundBond(baseFreq: number, positive: boolean) {
   try {
     const c = getCtx();
     if (c.state === 'suspended') c.resume();
@@ -222,7 +223,7 @@ function soundBond(baseFreq: number) {
     const g = c.createGain();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(baseFreq, now);
-    osc.frequency.linearRampToValueAtTime(baseFreq + 200, now + 0.06);
+    osc.frequency.linearRampToValueAtTime(positive ? baseFreq + 200 : baseFreq - 150, now + 0.06);
     g.gain.setValueAtTime(0.12 * gainMultiplier, now);
     g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
     osc.connect(g); g.connect(c.destination);
@@ -230,9 +231,9 @@ function soundBond(baseFreq: number) {
   } catch { /* Audio not available */ }
 }
 
-export function onBond(chainIndex = 0) {
+export function onBond(chainIndex = 0, positive = true) {
   if (mode === 'off') return;
   if (mode === 'reduced' && chainIndex > 0) return; // silent after first in chain
-  soundBond(400 + Math.min(chainIndex, 4) * 50);
+  soundBond(400 + Math.min(chainIndex, 4) * 50, positive);
   haptic(25);
 }

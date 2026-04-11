@@ -1,6 +1,6 @@
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { DroiteNumerique } from '../../model/types';
-import { computeAllBondLevels, computeBondPath, getImplicitMarkers, isMarkerCoveredByPositiveBond } from '../../engine/bonds';
+import { computeAllBondLevels, computeBondPath, getImplicitMarkers, isMarkerCoveredByPositiveBond, isMarkerCoveredByNegativeBond } from '../../engine/bonds';
 
 export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selectedBondIndex, bondMode, bondFromVal, toleranceMultiplier = 1 }: {
   piece: DroiteNumerique;
@@ -149,7 +149,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
                   y={labelY}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={7 * ts}
+                  fontSize={Math.max(7 * ts, 5)}
                   fontWeight={600}
                   fill={isSel ? '#7028E0' : '#185FA5'}
                   pointerEvents="none">
@@ -188,7 +188,10 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
         const mx = x + ((val - min) / (max - min)) * width;
         const isExplicit = markers.includes(val);
         const isBondFrom = bondFromVal !== null && bondFromVal !== undefined && Math.abs(val - bondFromVal) < 1e-9;
-        const labelBelow = isMarkerCoveredByPositiveBond(val, bonds);
+        const coveredByPositive = isMarkerCoveredByPositiveBond(val, bonds);
+        const coveredByNegative = isMarkerCoveredByNegativeBond(val, bonds);
+        // Default: label above. Move below if positive bond covers it. If both cover it, prefer above (less crowded).
+        const labelBelow = coveredByPositive && !coveredByNegative;
         const markerLabelY = labelBelow ? y + 9 + 7 * ts : y - 7;
         const isBondEndpointSel = selectedBondIndex !== undefined && selectedBondIndex >= 0 &&
           bonds[selectedBondIndex] && (
