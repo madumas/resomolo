@@ -463,12 +463,10 @@ export function ContextActions({
                 const isBondActive = bondMode?.pieceId === piece.id;
                 return (
                   <span style={{ display: 'flex', gap: 4 }}>
-                    <CtxBtn onClick={() => { if (isBondActive) onStopBondMode?.(); }}
-                      style={!isBondActive ? { background: '#E8F0FE', border: '1px solid #185FA5', color: '#185FA5' } : undefined}>
+                    <CtxBtn onClick={() => { if (isBondActive) onStopBondMode?.(); }} active={!isBondActive}>
                       ● Marqueur
                     </CtxBtn>
-                    <CtxBtn onClick={() => { if (!isBondActive) onStartBondMode?.(piece.id); }}
-                      style={isBondActive ? { background: '#E8F0FE', border: '1px solid #185FA5', color: '#185FA5' } : undefined}>
+                    <CtxBtn onClick={() => { if (!isBondActive) onStartBondMode?.(piece.id); }} active={isBondActive}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         <svg viewBox="0 0 14 8" width={14} height={8} style={{ verticalAlign: 'middle' }}>
                           <path d="M1 7 Q7 0 13 7" stroke="currentColor" fill="none" strokeWidth="1.5" />

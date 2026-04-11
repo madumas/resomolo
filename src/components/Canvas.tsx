@@ -399,8 +399,9 @@ export function Canvas({
         }
         return;
       }
-      // Click outside the droite in bond mode — ignore silently (don't deselect)
-      return;
+      // Click outside the droite in bond mode — exit bond mode and deselect
+      onStopBondMode?.();
+      onSelectPiece(null);
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
