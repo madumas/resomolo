@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { DroiteNumerique } from '../../model/types';
 import { computeAllBondLevels, computeBondPath, getImplicitMarkers, isMarkerCoveredByPositiveBond } from '../../engine/bonds';
 
@@ -20,22 +20,25 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
   const lastBondTime = useRef(0);
   const [newBondIndex, setNewBondIndex] = useState<number | null>(null);
 
-  useEffect(() => {
+  // useLayoutEffect runs synchronously before browser paint — no label flash
+  useLayoutEffect(() => {
     if (bonds.length > prevBondCount.current) {
       const now = Date.now();
       const elapsed = now - lastBondTime.current;
       if (elapsed > 200) {
-        // Not rapid chaining — animate the new bond
         setNewBondIndex(bonds.length - 1);
-        const timer = setTimeout(() => setNewBondIndex(null), 350); // animation duration + buffer
         lastBondTime.current = now;
-        prevBondCount.current = bonds.length;
-        return () => clearTimeout(timer);
       }
-      lastBondTime.current = now;
     }
     prevBondCount.current = bonds.length;
   }, [bonds.length]);
+
+  // Clear newBondIndex after animation completes (separate effect, can be async)
+  useEffect(() => {
+    if (newBondIndex === null) return;
+    const timer = setTimeout(() => setNewBondIndex(null), 350);
+    return () => clearTimeout(timer);
+  }, [newBondIndex]);
 
   // Refs for measuring path lengths (for stroke-dashoffset animation)
   const pathRefs = useRef<(SVGPathElement | null)[]>([]);
@@ -131,31 +134,28 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
               pointerEvents="none"
               className={isNew && pl > 0 ? 'bond-new' : undefined}
               style={isNew && pl > 0 ? { '--path-length': `${pl}` } as React.CSSProperties : undefined} />
-            {/* Label background */}
-            {bond.label && (
-              <rect
-                x={info.midX - (bond.label.length * 2.5 * ts + 2)}
-                y={labelY - 4.5 * ts}
-                width={bond.label.length * 5 * ts + 4}
-                height={8 * ts}
-                rx={2}
-                fill="rgba(255,255,255,0.85)"
-                pointerEvents="none"
-                className={isNew ? 'bond-label-new' : undefined} />
-            )}
-            {/* Label text */}
-            {bond.label && (
-              <text x={info.midX}
-                y={labelY}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={7 * ts}
-                fontWeight={600}
-                fill={isSel ? '#7028E0' : '#185FA5'}
-                pointerEvents="none"
-                className={isNew ? 'bond-label-new' : undefined}>
-                {bond.label}
-              </text>
+            {/* Label background + text — hidden during arc draw animation */}
+            {bond.label && !isNew && (
+              <>
+                <rect
+                  x={info.midX - (bond.label.length * 2.5 * ts + 2)}
+                  y={labelY - 4.5 * ts}
+                  width={bond.label.length * 5 * ts + 4}
+                  height={8 * ts}
+                  rx={2}
+                  fill="rgba(255,255,255,0.85)"
+                  pointerEvents="none" />
+                <text x={info.midX}
+                  y={labelY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={7 * ts}
+                  fontWeight={600}
+                  fill={isSel ? '#7028E0' : '#185FA5'}
+                  pointerEvents="none">
+                  {bond.label}
+                </text>
+              </>
             )}
           </g>
         );
@@ -195,6 +195,11 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
             Math.abs(val - bonds[selectedBondIndex].from) < 1e-9 ||
             Math.abs(val - bonds[selectedBondIndex].to) < 1e-9
           );
+        // Hide marker label when it duplicates a visible tick label (reduces visual clutter)
+        const tickIndex = Math.round((val - min) / safeStep);
+        const isZeroTick = min < 0 && Math.abs(val) < 1e-9;
+        const hasVisibleTickLabel = (tickIndex % labelEvery === 0 || isZeroTick) && tickIndex >= 0 && tickIndex < numTicks;
+        const showMarkerLabel = !hasVisibleTickLabel; // blue dot is enough when tick label is visible
         return (
           <g key={`m-${i}`}>
             <circle cx={mx} cy={y}
@@ -202,11 +207,13 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
               fill={isExplicit || isBondFrom ? '#185FA5' : 'rgba(24, 95, 165, 0.4)'}
               stroke="#fff" strokeWidth={0.7}
               style={isBondFrom ? { animation: 'marker-pulse 1.5s ease-in-out infinite' } : undefined} />
-            <text x={mx} y={markerLabelY} textAnchor="middle"
-              fontSize={7 * ts} fontWeight={600}
-              fill={isExplicit ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
-              {val}
-            </text>
+            {showMarkerLabel && (
+              <text x={mx} y={markerLabelY} textAnchor="middle"
+                fontSize={7 * ts} fontWeight={600}
+                fill={isExplicit ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
+                {val}
+              </text>
+            )}
           </g>
         );
       })}

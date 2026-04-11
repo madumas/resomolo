@@ -73,7 +73,7 @@ svg path.bond-new {
   to   { opacity: 1; }
 }
 svg .bond-label-new {
-  animation: bond-label-fade 100ms ease-out 150ms both;
+  animation: bond-label-fade 100ms ease-out 150ms forwards;
 }
 
 /* Bond removal fade-out */
