@@ -37,6 +37,7 @@ interface ContextActionsProps {
   onDeletePiece?: (id: string) => void;
   onDismiss?: () => void;
   onStartBondMode?: (pieceId: string) => void;
+  onStopBondMode?: () => void;
   bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
   selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
@@ -68,6 +69,7 @@ export function ContextActions({
   onDeletePiece,
   onDismiss: _onDismiss,
   onStartBondMode,
+  onStopBondMode,
   bondMode,
   selectedBondInfo,
   onSelectBond,
@@ -456,17 +458,27 @@ export function ContextActions({
         <>
           {droiteSubmenu === 'none' && (
             <>
-              {/* Bloc Contenu */}
-              {!piece.locked && (
-                <CtxBtn onClick={() => { onStartBondMode?.(piece.id); }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <svg viewBox="0 0 14 8" width={14} height={8} style={{ verticalAlign: 'middle' }}>
-                      <path d="M1 7 Q7 0 13 7" stroke="currentColor" fill="none" strokeWidth="1.5" />
-                    </svg>
-                    Saut
+              {/* Bloc Contenu — mode toggle Marqueur/Saut */}
+              {!piece.locked && (() => {
+                const isBondActive = bondMode?.pieceId === piece.id;
+                return (
+                  <span style={{ display: 'flex', gap: 4 }}>
+                    <CtxBtn onClick={() => { if (isBondActive) onStopBondMode?.(); }}
+                      style={!isBondActive ? { background: '#E8F0FE', border: '1px solid #185FA5', color: '#185FA5' } : undefined}>
+                      ● Marqueur
+                    </CtxBtn>
+                    <CtxBtn onClick={() => { if (!isBondActive) onStartBondMode?.(piece.id); }}
+                      style={isBondActive ? { background: '#E8F0FE', border: '1px solid #185FA5', color: '#185FA5' } : undefined}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 14 8" width={14} height={8} style={{ verticalAlign: 'middle' }}>
+                          <path d="M1 7 Q7 0 13 7" stroke="currentColor" fill="none" strokeWidth="1.5" />
+                        </svg>
+                        Saut
+                      </span>
+                    </CtxBtn>
                   </span>
-                </CtxBtn>
-              )}
+                );
+              })()}
               {piece.markers.length > 0 && (
                 <CtxBtn onClick={() => onEditPiece(piece.id, { markers: [] })}>
                   Effacer marqueurs

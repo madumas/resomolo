@@ -328,8 +328,8 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
           if (p.id !== pieceId || p.type !== 'droiteNumerique') return p;
           const dn = p as DroiteNumerique;
           const newBond = { from, to, label };
-          const allMarkers = [...new Set([...dn.markers, from, to])].sort((a, b) => a - b);
-          return { ...dn, bonds: [...(dn.bonds ?? []), newBond], markers: allMarkers } as Piece;
+          // Bond endpoints are rendered via getImplicitMarkers() — don't pollute markers[]
+          return { ...dn, bonds: [...(dn.bonds ?? []), newBond] } as Piece;
         }),
       };
     }

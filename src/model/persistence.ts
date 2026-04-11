@@ -108,8 +108,16 @@ function migratePieces(pieces: any[]): any[] {
         height: p.height ?? 90,
       };
     }
-    if (p.type === 'droiteNumerique' && !p.bonds) {
-      return { ...p, bonds: [] };
+    if (p.type === 'droiteNumerique') {
+      const bonds = p.bonds ?? [];
+      // Migration: strip bond endpoints from markers[] (old ADD_BOND polluted them)
+      if (bonds.length > 0 && p.markers?.length > 0) {
+        const bondVals = new Set<number>();
+        for (const b of bonds) { bondVals.add(b.from); bondVals.add(b.to); }
+        const cleanMarkers = p.markers.filter((m: number) => !bondVals.has(m));
+        return { ...p, bonds, markers: cleanMarkers };
+      }
+      return { ...p, bonds };
     }
     return p;
   });

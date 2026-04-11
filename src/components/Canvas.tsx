@@ -60,6 +60,7 @@ interface CanvasProps {
   focusMode?: boolean;
   bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
   onStartBondMode?: (pieceId: string) => void;
+  onStopBondMode?: () => void;
   onSetBondFrom?: (val: number) => void;
   onBondCreated?: (pieceId: string, from: number, to: number) => void;
   onBondGhostChange?: (info: { fromVal: number; toVal: number } | null) => void;
@@ -142,6 +143,7 @@ export function Canvas({
   focusMode,
   bondMode,
   onStartBondMode,
+  onStopBondMode,
   onSetBondFrom,
   onBondCreated,
   onBondGhostChange,
@@ -2136,6 +2138,7 @@ export function Canvas({
           onDeletePiece={(id) => { dispatch({ type: 'DELETE_PIECE', id }); onSelectPiece(null); }}
           onDismiss={() => onSelectPiece(null)}
           onStartBondMode={onStartBondMode}
+          onStopBondMode={onStopBondMode}
           bondMode={bondMode}
           selectedBondInfo={selectedBondInfo}
           onSelectBond={onSelectBond}

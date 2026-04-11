@@ -718,6 +718,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           focusMode={focusMode}
           bondMode={bondMode}
           onStartBondMode={handleStartBondMode}
+          onStopBondMode={() => { setBondMode(null); onAcknowledge(); }}
           onSetBondFrom={handleSetBondFrom}
           onBondCreated={handleBondCreated}
           onBondGhostChange={setBondGhostInfo}
