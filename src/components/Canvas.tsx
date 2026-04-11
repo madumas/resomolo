@@ -1350,7 +1350,7 @@ export function Canvas({
           return (
             <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier}
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
                 selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
@@ -1384,7 +1384,7 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier}
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
                 selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
@@ -2438,7 +2438,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1, bondModeActive, bondFromVal, selectedBondIndex }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1, toolbarMode = 'essentiel', bondModeActive, bondFromVal, selectedBondIndex }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
@@ -2446,6 +2446,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
   highContrast?: boolean;
   textScale?: number;
   toleranceMultiplier?: number;
+  toolbarMode?: 'essentiel' | 'complet';
   bondModeActive?: boolean;
   bondFromVal?: number | null;
   selectedBondIndex?: number;
@@ -2468,6 +2469,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
     case 'droiteNumerique':
       inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale}
         toleranceMultiplier={toleranceMultiplier}
+        toolbarMode={toolbarMode}
         bondMode={bondModeActive}
         bondFromVal={bondFromVal}
         selectedBondIndex={selectedBondIndex} />; break;
