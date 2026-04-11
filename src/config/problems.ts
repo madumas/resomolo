@@ -229,7 +229,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     id: 'c2-frac-comp',
     title: 'Comparaison de fractions',
     text: 'Marie a mangé 2/3 de sa tablette de chocolat. Léo a mangé 3/4 de la sienne. Les deux tablettes sont identiques. Qui a mangé le plus de chocolat?',
-    cycle: 2,
+    cycle: 3,
     category: 'fraction',
     difficulty: 2,
   },
@@ -289,6 +289,32 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     text: 'À la cafétéria, il y a 3 choix de sandwich (jambon, poulet, végé) et 2 choix de boisson (jus, lait). Combien de combinaisons sandwich-boisson différentes sont possibles?',
     cycle: 3,
     category: 'probabilite',
+    difficulty: 2,
+  },
+  // ── Données superflues ──
+  {
+    id: 'c2-superflu-1',
+    title: 'Pommes et chien',
+    text: 'Léo a 12 pommes rouges et 8 pommes vertes. Son chien s\'appelle Rex. Il donne 5 pommes à Marc. Combien lui en reste-t-il?',
+    cycle: 2,
+    category: 'soustraction',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-superflu-1',
+    title: 'Sortie au zoo',
+    text: 'Une classe de 28 élèves va au zoo. Le trajet dure 45 minutes. Le billet coûte 6 $. Combien coûtent les billets en tout?',
+    cycle: 3,
+    category: 'multiplication',
+    difficulty: 2,
+  },
+  // ── Travail à rebours ──
+  {
+    id: 'c3-rebours-1',
+    title: 'Économies de Jade',
+    text: 'Jade a économisé pendant 4 semaines. Chaque semaine, elle a mis le même montant. Elle a maintenant 60 $. Combien mettait-elle par semaine?',
+    cycle: 3,
+    category: 'division',
     difficulty: 2,
   },
 ];

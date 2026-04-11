@@ -599,7 +599,7 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
           <span style={{ fontSize: 11 }}>Oups</span>
         </button>
         <button onClick={onCancel} style={btnStyle}>Fermer</button>
-        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
+        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Terminer</button>
       </div>
     </div>
   );

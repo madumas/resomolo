@@ -38,5 +38,6 @@ export const RESPONSE_TEMPLATES = [
   { id: 'fois', label: '...fois plus que...', template: '___ a ___ fois plus que ___ .' },
   { id: 'total', label: 'En tout...', template: 'En tout, il y a ___ .' },
   { id: 'reponse', label: 'La réponse est...', template: 'La réponse est ___ .' },
+  { id: 'partage-reste', label: '...groupes et il reste...', template: '___ groupes de ___ et il en reste ___ .' },
 ];
 

@@ -71,7 +71,7 @@ export function AdultGuide({ onClose }: AdultGuideProps) {
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <li><strong>Escape</strong> — Annuler / désélectionner</li>
             <li><strong>Ctrl+Z</strong> — Annuler la dernière action</li>
-            <li><strong>Recommencer</strong> — Vide les pièces, garde le problème</li>
+            <li><strong>Tout effacer</strong> — Vide les pièces, garde le problème</li>
             <li><strong>Reset</strong> — Tout effacer et relancer le tutoriel</li>
           </ul>
         </Section>

@@ -540,7 +540,7 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         )}
         <div style={{ flex: 1 }} />
         <button onClick={onCancel} style={btnStyle}>Fermer</button>
-        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Valider</button>
+        <button onClick={commit} style={{ ...btnStyle, background: '#7028e0', color: '#fff', border: 'none' }}>Terminer</button>
       </div>
     </div>
   );

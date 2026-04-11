@@ -263,15 +263,15 @@ export function ProblemZone({
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {PASTILLE_ORDER.map(color => {
-            const label = color === 'bleu' ? 'Données' : color === 'orange' ? 'Question' : color === 'vert' ? 'Contexte' : 'Superflu';
+            const label = color === 'bleu' ? 'Données' : color === 'orange' ? 'Question' : color === 'vert' ? 'Contexte' : 'Pas utile';
             return (
               <button
                 key={color}
                 onClick={() => setActiveColor(color)}
                 style={{
-                  width: 44, height: 44, borderRadius: '50%',
+                  width: 48, height: 48, borderRadius: '50%',
                   background: HIGHLIGHT_COLORS[color].bg,
                   border: `2px solid ${activeColor === color ? HIGHLIGHT_COLORS[color].border : 'transparent'}`,
                   boxShadow: activeColor === color ? `0 0 0 3px ${HIGHLIGHT_COLORS[color].bg}` : 'none',

@@ -15,6 +15,8 @@ interface StatusBarProps {
   problemCollapsed?: boolean;
   problemText?: string;
   onExpandProblem?: () => void;
+  fatigueNudge?: boolean;
+  onDismissFatigueNudge?: () => void;
 }
 
 function extractQuestion(text: string): string {
@@ -37,6 +39,8 @@ export function StatusBar({
   problemCollapsed,
   problemText,
   onExpandProblem,
+  fatigueNudge,
+  onDismissFatigueNudge,
 }: StatusBarProps) {
   // When problem zone is collapsed and there's a problem, show the question
   const showProblemReminder = problemCollapsed && problemText && problemText.length > 0;
@@ -58,7 +62,23 @@ export function StatusBar({
       alignItems: 'center',
       gap: 12,
     }}>
-      {showProblemReminder ? (
+      {fatigueNudge ? (
+        <span
+          onClick={onDismissFatigueNudge}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter') onDismissFatigueNudge?.(); }}
+          style={{
+            flex: 1,
+            cursor: 'pointer',
+            color: '#9060C0',
+            fontStyle: 'italic',
+          }}
+          title="Cliquer pour fermer"
+        >
+          Tu sembles hésiter — prends une pause si tu veux, ton travail est sauvegardé.
+        </span>
+      ) : showProblemReminder ? (
         <span
           onClick={onExpandProblem}
           role="button"

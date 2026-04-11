@@ -40,6 +40,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { type: 'jeton', label: 'Jeton', Icon: JetonIcon },
       { type: 'boite', label: 'Boîte', Icon: BoiteIcon },
+      { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
     ],
     inlineTools: ['jeton', 'boite'],
   },
@@ -57,7 +58,6 @@ export const TOOL_GROUPS: ToolGroup[] = [
       { type: 'droiteNumerique', label: 'Droite', Icon: DroiteNumeriqueIcon },
       { type: 'arbre', label: 'Arbre', Icon: ArbreIcon },
       { type: 'tableau', label: 'Tableau', Icon: TableauIcon },
-      { type: 'diagrammeBandes', label: 'Bandes', Icon: DiagrammeBandesIcon },
       { type: 'diagrammeLigne', label: 'Ligne brisée', Icon: DiagrammeLigneIcon },
       { type: 'fleche', label: 'Flèche', Icon: FlecheIcon },
     ],

@@ -23,6 +23,7 @@ interface ActionBarProps {
   onStartTutorial?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
   activeProfile?: SettingsProfile;
+  showSaveIndicator?: boolean;
 }
 
 export function ActionBar({
@@ -42,6 +43,7 @@ export function ActionBar({
   onStartTutorial,
   sessionTimer,
   activeProfile = 'custom',
+  showSaveIndicator,
 }: ActionBarProps) {
   // showMore removed — fullscreen is now a standalone toggle
   return (
@@ -89,14 +91,27 @@ export function ActionBar({
 
       <Separator />
 
-      {/* Recommencer */}
+      {/* Tout effacer */}
       <ActionBtn onClick={onRecommencer} title="Effacer les pièces, garder le problème">
-        Recommencer
+        Tout effacer
       </ActionBtn>
 
       {/* Reset moved to SettingsPanel — too risky for impulsive children */}
 
       <div style={{ flex: 1 }} />
+
+      {/* Save indicator */}
+      {showSaveIndicator && (
+        <span style={{
+          fontSize: 10,
+          color: '#0B7285',
+          fontWeight: 500,
+          opacity: 0.8,
+          transition: 'opacity 0.3s',
+        }}>
+          ✓ Sauvegardé
+        </span>
+      )}
 
       {/* R6: Session timer */}
       {sessionTimer && (

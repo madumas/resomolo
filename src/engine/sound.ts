@@ -106,10 +106,15 @@ export function soundDistribute() {
   setTimeout(() => play(600, 20, 'sine', 0.04), 44);
 }
 
-// Haptic — vibration on supported devices
+// Haptic — vibration on supported devices, visual flash fallback on iOS/Safari
 export function haptic(ms = 30) {
   try {
-    navigator.vibrate?.(ms);
+    if (navigator.vibrate) {
+      navigator.vibrate(ms);
+    } else {
+      // iOS/Safari: no vibration API — dispatch visual flash event as fallback
+      window.dispatchEvent(new CustomEvent('haptic-flash'));
+    }
   } catch {
     // Not supported — silent
   }

@@ -5,7 +5,7 @@ import { pointerToMm, snapToGrid, calculateViewBoxHeight } from '../engine/coord
 import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
-import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM } from '../model/types';
+import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM, getToleranceMultiplier } from '../model/types';
 import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue, DiagrammeBandes } from '../model/types';
 import { isBarre, isBoite, isDroiteNumerique, isTableau, isArbre, ARBRE_NODE_W_MM, ARBRE_NODE_H_MM } from '../model/types';
 import type { Action } from '../model/state';
@@ -232,6 +232,7 @@ export function Canvas({
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
   const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
+  const tolMultiplier = getToleranceMultiplier(_toleranceProfile);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
   // Clear ghost states when tool or selection changes
@@ -239,6 +240,14 @@ export function Canvas({
     setGhostCursorMm(null);
     setDnGhostMarker(null);
   }, [activeTool, selectedPieceId]);
+
+  // Haptic flash fallback (iOS/Safari — no vibration API)
+  const [hapticFlash, setHapticFlash] = useState(false);
+  useEffect(() => {
+    const handler = () => { setHapticFlash(true); setTimeout(() => setHapticFlash(false), 100); };
+    window.addEventListener('haptic-flash', handler);
+    return () => window.removeEventListener('haptic-flash', handler);
+  }, []);
 
   // Ghost snap sound — play when ghost marker value changes or arrow snaps to target
   const prevDnGhostVal = useRef<number | null>(null);
@@ -1085,21 +1094,52 @@ export function Canvas({
         zIndex: 1, // context actions (z-index:10) must escape above status bar
         overflow: 'hidden',
         cursor: getCanvasCursor(activeTool, mode.type === 'moving', !!hoveredPieceId),
+        // Haptic flash fallback (iOS/Safari) — brief border pulse
+        ...(hapticFlash ? { boxShadow: 'inset 0 0 0 3px rgba(112, 40, 224, 0.3)', transition: 'box-shadow 0.1s' } : {}),
       }}
     >
       <svg
         ref={svgRef}
         data-testid="canvas-svg"
         role="application"
+        tabIndex={0}
         aria-label={`Canevas de modélisation — ${pieces.length} pièce${pieces.length !== 1 ? 's' : ''}`}
         aria-roledescription="Espace de travail interactif"
         viewBox={`0 0 ${CANVAS_WIDTH_MM} ${viewBoxHeight}`}
-        style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
+        style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none', outline: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={() => { setGhostCursorMm(null); setDnGhostMarker(null); }}
         onContextMenu={handleRightClick}
+        onKeyDown={(e) => {
+          if (pieces.length === 0) return;
+          const STEP = 5; // mm per arrow press
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            const idx = selectedPieceId ? pieces.findIndex(p => p.id === selectedPieceId) : -1;
+            const next = e.shiftKey
+              ? (idx <= 0 ? pieces.length - 1 : idx - 1)
+              : (idx < 0 || idx >= pieces.length - 1 ? 0 : idx + 1);
+            onSelectPiece(pieces[next].id);
+          } else if (e.key === 'Escape') {
+            onSelectPiece(null);
+          } else if (selectedPieceId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            const dx = e.key === 'ArrowRight' ? STEP : e.key === 'ArrowLeft' ? -STEP : 0;
+            const dy = e.key === 'ArrowDown' ? STEP : e.key === 'ArrowUp' ? -STEP : 0;
+            dispatch({ type: 'EDIT_PIECE', id: selectedPieceId, changes: { x: (pieces.find(p => p.id === selectedPieceId)?.x ?? 0) + dx, y: (pieces.find(p => p.id === selectedPieceId)?.y ?? 0) + dy } });
+          } else if (e.key === 'Delete' || e.key === 'Backspace') {
+            // Delete selected piece (if not locked)
+            if (selectedPieceId) {
+              const piece = pieces.find(p => p.id === selectedPieceId);
+              if (piece && !piece.locked) {
+                dispatch({ type: 'DELETE_PIECE', id: selectedPieceId });
+                onSelectPiece(null);
+              }
+            }
+          }
+        }}
       >
         <defs>
           <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
@@ -1170,7 +1210,7 @@ export function Canvas({
           return (
             <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} />
             </g>
           );
         })}
@@ -1201,7 +1241,7 @@ export function Canvas({
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
               style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
             >
-              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} />
+              <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} />
             </g>
           );
         })}
@@ -2228,20 +2268,21 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1 }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1 }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
   reponseIds?: string[];
   highContrast?: boolean;
   textScale?: number;
+  toleranceMultiplier?: number;
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
     case 'barre':
       inner = <BarrePiece piece={piece} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'jeton':
-      inner = <JetonPiece piece={piece} isSelected={isSelected} highContrast={highContrast} />; break;
+      inner = <JetonPiece piece={piece} isSelected={isSelected} highContrast={highContrast} toleranceMultiplier={toleranceMultiplier} />; break;
     case 'boite':
       inner = <BoitePiece piece={piece} isSelected={isSelected} highContrast={highContrast} />; break;
     case 'etiquette':
@@ -2280,8 +2321,9 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
   );
 }
 
-function JetonPiece({ piece, isSelected, highContrast }: { piece: Piece & { type: 'jeton' }; isSelected: boolean; highContrast?: boolean }) {
-  const r = 5;
+function JetonPiece({ piece, isSelected, highContrast, toleranceMultiplier = 1 }: { piece: Piece & { type: 'jeton' }; isSelected: boolean; highContrast?: boolean; toleranceMultiplier?: number }) {
+  // Scale visual radius with tolerance: normal=5mm, large=5.6mm (+12%), très-large=6.25mm (+25%)
+  const r = 5 * (1 + (toleranceMultiplier - 1) * 0.5);
   const color = getPieceColor(piece.couleur, highContrast);
   return (
     <circle

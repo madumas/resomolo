@@ -70,6 +70,12 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
   const [inactivityRelanceIndex, setInactivityRelanceIndex] = useState(0);
 
+  // Fatigue detection — consecutive undos and rapid clicks
+  const [showFatigueNudge, setShowFatigueNudge] = useState(false);
+  const consecutiveUndos = useRef(0);
+  const recentClicks = useRef<number[]>([]);
+  const fatigueNudgeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   const current = undoManager.current;
   const { pieces, probleme, problemeHighlights } = current;
 
@@ -128,6 +134,18 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       return result.undoManager;
     });
     setActivityTick(t => t + 1);
+    // Reset consecutive undo counter on any non-undo action
+    consecutiveUndos.current = 0;
+    // Fatigue: track rapid clicks (>15 actions in 30s)
+    const now = Date.now();
+    recentClicks.current.push(now);
+    recentClicks.current = recentClicks.current.filter(t => now - t < 30000);
+    if (recentClicks.current.length > 15) {
+      setShowFatigueNudge(true);
+      clearTimeout(fatigueNudgeTimer.current);
+      fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
+      recentClicks.current = []; // reset after triggering
+    }
   }, []);
 
   // Slot manager — pre-loaded registry from boot()
@@ -141,6 +159,13 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     });
     setSelectedPieceId(null);
     setEditingPieceId(null);
+    // Fatigue detection: track consecutive undos
+    consecutiveUndos.current += 1;
+    if (consecutiveUndos.current >= 3) {
+      setShowFatigueNudge(true);
+      clearTimeout(fatigueNudgeTimer.current);
+      fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
+    }
   }, []);
 
   const handleRedo = useCallback(() => {
@@ -184,7 +209,13 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }, [pieces.length > 0, probleme.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save (slot-aware)
-  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot);
+  const [showSaveIndicator, setShowSaveIndicator] = useState(false);
+  const saveIndicatorTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useAutoSave(undoManager, slotManager.activeSlotId, slotManager.touchActiveSlot, () => {
+    setShowSaveIndicator(true);
+    clearTimeout(saveIndicatorTimer.current);
+    saveIndicatorTimer.current = setTimeout(() => setShowSaveIndicator(false), 2000);
+  });
 
   // beforeunload
   useEffect(() => {
@@ -335,7 +366,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setConfirmDialog({
       title: 'Effacer les pièces?',
       subtitle: 'Tu peux toujours revenir avec Annuler.',
-      confirmLabel: 'Oui, recommencer',
+      confirmLabel: 'Oui, tout effacer',
       cancelLabel: 'Non, je continue',
       onConfirm: () => {
         dispatch({ type: 'CLEAR_PIECES' });
@@ -523,6 +554,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         problemCollapsed={problemZoneActive && !(settings.problemAlwaysVisible || problemExpanded) && probleme.length > 0}
         problemText={probleme}
         onExpandProblem={() => setProblemExpanded(true)}
+        fatigueNudge={showFatigueNudge}
+        onDismissFatigueNudge={() => setShowFatigueNudge(false)}
       />
 
       {/* Zone problème — visible seulement si activée (problème sélectionné ou slot avec problème) */}
@@ -607,6 +640,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         onShareLink={() => setShowSharePanel(true)}
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
         activeProfile={settings.activeProfile}
+        showSaveIndicator={showSaveIndicator}
       />
 
       {/* Mobile bottom toolbar */}

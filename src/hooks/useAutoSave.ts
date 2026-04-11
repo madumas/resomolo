@@ -20,6 +20,7 @@ export function useAutoSave(
   undoManager: UndoManager,
   activeSlotId?: string | null,
   touchActiveSlot?: (summaries?: { problemeSummary?: string; piecesSummary?: string }) => Promise<void>,
+  onSaved?: () => void,
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -39,6 +40,7 @@ export function useAutoSave(
       } else {
         saveToStorage(undoManager);
       }
+      onSaved?.();
     }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => {
