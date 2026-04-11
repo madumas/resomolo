@@ -380,6 +380,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const handleStartBondMode = useCallback((pieceId: string) => {
     setBondMode({ pieceId, fromVal: null, chainCount: 0 });
     setSelectedBondInfo(null);
+    onAcknowledge(); // feedback sonore + haptique
   }, []);
 
   const handleSetBondFrom = useCallback((val: number) => {
