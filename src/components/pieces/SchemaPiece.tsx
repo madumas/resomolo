@@ -139,9 +139,13 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         const by = y + tb.y;
         return (
           <g>
-            {/* Bracket line */}
-            <path d={`M${bx},${by} L${bx},${by + 4} L${bx + barWidth},${by + 4} L${bx + barWidth},${by}`}
-              stroke="#55506A" strokeWidth={0.8} fill="none" />
+            {/* Bracket ⊔: ticks up, line at bottom, label below */}
+            <line x1={bx} y1={by + 4} x2={bx + barWidth} y2={by + 4}
+              stroke="#55506A" strokeWidth={0.8} />
+            <line x1={bx} y1={by + 4} x2={bx} y2={by}
+              stroke="#55506A" strokeWidth={0.8} />
+            <line x1={bx + barWidth} y1={by + 4} x2={bx + barWidth} y2={by}
+              stroke="#55506A" strokeWidth={0.8} />
             {/* Total label */}
             <text x={bx + barWidth / 2} y={by + 9}
               textAnchor="middle" fontSize={T2 * ts} fill="#55506A" fontWeight={500}
@@ -160,16 +164,16 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         const midY = by + db.height / 2;
         return (
           <g>
-            {/* Horizontal bracket ⊔: bottom line with two ticks ascending toward longer bar */}
-            <line x1={bx} y1={by + db.height} x2={bx + db.width} y2={by + db.height}
+            {/* Horizontal bracket ⊔: short ticks up, line at bottom, label below */}
+            <line x1={bx} y1={by + 4} x2={bx + db.width} y2={by + 4}
               stroke="#55506A" strokeWidth={0.8} />
-            <line x1={bx} y1={by + db.height} x2={bx} y2={by}
+            <line x1={bx} y1={by + 4} x2={bx} y2={by}
               stroke="#55506A" strokeWidth={0.8} />
-            <line x1={bx + db.width} y1={by + db.height} x2={bx + db.width} y2={by}
+            <line x1={bx + db.width} y1={by + 4} x2={bx + db.width} y2={by}
               stroke="#55506A" strokeWidth={0.8} />
             {/* Difference label */}
-            <text x={bx + db.width / 2} y={by + db.height / 2 - 1}
-              textAnchor="middle" dominantBaseline="central"
+            <text x={bx + db.width / 2} y={by + 9}
+              textAnchor="middle"
               fontSize={T2 * ts} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-diff`}>
               {db.label}
