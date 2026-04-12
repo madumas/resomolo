@@ -1,9 +1,8 @@
 # Spécification — Sauts sur la droite numérique
 
-> **Statut** : Proposition (révisée après revue par 4 agents experts)  
+> **Statut** : Proposition  
 > **Date** : 2026-04-11  
 > **Prérequis** : Droite numérique existante (v0.9.0)  
-> **Revue** : Ergo-TDC, Pédago-Québec, Neuropsychologie, UX-Pédagogie — 4× Approuvé avec réserves, toutes les réserves intégrées ci-dessous
 
 ## 1. Motivation
 
@@ -184,7 +183,7 @@ Pendant le mode saut, la droite affiche un **indicateur visuel persistant** pour
 - Bordure de sélection de la droite en **bleu pulsant** (au lieu du violet statique habituel)
 - Badge « Mode saut » dans la barre d'état (style violet, comme les relances métacognitives)
 
-Justification neuropsychologique : les enfants TDC ont souvent un déficit de monitoring exécutif. Un mode implicite (sans indicateur visuel fort) peut les désorienter — ils oublient dans quel mode ils sont.
+Les enfants TDC ont souvent un déficit de monitoring exécutif. Un mode implicite (sans indicateur visuel fort) peut les désorienter — ils oublient dans quel mode ils sont.
 
 ### 4.10 Bouton « Terminer » visible
 
@@ -686,17 +685,3 @@ Les arcs et étiquettes sont rendus en SVG — ils apparaissent naturellement da
 
 **Effort total estimé** : Moyen-élevé — supérieur à l'implémentation initiale des bonds seuls, en raison des comportements conditionnels (Simplifié/Complet), du fallback tactile, et du regroupement des actions contextuelles.
 
----
-
-## Annexe — Revue par les agents experts
-
-Cette spec a été révisée suite à l'évaluation par 4 agents IA spécialisés (2026-04-11). Toutes les recommandations ont été intégrées :
-
-| Expert | Recommandations intégrées |
-|--------|--------------------------|
-| **Ergo-TDC** | Zones de clic validées, profils de tolérance confirmés, indicateur mode actif ajouté |
-| **Pédago-Québec** | Renommage Bond→Saut, étiquettes sans signe en mode Simplifié, barre d'état en mots directionnels, enchaînement conditionnel, cas d'usage nombres entiers ajouté, arrondissement retiré |
-| **Neuropsychologie** | Ghost étiquette optionnelle, nudge anti-comptage séquentiel, seuil empilage à 3, mode réduit par défaut pour profils TDC, escalier sonore validé |
-| **UX-Pédagogie** | Bouton Terminer visible, fallback tactile touch-move, collision labels/arcs, regroupement actions contextuelles, micro-icône arc, animations validées |
-
-> **Avertissement** : Ces revues sont générées par IA. Elles ne constituent pas des avis professionnels. Les conclusions doivent être validées par des professionnels qualifiés (orthopédagogue, ergothérapeute, neuropsychologue) avant implémentation.

@@ -1,14 +1,13 @@
 /**
- * Expert review screenshots — RésoMolo
+ * Review screenshots — RésoMolo
  *
- * Generates images for expert review by ergo-tdc, pedagogue, neuropsych,
- * and UX-pedagogy agents. Covers features missing from existing screenshots.
+ * Generates screenshots for internal review.
  *
  * Run:
- *   npx playwright test e2e/expert-review-screenshots.spec.ts --project='Desktop Chrome'
+ *   npx playwright test e2e/review-screenshots.spec.ts --project='Desktop Chrome'
  *
  * Output:
- *   docs/expert-review/images/*.png
+ *   .ai-reviews/images/*.png
  */
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -21,7 +20,7 @@ import {
 } from './helpers/canvas';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const IMG_DIR = path.join(__dirname, '..', 'docs', 'expert-review', 'images');
+const IMG_DIR = path.join(__dirname, '..', '.ai-reviews', 'images');
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
 function img(name: string) {
@@ -196,13 +195,13 @@ async function screenshotPieces(page: Page, filepath: string, padding = 12): Pro
 // Tests
 // ─────────────────────────────────────────────────────────
 
-test.describe('Expert review screenshots', () => {
+test.describe('Review screenshots', () => {
   test.describe.configure({ mode: 'serial' });
 
   // ═══════ A. ACCOMMODEMENTS MANQUANTS ═══════
 
   test('A1 — Police Atkinson Hyperlegible avec contenu', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       fontFamily: 'atkinson',
     });
     await page.screenshot({ path: img('A1-atkinson-hyperlegible.png'), fullPage: true });
@@ -216,7 +215,7 @@ test.describe('Expert review screenshots', () => {
   });
 
   test('A3 — Mode concentré (estompage)', async ({ page }) => {
-    await loadWithFixture(page, 'expert-canvas-dense.resomolo');
+    await loadWithFixture(page, 'review-canvas-dense.resomolo');
 
     // Select one bar to highlight it
     await selectPieceAt(page, 100, 35);
@@ -246,14 +245,14 @@ test.describe('Expert review screenshots', () => {
   });
 
   test('A4 — Main dominante gauche', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       dominantHand: 'left',
     });
     await page.screenshot({ path: img('A4-main-gauche.png'), fullPage: true });
   });
 
   test('A5 — Minuteur de session visible', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       sessionTimerEnabled: true,
       sessionTimerAlertMinutes: 0.05,
     });
@@ -263,7 +262,7 @@ test.describe('Expert review screenshots', () => {
   });
 
   test('A6 — Profil Aide + Attention (zones suggérées)', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       toleranceProfile: 'large',
       cursorSmoothing: false,
       relanceDelayMs: 30000,
@@ -277,7 +276,7 @@ test.describe('Expert review screenshots', () => {
   });
 
   test('A7 — Profil Aide + Lecture (texte 1.5×)', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       toleranceProfile: 'normal',
       cursorSmoothing: false,
       relanceDelayMs: 30000,
@@ -290,7 +289,7 @@ test.describe('Expert review screenshots', () => {
   });
 
   test('A8 — Problème toujours visible', async ({ page }) => {
-    await loadWithSettingsAndFixture(page, 'expert-canvas-dense.resomolo', {
+    await loadWithSettingsAndFixture(page, 'review-canvas-dense.resomolo', {
       problemAlwaysVisible: true,
     });
     await page.screenshot({ path: img('A8-probleme-toujours-visible.png'), fullPage: true });
@@ -299,12 +298,12 @@ test.describe('Expert review screenshots', () => {
   // ═══════ B. SCHÉMAS MANQUANTS ═══════
 
   test('B1 — Schéma groupes-égaux', async ({ page }) => {
-    await loadWithFixture(page, 'expert-schema-groupes.resomolo');
+    await loadWithFixture(page, 'review-schema-groupes.resomolo');
     await page.screenshot({ path: img('B1-schema-groupes-egaux.png'), fullPage: true });
   });
 
   test('B2 — Schéma transformation', async ({ page }) => {
-    await loadWithFixture(page, 'expert-schema-transformation.resomolo');
+    await loadWithFixture(page, 'review-schema-transformation.resomolo');
     await page.screenshot({ path: img('B2-schema-transformation.png'), fullPage: true });
   });
 
@@ -347,7 +346,7 @@ test.describe('Expert review screenshots', () => {
   // ═══════ C. CALCUL DÉTAILLÉ ═══════
 
   test('C1 — Soustraction en colonnes avec emprunts', async ({ page }) => {
-    await loadWithFixture(page, 'expert-comparaison.resomolo');
+    await loadWithFixture(page, 'review-comparaison.resomolo');
 
     // Click near the calcul piece to select it, then find context actions
     await page.keyboard.press('Escape');
@@ -409,32 +408,32 @@ test.describe('Expert review screenshots', () => {
   // ═══════ D. SCÉNARIOS PÉDAGOGIQUES COMPLETS ═══════
 
   test('D1 — Addition avec jetons', async ({ page }) => {
-    await loadWithFixture(page, 'expert-addition.resomolo');
+    await loadWithFixture(page, 'review-addition.resomolo');
     await page.screenshot({ path: img('D1-scenario-addition-jetons.png'), fullPage: true });
   });
 
   test('D2 — Comparaison avec barres', async ({ page }) => {
-    await loadWithFixture(page, 'expert-comparaison.resomolo');
+    await loadWithFixture(page, 'review-comparaison.resomolo');
     await page.screenshot({ path: img('D2-scenario-comparaison-barres.png'), fullPage: true });
   });
 
   test('D3 — Multiplication avec groupement', async ({ page }) => {
-    await loadWithFixture(page, 'expert-multiplication.resomolo');
+    await loadWithFixture(page, 'review-multiplication.resomolo');
     await page.screenshot({ path: img('D3-scenario-multiplication-groupes.png'), fullPage: true });
   });
 
   test('D4 — Division posée', async ({ page }) => {
-    await loadWithFixture(page, 'expert-division.resomolo');
+    await loadWithFixture(page, 'review-division.resomolo');
     await page.screenshot({ path: img('D4-scenario-division.png'), fullPage: true });
   });
 
   test('D5 — Multi-étapes', async ({ page }) => {
-    await loadWithFixture(page, 'expert-multi-etapes.resomolo');
+    await loadWithFixture(page, 'review-multi-etapes.resomolo');
     await page.screenshot({ path: img('D5-scenario-multi-etapes.png'), fullPage: true });
   });
 
   test('D6 — Statistiques', async ({ page }) => {
-    await loadWithFixture(page, 'expert-stats.resomolo');
+    await loadWithFixture(page, 'review-stats.resomolo');
     await page.screenshot({ path: img('D6-scenario-statistiques.png'), fullPage: true });
   });
 
