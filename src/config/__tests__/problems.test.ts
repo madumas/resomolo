@@ -73,4 +73,21 @@ describe('Problem presets', () => {
       expect(p).toHaveProperty('difficulty');
     });
   });
+
+  test('has at least 5 statistique problems', () => {
+    const stats = PROBLEM_PRESETS.filter(p => p.category === 'statistique');
+    expect(stats.length).toBeGreaterThanOrEqual(5);
+  });
+
+  test('has at least 2 statistique problems with "Construis" in text', () => {
+    const construction = PROBLEM_PRESETS.filter(
+      p => p.category === 'statistique' && p.text.includes('Construis'),
+    );
+    expect(construction.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('has at least 6 problems with "superflu" in ID', () => {
+    const superflu = PROBLEM_PRESETS.filter(p => p.id.includes('superflu'));
+    expect(superflu.length).toBeGreaterThanOrEqual(6);
+  });
 });

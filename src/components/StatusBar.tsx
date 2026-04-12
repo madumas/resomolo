@@ -17,6 +17,15 @@ interface StatusBarProps {
   onExpandProblem?: () => void;
   fatigueNudge?: boolean;
   onDismissFatigueNudge?: () => void;
+  // Worked example mode
+  exampleMode?: boolean;
+  examplePhaseIndex?: number;
+  examplePhaseCount?: number;
+  onExampleNext?: () => void;
+  onExamplePrev?: () => void;
+  onExampleTry?: () => void;
+  onExampleExit?: () => void;
+  showExampleTry?: boolean;
 }
 
 function extractQuestion(text: string): string {
@@ -41,6 +50,14 @@ export function StatusBar({
   onExpandProblem,
   fatigueNudge,
   onDismissFatigueNudge,
+  exampleMode,
+  examplePhaseIndex = 0,
+  examplePhaseCount = 4,
+  onExampleNext,
+  onExamplePrev,
+  onExampleTry,
+  onExampleExit,
+  showExampleTry,
 }: StatusBarProps) {
   // When problem zone is collapsed and there's a problem, show the question
   const showProblemReminder = problemCollapsed && problemText && problemText.length > 0;
@@ -150,6 +167,79 @@ export function StatusBar({
               {n}
             </button>
           ))}
+        </span>
+      )}
+      {exampleMode && (
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {examplePhaseIndex > 0 && (
+            <button
+              onClick={onExamplePrev}
+              style={{
+                padding: '4px 10px',
+                fontSize: 12,
+                background: '#fff',
+                color: UI_TEXT_SECONDARY,
+                border: `1px solid ${UI_BORDER}`,
+                borderRadius: 4,
+                cursor: 'pointer',
+                minHeight: MIN_BUTTON_SIZE_PX,
+              }}
+            >
+              ← Précédent
+            </button>
+          )}
+          {!showExampleTry && (
+            <button
+              onClick={onExampleNext}
+              style={{
+                padding: '4px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                background: UI_PRIMARY,
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                minHeight: MIN_BUTTON_SIZE_PX,
+              }}
+            >
+              Suivant → ({examplePhaseIndex + 1}/{examplePhaseCount})
+            </button>
+          )}
+          {showExampleTry && (
+            <button
+              onClick={onExampleTry}
+              data-testid="example-try-button"
+              style={{
+                padding: '4px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                background: '#2E7D32',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                minHeight: MIN_BUTTON_SIZE_PX,
+              }}
+            >
+              Essayer
+            </button>
+          )}
+          <button
+            onClick={onExampleExit}
+            style={{
+              padding: '4px 10px',
+              fontSize: 11,
+              background: 'none',
+              color: UI_TEXT_SECONDARY,
+              border: `1px solid #D5D0E0`,
+              borderRadius: 4,
+              cursor: 'pointer',
+              minHeight: MIN_BUTTON_SIZE_PX,
+            }}
+          >
+            Retour
+          </button>
         </span>
       )}
       {showTutorialButtons && (

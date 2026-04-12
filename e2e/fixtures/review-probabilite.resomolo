@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "name": "review-probabilite",
+  "probleme": "À la cafétéria, il y a 3 choix de sandwich (jambon, poulet, végé) et 2 choix de boisson (jus, lait). Combien de combinaisons sandwich-boisson différentes sont possibles?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 16, "end": 17, "color": "bleu" },
+    { "start": 63, "end": 64, "color": "bleu" },
+    { "start": 88, "end": 160, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "arbre-1",
+      "type": "arbre",
+      "x": 30, "y": 20, "locked": true,
+      "levels": [
+        { "name": "Sandwich", "options": ["Jambon", "Poulet", "Végé"] },
+        { "name": "Boisson", "options": ["Jus", "Lait"] }
+      ]
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 40, "y": 160, "locked": true,
+      "expression": "3 × 2 = 6"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 195, "locked": true,
+      "text": "Il y a 6 combinaisons possibles.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

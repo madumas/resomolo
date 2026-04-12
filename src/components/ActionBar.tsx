@@ -21,6 +21,7 @@ interface ActionBarProps {
   onExportPdf?: () => void;
   onShareLink?: () => void;
   onStartTutorial?: () => void;
+  onShowExamples?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
   activeProfile?: SettingsProfile;
   showSaveIndicator?: boolean;
@@ -41,6 +42,7 @@ export function ActionBar({
   onExportPdf,
   onShareLink,
   onStartTutorial,
+  onShowExamples,
   sessionTimer,
   activeProfile = 'custom',
   showSaveIndicator,
@@ -186,7 +188,7 @@ export function ActionBar({
       </button>
 
       {/* Menu aide */}
-      <HelpMenu onShowGuide={onShowGuide} onStartTutorial={onStartTutorial} />
+      <HelpMenu onShowGuide={onShowGuide} onStartTutorial={onStartTutorial} onShowExamples={onShowExamples} />
 
       {/* Fullscreen toggle — same position as GéoMolo */}
       <FullscreenToggle />
@@ -296,9 +298,10 @@ function ShareRow({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   );
 }
 
-function HelpMenu({ onShowGuide, onStartTutorial }: {
+function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples }: {
   onShowGuide: () => void;
   onStartTutorial?: () => void;
+  onShowExamples?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -376,6 +379,13 @@ function HelpMenu({ onShowGuide, onStartTutorial }: {
                 icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M4 2v10l8-5z" /></svg>}
                 label="Tutoriel"
                 onClick={() => { onStartTutorial(); setOpen(false); }}
+              />
+            )}
+            {onShowExamples && (
+              <ShareRow
+                icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="1" width="10" height="12" rx="1" /><line x1="4" y1="4" x2="10" y2="4" /><line x1="4" y1="7" x2="10" y2="7" /><line x1="4" y1="10" x2="7" y2="10" /></svg>}
+                label="Exemples résolus"
+                onClick={() => { onShowExamples(); setOpen(false); }}
               />
             )}
             <ShareRow

@@ -10,6 +10,10 @@ import type { UndoManager, ToolType, Highlight, Settings, DroiteNumerique } from
 import type { SlotRegistry } from './model/slots';
 import { canUndo, canRedo, undo, redo } from './model/undo';
 import { useTutorial } from './hooks/useTutorial';
+import { useWorkedExample } from './hooks/useWorkedExample';
+import type { WorkedExample } from './config/worked-examples';
+import { ExampleSelector } from './components/ExampleSelector';
+import { PROBLEM_PRESETS, type ProblemPreset } from './config/problems';
 import { useSessionTimer } from './hooks/useSessionTimer';
 import { useTTS } from './hooks/useTTS';
 import { Toolbar } from './components/Toolbar';
@@ -29,7 +33,6 @@ import type { ConfirmDialogProps } from './components/ConfirmDialog';
 import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
 import { onUndoSound, onBond, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
-import type { ProblemPreset } from './config/problems';
 
 interface AppProps {
   initialRegistry: SlotRegistry;
@@ -49,6 +52,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [jetonQuantity, setJetonQuantity] = useState(1);
   const [problemExpanded, setProblemExpanded] = useState(true);
   const [showProblemSelector, setShowProblemSelector] = useState(false);
+  const [showExampleSelector, setShowExampleSelector] = useState(false);
   const [problemZoneActive, setProblemZoneActive] = useState(initialProblemZoneActive);
   const [showAdultGuide, setShowAdultGuide] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
@@ -87,6 +91,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   // Tutorial
   const tutorial = useTutorial(current);
 
+  // Worked examples (exemples résolus)
+  const workedExample = useWorkedExample();
+
   // R6: Session timer
   const sessionTimer = useSessionTimer(settings.sessionTimerEnabled, settings.sessionTimerAlertMinutes);
 
@@ -111,13 +118,15 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const isPostHighlight = hasProblem && !hasPieces && hasHighlights;
 
   // Auto-collapse problem zone when first piece is placed (free canvas space)
+  // Skip in example mode — problem must stay visible
   const prevHadPieces = useRef(hasPieces);
   useEffect(() => {
+    if (workedExample.isExampleMode) return;
     if (hasPieces && !prevHadPieces.current && hasProblem && !settings.problemAlwaysVisible) {
       setProblemExpanded(false);
     }
     prevHadPieces.current = hasPieces;
-  }, [hasPieces, hasProblem, settings.problemAlwaysVisible]);
+  }, [hasPieces, hasProblem, settings.problemAlwaysVisible, workedExample.isExampleMode]);
 
   // Activity counter — incremented on every dispatch to reset inactivity timer (I2 fix)
   const [activityTick, setActivityTick] = useState(0);
@@ -222,7 +231,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setShowSaveIndicator(true);
     clearTimeout(saveIndicatorTimer.current);
     saveIndicatorTimer.current = setTimeout(() => setShowSaveIndicator(false), 2000);
-  });
+  }, workedExample.isExampleMode);
 
   // Cleanup fatigue + save timers on unmount
   useEffect(() => () => {
@@ -487,6 +496,42 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     }
   }, [dispatch]);
 
+  // View a worked example
+  const handleViewExample = useCallback((example: WorkedExample) => {
+    problemJustSelected.current = true; // prevent tutorial.isDone effect from clearing problem
+    tutorial.skipTutorial();
+    // Load full example state via RESTORE — single dispatch, no undo history pollution
+    dispatch({ type: 'RESTORE', undoManager: { past: [], current: example.state, future: [] } });
+    setShowProblemSelector(false);
+    setProblemZoneActive(true);
+    setProblemExpanded(true);
+    setSelectedPieceId(null);
+    setEditingPieceId(null);
+    setActiveTool(null);
+    workedExample.loadExample(example);
+  }, [dispatch, tutorial, workedExample]);
+
+  // "Essayer" — load paired practice problem after viewing example
+  const handleExampleTry = useCallback(async () => {
+    const example = workedExample.activeExample;
+    if (!example || example.pairedProblemIds.length === 0) {
+      workedExample.exitExample();
+      return;
+    }
+    // Find the first paired problem that exists
+    const pairedId = example.pairedProblemIds[0];
+    const preset = PROBLEM_PRESETS.find(p => p.id === pairedId);
+    workedExample.exitExample();
+    if (preset) {
+      await slotManager.createNewSlot();
+      dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: preset.text, readOnly: preset.text.length > 0 });
+      setProblemZoneActive(true);
+      setSelectedPieceId(null);
+      setEditingPieceId(null);
+      setActiveTool(null);
+    }
+  }, [dispatch, workedExample, slotManager]);
+
   // Select a problem
   const handleSelectProblem = useCallback(async (preset: ProblemPreset) => {
     problemJustSelected.current = true;
@@ -554,6 +599,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   } else if (groupingBarId) {
     statusMessage = 'Clique sur les barres à ajouter au groupe.';
     statusVariant = 'relance'; // highlight to show active mode
+  } else if (workedExample.isExampleMode) {
+    statusMessage = workedExample.message;
   } else if (tutorial.isActive) {
     statusMessage = tutorial.message;
   } else if (editingPieceId) {
@@ -657,6 +704,14 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         onExpandProblem={() => setProblemExpanded(true)}
         fatigueNudge={showFatigueNudge}
         onDismissFatigueNudge={() => setShowFatigueNudge(false)}
+        exampleMode={workedExample.isExampleMode}
+        examplePhaseIndex={workedExample.phaseIndex}
+        examplePhaseCount={workedExample.phaseCount}
+        onExampleNext={workedExample.nextPhase}
+        onExamplePrev={workedExample.prevPhase}
+        onExampleTry={handleExampleTry}
+        onExampleExit={workedExample.exitExample}
+        showExampleTry={workedExample.showTryButton}
       />
 
       {/* Zone problème — visible seulement si activée (problème sélectionné ou slot avec problème) */}
@@ -664,7 +719,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         text={probleme}
         highlights={problemeHighlights}
         pieces={pieces}
-        expanded={settings.problemAlwaysVisible || problemExpanded}
+        expanded={settings.problemAlwaysVisible || problemExpanded || workedExample.isExampleMode}
         readOnly={current.problemeReadOnly}
         onToggle={settings.problemAlwaysVisible ? () => {} : () => setProblemExpanded(e => !e)}
         onHighlightAdd={handleHighlightAdd}
@@ -682,7 +737,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       {/* Canvas */}
       <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', paddingBottom: isMobilePortrait ? 64 : 0 }}>
         <Canvas
-          pieces={pieces}
+          pieces={workedExample.isExampleMode ? workedExample.visiblePieces : pieces}
+          hideLockBadge={workedExample.isExampleMode}
           referenceUnitMm={current.referenceUnitMm}
           activeTool={activeTool}
           selectedPieceId={selectedPieceId}
@@ -726,7 +782,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           onSelectBond={setSelectedBondInfo}
           toolbarMode={settings.toolbarMode}
         />
-        {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} />}
+        {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} onViewExample={handleViewExample} />}
+        {showExampleSelector && <ExampleSelector onSelect={(ex) => { setShowExampleSelector(false); handleViewExample(ex); }} onClose={() => setShowExampleSelector(false)} />}
       </div>
 
       {/* Action bar en bas — comme GéoMolo */}
@@ -740,6 +797,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         onRecommencer={handleRecommencer}
         onShowGuide={() => setShowAdultGuide(true)}
         onStartTutorial={() => tutorial.startTutorial()}
+        onShowExamples={() => setShowExampleSelector(true)}
         onShowSettings={() => setShowSettings(true)}
         onShowSlotManager={() => setShowSlotManager(true)}
         onExportImage={() => {

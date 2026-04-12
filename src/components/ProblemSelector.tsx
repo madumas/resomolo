@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { PROBLEM_PRESETS, type ProblemPreset } from '../config/problems';
+import { WORKED_EXAMPLES, type WorkedExample, type CategoryGroup } from '../config/worked-examples';
 import { UI_PRIMARY, UI_BG, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { useModalBehavior } from '../hooks/useModalBehavior';
@@ -7,6 +8,7 @@ import { useModalBehavior } from '../hooks/useModalBehavior';
 interface ProblemSelectorProps {
   onSelect: (problem: ProblemPreset) => void;
   onClose: () => void;
+  onViewExample?: (example: WorkedExample) => void;
 }
 
 type CycleFilter = 2 | 3 | 'all';
@@ -29,7 +31,16 @@ const LIBRE_PRESET: ProblemPreset = {
   difficulty: 1,
 };
 
-export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
+// Map category filter values to categoryGroup values used by worked examples
+const FILTER_TO_GROUP: Record<Exclude<CategoryFilter, 'all'>, CategoryGroup> = {
+  additif: 'additif',
+  multiplicatif: 'multiplicatif',
+  fractions: 'fractions',
+  'stats-proba': 'stats-proba',
+  complexe: 'complexe',
+};
+
+export function ProblemSelector({ onSelect, onClose, onViewExample }: ProblemSelectorProps) {
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -77,6 +88,30 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
         <h2 style={{ fontSize: 18, fontWeight: 700, color: UI_PRIMARY, marginBottom: 16, flexShrink: 0 }}>
           Banque de problèmes
         </h2>
+
+        {/* Problème libre — en haut, cas d'utilisation commun (cahier de l'enseignant) */}
+        <button
+          onClick={() => onSelect(LIBRE_PRESET)}
+          style={{
+            marginBottom: 14,
+            padding: '12px 16px',
+            background: '#fff',
+            border: `2px dashed ${UI_PRIMARY}`,
+            borderRadius: 8,
+            cursor: 'pointer',
+            textAlign: 'left',
+            minHeight: MIN_BUTTON_SIZE_PX,
+            width: '100%',
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontWeight: 600, fontSize: 14, color: UI_PRIMARY }}>
+            Problème libre
+          </span>
+          <span style={{ fontSize: 12, color: UI_TEXT_SECONDARY, marginLeft: 8 }}>
+            — Travaille avec ton cahier
+          </span>
+        </button>
 
         {/* Filters */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16, flexShrink: 0 }}>
@@ -154,6 +189,37 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
                 Aucun problème ne correspond aux filtres.
               </div>
             )}
+            {/* Lien discret vers exemple — seulement quand une catégorie spécifique est choisie */}
+            {onViewExample && categoryFilter !== 'all' && (() => {
+              const group = FILTER_TO_GROUP[categoryFilter];
+              const example = WORKED_EXAMPLES.find(ex =>
+                ex.categoryGroup === group &&
+                (cycleFilter === 'all' || ex.cycle === cycleFilter),
+              );
+              if (!example) return null;
+              return (
+                <button
+                  key={`example-${example.id}`}
+                  onClick={() => onViewExample(example)}
+                  data-testid={`example-${example.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: 12,
+                    color: UI_PRIMARY,
+                    marginBottom: 4,
+                  }}
+                >
+                  Voir un exemple résolu
+                </button>
+              );
+            })()}
             {filtered.map(preset => (
               <button
                 key={preset.id}
@@ -197,31 +263,6 @@ export function ProblemSelector({ onSelect, onClose }: ProblemSelectorProps) {
             ))}
           </div>
         </div>
-
-        {/* Problème libre — always visible, outside filters */}
-        <button
-          onClick={() => onSelect(LIBRE_PRESET)}
-          style={{
-            marginTop: 14,
-            padding: '12px 16px',
-            background: '#fff',
-            border: `2px dashed ${UI_BORDER}`,
-            borderRadius: 8,
-            cursor: 'pointer',
-            textAlign: 'left',
-            minHeight: MIN_BUTTON_SIZE_PX,
-            width: '100%',
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontWeight: 600, fontSize: 14, color: UI_TEXT_PRIMARY }}>
-            Problème libre
-          </span>
-          <br />
-          <span style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>
-            Travaille avec ton cahier
-          </span>
-        </button>
 
         {/* Close button */}
         <button

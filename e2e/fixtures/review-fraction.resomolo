@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "name": "review-fraction",
+  "probleme": "Il y a 24 billes dans un sac. Le tiers des billes sont rouges. Combien y a-t-il de billes rouges?",
+  "problemeReadOnly": true,
+  "problemeHighlights": [
+    { "start": 6, "end": 8, "color": "bleu" },
+    { "start": 28, "end": 37, "color": "bleu" },
+    { "start": 60, "end": 95, "color": "orange" }
+  ],
+  "referenceUnitMm": 60,
+  "pieces": [
+    {
+      "id": "barre-tout",
+      "type": "barre",
+      "x": 40, "y": 30, "locked": true,
+      "couleur": "bleu",
+      "sizeMultiplier": 3,
+      "label": "24 billes",
+      "value": "24",
+      "divisions": 3,
+      "coloredParts": [0],
+      "showFraction": true,
+      "groupId": null,
+      "groupLabel": null
+    },
+    {
+      "id": "etiq-tiers",
+      "type": "etiquette",
+      "x": 40, "y": 70, "locked": true,
+      "text": "1/3 = ?",
+      "attachedTo": null
+    },
+    {
+      "id": "calcul",
+      "type": "calcul",
+      "x": 40, "y": 100, "locked": true,
+      "expression": "24 ÷ 3 = 8"
+    },
+    {
+      "id": "reponse",
+      "type": "reponse",
+      "x": 40, "y": 135, "locked": true,
+      "text": "Il y a 8 billes rouges.",
+      "template": null
+    }
+  ],
+  "availablePieces": null
+}

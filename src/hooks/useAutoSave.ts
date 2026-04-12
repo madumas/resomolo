@@ -21,12 +21,14 @@ export function useAutoSave(
   activeSlotId?: string | null,
   touchActiveSlot?: (summaries?: { problemeSummary?: string; piecesSummary?: string }) => Promise<void>,
   onSaved?: () => void,
+  paused?: boolean,
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const onSavedRef = useRef(onSaved);
   onSavedRef.current = onSaved;
 
   useEffect(() => {
+    if (paused) return; // skip auto-save (e.g. example mode)
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (activeSlotId) {
@@ -48,11 +50,12 @@ export function useAutoSave(
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [undoManager, activeSlotId, touchActiveSlot]);
+  }, [undoManager, activeSlotId, touchActiveSlot, paused]);
 
   // I6: Save on beforeunload — slot key (async, best effort) + emergency (sync localStorage)
   useEffect(() => {
     const handler = () => {
+      if (paused) return;
       if (activeSlotId) {
         saveSlotData(activeSlotId, undoManager); // async best-effort
       }
@@ -60,5 +63,5 @@ export function useAutoSave(
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [undoManager, activeSlotId]);
+  }, [undoManager, activeSlotId, paused]);
 }

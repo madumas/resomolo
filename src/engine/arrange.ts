@@ -110,6 +110,56 @@ function layoutWithGap(
       group.sort((a, b) => a.y - b.y || a.x - b.x);
     }
 
+    // Group barres by groupId — grouped barres stack vertically as a single block
+    if (type === 'barre') {
+      const ungrouped: Piece[] = [];
+      const barreGroups = new Map<string, Piece[]>();
+      for (const p of group) {
+        const gid = (p as any).groupId as string | null;
+        if (gid) {
+          const list = barreGroups.get(gid) || [];
+          list.push(p);
+          barreGroups.set(gid, list);
+        } else {
+          ungrouped.push(p);
+        }
+      }
+      // Lay out each barre group as a vertical stack
+      for (const [, barres] of barreGroups) {
+        const maxLabel = Math.max(...barres.map(b => getBarreLabelWidth(b)));
+        const barW = maxLabel + barres[0].sizeMultiplier * referenceUnitMm;
+        const stackH = barres.length * (BAR_HEIGHT_MM + 5) + 15; // +15 for group bracket
+        if (currentX + barW > CANVAS_MAX_X && currentX > MARGIN) {
+          currentX = MARGIN;
+          currentY += rowMaxHeight + vGap;
+          rowMaxHeight = 0;
+        }
+        let barY = currentY;
+        for (const barre of barres) {
+          moves.push({ id: barre.id, x: currentX + maxLabel, y: barY });
+          barY += BAR_HEIGHT_MM + 5;
+        }
+        currentX += barW + H_GAP;
+        rowMaxHeight = Math.max(rowMaxHeight, stackH);
+      }
+      // Lay out ungrouped barres normally
+      for (const piece of ungrouped) {
+        const w = getPieceWidth(piece, referenceUnitMm);
+        const h = getPieceHeight(piece);
+        if (currentX + w > CANVAS_MAX_X && currentX > MARGIN) {
+          currentX = MARGIN;
+          currentY += rowMaxHeight + vGap;
+          rowMaxHeight = 0;
+        }
+        const labelOffset = getBarreLabelWidth(piece);
+        moves.push({ id: piece.id, x: currentX + labelOffset, y: currentY });
+        const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
+        currentX += w + H_GAP + extra;
+        rowMaxHeight = Math.max(rowMaxHeight, h);
+      }
+      continue;
+    }
+
     for (const piece of group) {
       const w = getPieceWidth(piece, referenceUnitMm);
       const h = getPieceHeight(piece);
@@ -120,9 +170,15 @@ function layoutWithGap(
         rowMaxHeight = 0;
       }
 
-      // Réponse: align right + bottom of its row
-      const px = type === 'reponse' ? Math.max(currentX, CANVAS_MAX_X - w) : currentX;
-      const py = type === 'reponse' && rowMaxHeight > h ? currentY + rowMaxHeight - h : currentY;
+      // Réponse: start a new row below, left-aligned
+      const labelOffset = getBarreLabelWidth(piece);
+      if (type === 'reponse' && currentX > MARGIN) {
+        currentX = MARGIN;
+        currentY += rowMaxHeight + vGap;
+        rowMaxHeight = 0;
+      }
+      const px = currentX + labelOffset;
+      const py = currentY;
       moves.push({ id: piece.id, x: px, y: py });
       const extra = flecheConnected.has(piece.id) ? FLECHE_EXTRA : 0;
       currentX += w + H_GAP + extra;
@@ -155,9 +211,16 @@ function addParentedJetons(
   }
 }
 
+function getBarreLabelWidth(piece: Piece): number {
+  if (piece.type !== 'barre') return 0;
+  const label = piece.label || '';
+  if (label.length === 0) return 0;
+  return label.length * 4.5 + 8; // approximate mm for label text to the left
+}
+
 function getPieceWidth(piece: Piece, referenceUnitMm: number): number {
   switch (piece.type) {
-    case 'barre': return piece.sizeMultiplier * referenceUnitMm;
+    case 'barre': return getBarreLabelWidth(piece) + piece.sizeMultiplier * referenceUnitMm;
     case 'droiteNumerique': return (piece as any).width;
     case 'jeton': return JETON_DIAMETER_MM;
     case 'boite': return piece.width;

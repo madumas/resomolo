@@ -67,6 +67,7 @@ interface CanvasProps {
   selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
   toolbarMode?: 'essentiel' | 'complet';
+  hideLockBadge?: boolean;
 }
 
 type InteractionMode =
@@ -150,6 +151,7 @@ export function Canvas({
   selectedBondInfo,
   onSelectBond,
   toolbarMode = 'essentiel',
+  hideLockBadge,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -1358,7 +1360,8 @@ export function Canvas({
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
-                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
+                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined}
+                hideLockBadge={hideLockBadge} />
             </g>
           );
         })}
@@ -1392,7 +1395,8 @@ export function Canvas({
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
-                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined} />
+                selectedBondIndex={selectedBondInfo?.pieceId === piece.id ? selectedBondInfo.bondIndex : undefined}
+                hideLockBadge={hideLockBadge} />
             </g>
           );
         })}
@@ -2355,8 +2359,8 @@ export function Canvas({
         );
       })()}
 
-      {/* R7: Ranger floating button */}
-      {pieces.some(p => !p.locked) && (
+      {/* R7: Ranger floating button — hidden in example mode */}
+      {!hideLockBadge && pieces.some(p => !p.locked) && (
         <button
           onClick={handleArrange}
           disabled={isArranging}
@@ -2443,7 +2447,7 @@ function getLockedBadgePos(piece: Piece, referenceUnitMm: number): { x: number; 
   }
 }
 
-function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1, toolbarMode = 'essentiel', bondModeActive, bondFromVal, selectedBondIndex }: {
+function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highContrast, textScale = 1, toleranceMultiplier = 1, toolbarMode = 'essentiel', bondModeActive, bondFromVal, selectedBondIndex, hideLockBadge }: {
   piece: Piece;
   referenceUnitMm: number;
   isSelected: boolean;
@@ -2455,6 +2459,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
   bondModeActive?: boolean;
   bondFromVal?: number | null;
   selectedBondIndex?: number;
+  hideLockBadge?: boolean;
 }) {
   let inner: React.ReactElement | null;
   switch (piece.type) {
@@ -2495,7 +2500,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
     default:
       return null;
   }
-  if (!piece.locked) return inner;
+  if (!piece.locked || hideLockBadge) return inner;
   const pos = getLockedBadgePos(piece, referenceUnitMm);
   return (
     <>

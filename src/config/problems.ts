@@ -274,6 +274,31 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     category: 'statistique',
     difficulty: 2,
   },
+  // ── Construction de diagramme ──
+  {
+    id: 'c2-stat-constr-1',
+    title: 'Fruits préférés',
+    text: 'Dans la classe de Mme Julie, 8 élèves préfèrent la pomme, 5 préfèrent la banane, 10 préfèrent la fraise et 3 préfèrent le raisin. Construis un diagramme à bandes pour montrer les résultats du sondage.',
+    cycle: 2,
+    category: 'statistique',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-stat-constr-1',
+    title: 'Livres lus par mois',
+    text: 'Voici les livres lus par Émile chaque mois : septembre 4, octobre 6, novembre 3, décembre 8, janvier 5. Construis un diagramme à bandes. Quel mois Émile a-t-il lu le plus? Combien de livres de plus en décembre qu\'en novembre?',
+    cycle: 3,
+    category: 'statistique',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-stat-constr-2',
+    title: 'Température de la semaine',
+    text: 'Voici la température à midi chaque jour : lundi 5 °C, mardi 8 °C, mercredi 3 °C, jeudi 7 °C, vendredi 10 °C. Construis un diagramme à ligne brisée pour montrer l\'évolution.',
+    cycle: 3,
+    category: 'statistique',
+    difficulty: 2,
+  },
   // ── Cycle 3, Probabilité ──
   {
     id: 'c3-prob-simple',
@@ -307,6 +332,38 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     cycle: 3,
     category: 'multiplication',
     difficulty: 2,
+  },
+  {
+    id: 'c2-superflu-2',
+    title: 'Rangées de chaises',
+    text: 'Dans le gymnase, il y a 6 rangées de 8 chaises. Le gymnase mesure 20 mètres de long. Combien y a-t-il de chaises en tout?',
+    cycle: 2,
+    category: 'multiplication',
+    difficulty: 1,
+  },
+  {
+    id: 'c2-superflu-3',
+    title: 'Biscuits de Maman',
+    text: 'Maman fait des biscuits. Elle utilise 3 œufs. Elle fait 14 biscuits au chocolat et 9 biscuits à la vanille. Le four chauffe à 180 °C. Combien de biscuits a-t-elle faits en tout?',
+    cycle: 2,
+    category: 'addition',
+    difficulty: 2,
+  },
+  {
+    id: 'c3-superflu-2',
+    title: 'Sortie en autobus',
+    text: 'Deux autobus partent de l\'école à 8 h 30. Le premier autobus a 32 places et le deuxième a 28 places. Le trajet dure 50 minutes. Il y a 45 élèves en tout. Combien de places vides y a-t-il?',
+    cycle: 3,
+    category: 'multi-etapes',
+    difficulty: 3,
+  },
+  {
+    id: 'c3-superflu-3',
+    title: 'Partage de pommes',
+    text: 'Au verger, Jade a cueilli 36 pommes en 2 heures. Elle veut les répartir également dans 4 paniers. Chaque panier pèse 500 grammes vide. Combien de pommes met-elle dans chaque panier?',
+    cycle: 3,
+    category: 'division',
+    difficulty: 3,
   },
   // ── Travail à rebours ──
   {

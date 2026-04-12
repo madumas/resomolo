@@ -644,14 +644,13 @@ Le tutoriel utilise deux problèmes courts (< 3 minutes au total) pour montrer l
 
 > « Théo a 5 pommes. Il en donne 2 à Léa. Combien lui en reste-t-il? »
 
-Barre d'état guidante :
-1. « Clique sur les nombres importants pour les surligner en bleu. »
-2. « Clique sur Jeton, puis clique 5 fois pour placer les pommes de Théo. »
-3. « Tu peux écrire "Théo" à côté — clique sur Plus, puis Étiquette. » (optionnel, skippable)
-4. « Clique sur Calcul et écris ton opération. »
-5. « Clique sur Réponse et écris combien il en reste. »
+Barre d'état guidante (estompage progressif — directif → ouvert) :
+1. « Quels sont les nombres importants dans ce problème? Clique dessus pour les surligner. » (ouvert — surlignage = geste simple)
+2. « Clique sur Jeton dans la barre d'outils, puis clique dans le canvas pour placer des jetons. » (directif — 1re pièce, enseigne le geste)
+3. « Quel calcul faut-il faire? Clique sur Calcul pour l'écrire. » (semi-ouvert)
+4. « Quelle est ta réponse? Clique sur Réponse pour l'écrire. » (semi-ouvert)
 
-> **Note :** L'étape 1 enseigne le surlignage, la fonctionnalité la plus distinctive de l'outil. L'étape 4 ne dicte pas le contenu du calcul — l'outil ne fournit jamais la réponse cognitive, même dans le tutoriel.
+> **Note :** L'étape 1 enseigne le surlignage via une question ouverte. Les étapes 2 (Jeton) restent directives car l'enfant ne connaît pas encore les pièces disponibles. L'outil ne fournit jamais la réponse cognitive, même dans le tutoriel. L'estompage s'opère au problème 2.
 
 **Problème 2 — multiplicatif (barre) : ~1 minute**
 
@@ -659,11 +658,11 @@ Barre d'état guidante :
 
 > **Note :** Problème de groupes égaux (2e cycle) remplaçant la comparaison multiplicative (3e cycle) pour garantir l'accessibilité du tutoriel au plus bas cycle ciblé.
 
-Barre d'état guidante :
-1. « Clique sur Barre, puis clique dans le canvas pour placer une barre. »
-2. « Sélectionne la barre et clique Copier pour en faire 2 copies. »
-3. « Clique sur Calcul et écris ton opération. »
-4. « Clique sur Réponse et écris ta réponse. »
+Barre d'état guidante (estompage — la 2e étape devient ouverte) :
+1. « Clique sur Barre dans la barre d'outils pour placer une barre. » (directif — 2e pièce, enseigne un nouvel outil)
+2. « Il y a 3 tables identiques. Comment montrer ça dans ton modèle? » (ouvert — répertoire acquis)
+3. « Quel calcul faut-il faire? Clique sur Calcul pour l'écrire. » (semi-ouvert)
+4. « Quelle est ta réponse? Clique sur Réponse pour l'écrire. » (semi-ouvert)
 
 **Fin du tutoriel :** La barre d'état affiche « Tu connais les pièces! » Le canvas se vide. L'enfant est en mode normal. Pas de récapitulatif, pas de cérémonie.
 

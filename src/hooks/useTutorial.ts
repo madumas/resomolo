@@ -19,15 +19,16 @@ export type TutorialStep =
 const TUTORIAL_PROBLEM_1 = 'Théo a 5 pommes. Il en donne 2 à Léa. Combien lui en reste-t-il?';
 const TUTORIAL_PROBLEM_2 = 'Il y a 3 tables. Chaque table a 4 crayons. Combien y a-t-il de crayons en tout?';
 
-const STEP_MESSAGES: Record<Exclude<TutorialStep, null>, string> = {
+// Estompage progressif : directif pour les 1res pièces, ouvert une fois le répertoire acquis.
+export const STEP_MESSAGES: Record<Exclude<TutorialStep, null>, string> = {
   problem1_intro: 'Tutoriel — Commence par lire le problème ci-dessus.',
-  problem1_highlight: 'Clique sur les nombres importants pour les surligner en bleu.',
-  problem1_place_tokens: 'Clique sur Jeton, puis clique dans le canvas pour placer les pommes de Théo.',
+  problem1_highlight: 'Quels sont les nombres importants dans ce problème? Clique dessus pour les surligner.',
+  problem1_place_tokens: 'Clique sur Jeton dans la barre d\'outils, puis clique dans le canvas pour placer des jetons.',
   problem1_calc: 'Quel calcul faut-il faire? Clique sur Calcul pour l\'écrire.',
   problem1_answer: 'Quelle est ta réponse? Clique sur Réponse pour l\'écrire.',
   transition: 'Passons au deuxième problème...',
-  problem2_intro: 'Clique sur Barre, puis clique dans le canvas pour placer une barre.',
-  problem2_place_bar: 'Sélectionne la barre et clique Copier pour en faire 2 copies.',
+  problem2_intro: 'Clique sur Barre dans la barre d\'outils pour placer une barre.',
+  problem2_place_bar: 'Il y a 3 tables identiques. Comment montrer ça dans ton modèle?',
   problem2_resize: 'Quel calcul faut-il faire? Clique sur Calcul pour l\'écrire.',
   problem2_calc: 'Quelle est ta réponse? Clique sur Réponse pour l\'écrire.',
   problem2_answer: 'Tu connais les pièces! Clique Suivant pour commencer.',
@@ -65,14 +66,14 @@ const STEP_ORDER: Exclude<TutorialStep, null>[] = [
 
 // R8: State-shape detection predicates per step.
 // When the predicate returns true, the tutorial auto-advances after a short delay.
-const STEP_DETECTORS: Partial<Record<NonNullable<TutorialStep>, (s: ModelisationState) => boolean>> = {
+export const STEP_DETECTORS: Partial<Record<NonNullable<TutorialStep>, (s: ModelisationState) => boolean>> = {
   // problem1_intro: pas de detector — avancement manuel seulement
   problem1_highlight: s => s.problemeHighlights.length > 0,
   problem1_place_tokens: s => s.pieces.some(p => p.type === 'jeton'),
   problem1_calc: s => s.pieces.some(p => p.type === 'calcul'),
   problem1_answer: s => s.pieces.some(p => p.type === 'reponse'),
   problem2_intro: s => s.pieces.some(p => p.type === 'barre'),
-  problem2_place_bar: s => s.pieces.filter(p => p.type === 'barre').length >= 3,
+  problem2_place_bar: s => s.pieces.filter(p => p.type !== 'calcul' && p.type !== 'reponse').length >= 3,
   problem2_resize: s => s.pieces.some(p => p.type === 'calcul'),
   problem2_calc: s => s.pieces.some(p => p.type === 'reponse'),
   problem2_answer: s => s.pieces.some(p => p.type === 'reponse' && 'text' in p && (p.text as string).length > 0),

@@ -77,7 +77,7 @@ export function ProblemZone({
   const handleWordClick = useCallback((token: Token) => {
     // Check if this word is already highlighted
     const existingIdx = highlights.findIndex(
-      h => h.start <= token.start && h.end >= token.end
+      h => h.start < token.end && h.end > token.start
     );
 
     if (existingIdx >= 0) {
@@ -207,7 +207,7 @@ export function ProblemZone({
           ▶ {text.length > 60 ? text.slice(0, 60) + '...' : text}
         </span>
         {highlightedTexts.length > 0 && (
-          <span style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          <span style={{ display: 'flex', gap: 4, flexShrink: 1, overflow: 'hidden' }}>
             {highlightedTexts.map((h, i) => (
               <span key={i} style={{
                 background: HIGHLIGHT_COLORS[h.color].bg, borderRadius: 3,
@@ -323,7 +323,7 @@ export function ProblemZone({
               const sentenceStart = text.indexOf(sentence, sentences.slice(0, currentSentenceIndex).reduce((off, s) => { const idx = text.indexOf(s, off); return idx >= 0 ? idx + s.length : off; }, 0));
               return tokenize(sentence).map((token, i) => {
                 const adjustedToken = { ...token, start: token.start + sentenceStart, end: token.end + sentenceStart };
-                const highlight = highlights.find(h => h.start <= adjustedToken.start && h.end >= adjustedToken.end);
+                const highlight = highlights.find(h => h.start < adjustedToken.end && h.end > adjustedToken.start);
                 const isBeingSpoken = onTTSCharIndex !== undefined && onTTSCharIndex >= 0
                   && adjustedToken.start <= onTTSCharIndex && adjustedToken.end > onTTSCharIndex;
                 return (
@@ -372,7 +372,7 @@ export function ProblemZone({
         <div style={{ fontSize: 14, lineHeight: 1.8, color: UI_TEXT_PRIMARY }}>
           {tokens.map((token, i) => {
             const highlight = highlights.find(
-              h => h.start <= token.start && h.end >= token.end
+              h => h.start < token.end && h.end > token.start
             );
             // Determine if this token is being spoken
             const isBeingSpoken = onTTSCharIndex !== undefined && onTTSCharIndex >= 0
