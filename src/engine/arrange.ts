@@ -127,7 +127,7 @@ function layoutWithGap(
       // Lay out each barre group as a vertical stack
       for (const [, barres] of barreGroups) {
         const maxLabel = Math.max(...barres.map(b => getBarreLabelWidth(b)));
-        const barW = maxLabel + barres[0].sizeMultiplier * referenceUnitMm;
+        const barW = maxLabel + (barres[0] as any).sizeMultiplier * referenceUnitMm;
         const stackH = barres.length * (BAR_HEIGHT_MM + 5) + 15; // +15 for group bracket
         if (currentX + barW > CANVAS_MAX_X && currentX > MARGIN) {
           currentX = MARGIN;
