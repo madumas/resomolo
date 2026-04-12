@@ -4292,7 +4292,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(ctxActions.locator('button:has-text("Saut")')).toBeVisible({ timeout: 2000 });
 
     // Click Saut
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
 
     // Status bar should show bond mode message
@@ -4332,7 +4332,7 @@ test.describe('Visual audit — full flow', () => {
     // Select and start bond mode
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
 
     // Bond 1: 2 → 5
@@ -4371,7 +4371,7 @@ test.describe('Visual audit — full flow', () => {
     // Select droite and create a bond (3→7)
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 210, 200); // ~3
     await page.waitForTimeout(300);
@@ -4406,7 +4406,7 @@ test.describe('Visual audit — full flow', () => {
     // Create 2 bonds
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 190, 200); // start ~2
     await page.waitForTimeout(300);
@@ -4415,7 +4415,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Create another bond
     await selectPieceAt(page, 280, 200);
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 270, 200); // start ~6
     await page.waitForTimeout(300);
@@ -4471,7 +4471,7 @@ test.describe('Visual audit — full flow', () => {
     // Create bond 2→8
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.getByRole('button', { name: 'Saut', exact: true }).click();
+    await ctxActions.locator('button:has-text("Saut")').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 190, 200); // ~2
     await page.waitForTimeout(300);
