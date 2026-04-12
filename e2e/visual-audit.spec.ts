@@ -4320,11 +4320,10 @@ test.describe('Visual audit — full flow', () => {
     const modeSelector = page.locator('[data-testid="mode-selector"]');
     await modeSelector.click();
     await page.waitForTimeout(200);
-    const completOption = page.locator('button:has-text("Complet")');
-    if (await completOption.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await completOption.click();
-      await page.waitForTimeout(200);
-    }
+    const completOption = page.locator('[data-testid="mode-option-complet"]');
+    await expect(completOption).toBeVisible({ timeout: 2000 });
+    await completOption.click();
+    await page.waitForTimeout(200);
 
     // Place droite near center of canvas
     await selectTool(page, 'droiteNumerique');
