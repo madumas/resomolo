@@ -2,23 +2,31 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { onSnap } from '../engine/sound';
 
 export interface ColumnCalcData {
-  op1: string[];
-  op2: string[];
+  operands: string[][];    // 2-6 operand rows, each is string[NUM_COLS]
   result: string[];
   carry: string[];
   intermediates: string[][]; // intermediate lines for multi-digit multiplication
   operator: string;
   decimalPosition: number | null; // number of decimal places (null = integer mode)
-  borrow?: boolean[]; // borrow indicator per op1 cell (subtraction only)
+  borrow?: boolean[]; // borrow indicator per first operand cell (subtraction only)
   carryBorrow?: boolean[]; // borrow indicator per carry cell (subtraction cascading)
   addCarry?: string[]; // carry row for addition of intermediates (multiplication)
+}
+
+/** Migrate legacy { op1, op2 } format to { operands } */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateColumnCalcData(raw: any): ColumnCalcData {
+  if (raw.operands) return raw as ColumnCalcData;
+  return {
+    ...raw,
+    operands: [raw.op1 || emptyRow(), raw.op2 || emptyRow()],
+  };
 }
 
 interface ColumnCalcProps {
   left: number;
   top: number;
-  initialOp1?: string;
-  initialOp2?: string;
+  initialOperands?: string[];   // parsed operand strings (e.g. ["45", "3", "12"])
   initialOperator?: string;
   initialResult?: string;
   savedData?: ColumnCalcData;
@@ -27,6 +35,7 @@ interface ColumnCalcProps {
 }
 
 const OPERATORS = ['+', '−', '×'];
+const MAX_OPERANDS = 6;
 const NUM_COLS = 6; // 6 columns for intermediate results
 const CELL = 48;
 const GAP = 4;
@@ -75,35 +84,43 @@ function rowToNum(row: Row): string {
   return row.join('').replace(/^0+/, '') || '0';
 }
 
-// Count non-empty digits in op2 to determine how many intermediate lines needed
+// Count non-empty digits in a row to determine how many intermediate lines needed
 function countDigits(row: Row): number {
   return row.filter(d => d !== '').length;
 }
 
-export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOperator, initialResult, savedData, onCommit, onCancel }: ColumnCalcProps) {
-  const [op1, setOp1] = useState<Row>(savedData?.op1 || numToRow(initialOp1));
-  const [op2, setOp2] = useState<Row>(savedData?.op2 || numToRow(initialOp2));
-  const [result, setResult] = useState<Row>(savedData?.result || numToRow(initialResult));
-  const [carry, setCarry] = useState<Row>(savedData?.carry || emptyRow());
+export function ColumnCalc({ left, top: _top, initialOperands, initialOperator, initialResult, savedData, onCommit, onCancel }: ColumnCalcProps) {
+  const migratedData = savedData ? migrateColumnCalcData(savedData) : undefined;
+
+  const initOps = migratedData?.operands
+    || (initialOperands && initialOperands.length >= 2
+      ? initialOperands.slice(0, MAX_OPERANDS).map(n => numToRow(n))
+      : [emptyRow(), emptyRow()]);
+
+  const [operands, setOperands] = useState<Row[]>(initOps);
+  const [result, setResult] = useState<Row>(migratedData?.result || numToRow(initialResult));
+  const [carry, setCarry] = useState<Row>(migratedData?.carry || emptyRow());
   const [intermediates, setIntermediates] = useState<Row[]>(
-    savedData?.intermediates || [emptyRow()]
+    migratedData?.intermediates || [emptyRow()]
   );
-  const [operator, setOperator] = useState(savedData?.operator || initialOperator || '+');
-  const [borrow, setBorrow] = useState<boolean[]>(savedData?.borrow || Array(NUM_COLS).fill(false));
-  const [carryBorrow, setCarryBorrow] = useState<boolean[]>(savedData?.carryBorrow || Array(NUM_COLS).fill(false));
-  const [addCarry, setAddCarry] = useState<Row>(savedData?.addCarry || emptyRow());
+  const [operator, setOperator] = useState(migratedData?.operator || initialOperator || '+');
+  const [borrow, setBorrow] = useState<boolean[]>(migratedData?.borrow || Array(NUM_COLS).fill(false));
+  const [carryBorrow, setCarryBorrow] = useState<boolean[]>(migratedData?.carryBorrow || Array(NUM_COLS).fill(false));
+  const [addCarry, setAddCarry] = useState<Row>(migratedData?.addCarry || emptyRow());
   const [lastModified, setLastModified] = useState<{ cellId: string; prevValue: string } | null>(null);
-  const initialDecPos = detectDecimalPosition(initialOp1)
-    ?? detectDecimalPosition(initialOp2)
-    ?? savedData?.decimalPosition
+  const initialDecPos = (initialOperands && initialOperands.length > 0
+    ? initialOperands.reduce<number | null>((acc, n) => acc ?? detectDecimalPosition(n), null)
+    : null)
+    ?? migratedData?.decimalPosition
     ?? null;
   const [decimalPosition, setDecimalPosition] = useState<number | null>(initialDecPos);
   const cellRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
-  // Auto-adjust number of intermediate lines based on op2 digits (for multiplication)
-  const op2Digits = countDigits(op2);
-  const needsIntermediates = operator === '×' && op2Digits > 1;
-  const numIntermediates = needsIntermediates ? op2Digits : 0;
+  // Auto-adjust number of intermediate lines based on last operand digits (for multiplication)
+  const lastOp = operands[operands.length - 1];
+  const lastOpDigits = countDigits(lastOp);
+  const needsIntermediates = operator === '×' && lastOpDigits > 1;
+  const numIntermediates = needsIntermediates ? lastOpDigits : 0;
 
   // Ensure we have enough intermediate rows
   useEffect(() => {
@@ -118,11 +135,11 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
 
   useEffect(() => {
     setTimeout(() => {
-      if (initialOp1) {
+      if (initialOperands && initialOperands.length > 0) {
         const ref = cellRefs.current.get(`result-${NUM_COLS - 1}`);
         ref?.focus();
       } else {
-        const ref = cellRefs.current.get(`op1-0`);
+        const ref = cellRefs.current.get(`op0-0`);
         ref?.focus();
       }
     }, 50);
@@ -137,9 +154,14 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     const parts = cellId.split('-');
     const rowName = parts[0];
     const col = parseInt(parts[parts.length - 1]);
-    if (rowName === 'op1') setOp1(prev => { const n = [...prev]; n[col] = value; return n; });
-    else if (rowName === 'op2') setOp2(prev => { const n = [...prev]; n[col] = value; return n; });
-    else if (rowName === 'result') setResult(prev => { const n = [...prev]; n[col] = value; return n; });
+    if (rowName.startsWith('op')) {
+      const opIdx = parseInt(rowName.replace('op', ''));
+      setOperands(prev => {
+        const next = prev.map(r => [...r]);
+        if (next[opIdx]) next[opIdx][col] = value;
+        return next;
+      });
+    } else if (rowName === 'result') setResult(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName === 'carry') setCarry(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName === 'addCarry') setAddCarry(prev => { const n = [...prev]; n[col] = value; return n; });
     else if (rowName.startsWith('int')) {
@@ -161,25 +183,20 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   };
 
   // Change decimal position: shift digits so the comma adds/removes places on the RIGHT
-  // e.g., "345,7" (decPos=1) → "345,70" (decPos=2): shift all rows left by 1, add 0 at right
-  // e.g., "34,57" (decPos=2) → "345,7" (decPos=1): shift all rows right by 1, drop rightmost
   const changeDecimalPosition = (newDecPos: number | null) => {
     const oldDecPos = decimalPosition ?? 0;
     const newDec = newDecPos ?? 0;
-    const shift = newDec - oldDecPos; // positive = need more decimal places (shift left)
+    const shift = newDec - oldDecPos;
 
     if (shift !== 0) {
       const shiftRow = (row: Row): Row => {
         if (shift > 0) {
-          // Adding decimal places: shift digits left, fill right with ''
           return [...row.slice(shift), ...Array(shift).fill('')];
         } else {
-          // Removing decimal places: shift digits right, fill left with ''
           return [...Array(-shift).fill(''), ...row.slice(0, shift)];
         }
       };
-      setOp1(shiftRow);
-      setOp2(shiftRow);
+      setOperands(prev => prev.map(r => shiftRow(r)));
       setResult(shiftRow);
       setCarry(shiftRow);
       setAddCarry(shiftRow);
@@ -212,6 +229,13 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         copy[intIdx] = next;
         return copy;
       });
+    } else if (rowName.startsWith('op')) {
+      const opIdx = parseInt(rowName.replace('op', ''));
+      setOperands(prev => {
+        const copy = prev.map(r => [...r]);
+        copy[opIdx] = next;
+        return copy;
+      });
     } else if (setRow) {
       setRow(next);
     }
@@ -236,7 +260,6 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
   };
 
   const focusCell = (name: string) => {
-    // Use DOM query as reliable fallback
     const el = cellRefs.current.get(name) || document.querySelector<HTMLInputElement>(`[data-cell="${name}"]`);
     el?.focus();
   };
@@ -258,7 +281,8 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      const allRows = ['carry', 'op1', 'op2'];
+      const allRows = ['carry'];
+      for (let i = 0; i < operands.length; i++) allRows.push(`op${i}`);
       if (needsIntermediates) {
         allRows.push('addCarry');
         for (let i = 0; i < numIntermediates; i++) allRows.push(`int${i}`);
@@ -282,28 +306,64 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
     if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
   };
 
+  const addOperand = () => {
+    if (operator === '+' && operands.length < MAX_OPERANDS) {
+      setOperands(prev => [...prev, emptyRow()]);
+    }
+  };
+
+  const removeOperand = (idx: number) => {
+    if (operands.length > 2) {
+      setOperands(prev => prev.filter((_, i) => i !== idx));
+      setLastModified(null);
+    }
+  };
+
   const commit = () => {
-    const n1 = decimalPosition !== null ? rowToNumWithDecimal(op1, decimalPosition) : rowToNum(op1);
-    const n2 = decimalPosition !== null ? rowToNumWithDecimal(op2, decimalPosition) : rowToNum(op2);
+    const isZero = (s: string) => s.replace(/[,0]/g, '') === '';
+    const nums = operands.map(op =>
+      decimalPosition !== null ? rowToNumWithDecimal(op, decimalPosition) : rowToNum(op)
+    );
     const res = decimalPosition !== null ? rowToNumWithDecimal(result, decimalPosition) : rowToNum(result);
     const op = operator === '−' ? '-' : operator === '×' ? '×' : operator;
-    // I1 fix: detect zero including decimal zeros (e.g., "0,00")
-    const isZero = (s: string) => s.replace(/[,0]/g, '') === '';
-    const rawExpr = res && !isZero(res) && !isZero(n1) && !isZero(n2)
-      ? `${n1} ${op} ${n2} = ${res}`
-      : !isZero(n1) && !isZero(n2)
-      ? `${n1} ${op} ${n2}`
-      : '';
-    const expr = rawExpr;
+
+    const nonZeroNums = nums.filter(n => !isZero(n));
+    let rawExpr = '';
+    if (nonZeroNums.length >= 2) {
+      const joined = nonZeroNums.join(` ${op} `);
+      rawExpr = res && !isZero(res) ? `${joined} = ${res}` : joined;
+    }
+
     const data: ColumnCalcData = {
-      op1: [...op1], op2: [...op2], result: [...result],
-      carry: [...carry], intermediates: intermediates.map(r => [...r]), operator,
+      operands: operands.map(r => [...r]),
+      result: [...result],
+      carry: [...carry],
+      intermediates: intermediates.map(r => [...r]),
+      operator,
       decimalPosition,
       borrow: [...borrow],
       carryBorrow: [...carryBorrow],
       addCarry: [...addCarry],
     };
-    onCommit(expr || '', data);
+    onCommit(rawExpr || '', data);
+  };
+
+  const handleOperatorChange = (newOp: string) => {
+    setOperator(newOp);
+    // Truncate to 2 operands when switching away from addition
+    if (newOp !== '+' && operands.length > 2) {
+      setOperands(prev => prev.slice(0, 2));
+    }
+    if (newOp !== '−') {
+      setBorrow(Array(NUM_COLS).fill(false));
+      setCarryBorrow(Array(NUM_COLS).fill(false));
+    }
+  };
+
+  const operatorSelectStyle: React.CSSProperties = {
+    width: CELL, height: CELL, fontSize: 24, textAlign: 'center',
+    border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA',
+    cursor: 'pointer', fontFamily: 'monospace',
   };
 
   return (
@@ -320,8 +380,6 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
       <div style={{ fontSize: 13, color: '#7028e0', fontWeight: 600, marginBottom: 10 }}>
         Calcul en colonnes
       </div>
-
-      {/* Swap visibility + handler (multiplication only, both operands have digits) */}
 
       {/* Carry row */}
       <div style={{ display: 'flex', gap: GAP, marginBottom: 4, marginLeft: CELL + GAP }}>
@@ -365,53 +423,79 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
         ))}
       </div>
 
-      {/* Operand 1 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
-        <div style={{ width: CELL, height: CELL }} />
-        {op1.map((d, col) => (
-          <React.Fragment key={`op1-${col}`}>
-            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
-              <span style={decimalSepStyle}>,</span>
-            )}
-            <div style={{ position: 'relative' }}>
-              {borrow[col] && (
-                <span style={{
-                  position: 'absolute', left: 3, top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: 16, fontWeight: 700, color: '#9060C0',
-                  pointerEvents: 'none', fontFamily: 'monospace', zIndex: 1,
-                }}>1</span>
-              )}
-              <CellInput cellId={`op1-${col}`} refCb={el => setCellRef(`op1-${col}`, el)}
-                value={d} onChange={v => handleCellChange(op1, setOp1, 'op1', col, v)}
-                onKeyDown={e => handleKeyDown('op1', col, e)}
-                strikethrough={operator === '−' && carry[col] !== ''}
-                borrowActive={borrow[col]}
-                onBorrowToggle={operator === '−' && d !== '' ? () => {
-                  setBorrow(prev => { const n = [...prev]; n[col] = !n[col]; return n; });
-                } : undefined} />
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
+      {/* Operand rows */}
+      {operands.map((opRow, opIdx) => {
+        const isLast = opIdx === operands.length - 1;
+        const canRemove = operands.length > 2 && operator === '+';
+        const isFirstOp = opIdx === 0;
 
-      {/* Operator + Operand 2 */}
-      <div style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
-        <select value={operator} onChange={e => { setOperator(e.target.value); if (e.target.value !== '−') { setBorrow(Array(NUM_COLS).fill(false)); setCarryBorrow(Array(NUM_COLS).fill(false)); } }}
-          style={{ width: CELL, height: CELL, fontSize: 24, textAlign: 'center', border: '2px solid #D5D0E0', borderRadius: 6, background: '#F6F4FA', cursor: 'pointer', fontFamily: 'monospace' }}>
-          {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
-        </select>
-        {op2.map((d, col) => (
-          <React.Fragment key={`op2-${col}`}>
-            {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
-              <span style={decimalSepStyle}>,</span>
+        return (
+          <div key={`op${opIdx}`} style={{ display: 'flex', gap: GAP, marginBottom: GAP, alignItems: 'center' }}>
+            {/* Operator cell on last row, empty spacer or remove button on others */}
+            {isLast ? (
+              <select value={operator} onChange={e => handleOperatorChange(e.target.value)}
+                style={operatorSelectStyle}>
+                {OPERATORS.map(op => <option key={op} value={op}>{op}</option>)}
+              </select>
+            ) : (
+              <div style={{ width: CELL, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {canRemove && !isFirstOp && (
+                  <button
+                    onClick={() => removeOperand(opIdx)}
+                    title="Retirer ce nombre"
+                    style={{
+                      width: 28, height: 28, borderRadius: 14,
+                      border: '1px solid #E5D0D0', background: '#FFF5F5',
+                      cursor: 'pointer', fontSize: 16, color: '#C06060',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 0, lineHeight: 1,
+                    }}
+                  >×</button>
+                )}
+              </div>
             )}
-            <CellInput cellId={`op2-${col}`} refCb={el => setCellRef(`op2-${col}`, el)}
-              value={d} onChange={v => handleCellChange(op2, setOp2, 'op2', col, v)}
-              onKeyDown={e => handleKeyDown('op2', col, e)} />
-          </React.Fragment>
-        ))}
-      </div>
+            {/* Digit cells */}
+            {opRow.map((d, col) => (
+              <React.Fragment key={`op${opIdx}-${col}`}>
+                {decimalPosition !== null && col === NUM_COLS - decimalPosition && (
+                  <span style={decimalSepStyle}>,</span>
+                )}
+                <div style={{ position: 'relative' }}>
+                  {isFirstOp && borrow[col] && (
+                    <span style={{
+                      position: 'absolute', left: 3, top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: 16, fontWeight: 700, color: '#9060C0',
+                      pointerEvents: 'none', fontFamily: 'monospace', zIndex: 1,
+                    }}>1</span>
+                  )}
+                  <CellInput cellId={`op${opIdx}-${col}`} refCb={el => setCellRef(`op${opIdx}-${col}`, el)}
+                    value={d} onChange={v => handleCellChange(opRow, null, `op${opIdx}`, col, v)}
+                    onKeyDown={e => handleKeyDown(`op${opIdx}`, col, e)}
+                    strikethrough={operator === '−' && isFirstOp && carry[col] !== ''}
+                    borrowActive={isFirstOp && borrow[col]}
+                    onBorrowToggle={operator === '−' && isFirstOp && d !== '' ? () => {
+                      setBorrow(prev => { const n = [...prev]; n[col] = !n[col]; return n; });
+                    } : undefined} />
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+        );
+      })}
+
+      {/* Add operand button (addition only, max 6) */}
+      {operator === '+' && operands.length < MAX_OPERANDS && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: GAP }}>
+          <button onClick={addOperand} style={{
+            padding: '4px 16px', fontSize: 13, border: '1px dashed #D5D0E0',
+            borderRadius: 6, background: '#FAFAFA', cursor: 'pointer',
+            color: '#7028e0', fontWeight: 500, minHeight: 32,
+          }}>
+            + Nombre
+          </button>
+        </div>
+      )}
 
       {/* First separator */}
       <div style={{ borderTop: '3px solid #1E1A2E', margin: `${GAP}px 0`, marginLeft: CELL + GAP }} />
@@ -514,13 +598,10 @@ export function ColumnCalc({ left, top: _top, initialOp1, initialOp2, initialOpe
           <span style={{ fontSize: 11 }}>Oups</span>
         </button>
         {/* Swap button — multiplication only, both operands have digits */}
-        {operator === '×' && op1.some(d => d !== '') && op2.some(d => d !== '') && (
+        {operator === '×' && operands[0].some(d => d !== '') && operands[1]?.some(d => d !== '') && (
           <button
             onClick={() => {
-              const newOp1 = [...op2];
-              const newOp2 = [...op1];
-              setOp1(newOp1);
-              setOp2(newOp2);
+              setOperands(prev => [prev[1], prev[0]]);
               setCarry(emptyRow());
               setIntermediates([emptyRow()]);
               setLastModified(null);

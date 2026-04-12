@@ -2163,8 +2163,7 @@ export function Canvas({
           <ColumnCalc
             left={Math.max(8, ptTop.x - cr.left)}
             top={8}
-            initialOp1={parsed?.op1}
-            initialOp2={parsed?.op2}
+            initialOperands={parsed?.operands}
             initialOperator={parsed?.operator}
             initialResult={parsed?.result}
             savedData={savedData}
@@ -2198,8 +2197,8 @@ export function Canvas({
         const savedColData = piece.columnData ? JSON.parse(piece.columnData) : undefined;
         const savedData = savedColData?.type === 'division' ? savedColData as DivisionCalcData : undefined;
         // Pre-fill from expression: for "A ÷ B = C", dividend=A, divisor=B
-        const initialDividend = !savedData && parsed?.operator === '÷' ? parsed.op1 : (!savedData && parsed ? parsed.op1 : undefined);
-        const initialDivisor = !savedData && parsed?.operator === '÷' ? parsed.op2 : (!savedData && parsed ? parsed.op2 : undefined);
+        const initialDividend = !savedData && parsed?.operator === '÷' ? parsed.operands[0] : (!savedData && parsed ? parsed.operands[0] : undefined);
+        const initialDivisor = !savedData && parsed?.operator === '÷' ? parsed.operands[1] : (!savedData && parsed ? parsed.operands[1] : undefined);
 
         return (
           <DivisionCalc
@@ -2916,19 +2915,30 @@ function formatExpr(s: string): string {
   return s.replace(/\*/g, '×').replace(/x/gi, '×').replace(/\//g, '÷').replace(/\./g, ',');
 }
 
-// Parse an expression like "28 × 4 = 112" or "3,45 + 2,78 = 6,23" into components
-function parseExpression(expr: string): { op1: string; op2: string; operator: string; result: string } | null {
+// Parse an expression like "28 × 4 = 112", "3 + 5 + 2 = 10", or "3,45 + 2,78 = 6,23" into components
+function parseExpression(expr: string): { operands: string[]; operator: string; result: string } | null {
   if (!expr) return null;
   // Normalize operators
   const normalized = expr.replace(/×/g, '*').replace(/x/gi, '*').replace(/÷/g, '/').replace(/−/g, '-');
-  // Match: number (with optional decimal comma/dot) operator number = number
+
+  // Try multi-operand addition: NUM + NUM + NUM ... (= NUM)?
+  const addMatch = normalized.match(/^\s*(\d+(?:[,\.]\d+)?(?:\s*\+\s*\d+(?:[,\.]\d+)?)+)\s*(?:=\s*(\d+(?:[,\.]\d+)?))?\s*$/);
+  if (addMatch) {
+    const parts = addMatch[1].split(/\s*\+\s*/);
+    return {
+      operands: parts.map(p => p.replace(/,/g, '.')),
+      operator: '+',
+      result: addMatch[2] ? addMatch[2].replace(/,/g, '.') : '',
+    };
+  }
+
+  // 2-operand for other operators (−, ×, ÷)
   const match = normalized.match(/^\s*(\d+(?:[,\.]\d+)?)\s*([+\-*/])\s*(\d+(?:[,\.]\d+)?)\s*(?:=\s*(\d+(?:[,\.]\d+)?))?\s*$/);
   if (!match) return null;
   const opMap: Record<string, string> = { '+': '+', '-': '−', '*': '×', '/': '÷' };
   // Normalize commas to dots for internal use
   return {
-    op1: match[1].replace(/,/g, '.'),
-    op2: match[3].replace(/,/g, '.'),
+    operands: [match[1].replace(/,/g, '.'), match[3].replace(/,/g, '.')],
     operator: opMap[match[2]] || '+',
     result: match[4] ? match[4].replace(/,/g, '.') : '',
   };
