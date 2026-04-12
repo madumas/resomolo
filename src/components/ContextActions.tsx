@@ -106,7 +106,7 @@ export function ContextActions({
   // showDivideOptions removed — fraction submenu handles division presets
 
   // 2.2: Submenu state for bar context actions (reduces cognitive overload)
-  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'fraction'>('none');
+  const [barSubmenu, setBarSubmenu] = useState<'none' | 'taille' | 'fraction' | 'groupLabel'>('none');
 
   // Template submenu for reponse pieces
   const [showTemplateOptions, setShowTemplateOptions] = useState(false);
@@ -134,8 +134,8 @@ export function ContextActions({
   };
 
   // Diagramme submenu states
-  const [bandesSubmenu, setBandesSubmenu] = useState<'none' | 'data'>('none');
-  const [ligneSubmenu, setLigneSubmenu] = useState<'none' | 'data'>('none');
+  const [bandesSubmenu, setBandesSubmenu] = useState<'none' | 'data' | 'axeY'>('none');
+  const [ligneSubmenu, setLigneSubmenu] = useState<'none' | 'data' | 'axeY'>('none');
   // Local editing state for inline inputs (initialized from piece data when submenu opens)
   const [editingCategories, setEditingCategories] = useState<{ label: string; value: number; couleur: string }[]>([]);
   const [editingPoints, setEditingPoints] = useState<{ label: string; value: number }[]>([]);
@@ -331,6 +331,9 @@ export function ContextActions({
           {piece.groupId && (
             <CtxBtn testId="ctx-degrouper" onClick={() => onUngroup(piece.groupId!)}>Dégrouper</CtxBtn>
           )}
+          {piece.groupId && (
+            <CtxBtn onClick={() => setBarSubmenu('groupLabel')}>Nommer groupe</CtxBtn>
+          )}
           <ColorRow pieceId={piece.id} current={piece.couleur} onChange={onChangeColor} />
         </>
       )}
@@ -424,6 +427,25 @@ export function ContextActions({
               </CtxBtn>
             </>
           )}
+        </>
+      )}
+
+      {/* Barre — submenu Nommer groupe */}
+      {isBarre(piece) && barSubmenu === 'groupLabel' && (
+        <>
+          <CtxBtn onClick={() => setBarSubmenu('none')} back>←</CtxBtn>
+          <div style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}
+            onPointerDown={e => e.stopPropagation()}>
+            <input type="text" value={piece.groupLabel || ''} placeholder="Nom du groupe..."
+              autoFocus
+              onChange={e => onEditPiece(piece.id, { groupLabel: e.target.value || null })}
+              onKeyDown={e => { if (e.key === 'Enter') setBarSubmenu('none'); }}
+              style={{
+                flex: 1, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                outline: 'none',
+              }} />
+          </div>
         </>
       )}
 
@@ -939,6 +961,7 @@ export function ContextActions({
       {isDiagrammeBandes(piece) && bandesSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
+          <CtxBtn onClick={() => setBandesSubmenu('axeY')}>Axe Y</CtxBtn>
           <CtxBtn onClick={() => {
             setEditingCategories(piece.categories.map(c => ({ ...c })));
             setBandesSubmenu('data');
@@ -996,10 +1019,30 @@ export function ContextActions({
         </>
       )}
 
+      {/* DiagrammeBandes — sous-menu Axe Y */}
+      {isDiagrammeBandes(piece) && bandesSubmenu === 'axeY' && (
+        <>
+          <CtxBtn onClick={() => setBandesSubmenu('none')} back>←</CtxBtn>
+          <div style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}
+            onPointerDown={e => e.stopPropagation()}>
+            <input type="text" value={piece.yAxisLabel} placeholder="Axe Y..."
+              autoFocus
+              onChange={e => onEditPiece(piece.id, { yAxisLabel: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') setBandesSubmenu('none'); }}
+              style={{
+                flex: 1, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                outline: 'none',
+              }} />
+          </div>
+        </>
+      )}
+
       {/* DiagrammeLigne — L1 compact */}
       {piece.type === 'diagrammeLigne' && ligneSubmenu === 'none' && (
         <>
           <CtxBtn onClick={() => onStartEdit(piece.id)}>Titre</CtxBtn>
+          <CtxBtn onClick={() => setLigneSubmenu('axeY')}>Axe Y</CtxBtn>
           <CtxBtn onClick={() => {
             setEditingPoints((piece as any).points.map((p: any) => ({ ...p })));
             setLigneSubmenu('data');
@@ -1053,6 +1096,25 @@ export function ContextActions({
                 }} />
             </div>
           ))}
+        </>
+      )}
+
+      {/* DiagrammeLigne — sous-menu Axe Y */}
+      {piece.type === 'diagrammeLigne' && ligneSubmenu === 'axeY' && (
+        <>
+          <CtxBtn onClick={() => setLigneSubmenu('none')} back>←</CtxBtn>
+          <div style={{ display: 'flex', gap: 8, width: '100%', alignItems: 'center' }}
+            onPointerDown={e => e.stopPropagation()}>
+            <input type="text" value={(piece as any).yAxisLabel || ''} placeholder="Axe Y..."
+              autoFocus
+              onChange={e => onEditPiece(piece.id, { yAxisLabel: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') setLigneSubmenu('none'); }}
+              style={{
+                flex: 1, minHeight: 44, borderRadius: 6, fontSize: 13, padding: '4px 8px',
+                border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
+                outline: 'none',
+              }} />
+          </div>
         </>
       )}
 
