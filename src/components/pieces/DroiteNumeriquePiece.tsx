@@ -1,10 +1,17 @@
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { DroiteNumerique } from '../../model/types';
 import { computeAllBondLevels, computeBondPath, computeAutoLabel, getImplicitMarkers, isMarkerCoveredByPositiveBond, isMarkerCoveredByNegativeBond } from '../../engine/bonds';
+import { fmtNum } from '../../utils/format';
 
-export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selectedBondIndex, bondMode, bondFromVal, toleranceMultiplier = 1, toolbarMode = 'essentiel' }: {
+// SVG font tiers (mm) — harmonized across all pieces
+const T1 = 7;   // content: tick/marker labels
+const T2 = 6;   // labels (réservé)
+const T3 = 5;   // annotation
+
+export function DroiteNumeriquePiece({ piece, isSelected, highContrast, textScale = 1, selectedBondIndex, bondMode, bondFromVal, toleranceMultiplier = 1, toolbarMode = 'essentiel' }: {
   piece: DroiteNumerique;
   isSelected: boolean;
+  highContrast?: boolean;
   textScale?: number;
   selectedBondIndex?: number;
   bondMode?: boolean;
@@ -55,12 +62,12 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
     return (
       <g>
         {isSelected && (
-          <rect x={x - 2} y={y - 10} width={width + 4} height={24} rx={2}
+          <rect x={x - 2} y={y - 10} width={width + 4} height={24} rx={3}
             fill="rgba(112, 40, 224, 0.06)" stroke="#7028e0" strokeWidth={1} />
         )}
         <line x1={x} y1={y} x2={x + width} y2={y}
           stroke="#55506A" strokeWidth={1} />
-        <text x={x + width / 2} y={y + 8} textAnchor="middle" fontSize={4} fill="#B91C1C">
+        <text x={x + width / 2} y={y + 8} textAnchor="middle" fontSize={T3 * ts} fill="#B91C1C">
           Ajuster min/max
         </text>
       </g>
@@ -85,9 +92,9 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
 
   return (
     <g>
-      {/* Selection highlight */}
+      {/* Selection highlight — asymmetric y: -10 top to encompass bond arcs above */}
       {isSelected && (
-        <rect x={x - 2} y={y - 10} width={width + 4} height={h + 4} rx={2}
+        <rect x={x - 2} y={y - 10} width={width + 4} height={h + 4} rx={3}
           fill="rgba(112, 40, 224, 0.06)"
           stroke={bondMode ? '#185FA5' : '#7028e0'}
           strokeWidth={1}
@@ -96,11 +103,11 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
 
       {/* Main line */}
       <line x1={x} y1={y} x2={x + width} y2={y}
-        stroke="#55506A" strokeWidth={1} />
+        stroke={highContrast ? '#3D3856' : '#55506A'} strokeWidth={highContrast ? 1.5 : 1} />
 
       {/* Arrow heads at both ends */}
-      <polygon points={`${x - 3},${y} ${x + 2},${y - 2} ${x + 2},${y + 2}`} fill="#55506A" />
-      <polygon points={`${x + width + 3},${y} ${x + width - 2},${y - 2} ${x + width - 2},${y + 2}`} fill="#55506A" />
+      <polygon points={`${x - 3},${y} ${x + 2},${y - 2} ${x + 2},${y + 2}`} fill={highContrast ? '#3D3856' : '#55506A'} />
+      <polygon points={`${x + width + 3},${y} ${x + width - 2},${y - 2} ${x + width - 2},${y + 2}`} fill={highContrast ? '#3D3856' : '#55506A'} />
 
       {/* Bond arcs */}
       {bonds.map((bond, i) => {
@@ -130,8 +137,8 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
             <path
               ref={el => { pathRefs.current[i] = el; }}
               d={info.path} fill="none"
-              stroke={isSel ? '#7028E0' : '#185FA5'}
-              strokeWidth={isSel ? 2 : 1.5}
+              stroke={isSel ? '#7028E0' : (highContrast ? '#0D4A82' : '#185FA5')}
+              strokeWidth={highContrast ? (isSel ? 2.5 : 2) : (isSel ? 2 : 1.5)}
               pointerEvents="none"
               className={isNew && pl > 0 ? 'bond-new' : undefined}
               style={isNew && pl > 0 ? { '--path-length': `${pl}` } as React.CSSProperties : undefined} />
@@ -156,7 +163,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
                     y={labelY}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontSize={Math.max(7 * ts, 5)}
+                    fontSize={Math.max(T1 * ts, 5)}
                     fontWeight={600}
                     fill={isSel ? '#7028E0' : '#185FA5'}
                     pointerEvents="none">
@@ -177,15 +184,15 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
         const val = parseFloat(rawVal.toFixed(Math.max(stepDecimals, (String(min).split('.')[1] || '').length)));
         const tx = x + i * tickSpacing;
         const isZero = min < 0 && Math.abs(val) < 1e-9;
-        const displayVal = String(val).replace('.', ',');
+        const displayVal = fmtNum(val);
         return (
           <g key={i}>
             <line x1={tx} y1={y - 3} x2={tx} y2={y + 3}
-              stroke={isZero ? '#7028E0' : '#55506A'}
-              strokeWidth={isZero ? 2.5 : (i % labelEvery === 0 ? 0.7 : 0.3)} />
+              stroke={isZero ? '#7028E0' : (highContrast ? '#3D3856' : '#55506A')}
+              strokeWidth={isZero ? 2.5 : (i % labelEvery === 0 ? (highContrast ? 1.0 : 0.7) : (highContrast ? 0.5 : 0.3))} />
             {(i % labelEvery === 0 || isZero) && (
               <text x={tx} y={y + 9} textAnchor="middle"
-                fontSize={(isZero ? 8 : 7) * ts}
+                fontSize={(isZero ? T1 + 1 : T1) * ts}
                 fontWeight={isZero ? 700 : 500}
                 fill={isZero ? '#7028E0' : '#55506A'}>
                 {displayVal}
@@ -205,7 +212,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
         const coveredByNegative = isMarkerCoveredByNegativeBond(val, bonds);
         // Default: label above. Move below if positive bond covers it. If both cover it, prefer above (less crowded).
         const labelBelow = coveredByPositive && !coveredByNegative;
-        const markerLabelY = labelBelow ? y + 9 + 7 * ts : y - 7;
+        const markerLabelY = labelBelow ? y + 9 + T1 * ts : y - 7;
         const isBondEndpointSel = selectedBondIndex !== undefined && selectedBondIndex >= 0 &&
           bonds[selectedBondIndex] && (
             Math.abs(val - bonds[selectedBondIndex].from) < 1e-9 ||
@@ -236,9 +243,9 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
             )}
             {showMarkerLabel && (
               <text x={mx} y={markerLabelY} textAnchor="middle"
-                fontSize={7 * ts} fontWeight={600}
+                fontSize={T1 * ts} fontWeight={600}
                 fill={isExplicit || isBondEndpoint ? '#185FA5' : 'rgba(24, 95, 165, 0.5)'}>
-                {val}
+                {fmtNum(val)}
               </text>
             )}
           </g>

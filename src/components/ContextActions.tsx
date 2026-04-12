@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fmtNum } from '../utils/format';
 import type { Piece, CouleurPiece } from '../model/types';
 import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema, isDiagrammeBandes } from '../model/types';
 import { CHART_MAX_CATEGORIES, CHART_MAX_CATEGORIES_COMPLET } from '../model/types';
@@ -661,7 +662,7 @@ export function ContextActions({
                   active={piece.step === n}
                   onClick={() => { onEditPiece(piece.id, { step: n }); setDroiteSubmenu('none'); }}
                 >
-                  {String(n).replace('.', ',')}
+                  {fmtNum(n)}
                 </CtxBtn>
               ))}
               {isComplet && (

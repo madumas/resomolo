@@ -2,16 +2,12 @@ import type { Schema } from '../../model/types';
 import { SCHEMA_BAR_HEIGHT_MM } from '../../model/types';
 import { getPieceColor, getPieceFillColor } from '../../config/theme';
 import { computePartLayout } from '../../engine/schema-layout';
+import { fmtNum } from '../../utils/format';
 
 // SVG font tiers (mm) — harmonized across all pieces
 const T1 = 7;   // content: part values, multiplier
 const T2 = 6;   // labels: bar labels, part labels, bracket labels
 const T3 = 5;   // annotation: gabarit indicator
-
-/** Format number for display: dot → comma (Quebec/French convention) */
-function fmtNum(v: number): string {
-  return String(v).replace('.', ',');
-}
 
 interface SchemaPieceProps {
   piece: Schema;
@@ -54,7 +50,6 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               textAnchor="end" dominantBaseline="central"
               fontSize={T2 * ts}
               fill={bar.label ? '#1E1A2E' : '#B0A8C0'}
-              opacity={bar.label ? 1 : 0.6}
               data-edit-target={`${piece.id}-bar-${bi}-label`}>
               {bar.label || '...'}
             </text>
@@ -66,7 +61,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
                 fontSize={T1 * ts}
                 fill={srcBar.value != null ? '#1E1A2E' : '#B0A8C0'}
                 fontWeight={srcBar.value != null ? 600 : 400}
-                opacity={srcBar.value != null ? 1 : 0.6}
+                fontStyle={srcBar.value != null ? 'normal' : 'italic'}
                 data-edit-target={`${piece.id}-bar-${bi}-value`}>
                 {srcBar.value != null ? fmtNum(srcBar.value) : '?'}
               </text>
@@ -90,18 +85,19 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         const fill = getPieceFillColor(part.couleur, highContrast);
         const barInfo = layout.bars[part.barIndex];
         if (!barInfo) return null;
+        const partEmpty = !part.label && part.value == null;
 
         return (
           <g key={`part-${pi}`}>
             {/* Part fill */}
             <rect x={x + part.x} y={y + part.y} width={part.width} height={part.height}
-              fill={fill} stroke={color} strokeWidth={0.3} />
+              fill={fill} stroke={color} strokeWidth={0.3}
+              strokeDasharray={partEmpty ? '3 2' : undefined} />
 
             {/* Part label above */}
             <text x={x + part.x + part.width / 2} y={y + part.y - 2}
               textAnchor="middle" fontSize={T2 * ts}
               fill={part.label ? '#55506A' : '#B0A8C0'}
-              opacity={part.label ? 1 : 0.6}
               data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-label`}>
               {part.label || '...'}
             </text>
@@ -112,7 +108,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               fontSize={T1 * ts}
               fill={part.value != null ? '#1E1A2E' : '#B0A8C0'}
               fontWeight={part.value != null ? 600 : 400}
-              opacity={part.value != null ? 1 : 0.6}
+              fontStyle={part.value != null ? 'normal' : 'italic'}
               data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-value`}>
               {part.value != null ? fmtNum(part.value) : '?'}
             </text>

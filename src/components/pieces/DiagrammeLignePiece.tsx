@@ -1,9 +1,10 @@
 import type { DiagrammeLigne } from '../../model/types';
 import { computeAutoScale, getPlotArea, DEFAULT_CHART_DIMS } from '../../engine/chart-layout';
+import { fmtNum } from '../../utils/format';
 
 // SVG font tiers (mm) — harmonized across all pieces
 const T1 = 7;   // content: values above points
-const T2 = 5.5; // labels: axis labels, point labels
+const T2 = 6;   // labels: axis labels, point labels
 const T3 = 5;   // annotation: axis tick labels
 
 interface DiagrammeLignePieceProps {
@@ -57,8 +58,7 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
 
       {/* Title */}
       <text x={x + width / 2} y={y + 5} textAnchor="middle" dominantBaseline="central"
-        fontSize={T2 * ts} fontWeight="600" fill={title ? '#1E1A2E' : '#B0A8C0'}
-        opacity={title ? 1 : 0.5}
+        fontSize={T2 * ts} fontWeight={600} fill={title ? '#1E1A2E' : '#B0A8C0'}
         data-edit-target={piece.id}>
         {title || 'Titre...'}
       </text>
@@ -85,7 +85,7 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
           <text x={x + plot.x - 3} y={valueToY(v)}
             textAnchor="end" dominantBaseline="central"
             fontSize={T3 * ts} fill="#55506A">
-            {String(v).replace('.', ',')}
+            {fmtNum(v)}
           </text>
         </g>
       ))}
@@ -122,8 +122,8 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
             {/* Value above point */}
             <text x={px} y={py - 3}
               textAnchor="middle" dominantBaseline="auto"
-              fontSize={T1 * ts} fontWeight="600" fill="#1E1A2E">
-              {String(pt.value).replace('.', ',')}
+              fontSize={T1 * ts} fontWeight={600} fill="#1E1A2E">
+              {fmtNum(pt.value)}
             </text>
 
             {/* Label below axis */}

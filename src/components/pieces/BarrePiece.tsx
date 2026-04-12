@@ -1,6 +1,12 @@
 import type { Barre } from '../../model/types';
 import { BAR_HEIGHT_MM } from '../../model/types';
 import { getPieceColor, getPieceFillColor } from '../../config/theme';
+import { fmtNum } from '../../utils/format';
+
+// SVG font tiers (mm) — harmonized across all pieces
+const T1 = 7;   // content: values
+const T2 = 6;   // labels: bar label
+const T3 = 5;   // annotation: fraction labels
 
 interface BarrePieceProps {
   piece: Barre;
@@ -28,12 +34,13 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
         y={piece.y + h / 2}
         textAnchor="end"
         dominantBaseline="central"
-        fontSize={6 * ts}
-        fill={hasLabel ? '#1E1A2E' : 'transparent'}
+        fontSize={T2 * ts}
+        fill={hasLabel ? '#1E1A2E' : '#B0A8C0'}
+        fontWeight={hasLabel ? 500 : 400}
         data-testid="bar-label"
         data-edit-target={`${piece.id}-label`}
       >
-        {piece.label || ' '}
+        {piece.label || '...'}
       </text>
       <rect
         x={piece.x}
@@ -44,6 +51,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
         fill={fill}
         stroke={piece.locked ? '#9CA3AF' : color}
         strokeWidth={sw}
+        strokeDasharray={!hasLabel && !hasValue ? '3 2' : undefined}
       />
       {/* Colored subdivision parts */}
       {piece.divisions && piece.coloredParts && piece.coloredParts.map(partIdx => {
@@ -66,13 +74,13 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
         y={piece.y + h / 2}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={7 * ts}
-        fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1E1A2E') : (!hasLabel ? (piece.locked ? '#9CA3AF' : color) : 'transparent')}
-        fontWeight={600}
-        opacity={hasValue ? 1 : 0.5}
+        fontSize={T1 * ts}
+        fill={hasValue ? (piece.locked ? '#9CA3AF' : '#1E1A2E') : '#B0A8C0'}
+        fontWeight={hasValue ? 600 : 400}
+        fontStyle={hasValue ? 'normal' : 'italic'}
         data-edit-target={`${piece.id}-value`}
       >
-        {hasValue ? piece.value : ' '}
+        {hasValue ? fmtNum(piece.value) : '?'}
       </text>
       {/* Part labels under each subdivision when showFraction */}
       {piece.showFraction && piece.divisions && piece.divisions > 1 && (
@@ -81,7 +89,7 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
           const partX = piece.x + partW * i + partW / 2;
           return (
             <text key={`pl-${i}`} x={partX} y={piece.y - 3}
-              textAnchor="middle" fontSize={5 * ts} fill="#55506A">
+              textAnchor="middle" fontSize={T3 * ts} fill="#55506A">
               {i + 1}/{piece.divisions}
             </text>
           );
@@ -90,11 +98,11 @@ export function BarrePiece({ piece, referenceUnitMm, isSelected, highContrast, t
       {/* Selection highlight */}
       {isSelected && (
         <rect
-          x={piece.x - 1}
-          y={piece.y - 1}
-          width={w + 2}
-          height={h + 2}
-          rx={2.5}
+          x={piece.x - 2}
+          y={piece.y - 2}
+          width={w + 4}
+          height={h + 4}
+          rx={3}
           fill="rgba(112, 40, 224, 0.06)"
           stroke="#7028e0"
           strokeWidth={1}

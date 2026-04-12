@@ -2905,14 +2905,14 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
       inner = <ReponsePiece piece={piece} isSelected={isSelected} textScale={textScale}
         reponseIndex={reponseIds?.indexOf(piece.id)} totalReponses={reponseIds?.length} />; break;
     case 'droiteNumerique':
-      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} textScale={textScale}
+      inner = <DroiteNumeriquePiece piece={piece as DroiteNumerique} isSelected={isSelected} highContrast={highContrast} textScale={textScale}
         toleranceMultiplier={toleranceMultiplier}
         toolbarMode={toolbarMode}
         bondMode={bondModeActive}
         bondFromVal={bondFromVal}
         selectedBondIndex={selectedBondIndex} />; break;
     case 'arbre':
-      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} toolbarMode={toolbarMode} />; break;
+      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} highContrast={highContrast} textScale={textScale} toolbarMode={toolbarMode} />; break;
     case 'schema':
       inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'inconnue':

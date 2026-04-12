@@ -1,10 +1,11 @@
 import type { DiagrammeBandes } from '../../model/types';
 import { getPieceColor, getPieceFillColor } from '../../config/theme';
 import { computeAutoScale, getPlotArea, DEFAULT_CHART_DIMS } from '../../engine/chart-layout';
+import { fmtNum } from '../../utils/format';
 
 // SVG font tiers (mm) — harmonized across all pieces
 const T1 = 7;   // content: values above bars
-const T2 = 5.5; // labels: axis labels, category labels
+const T2 = 6;   // labels: axis labels, category labels
 const T3 = 5;   // annotation: axis tick labels
 
 interface DiagrammeBandesPieceProps {
@@ -53,8 +54,7 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
 
       {/* Title */}
       <text x={x + width / 2} y={y + 5} textAnchor="middle" dominantBaseline="central"
-        fontSize={T2 * ts} fontWeight="600" fill={title ? '#1E1A2E' : '#B0A8C0'}
-        opacity={title ? 1 : 0.5}
+        fontSize={T2 * ts} fontWeight={600} fill={title ? '#1E1A2E' : '#B0A8C0'}
         data-edit-target={piece.id}>
         {title || 'Titre...'}
       </text>
@@ -81,7 +81,7 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
           <text x={x + plot.x - 3} y={valueToY(v)}
             textAnchor="end" dominantBaseline="central"
             fontSize={T3 * ts} fill="#55506A">
-            {String(v).replace('.', ',')}
+            {fmtNum(v)}
           </text>
         </g>
       ))}
@@ -108,13 +108,11 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
               rx={1} fill={fill} stroke={color} strokeWidth={sw} />
 
             {/* Value above bar */}
-            {cat.value > 0 && (
-              <text x={barX + barWidth / 2} y={barY - 2}
-                textAnchor="middle" dominantBaseline="auto"
-                fontSize={T1 * ts} fontWeight="600" fill="#1E1A2E">
-                {String(cat.value).replace('.', ',')}
-              </text>
-            )}
+            <text x={barX + barWidth / 2} y={barY - 2}
+              textAnchor="middle" dominantBaseline="auto"
+              fontSize={T1 * ts} fontWeight={600} fill="#1E1A2E">
+              {fmtNum(cat.value)}
+            </text>
 
             {/* Category label below axis */}
             <text x={barX + barWidth / 2} y={y + plot.y + plot.height + 4}
