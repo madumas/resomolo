@@ -8,6 +8,11 @@ const T1 = 7;   // content: part values, multiplier
 const T2 = 6;   // labels: bar labels, part labels, bracket labels
 const T3 = 5;   // annotation: gabarit indicator
 
+/** Format number for display: dot → comma (Quebec/French convention) */
+function fmtNum(v: number): string {
+  return String(v).replace('.', ',');
+}
+
 interface SchemaPieceProps {
   piece: Schema;
   referenceUnitMm: number;
@@ -63,7 +68,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
                 fontWeight={srcBar.value != null ? 600 : 400}
                 opacity={srcBar.value != null ? 1 : 0.6}
                 data-edit-target={`${piece.id}-bar-${bi}-value`}>
-                {srcBar.value != null ? srcBar.value : '?'}
+                {srcBar.value != null ? fmtNum(srcBar.value) : '?'}
               </text>
             )}
 
@@ -109,7 +114,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               fontWeight={part.value != null ? 600 : 400}
               opacity={part.value != null ? 1 : 0.6}
               data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-value`}>
-              {part.value != null ? part.value : '?'}
+              {part.value != null ? fmtNum(part.value) : '?'}
             </text>
 
             {/* Division line (except first part) */}

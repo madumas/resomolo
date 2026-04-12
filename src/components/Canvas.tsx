@@ -438,8 +438,9 @@ export function Canvas({
             const newBars = schema.bars.map((b, i) => i === curSchemaField.barIndex ? { ...b, label: value } : b);
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
           } else if (curSchemaField.type === 'bar-value') {
-            const numVal = value === '' ? null : Number(value);
-            const newBars = schema.bars.map((b, i) => i === curSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b);
+            const trimmed = value.trim().replace(',', '.');
+            const numVal = trimmed === '' ? null : Number(trimmed);
+            const newBars = schema.bars.map((b, i) => i === curSchemaField.barIndex ? { ...b, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : b);
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
           } else if (curSchemaField.type === 'part-label') {
             const { barIndex, partIndex } = curSchemaField;
@@ -447,8 +448,9 @@ export function Canvas({
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
           } else if (curSchemaField.type === 'part-value') {
             const { barIndex, partIndex } = curSchemaField;
-            const numVal = value === '' ? null : Number(value);
-            const newBars = schema.bars.map((b, i) => i === barIndex ? { ...b, parts: b.parts.map((p, j) => j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b);
+            const trimmed = value.trim().replace(',', '.');
+            const numVal = trimmed === '' ? null : Number(trimmed);
+            const newBars = schema.bars.map((b, i) => i === barIndex ? { ...b, parts: b.parts.map((p, j) => j === partIndex ? { ...p, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : p) } : b);
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
           } else if (curSchemaField.type === 'total' || curSchemaField.type === 'diff') {
             dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
@@ -2106,14 +2108,14 @@ export function Canvas({
           } else if (editingSchemaField.type === 'bar-value') {
             const val = schema.bars[editingSchemaField.barIndex]?.value;
             initialValue = val != null ? String(val) : '';
-            placeholder = '?';
+            placeholder = 'Nombre';
             fieldKey = `__schema_bar_${editingSchemaField.barIndex}_value`;
             svgFontSizeMm = 7;
           } else if (editingSchemaField.type === 'part-value') {
             const { barIndex, partIndex } = editingSchemaField;
             const val = schema.bars[barIndex]?.parts[partIndex]?.value;
             initialValue = val != null ? String(val) : '';
-            placeholder = '?';
+            placeholder = 'Nombre';
             fieldKey = `__schema_part_${barIndex}_${partIndex}_value`;
             svgFontSizeMm = 7;
           }
@@ -2335,6 +2337,7 @@ export function Canvas({
             borderRadiusPx={pieceBorderRadius}
             paddingLeftPx={editorPaddingLeft}
             fontWeight={editorFontWeight}
+            inputMode={editingSchemaField && (editingSchemaField.type === 'bar-value' || editingSchemaField.type === 'part-value') ? 'decimal' : undefined}
             onCommit={(value) => {
               if (piece.type === 'arbre' && editingArbreField) {
                 const arbre = piece as Arbre;
@@ -2358,17 +2361,19 @@ export function Canvas({
                   );
                   dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
                 } else if (editingSchemaField.type === 'bar-value') {
-                  const numVal = value === '' ? null : Number(value);
+                  const trimmed = value.trim().replace(',', '.');
+                  const numVal = trimmed === '' ? null : Number(trimmed);
                   const newBars = schema.bars.map((b, i) =>
-                    i === editingSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b
+                    i === editingSchemaField.barIndex ? { ...b, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : b
                   );
                   dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
                 } else if (editingSchemaField.type === 'part-value') {
                   const { barIndex, partIndex } = editingSchemaField;
-                  const numVal = value === '' ? null : Number(value);
+                  const trimmed = value.trim().replace(',', '.');
+                  const numVal = trimmed === '' ? null : Number(trimmed);
                   const newBars = schema.bars.map((b, i) =>
                     i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
-                      j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b
+                      j === partIndex ? { ...p, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : p) } : b
                   );
                   dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
                 } else if (editingSchemaField.type === 'total' || editingSchemaField.type === 'diff') {
@@ -2417,9 +2422,10 @@ export function Canvas({
                   i === editingSchemaField.barIndex ? { ...b, label: value } : b
                 );
               } else if (editingSchemaField.type === 'bar-value') {
-                const numVal = value === '' ? null : Number(value);
+                const trimmed = value.trim().replace(',', '.');
+                const numVal = trimmed === '' ? null : Number(trimmed);
                 newBars = schema.bars.map((b, i) =>
-                  i === editingSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b
+                  i === editingSchemaField.barIndex ? { ...b, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : b
                 );
               } else if (editingSchemaField.type === 'part-label') {
                 const { barIndex, partIndex } = editingSchemaField;
@@ -2429,10 +2435,11 @@ export function Canvas({
                 );
               } else if (editingSchemaField.type === 'part-value') {
                 const { barIndex, partIndex } = editingSchemaField;
-                const numVal = value === '' ? null : Number(value);
+                const trimmed = value.trim().replace(',', '.');
+                const numVal = trimmed === '' ? null : Number(trimmed);
                 newBars = schema.bars.map((b, i) =>
                   i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
-                    j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b
+                    j === partIndex ? { ...p, value: (numVal !== null && !isNaN(numVal)) ? numVal : null } : p) } : b
                 );
               } else if (editingSchemaField.type === 'total' || editingSchemaField.type === 'diff') {
                 dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
@@ -3153,7 +3160,7 @@ function ReponsePiece({ piece, isSelected, reponseIndex, totalReponses, textScal
 }
 
 // Inline editor — rendered as HTML overlay above the SVG
-function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, fixedWidth, fixedHeight, textAlign, compact, borderRadiusPx, paddingLeftPx, fontWeight, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
+function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize = 14, monospace, maxLength, minWidth = 200, fixedWidth, fixedHeight, textAlign, compact, borderRadiusPx, paddingLeftPx, fontWeight, inputMode, onCommit, onCancel, onTab, onColumnCalc, onDivisionCalc }: {
   left: number; top: number;
   initialValue: string; placeholder: string;
   isCalcul?: boolean;
@@ -3161,6 +3168,7 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
   monospace?: boolean;
   maxLength?: number;
   minWidth?: number;
+  inputMode?: 'text' | 'decimal' | 'numeric';
   fixedWidth?: boolean;
   fixedHeight?: number;
   textAlign?: 'center' | 'left' | 'right';
@@ -3221,6 +3229,7 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
           ref={inputRef}
           data-testid="inline-editor"
           type="text"
+          inputMode={inputMode}
           value={value}
           placeholder={placeholder}
           onChange={e => setValue(e.target.value)}

@@ -81,7 +81,7 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
           <text x={x + plot.x - 3} y={valueToY(v)}
             textAnchor="end" dominantBaseline="central"
             fontSize={T3 * ts} fill="#55506A">
-            {v}
+            {String(v).replace('.', ',')}
           </text>
         </g>
       ))}
@@ -112,7 +112,7 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
               <text x={barX + barWidth / 2} y={barY - 2}
                 textAnchor="middle" dominantBaseline="auto"
                 fontSize={T1 * ts} fontWeight="600" fill="#1E1A2E">
-                {cat.value}
+                {String(cat.value).replace('.', ',')}
               </text>
             )}
 

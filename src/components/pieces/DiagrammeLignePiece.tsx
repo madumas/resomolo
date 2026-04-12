@@ -85,7 +85,7 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
           <text x={x + plot.x - 3} y={valueToY(v)}
             textAnchor="end" dominantBaseline="central"
             fontSize={T3 * ts} fill="#55506A">
-            {v}
+            {String(v).replace('.', ',')}
           </text>
         </g>
       ))}
@@ -123,7 +123,7 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
             <text x={px} y={py - 3}
               textAnchor="middle" dominantBaseline="auto"
               fontSize={T1 * ts} fontWeight="600" fill="#1E1A2E">
-              {pt.value}
+              {String(pt.value).replace('.', ',')}
             </text>
 
             {/* Label below axis */}

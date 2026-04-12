@@ -11,6 +11,32 @@ import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
 import { onSubdivide } from '../engine/sound';
 
+/* ── Debounce global ref for all context action buttons ── */
+const lastClickRef = { current: 0 };
+function debouncedClick(fn: () => void, delayMs: number) {
+  const now = Date.now();
+  if (now - lastClickRef.current < delayMs) return;
+  lastClickRef.current = now;
+  fn();
+}
+
+/** Readable label for aria-label */
+function pieceTypeLabel(piece: Piece): string {
+  const labels: Record<string, string> = {
+    barre: 'la barre', boite: 'la boîte', jeton: 'le jeton', calcul: 'le calcul',
+    reponse: 'la réponse', fleche: 'la flèche', droiteNumerique: 'la droite numérique',
+    tableau: 'le tableau', arbre: "l'arbre", schema: 'le schéma',
+    diagrammeBandes: 'le diagramme à bandes', diagrammeLigne: 'le diagramme à ligne',
+    inconnue: 'la pièce',
+  };
+  return labels[piece.type] || 'la pièce';
+}
+
+/** Visual group separator */
+function Divider() {
+  return <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '6px 0' }} />;
+}
+
 interface ContextActionsProps {
   piece: Piece;
   canvasRect: DOMRect | null;
@@ -117,11 +143,11 @@ export function ContextActions({
   // Schema submenu state
   const [schemaSubmenu, setSchemaSubmenu] = useState<'none' | 'type' | 'taille'>('none');
 
-  // Micro-confirmation for delete (2s timer)
+  // Micro-confirmation for delete (3.5s timer)
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   useEffect(() => {
     if (!deleteConfirm) return;
-    const timer = setTimeout(() => setDeleteConfirm(false), 2000);
+    const timer = setTimeout(() => setDeleteConfirm(false), 3500);
     return () => clearTimeout(timer);
   }, [deleteConfirm]);
 
@@ -156,28 +182,36 @@ export function ContextActions({
 
   return (
     <>
-    {/* Hide native number input spinners — too small for TDC accessibility */}
+    {/* Context actions CSS — spinners, animations, reduced motion */}
     <style>{`[data-testid="context-actions"] input[type="number"]::-webkit-inner-spin-button,
 [data-testid="context-actions"] input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-[data-testid="context-actions"] input[type="number"] { -moz-appearance: textfield; }`}</style>
+[data-testid="context-actions"] input[type="number"] { -moz-appearance: textfield; }
+@keyframes ctx-enter { from { opacity: 0; transform: translate(-50%, calc(${placeAbove ? '-100%' : '0%'} + 4px)); } to { opacity: 1; transform: translate(-50%, ${placeAbove ? '-100%' : '0'}); } }
+@keyframes ctx-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+@media (prefers-reduced-motion: reduce) { @keyframes ctx-enter { from { opacity: 0; } to { opacity: 1; } } @keyframes ctx-pulse { from, to { opacity: 1; } } }
+[data-testid="context-actions"] button:not(:disabled):hover { filter: brightness(0.96); }
+[data-testid="context-actions"] button:not(:disabled):active { transform: scale(0.97); }`}</style>
     <div
       data-testid="context-actions"
+      role="toolbar"
+      aria-label={`Actions pour ${pieceTypeLabel(piece)}`}
       style={{
         position: 'fixed',
         left: canvasRect.left + anchorX,
         top: canvasRect.top + anchorY,
         transform: `translate(-50%, ${placeAbove ? '-100%' : '0'})`,
         display: 'flex',
-        gap: 10,
+        gap: 12,
         background: '#fff',
         border: '1px solid #D5D0E0',
-        borderRadius: 8,
-        padding: 4,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        borderRadius: 12,
+        padding: 8,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)',
         zIndex: 50,
         flexWrap: 'wrap',
         maxWidth: MAX_ACTIONS_WIDTH,
         maxHeight: Math.max(100, maxH),
+        animation: 'ctx-enter 120ms ease-out',
       }}
       onPointerDown={e => e.stopPropagation()}
       onBlur={e => {
@@ -270,24 +304,27 @@ export function ContextActions({
         </>
       )}
 
-      {/* Barre — vue unique: Nommer, Taille, Copier, Fraction, Valeur, Grouper, Couleur */}
+      {/* Barre — regroupé : Identification / Modification / Couleur */}
       {isBarre(piece) && barSubmenu === 'none' && (
         <>
+          {/* Groupe Identification */}
           <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
+          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+          <Divider />
+          {/* Groupe Modification */}
           {!piece.locked && (
             <CtxBtn onClick={() => setBarSubmenu('taille')}>
               Taille {piece.sizeMultiplier}×
             </CtxBtn>
           )}
           {!piece.locked && (
-            <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
-          )}
-          {!piece.locked && (
             <CtxBtn onClick={() => setBarSubmenu('fraction')}>
               Fraction {piece.divisions ? `${piece.coloredParts.length}/${piece.divisions}` : ''}
             </CtxBtn>
           )}
-          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+          {!piece.locked && (
+            <CtxBtn onClick={() => { onDuplicateBar(piece.id, 1); }}>Copier</CtxBtn>
+          )}
           {!piece.groupId && !piece.locked && (
             <CtxBtn testId="ctx-grouper" onClick={() => onStartGrouping(piece.id)}>Grouper</CtxBtn>
           )}
@@ -324,7 +361,7 @@ export function ContextActions({
           ))}
           <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '4px 0' }} />
           <CtxBtn onClick={() => { onStartEqualizing(piece.id); setBarSubmenu('none'); }}>
-            = une autre barre
+            Même taille qu'une autre
           </CtxBtn>
         </>
       )}
@@ -394,10 +431,10 @@ export function ContextActions({
       {isJeton(piece) && (
         <>
           <ColorRow pieceId={piece.id} current={piece.couleur} onChange={onChangeColor} />
-          <CtxBtn onClick={() => onDuplicateJetons(piece.id, 3)}>=3</CtxBtn>
-          <CtxBtn onClick={() => onDuplicateJetons(piece.id, 5)}>=5</CtxBtn>
+          <CtxBtn onClick={() => onDuplicateJetons(piece.id, 3)}>3 jetons</CtxBtn>
+          <CtxBtn onClick={() => onDuplicateJetons(piece.id, 5)}>5 jetons</CtxBtn>
           {freeJetonCount >= 2 && onRepartirJetons && !showRepartir && (
-            <CtxBtn onClick={() => setShowRepartir(true)}>Répartir</CtxBtn>
+            <CtxBtn onClick={() => setShowRepartir(true)}>Partager</CtxBtn>
           )}
           {showRepartir && onRepartirJetons && (
             <>
@@ -410,12 +447,15 @@ export function ContextActions({
             </>
           )}
           {onDeletePiece && !showRepartir && (
-            <CtxBtn testId="ctx-delete-jeton" destructive onClick={() => {
-              if (deleteConfirm) { onDeletePiece(piece.id); }
-              else { setDeleteConfirm(true); }
-            }}>
-              {deleteConfirm ? 'Sûr?' : 'Supprimer'}
-            </CtxBtn>
+            <>
+              <Divider />
+              <CtxBtn testId="ctx-delete-jeton" destructive pulse={deleteConfirm} onClick={() => {
+                if (deleteConfirm) { onDeletePiece(piece.id); }
+                else { setDeleteConfirm(true); }
+              }}>
+                {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
+              </CtxBtn>
+            </>
           )}
         </>
       )}
@@ -492,7 +532,7 @@ export function ContextActions({
               )}
               {/* Divider */}
               <div style={{ width: '100%', height: 1, background: '#E8E5F0', margin: '4px 0' }} />
-              <div style={{ fontSize: 10, color: '#9CA3AF', padding: '0 4px', marginBottom: 2 }}>Paramètres</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF', padding: '0 4px', marginBottom: 2 }}>Paramètres</div>
               {/* Bloc Paramètres */}
               <CtxBtn onClick={() => setDroiteSubmenu('min')}>
                 Min: {piece.min}
@@ -802,38 +842,35 @@ export function ContextActions({
         </>
       )}
 
-      {/* Schema — premier niveau */}
+      {/* Schema — premier niveau (regroupé : Identification / Structure / Destruction) */}
       {isSchema(piece) && schemaSubmenu === 'none' && (
         <>
+          {/* Groupe Identification */}
           <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
           <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
+          <Divider />
+          {/* Groupe Structure */}
           <CtxBtn onClick={() => setSchemaSubmenu('type')}>Type</CtxBtn>
-          {/* Discrete size buttons — direct in L1 to reduce clicks (R12) */}
-          {/* For comparaison: resize first bar only, preserve ratio. Others: uniform. */}
-          {[0.5, 1, 2, 3].map(m => (
-            <CtxBtn key={m}
-              active={piece.bars[0]?.sizeMultiplier === m}
-              onClick={() => {
-                let newBars;
-                if (piece.gabarit === 'comparaison' && piece.bars.length >= 2) {
-                  // Preserve ratio between bars
-                  const oldFirst = piece.bars[0].sizeMultiplier || 1;
-                  const ratio = m / oldFirst;
-                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: Math.max(0.25, b.sizeMultiplier * ratio) }));
-                } else {
-                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: m }));
-                }
-                onEditPiece(piece.id, { bars: newBars, referenceWidth: m * referenceUnitMm });
-              }}>×{m}</CtxBtn>
-          ))}
+          <CtxBtn onClick={() => setSchemaSubmenu('taille')}>
+            Taille {piece.bars[0]?.sizeMultiplier ?? 1}×
+          </CtxBtn>
           {/* Add/remove parts (for parties-tout, transformation) */}
           {(piece.gabarit === 'parties-tout' || piece.gabarit === 'transformation' || piece.gabarit === 'libre') && (
             <CtxBtn onClick={() => {
               const bar = piece.bars[0];
               if (bar && bar.parts.length < 6) {
                 const partColors: ('bleu' | 'rouge' | 'vert' | 'jaune')[] = ['bleu', 'rouge', 'vert', 'jaune'];
-                const newColor = partColors[bar.parts.length % partColors.length];
-                const newParts = [...bar.parts, { label: '', value: null, couleur: newColor }];
+                let newParts;
+                if (bar.parts.length === 0) {
+                  // First split: create 2 parts (1 part = whole bar = visually unchanged)
+                  newParts = [
+                    { label: '', value: null, couleur: bar.couleur },
+                    { label: '', value: null, couleur: partColors[1] },
+                  ];
+                } else {
+                  const newColor = partColors[bar.parts.length % partColors.length];
+                  newParts = [...bar.parts, { label: '', value: null, couleur: newColor }];
+                }
                 const newBars = [{ ...bar, parts: newParts }, ...piece.bars.slice(1)];
                 onEditPiece(piece.id, { bars: newBars });
                 onAddPart();
@@ -851,6 +888,30 @@ export function ContextActions({
           )}
         </>
       )}
+      {/* Schema — sous-menu Taille */}
+      {isSchema(piece) && schemaSubmenu === 'taille' && (
+        <>
+          <CtxBtn onClick={() => setSchemaSubmenu('none')} back>←</CtxBtn>
+          {[0.5, 1, 2, 3].map(m => (
+            <CtxBtn key={m}
+              active={piece.bars[0]?.sizeMultiplier === m}
+              onClick={() => {
+                let newBars;
+                if (piece.gabarit === 'comparaison' && piece.bars.length >= 2) {
+                  const oldFirst = piece.bars[0].sizeMultiplier || 1;
+                  const ratio = m / oldFirst;
+                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: Math.max(0.25, b.sizeMultiplier * ratio) }));
+                } else {
+                  newBars = piece.bars.map(b => ({ ...b, sizeMultiplier: m }));
+                }
+                onEditPiece(piece.id, { bars: newBars, referenceWidth: m * referenceUnitMm });
+                setSchemaSubmenu('none');
+              }}>
+              {m}×
+            </CtxBtn>
+          ))}
+        </>
+      )}
       {/* Schema — sous-menu Type (R12: illustration + verbe d'action) */}
       {isSchema(piece) && schemaSubmenu === 'type' && (
         <>
@@ -860,7 +921,7 @@ export function ContextActions({
             { g: 'comparaison' as SchemaGabarit, label: 'Comparer deux quantités' },
             { g: 'groupes-egaux' as SchemaGabarit, label: 'Faire des groupes égaux' },
             { g: 'transformation' as SchemaGabarit, label: 'Avant → Après' },
-            { g: 'libre' as SchemaGabarit, label: 'Libre' },
+            { g: 'libre' as SchemaGabarit, label: 'Schéma libre' },
           ]).map(({ g, label }) => (
             <CtxBtn key={g}
               active={piece.gabarit === g}
@@ -1000,28 +1061,32 @@ export function ContextActions({
         <CtxBtn onClick={() => onStartEdit(piece.id)}>Texte</CtxBtn>
       )}
 
-      {/* Delete — micro-confirmation "Sûr?" (2s timer). Hidden inside submenus. */}
+      {/* Delete — isolated at bottom with separator. Micro-confirmation 3.5s. Hidden inside submenus. */}
       {onDeletePiece && !piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && !(selectedBondInfo && selectedBondInfo.pieceId === piece.id) && (
-        <CtxBtn
-          testId="ctx-delete"
-          destructive
-          onClick={() => {
-            if (deleteConfirm) {
-              onDeletePiece(piece.id);
-            } else {
-              setDeleteConfirm(true);
-            }
-          }}
-        >
-          {deleteConfirm ? 'Sûr?' : 'Supprimer'}
-        </CtxBtn>
+        <>
+          <Divider />
+          <CtxBtn
+            testId="ctx-delete"
+            destructive
+            pulse={deleteConfirm}
+            onClick={() => {
+              if (deleteConfirm) {
+                onDeletePiece(piece.id);
+              } else {
+                setDeleteConfirm(true);
+              }
+            }}
+          >
+            {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
+          </CtxBtn>
+        </>
       )}
     </div>
     </>
   );
 }
 
-function CtxBtn({ children, onClick, active, destructive, back, disabled, testId, onPointerEnter, onPointerLeave, ...rest }: {
+function CtxBtn({ children, onClick, active, destructive, back, disabled, testId, onPointerEnter, onPointerLeave, debounceMs, pulse, ...rest }: {
   children: React.ReactNode;
   onClick: () => void;
   active?: boolean;
@@ -1031,30 +1096,37 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, testId
   testId?: string;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
+  debounceMs?: number;
+  pulse?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const defaultDebounce = destructive ? 300 : back ? 150 : 200;
+  const delay = debounceMs ?? defaultDebounce;
   return (
     <button
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled ? undefined : () => debouncedClick(onClick, delay)}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       disabled={disabled}
       data-testid={testId}
+      role="menuitem"
       {...rest}
       style={{
         padding: back ? '10px 12px' : '10px 14px',
-        fontSize: back ? 14 : 13,
-        borderRadius: 6,
-        background: disabled ? '#F0F0F0' : back ? '#F3F4F6' : destructive ? '#FEE2E2' : active ? '#EBF0F9' : UI_BG,
+        fontSize: back ? 15 : 14,
+        borderRadius: 10,
+        background: disabled ? '#F0F0F0' : back ? '#F3F4F6' : destructive ? (pulse ? '#F8B4B4' : '#FEE2E2') : active ? '#EBF0F9' : UI_BG,
         border: `1px solid ${disabled ? '#E0E0E0' : back ? '#D5D0E0' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_BORDER}`,
         color: disabled ? '#C0C0C0' : back ? '#6B7280' : destructive ? COLORS.destructive : active ? COLORS.primary : UI_TEXT_SECONDARY,
         cursor: disabled ? 'default' : 'pointer',
         whiteSpace: 'nowrap',
-        minHeight: 44,
-        minWidth: 44,
+        minHeight: 48,
+        minWidth: 48,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         opacity: disabled ? 0.5 : 1,
+        transition: 'background 0.1s, border-color 0.1s, transform 0.05s',
+        animation: pulse ? 'ctx-pulse 1.5s ease-in-out infinite' : undefined,
       }}
     >
       {children}
@@ -1069,18 +1141,30 @@ function ColorRow({ pieceId, current, onChange }: {
   onChange: (id: string, c: CouleurPiece) => void;
 }) {
   return (
-    <div style={{ display: 'flex', gap: 6, width: '100%', paddingTop: 2 }}>
-      {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => (
-        <button key={c} onClick={() => onChange(pieceId, c)}
-          aria-label={`Couleur ${c}`}
-          style={{
-            minWidth: 44, minHeight: 44, borderRadius: '50%',
-            background: getPieceColor(c),
-            border: `3px solid ${current === c ? '#1E1A2E' : 'transparent'}`,
-            cursor: 'pointer', opacity: current === c ? 1 : 0.5,
-          }}
-        />
-      ))}
+    <div style={{ display: 'flex', gap: 10, width: '100%', paddingTop: 2 }}>
+      {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => {
+        const isSelected = current === c;
+        return (
+          <button key={c} onClick={() => debouncedClick(() => onChange(pieceId, c), 200)}
+            aria-label={`Couleur ${c}${isSelected ? ' (sélectionnée)' : ''}`}
+            role="menuitem"
+            style={{
+              minWidth: 48, minHeight: 48, borderRadius: '50%',
+              background: getPieceColor(c),
+              border: `3px solid ${isSelected ? '#1E1A2E' : 'transparent'}`,
+              cursor: 'pointer', opacity: isSelected ? 1 : 0.5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'opacity 0.1s, border-color 0.1s',
+            }}
+          >
+            {isSelected && (
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4 9.5L7.5 13L14 5.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

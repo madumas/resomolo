@@ -57,7 +57,7 @@ export const UI_PRIMARY = '#7028e0';
 export const UI_DESTRUCTIVE = '#C82828';
 export const UI_BORDER = '#D5D0E0';
 export const UI_TEXT_PRIMARY = '#1E1A2E';
-export const UI_TEXT_SECONDARY = '#55506A';
+export const UI_TEXT_SECONDARY = '#4A455E';
 export const UI_DISABLED_BG = '#ECEAF0';
 export const UI_DISABLED_TEXT = '#9E9AAF';
 
