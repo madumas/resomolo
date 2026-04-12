@@ -88,6 +88,14 @@ svg .bond-removing {
   50% { opacity: 0.5; }
 }
 
+/* Marker delete hint — X appears on hover */
+.marker-deletable:hover circle {
+  fill: #D32F2F !important;
+}
+.marker-deletable:hover .marker-x {
+  opacity: 1 !important;
+}
+
 /* Bond mode active indicator (pulsing selection border) */
 @keyframes bond-mode-pulse {
   0%, 100% { stroke-opacity: 1; }

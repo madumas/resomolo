@@ -367,9 +367,14 @@ export function Canvas({
 
     // Bond hit-test: check if click landed on an invisible bond arc path
     const bondIdx = (e.target as SVGElement)?.dataset?.bondIndex;
-    if (bondIdx !== undefined && selectedPieceId && !bondMode) {
-      onSelectBond?.({ pieceId: selectedPieceId, bondIndex: parseInt(bondIdx) });
-      return;
+    if (bondIdx !== undefined && !bondMode) {
+      const pieceEl = (e.target as SVGElement).closest('[data-piece-id]');
+      const pieceId = pieceEl?.getAttribute('data-piece-id');
+      if (pieceId) {
+        if (selectedPieceId !== pieceId) onSelectPiece(pieceId);
+        onSelectBond?.({ pieceId, bondIndex: parseInt(bondIdx) });
+        return;
+      }
     }
 
     const pos = pointerToMm(e, svgRef.current);

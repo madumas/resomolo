@@ -968,7 +968,7 @@ export function ContextActions({
       )}
 
       {/* Delete — micro-confirmation "Sûr?" (2s timer). Hidden inside submenus. */}
-      {onDeletePiece && !piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && (
+      {onDeletePiece && !piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && !(selectedBondInfo && selectedBondInfo.pieceId === piece.id) && (
         <CtxBtn
           testId="ctx-delete"
           destructive

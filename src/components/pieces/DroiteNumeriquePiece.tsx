@@ -212,13 +212,24 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
         const isZeroTick = min < 0 && Math.abs(val) < 1e-9;
         const hasVisibleTickLabel = (tickIndex % labelEvery === 0 || isZeroTick) && tickIndex >= 0 && tickIndex < numTicks;
         const showMarkerLabel = !hasVisibleTickLabel; // blue dot is enough when tick label is visible
+        const canDelete = isSelected && isExplicit && !bondMode && !isBondFrom;
+        const r = isBondFrom ? 5.5 : isBondEndpointSel ? 5 : 4;
         return (
-          <g key={`m-${i}`}>
+          <g key={`m-${i}`} className={canDelete ? 'marker-deletable' : undefined}
+            style={canDelete ? { cursor: 'pointer' } : undefined}>
             <circle cx={mx} cy={y}
-              r={isBondFrom ? 5.5 : isBondEndpointSel ? 5 : 4}
+              r={r}
               fill={isExplicit || isBondEndpoint || isBondFrom ? '#185FA5' : 'rgba(24, 95, 165, 0.4)'}
               stroke="#fff" strokeWidth={0.7}
               style={isBondFrom ? { animation: 'marker-pulse 1.5s ease-in-out infinite' } : undefined} />
+            {canDelete && (
+              <g className="marker-x" opacity={0}>
+                <line x1={mx - 2.2} y1={y - 2.2} x2={mx + 2.2} y2={y + 2.2}
+                  stroke="#fff" strokeWidth={1.5} strokeLinecap="round" />
+                <line x1={mx + 2.2} y1={y - 2.2} x2={mx - 2.2} y2={y + 2.2}
+                  stroke="#fff" strokeWidth={1.5} strokeLinecap="round" />
+              </g>
+            )}
             {showMarkerLabel && (
               <text x={mx} y={markerLabelY} textAnchor="middle"
                 fontSize={7 * ts} fontWeight={600}
