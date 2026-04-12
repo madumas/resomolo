@@ -367,6 +367,98 @@ export function Canvas({
         return;
       }
 
+      // Schema — click on another label/value switches field directly (spreadsheet pattern)
+      const curSchemaField = editingSchemaFieldRef.current;
+      const editingSchema = curSchemaField && pieces.find(p => p.id === editingPieceId);
+      const nextSchemaField = editingSchema && svgRef.current && isSchema(editingSchema) && (() => {
+        const pos = pointerToMm(e, svgRef.current!);
+        const schema = editingSchema as Schema;
+        const schemaLayout = computePartLayout(schema, referenceUnitMm);
+        const relX = pos.x - schema.x;
+        const relY = pos.y - schema.y;
+        const hitPad = 4;
+
+        // Bar labels (left of bars)
+        for (let bi = 0; bi < schemaLayout.bars.length; bi++) {
+          const bar = schemaLayout.bars[bi];
+          if (relX >= bar.x - 20 && relX <= bar.x - 1 &&
+              Math.abs(relY - (bar.y + bar.height / 2)) <= bar.height / 2 + hitPad) {
+            return { type: 'bar-label' as const, barIndex: bi };
+          }
+        }
+        // Part labels (above parts)
+        for (const part of schemaLayout.parts) {
+          if (Math.abs(relX - (part.x + part.width / 2)) <= part.width / 2 + hitPad &&
+              relY >= part.y - 10 && relY <= part.y) {
+            return { type: 'part-label' as const, barIndex: part.barIndex, partIndex: part.partIndex };
+          }
+        }
+        // Bar values (bar body, no parts)
+        for (let bi = 0; bi < schemaLayout.bars.length; bi++) {
+          const bar = schemaLayout.bars[bi];
+          if (schema.bars[bi]?.parts.length === 0 &&
+              relX >= bar.x && relX <= bar.x + bar.width &&
+              relY >= bar.y && relY <= bar.y + bar.height) {
+            return { type: 'bar-value' as const, barIndex: bi };
+          }
+        }
+        // Part values (inside parts)
+        for (const part of schemaLayout.parts) {
+          if (relX >= part.x && relX <= part.x + part.width &&
+              relY >= part.y && relY <= part.y + part.height) {
+            return { type: 'part-value' as const, barIndex: part.barIndex, partIndex: part.partIndex };
+          }
+        }
+        // Total bracket
+        if (schemaLayout.totalBracket) {
+          const tb = schemaLayout.totalBracket;
+          if (relY >= tb.y && relY <= tb.y + tb.height + hitPad &&
+              relX >= 0 && relX <= (schemaLayout.bars[0]?.width ?? schemaLayout.width)) {
+            return { type: 'total' as const };
+          }
+        }
+        // Diff bracket
+        if (schemaLayout.differenceBracket) {
+          const db = schemaLayout.differenceBracket;
+          if (relX >= db.x && relX <= db.x + 20 &&
+              relY >= db.y && relY <= db.y + db.height) {
+            return { type: 'diff' as const };
+          }
+        }
+        return null;
+      })();
+
+      if (nextSchemaField) {
+        // Commit current schema field, then switch
+        const input = document.activeElement;
+        if (input instanceof HTMLInputElement) {
+          const schema = editingSchema as Schema;
+          const value = input.value;
+          if (curSchemaField.type === 'bar-label') {
+            const newBars = schema.bars.map((b, i) => i === curSchemaField.barIndex ? { ...b, label: value } : b);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+          } else if (curSchemaField.type === 'bar-value') {
+            const numVal = value === '' ? null : Number(value);
+            const newBars = schema.bars.map((b, i) => i === curSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+          } else if (curSchemaField.type === 'part-label') {
+            const { barIndex, partIndex } = curSchemaField;
+            const newBars = schema.bars.map((b, i) => i === barIndex ? { ...b, parts: b.parts.map((p, j) => j === partIndex ? { ...p, label: value } : p) } : b);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+          } else if (curSchemaField.type === 'part-value') {
+            const { barIndex, partIndex } = curSchemaField;
+            const numVal = value === '' ? null : Number(value);
+            const newBars = schema.bars.map((b, i) => i === barIndex ? { ...b, parts: b.parts.map((p, j) => j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b);
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+          } else if (curSchemaField.type === 'total' || curSchemaField.type === 'diff') {
+            dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
+          }
+        }
+        // Switch field without closing editor
+        setEditingSchemaField(nextSchemaField as any);
+        return;
+      }
+
       // Normal case: commit and close
       if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
         document.activeElement.blur();
