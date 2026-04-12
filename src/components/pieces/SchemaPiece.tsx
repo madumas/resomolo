@@ -45,14 +45,14 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               rx={1.5} fill={fill} stroke={color} strokeWidth={sw} />
 
             {/* Bar label to the left */}
-            {bar.label && (
-              <text x={x + bar.x - 4} y={y + bar.y + barH / 2}
-                textAnchor="end" dominantBaseline="central"
-                fontSize={T2 * ts} fill="#1E1A2E"
-                data-edit-target={`${piece.id}-bar-${bi}-label`}>
-                {bar.label}
-              </text>
-            )}
+            <text x={x + bar.x - 4} y={y + bar.y + barH / 2}
+              textAnchor="end" dominantBaseline="central"
+              fontSize={T2 * ts}
+              fill={bar.label ? '#1E1A2E' : '#B0A8C0'}
+              opacity={bar.label ? 1 : 0.6}
+              data-edit-target={`${piece.id}-bar-${bi}-label`}>
+              {bar.label || '...'}
+            </text>
 
             {/* Multiplier annotation "×N" (R15 — triple coding) — offset below first bar */}
             {bar.multiplierLabel && bi === 0 && (
@@ -80,13 +80,13 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               fill={fill} stroke={color} strokeWidth={0.3} />
 
             {/* Part label above */}
-            {part.label && (
-              <text x={x + part.x + part.width / 2} y={y + part.y - 2}
-                textAnchor="middle" fontSize={T2 * ts} fill="#55506A"
-                data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-label`}>
-                {part.label}
-              </text>
-            )}
+            <text x={x + part.x + part.width / 2} y={y + part.y - 2}
+              textAnchor="middle" fontSize={T2 * ts}
+              fill={part.label ? '#55506A' : '#B0A8C0'}
+              opacity={part.label ? 1 : 0.6}
+              data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-label`}>
+              {part.label || '...'}
+            </text>
 
             {/* Part value inside */}
             {part.value !== null && (
@@ -137,19 +137,25 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         );
       })()}
 
-      {/* Difference bracket right (comparaison) */}
+      {/* Difference bracket horizontal (comparaison) */}
       {layout.differenceBracket && (() => {
         const db = layout.differenceBracket!;
         const bx = x + db.x;
         const by = y + db.y;
+        const midY = by + db.height / 2;
         return (
           <g>
-            {/* Bracket line */}
-            <path d={`M${bx},${by} L${bx + 5},${by} L${bx + 5},${by + db.height} L${bx},${by + db.height}`}
-              stroke="#55506A" strokeWidth={0.8} fill="none" />
+            {/* Horizontal bracket ⊔: bottom line with two ticks ascending toward longer bar */}
+            <line x1={bx} y1={by + db.height} x2={bx + db.width} y2={by + db.height}
+              stroke="#55506A" strokeWidth={0.8} />
+            <line x1={bx} y1={by + db.height} x2={bx} y2={by}
+              stroke="#55506A" strokeWidth={0.8} />
+            <line x1={bx + db.width} y1={by + db.height} x2={bx + db.width} y2={by}
+              stroke="#55506A" strokeWidth={0.8} />
             {/* Difference label */}
-            <text x={bx + 9} y={by + db.height / 2}
-              dominantBaseline="central" fontSize={T2 * ts} fill="#55506A" fontWeight={500}
+            <text x={bx + db.width / 2} y={by + db.height / 2 - 1}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={T2 * ts} fill="#55506A" fontWeight={500}
               data-edit-target={`${piece.id}-diff`}>
               {db.label}
             </text>

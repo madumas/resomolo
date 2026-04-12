@@ -19,7 +19,7 @@ export interface SchemaLayoutInfo {
   bars: { x: number; y: number; width: number; height: number; label: string; multiplierLabel: string | null }[];
   parts: PartLayoutInfo[];
   totalBracket: { x: number; y: number; height: number; label: string } | null;
-  differenceBracket: { x: number; y: number; height: number; label: string } | null;
+  differenceBracket: { x: number; y: number; width: number; height: number; label: string } | null;
   transformationMarker: { x: number; y: number } | null;
   width: number;
   height: number;
@@ -51,7 +51,7 @@ export function computeSchemaHeight(schema: Schema, verticalGap: number = VERTIC
 
   // Add label space
   const hasTopLabel = schema.gabarit !== 'libre';
-  const hasBottomLabel = schema.gabarit === 'parties-tout' || schema.gabarit === 'transformation';
+  const hasBottomLabel = schema.gabarit === 'parties-tout' || schema.gabarit === 'transformation' || schema.gabarit === 'comparaison';
   return barsHeight + (hasTopLabel ? LABEL_HEIGHT : 0) + (hasBottomLabel ? LABEL_HEIGHT : 0);
 }
 
@@ -210,10 +210,14 @@ export function computePartLayout(
     const bar1W = schema.bars[0].sizeMultiplier * referenceUnitMm;
     const bar2W = schema.bars[1].sizeMultiplier * referenceUnitMm;
     const shorterW = Math.min(bar1W, bar2W);
+    const longerW = Math.max(bar1W, bar2W);
+    // Bracket below bar 2 (shorter), ⊔ shape pointing up to emphasize the gap
+    const bar2Bottom = topOffset + 2 * barH + verticalGap;
     differenceBracket = {
-      x: shorterW + 2,
-      y: topOffset,
-      height: 2 * barH + verticalGap,
+      x: shorterW,
+      y: bar2Bottom + 1,
+      width: longerW - shorterW,
+      height: LABEL_HEIGHT,
       label: schema.totalLabel || '?',
     };
   }
