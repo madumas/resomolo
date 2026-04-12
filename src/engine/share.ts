@@ -17,7 +17,7 @@ interface MinPiece {
   pi?: string; // parentId
   tpl?: string; // template (reponse)
   // DroiteNumerique
-  mn?: number; mx?: number; st?: number; mk?: number[]; wd?: number;
+  mn?: number; mx?: number; st?: number; mk?: number[]; bd?: any[]; wd?: number;
   // Tableau
   rw?: number; cl?: number; clz?: string[][]; hr?: boolean;
   // Arbre
@@ -134,7 +134,7 @@ function expandPiece(m: MinPiece): Piece {
       return { ...base, type: 'fleche', fromId: m.fi ?? '', toId: m.ti ?? '', label: m.l ?? '' };
     case 'droiteNumerique':
       return { ...base, type: 'droiteNumerique', min: m.mn ?? 0, max: m.mx ?? 10, step: m.st ?? 1,
-        markers: m.mk ?? [], width: m.wd ?? 200 };
+        markers: m.mk ?? [], bonds: m.bd ?? [], width: m.wd ?? 200 };
     case 'tableau':
       return { ...base, type: 'tableau', rows: m.rw ?? 2, cols: m.cl ?? 3,
         cells: m.clz ?? Array.from({ length: m.rw ?? 2 }, () => Array(m.cl ?? 3).fill('')),

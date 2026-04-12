@@ -463,22 +463,7 @@ export function Canvas({
         // Stay in grouping mode — click empty space or Escape to end
         return;
       }
-      // Bond mode — clicking on the droite creates a jump (start or end point)
-      if (bondMode && isDroiteNumerique(hitPiece) && hitPiece.id === bondMode.pieceId) {
-        const dn = hitPiece as DroiteNumerique;
-        const relX = pos.x - dn.x;
-        const ratio = relX / dn.width;
-        const nearestVal = Math.round(dn.min + ratio * (dn.max - dn.min));
-        const safeStep = Math.max(0.1, dn.step);
-        const clamped = Math.max(dn.min, Math.min(dn.max, nearestVal));
-        const snapped = Math.round((clamped - dn.min) / safeStep) * safeStep + dn.min;
-        if (bondMode.fromVal === null) {
-          onSetBondFrom?.(snapped);
-        } else if (Math.abs(snapped - bondMode.fromVal) > 1e-9) {
-          onBondCreated?.(bondMode.pieceId, bondMode.fromVal, snapped);
-        }
-        return;
-      }
+      // Bond mode on droite is handled earlier (line ~395) before hit-testing.
       // DroiteNumerique marker toggle — clicking on a selected droite adds/removes a marker
       if (isDroiteNumerique(hitPiece) && hitPiece.id === selectedPieceId && !bondMode) {
         const dn = hitPiece as DroiteNumerique;

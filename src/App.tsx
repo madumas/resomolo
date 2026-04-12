@@ -31,7 +31,7 @@ import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
 import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
-import { onUndoSound, onBond, setSoundMode, setGainMultiplier } from './engine/sound';
+import { onUndoSound, onBond, onAcknowledge, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
 
 interface AppProps {
