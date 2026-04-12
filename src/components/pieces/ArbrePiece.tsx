@@ -1,5 +1,5 @@
 import type { Arbre } from '../../model/types';
-import { ARBRE_NODE_W_MM, ARBRE_NODE_H_MM } from '../../model/types';
+import { ARBRE_NODE_W_MM, ARBRE_NODE_H_MM, ARBRE_MAX_LEAVES, ARBRE_MAX_LEAVES_COMPLET, ARBRE_SIBLING_GAP_MM } from '../../model/types';
 import { computeTreeLayout } from '../../engine/arbre-layout';
 
 // TODO v2: WAI-ARIA TreeView keyboard navigation (tabindex + aria-activedescendant)
@@ -13,14 +13,16 @@ interface ArbrePieceProps {
   piece: Arbre;
   isSelected: boolean;
   textScale?: number;
+  toolbarMode?: 'essentiel' | 'complet';
 }
 
-export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps) {
+export function ArbrePiece({ piece, isSelected, textScale = 1, toolbarMode = 'essentiel' }: ArbrePieceProps) {
   const ts = textScale;
-  const layout = computeTreeLayout(piece.levels);
-  const { nodes, branches, leafCount, width, height, warning } = layout;
+  const maxLeaves = toolbarMode === 'complet' ? ARBRE_MAX_LEAVES_COMPLET : ARBRE_MAX_LEAVES;
+  const layout = computeTreeLayout(piece.levels, ARBRE_SIBLING_GAP_MM, maxLeaves);
+  const { nodes, branches, leafCount, width, height, warning, sizeMultiplier } = layout;
   const { x, y } = piece;
-  const nw = ARBRE_NODE_W_MM;
+  const nw = ARBRE_NODE_W_MM * sizeMultiplier;
   const nh = ARBRE_NODE_H_MM;
 
   if (nodes.length === 0) {
@@ -71,7 +73,7 @@ export function ArbrePiece({ piece, isSelected, textScale = 1 }: ArbrePieceProps
               data-edit-target={`${piece.id}-node-${i}`} />
             <text x={x + node.x} y={y + node.y + 1}
               textAnchor="middle" dominantBaseline="central"
-              fontSize={Math.min(T1, nw / Math.max(1, displayLabel.length) * 1.4) * ts}
+              fontSize={Math.min(T1 * sizeMultiplier, nw / Math.max(1, displayLabel.length) * 1.4) * ts}
               fill={isEmpty ? '#B0A8C0' : '#1E1A2E'}
               fontWeight={isEmpty ? 400 : 600}
               opacity={isEmpty ? 0.65 : 1}

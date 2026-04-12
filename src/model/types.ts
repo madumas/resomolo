@@ -237,7 +237,10 @@ export const ARBRE_SIBLING_GAP_MM = 8;
 export const ARBRE_MAX_LEVELS = 4;
 export const ARBRE_MAX_OPTIONS = 6;
 export const ARBRE_MAX_LEAVES = 24;
+export const ARBRE_MAX_LEAVES_COMPLET = 30;
 export const ARBRE_WARN_LEAVES = 16;
+export const ARBRE_NODE_W_COMPACT_MM = 20;
+export const ARBRE_SIBLING_GAP_COMPACT_MM = 4;
 
 // Schema constants
 export const SCHEMA_BAR_HEIGHT_MM = 15;  // same as BAR_HEIGHT_MM for visual coherence
@@ -249,6 +252,7 @@ export const INCONNUE_SIZE_MM = 12;  // diameter of the visual circle
 export const CHART_DEFAULT_WIDTH_MM = 120;
 export const CHART_DEFAULT_HEIGHT_MM = 90;
 export const CHART_MAX_CATEGORIES = 6;
+export const CHART_MAX_CATEGORIES_COMPLET = 12;
 
 // === Settings ===
 

@@ -2,6 +2,7 @@ import type { ArbreLevel } from '../model/types';
 import {
   ARBRE_LEVEL_GAP_MM, ARBRE_NODE_W_MM, ARBRE_NODE_H_MM,
   ARBRE_SIBLING_GAP_MM, ARBRE_MAX_LEAVES, ARBRE_WARN_LEAVES,
+  ARBRE_NODE_W_COMPACT_MM, ARBRE_SIBLING_GAP_COMPACT_MM,
 } from '../model/types';
 
 // === Tree layout types ===
@@ -30,6 +31,7 @@ export interface TreeLayout {
   height: number;
   warning: string | null; // non-judgmental warning if leafCount > WARN threshold
   capped: boolean;        // true if tree was capped at MAX_LEAVES
+  sizeMultiplier: number; // 1.0 = normal, <1.0 = compact (progressive scaling)
 }
 
 // === Layout computation ===
@@ -47,9 +49,10 @@ export interface TreeLayout {
 export function computeTreeLayout(
   levels: ArbreLevel[],
   siblingGap: number = ARBRE_SIBLING_GAP_MM,
+  maxLeaves: number = ARBRE_MAX_LEAVES,
 ): TreeLayout {
   if (levels.length === 0) {
-    return { nodes: [], branches: [], leafCount: 0, width: 0, height: 0, warning: null, capped: false };
+    return { nodes: [], branches: [], leafCount: 0, width: 0, height: 0, warning: null, capped: false, sizeMultiplier: 1 };
   }
 
   // Compute leaf count (product of all option counts)
@@ -58,19 +61,28 @@ export function computeTreeLayout(
   for (const level of levels) {
     leafCount *= Math.max(1, level.options.length);
   }
-  if (leafCount > ARBRE_MAX_LEAVES) {
+  if (leafCount > maxLeaves) {
     capped = true;
-    leafCount = ARBRE_MAX_LEAVES;
+    leafCount = maxLeaves;
   }
 
   const warning = leafCount >= ARBRE_WARN_LEAVES
     ? `Ton arbre a ${leafCount} feuilles. C'est beaucoup!`
     : null;
 
-  const nodeW = ARBRE_NODE_W_MM;
+  // Progressive compact scaling: lerp from 1.0 (≤10 leaves) to min (≥20 leaves)
+  const minScale = ARBRE_NODE_W_COMPACT_MM / ARBRE_NODE_W_MM;
+  const sizeMultiplier = leafCount <= 10 ? 1.0
+    : leafCount >= 20 ? minScale
+    : 1.0 + (minScale - 1.0) * (leafCount - 10) / 10;
+
+  const nodeW = ARBRE_NODE_W_MM * sizeMultiplier;
   const nodeH = ARBRE_NODE_H_MM;
   const levelGap = ARBRE_LEVEL_GAP_MM;
-  const cellW = nodeW + siblingGap;
+  const effectiveGap = siblingGap === ARBRE_SIBLING_GAP_MM
+    ? ARBRE_SIBLING_GAP_MM + (ARBRE_SIBLING_GAP_COMPACT_MM - ARBRE_SIBLING_GAP_MM) * (1 - sizeMultiplier) / (1 - minScale || 1)
+    : siblingGap;
+  const cellW = nodeW + effectiveGap;
 
   // Total width based on leaf count
   const width = Math.max(nodeW, leafCount * cellW - siblingGap);
@@ -167,7 +179,7 @@ export function computeTreeLayout(
     }
   }
 
-  return { nodes, branches, leafCount, width: actualWidth, height, warning, capped };
+  return { nodes, branches, leafCount, width: actualWidth, height, warning, capped, sizeMultiplier };
 }
 
 // === "Brancher pareil" helper ===

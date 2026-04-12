@@ -2573,6 +2573,7 @@ export function Canvas({
           bondMode={bondMode}
           selectedBondInfo={selectedBondInfo}
           onSelectBond={onSelectBond}
+          toolbarMode={toolbarMode}
         />
       )}
 
@@ -2904,7 +2905,7 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
         bondFromVal={bondFromVal}
         selectedBondIndex={selectedBondIndex} />; break;
     case 'arbre':
-      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} />; break;
+      inner = <ArbrePiece piece={piece as Arbre} isSelected={isSelected} textScale={textScale} toolbarMode={toolbarMode} />; break;
     case 'schema':
       inner = <SchemaPiece piece={piece as Schema} referenceUnitMm={referenceUnitMm} isSelected={isSelected} highContrast={highContrast} textScale={textScale} />; break;
     case 'inconnue':

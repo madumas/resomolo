@@ -171,9 +171,13 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
 
       {/* Tick marks and labels */}
       {Array.from({ length: numTicks }, (_, i) => {
-        const val = min + i * safeStep;
+        const rawVal = min + i * safeStep;
+        // Round to step precision to avoid floating-point artifacts (e.g. 3.5999999999996)
+        const stepDecimals = (String(safeStep).split('.')[1] || '').length;
+        const val = parseFloat(rawVal.toFixed(Math.max(stepDecimals, (String(min).split('.')[1] || '').length)));
         const tx = x + i * tickSpacing;
         const isZero = min < 0 && Math.abs(val) < 1e-9;
+        const displayVal = String(val).replace('.', ',');
         return (
           <g key={i}>
             <line x1={tx} y1={y - 3} x2={tx} y2={y + 3}
@@ -184,7 +188,7 @@ export function DroiteNumeriquePiece({ piece, isSelected, textScale = 1, selecte
                 fontSize={(isZero ? 8 : 7) * ts}
                 fontWeight={isZero ? 700 : 500}
                 fill={isZero ? '#7028E0' : '#55506A'}>
-                {val}
+                {displayVal}
               </text>
             )}
           </g>

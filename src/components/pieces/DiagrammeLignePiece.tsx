@@ -16,7 +16,9 @@ interface DiagrammeLignePieceProps {
 
 export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale = 1, highlightIndex }: DiagrammeLignePieceProps) {
   const ts = textScale;
-  const { x, y, width, height, points, title } = piece;
+  const { x, y, height, points, title } = piece;
+  // Auto-resize width when more than 6 points
+  const width = Math.max(piece.width, points.length * 18);
   const dims = { ...DEFAULT_CHART_DIMS, width, height };
   const plot = getPlotArea(dims);
   const values = points.map(p => p.value);
@@ -126,8 +128,9 @@ export function DiagrammeLignePiece({ piece, isSelected, highContrast, textScale
 
             {/* Label below axis */}
             <text x={px} y={y + plot.y + plot.height + 4}
-              textAnchor="middle" dominantBaseline="hanging"
-              fontSize={T2 * ts} fill="#55506A">
+              textAnchor={n > 6 ? 'end' : 'middle'} dominantBaseline="hanging"
+              fontSize={T2 * ts} fill="#55506A"
+              transform={n > 6 ? `rotate(-30, ${px}, ${y + plot.y + plot.height + 4})` : undefined}>
               {pt.label}
             </text>
 

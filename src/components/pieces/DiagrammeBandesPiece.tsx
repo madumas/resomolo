@@ -17,7 +17,9 @@ interface DiagrammeBandesPieceProps {
 
 export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScale = 1, highlightIndex }: DiagrammeBandesPieceProps) {
   const ts = textScale;
-  const { x, y, width, height, categories, title } = piece;
+  const { x, y, height, categories, title } = piece;
+  // Auto-resize width when more than 6 categories
+  const width = Math.max(piece.width, categories.length * 18);
   const dims = { ...DEFAULT_CHART_DIMS, width, height };
   const plot = getPlotArea(dims);
   const values = categories.map(c => c.value);
@@ -116,8 +118,9 @@ export function DiagrammeBandesPiece({ piece, isSelected, highContrast, textScal
 
             {/* Category label below axis */}
             <text x={barX + barWidth / 2} y={y + plot.y + plot.height + 4}
-              textAnchor="middle" dominantBaseline="hanging"
-              fontSize={T2 * ts} fill="#55506A">
+              textAnchor={n > 6 ? 'end' : 'middle'} dominantBaseline="hanging"
+              fontSize={T2 * ts} fill="#55506A"
+              transform={n > 6 ? `rotate(-30, ${barX + barWidth / 2}, ${y + plot.y + plot.height + 4})` : undefined}>
               {cat.label}
             </text>
 

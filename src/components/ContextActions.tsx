@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Piece, CouleurPiece } from '../model/types';
 import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema, isDiagrammeBandes } from '../model/types';
-import { CHART_MAX_CATEGORIES } from '../model/types';
+import { CHART_MAX_CATEGORIES, CHART_MAX_CATEGORIES_COMPLET } from '../model/types';
 import type { SchemaGabarit } from '../model/types';
 import { computeTreeLayout } from '../engine/arbre-layout';
 import { computeSchemaWidth, computeSchemaHeight, getGabaritDefaults } from '../engine/schema-layout';
@@ -41,6 +41,7 @@ interface ContextActionsProps {
   bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
   selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
+  toolbarMode?: 'essentiel' | 'complet';
 }
 
 export function ContextActions({
@@ -73,6 +74,7 @@ export function ContextActions({
   bondMode,
   selectedBondInfo,
   onSelectBond,
+  toolbarMode = 'essentiel',
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
@@ -87,7 +89,8 @@ export function ContextActions({
   const [showRepartir, setShowRepartir] = useState(false);
 
   // DroiteNumerique submenu state
-  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur' | 'min-custom' | 'max-custom'>('none');
+  const [droiteSubmenu, setDroiteSubmenu] = useState<'none' | 'min' | 'max' | 'pas' | 'largeur' | 'min-custom' | 'max-custom' | 'pas-custom'>('none');
+  const isComplet = toolbarMode === 'complet';
   const [customValue, setCustomValue] = useState(0);
 
   // Tableau submenu state + preview
@@ -590,15 +593,43 @@ export function ContextActions({
               <CtxBtn onClick={() => setDroiteSubmenu('none')} back>
                 ←
               </CtxBtn>
-              {[1, 2, 5, 10].map(n => (
+              {[0.1, 0.25, 0.5, 1, 2, 5, 10].map(n => (
                 <CtxBtn
                   key={n}
                   active={piece.step === n}
                   onClick={() => { onEditPiece(piece.id, { step: n }); setDroiteSubmenu('none'); }}
                 >
-                  {n}
+                  {String(n).replace('.', ',')}
                 </CtxBtn>
               ))}
+              {isComplet && (
+                <CtxBtn onClick={() => { setCustomValue(piece.step); setDroiteSubmenu('pas-custom'); }}>
+                  Autre…
+                </CtxBtn>
+              )}
+            </>
+          )}
+          {droiteSubmenu === 'pas-custom' && (
+            <>
+              <CtxBtn onClick={() => setDroiteSubmenu('pas')} back>
+                ←
+              </CtxBtn>
+              <input
+                type="number"
+                value={customValue}
+                onChange={e => setCustomValue(Number(e.target.value))}
+                autoFocus
+                min={0.01}
+                step="any"
+                style={{ width: 60, minHeight: 44, fontSize: 15, textAlign: 'center', borderRadius: 8, border: '2px solid #D1D5DB', padding: '0 4px' }}
+                onKeyDown={e => { if (e.key === 'Enter' && customValue > 0 && customValue <= (piece.max - piece.min)) { onEditPiece(piece.id, { step: customValue }); setDroiteSubmenu('none'); } }}
+              />
+              <CtxBtn
+                disabled={customValue <= 0 || customValue > (piece.max - piece.min)}
+                onClick={() => { if (customValue > 0 && customValue <= (piece.max - piece.min)) { onEditPiece(piece.id, { step: customValue }); setDroiteSubmenu('none'); } }}
+              >
+                OK
+              </CtxBtn>
             </>
           )}
           {droiteSubmenu === 'largeur' && (
@@ -851,7 +882,7 @@ export function ContextActions({
             setEditingCategories(piece.categories.map(c => ({ ...c })));
             setBandesSubmenu('data');
           }}>Données {piece.categories.length}</CtxBtn>
-          {piece.categories.length < CHART_MAX_CATEGORIES && (
+          {piece.categories.length < (isComplet ? CHART_MAX_CATEGORIES_COMPLET : CHART_MAX_CATEGORIES) && (
             <CtxBtn onClick={() => {
               const partColors = ['bleu', 'rouge', 'vert', 'jaune'] as const;
               const newCat = { label: '', value: 0, couleur: partColors[piece.categories.length % 4] };
@@ -912,7 +943,7 @@ export function ContextActions({
             setEditingPoints((piece as any).points.map((p: any) => ({ ...p })));
             setLigneSubmenu('data');
           }}>Points {(piece as any).points.length}</CtxBtn>
-          {(piece as any).points.length < CHART_MAX_CATEGORIES && (
+          {(piece as any).points.length < (isComplet ? CHART_MAX_CATEGORIES_COMPLET : CHART_MAX_CATEGORIES) && (
             <CtxBtn onClick={() => {
               const newPt = { label: '', value: 0 };
               onEditPiece(piece.id, { points: [...(piece as any).points, newPt] });
