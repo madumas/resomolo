@@ -7,7 +7,7 @@
  *   npx playwright test e2e/review-screenshots.spec.ts --project='Desktop Chrome'
  *
  * Output:
- *   .ai-reviews/images/*.png
+ *   .review-screenshots/*.png
  */
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -20,7 +20,7 @@ import {
 } from './helpers/canvas';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const IMG_DIR = path.join(__dirname, '..', '.ai-reviews', 'images');
+const IMG_DIR = path.join(__dirname, '..', '.review-screenshots');
 const FIXTURE_DIR = path.join(__dirname, 'fixtures');
 
 function img(name: string) {
