@@ -2846,7 +2846,7 @@ test.describe('Visual audit — full flow', () => {
   });
 
   // ══════════════════════════════════════════════════════════════════
-  // Tests 90–115 — Post-revue 4 agents experts (ergo, pédago, neuropsych, UX)
+  // Tests 90–115 — Sauts sur la droite numérique
   // ══════════════════════════════════════════════════════════════════
 
   // T1 — Contraste WCAG barre d'état
@@ -4292,7 +4292,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(ctxActions.locator('button:has-text("Saut")')).toBeVisible({ timeout: 2000 });
 
     // Click Saut
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
 
     // Status bar should show bond mode message
@@ -4316,35 +4316,39 @@ test.describe('Visual audit — full flow', () => {
 
   test('139 — Droite numérique: enchaînement de sauts en mode Complet', async ({ page }) => {
     await navigateAndReady(page);
-    // Switch to Complet mode
-    const modeBtn = page.locator('button:has-text("Simplifié")');
-    if (await modeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
-      await modeBtn.click();
+    // Switch to Complet mode via ModeSelector dropdown
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    const completOption = page.locator('button:has-text("Complet")');
+    if (await completOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await completOption.click();
       await page.waitForTimeout(200);
     }
 
-    // Place droite
+    // Place droite near center of canvas
     await selectTool(page, 'droiteNumerique');
-    await clickCanvas(page, 250, 200);
+    await clickCanvas(page, 250, 100);
     await page.waitForTimeout(400);
+    // Deactivate tool
     await selectTool(page, 'droiteNumerique');
 
-    // Select and start bond mode
-    await selectPieceAt(page, 280, 200);
+    // Select the droite and start bond mode
+    await selectPieceAt(page, 200, 100);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
 
-    // Bond 1: 2 → 5
-    await clickCanvas(page, 190, 200); // ~2
-    await page.waitForTimeout(300);
-    await clickCanvas(page, 250, 200); // ~5
-    await page.waitForTimeout(300);
+    // Bond 1: click near tick 2, then tick 5 (coordinates relative to droite at y=100)
+    await clickCanvas(page, 190, 100);
+    await page.waitForTimeout(500);
+    await clickCanvas(page, 250, 100);
+    await page.waitForTimeout(500);
 
     // In Complet mode, chaining should keep bond mode active
-    // Bond 2: 5 → 8 (just click end, start is auto-set)
-    await clickCanvas(page, 310, 200); // ~8
-    await page.waitForTimeout(400);
+    // Bond 2: start auto-set to 5, click tick 8
+    await clickCanvas(page, 300, 100);
+    await page.waitForTimeout(500);
 
     // Should have 2 bonds
     const bondPaths = page.locator('[data-testid="canvas-svg"] path[data-bond-index]');
@@ -4371,7 +4375,7 @@ test.describe('Visual audit — full flow', () => {
     // Select droite and create a bond (3→7)
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 210, 200); // ~3
     await page.waitForTimeout(300);
@@ -4406,7 +4410,7 @@ test.describe('Visual audit — full flow', () => {
     // Create 2 bonds
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 190, 200); // start ~2
     await page.waitForTimeout(300);
@@ -4415,7 +4419,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Create another bond
     await selectPieceAt(page, 280, 200);
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 270, 200); // start ~6
     await page.waitForTimeout(300);
@@ -4471,7 +4475,7 @@ test.describe('Visual audit — full flow', () => {
     // Create bond 2→8
     await selectPieceAt(page, 280, 200);
     const ctxActions = page.locator('[data-testid="context-actions"]');
-    await ctxActions.locator('button:has-text("Saut")').click();
+    await ctxActions.locator('[data-testid="ctx-bond-mode"]').click();
     await page.waitForTimeout(200);
     await clickCanvas(page, 190, 200); // ~2
     await page.waitForTimeout(300);

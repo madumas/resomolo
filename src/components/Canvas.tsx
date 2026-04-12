@@ -399,9 +399,9 @@ export function Canvas({
         }
         return;
       }
-      // Click outside the droite in bond mode — exit bond mode and deselect
+      // Click outside the droite in bond mode — exit bond mode but keep droite selected
       onStopBondMode?.();
-      onSelectPiece(null);
+      return;
     }
 
     // Hit test: small pieces first (jetons > étiquettes > calculs > barres > boîtes)
@@ -2111,8 +2111,8 @@ export function Canvas({
         );
       })()}
 
-      {/* Context actions */}
-      {selectedPiece && mode.type === 'idle' && !editingPieceId && (
+      {/* Context actions — hidden during bond mode to avoid intercepting canvas clicks */}
+      {selectedPiece && mode.type === 'idle' && !editingPieceId && !bondMode && (
         <ContextActions
           piece={selectedPiece}
           canvasRect={containerRef.current?.getBoundingClientRect() ?? null}
