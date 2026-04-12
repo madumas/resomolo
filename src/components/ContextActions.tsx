@@ -774,6 +774,8 @@ export function ContextActions({
       {/* Schema — premier niveau */}
       {isSchema(piece) && schemaSubmenu === 'none' && (
         <>
+          <CtxBtn onClick={() => onStartEditLabel(piece.id)}>Nommer</CtxBtn>
+          <CtxBtn onClick={() => onStartEditValue(piece.id)}>Valeur</CtxBtn>
           <CtxBtn onClick={() => setSchemaSubmenu('type')}>Type</CtxBtn>
           {/* Discrete size buttons — direct in L1 to reduce clicks (R12) */}
           {/* For comparaison: resize first bar only, preserve ratio. Others: uniform. */}

@@ -54,6 +54,19 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
               {bar.label || '...'}
             </text>
 
+            {/* Bar value inside (shown when bar has no parts) */}
+            {srcBar.parts.length === 0 && (
+              <text x={x + bar.x + bar.width / 2} y={y + bar.y + barH / 2 + 1}
+                textAnchor="middle" dominantBaseline="central"
+                fontSize={T1 * ts}
+                fill={srcBar.value != null ? '#1E1A2E' : '#B0A8C0'}
+                fontWeight={srcBar.value != null ? 600 : 400}
+                opacity={srcBar.value != null ? 1 : 0.6}
+                data-edit-target={`${piece.id}-bar-${bi}-value`}>
+                {srcBar.value != null ? srcBar.value : '?'}
+              </text>
+            )}
+
             {/* Multiplier annotation "×N" (R15 — triple coding) — offset below first bar */}
             {bar.multiplierLabel && bi === 0 && (
               <text x={x + bar.x - 4} y={y + bar.y + barH + 6}
@@ -89,13 +102,15 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
             </text>
 
             {/* Part value inside */}
-            {part.value !== null && (
-              <text x={x + part.x + part.width / 2} y={y + part.y + part.height / 2 + 1}
-                textAnchor="middle" dominantBaseline="central"
-                fontSize={T1 * ts} fill="#1E1A2E" fontWeight={600}>
-                {part.value}
-              </text>
-            )}
+            <text x={x + part.x + part.width / 2} y={y + part.y + part.height / 2 + 1}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={T1 * ts}
+              fill={part.value != null ? '#1E1A2E' : '#B0A8C0'}
+              fontWeight={part.value != null ? 600 : 400}
+              opacity={part.value != null ? 1 : 0.6}
+              data-edit-target={`${piece.id}-part-${part.barIndex}-${part.partIndex}-value`}>
+              {part.value != null ? part.value : '?'}
+            </text>
 
             {/* Division line (except first part) */}
             {part.partIndex > 0 && (

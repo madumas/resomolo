@@ -7,7 +7,7 @@ import { getTolerances } from '../engine/tolerances';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { CANVAS_WIDTH_MM, BAR_HEIGHT_MM, BAR_VERTICAL_GAP_MM, getToleranceMultiplier } from '../model/types';
 import type { Piece, Barre, Boite, ToolType, ToleranceProfile, CouleurPiece, Fleche, Reponse, DroiteNumerique, Tableau, Arbre, Schema, Inconnue, DiagrammeBandes } from '../model/types';
-import { isBarre, isBoite, isDroiteNumerique, isTableau, isArbre, ARBRE_NODE_W_MM, ARBRE_NODE_H_MM } from '../model/types';
+import { isBarre, isBoite, isDroiteNumerique, isTableau, isArbre, isSchema, ARBRE_NODE_W_MM, ARBRE_NODE_H_MM } from '../model/types';
 import type { Action } from '../model/state';
 import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
@@ -19,7 +19,7 @@ import { SchemaPiece } from './pieces/SchemaPiece';
 import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
 import { DiagrammeLignePiece } from './pieces/DiagrammeLignePiece';
 import { computeTreeLayout } from '../engine/arbre-layout';
-import { computeSchemaWidth, computeSchemaHeight } from '../engine/schema-layout';
+import { computeSchemaWidth, computeSchemaHeight, computePartLayout } from '../engine/schema-layout';
 import { getGabaritDefaults } from '../engine/schema-layout';
 import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
@@ -245,7 +245,18 @@ export function Canvas({
   >(null);
   const editingArbreFieldRef = useRef(editingArbreField);
   useEffect(() => { editingArbreFieldRef.current = editingArbreField; }, [editingArbreField]);
-  useEffect(() => { if (!editingPieceId) setEditingArbreField(null); }, [editingPieceId]);
+  const [editingSchemaField, setEditingSchemaField] = useState<
+    | { type: 'bar-label'; barIndex: number }
+    | { type: 'bar-value'; barIndex: number }
+    | { type: 'part-label'; barIndex: number; partIndex: number }
+    | { type: 'part-value'; barIndex: number; partIndex: number }
+    | { type: 'total' }
+    | { type: 'diff' }
+    | null
+  >(null);
+  const editingSchemaFieldRef = useRef(editingSchemaField);
+  useEffect(() => { editingSchemaFieldRef.current = editingSchemaField; }, [editingSchemaField]);
+  useEffect(() => { if (!editingPieceId) { setEditingArbreField(null); setEditingSchemaField(null); } }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
@@ -599,6 +610,93 @@ export function Canvas({
           onSelectPiece(hitPiece.id);
         }
         return;
+      }
+      // Schema — 2nd click on label area enters edit mode (1st click = select only, ergo TDC)
+      if (isSchema(hitPiece) && hitPiece.id === selectedPieceId && !activeTool) {
+        const schema = hitPiece as Schema;
+        const schemaLayout = computePartLayout(schema, referenceUnitMm);
+        const relX = pos.x - schema.x;
+        const relY = pos.y - schema.y;
+        const hitPad = 4; // mm — TDC accessibility
+
+        let schemaFound = false;
+
+        // Check bar labels (left of bars)
+        for (let bi = 0; bi < schemaLayout.bars.length; bi++) {
+          const bar = schemaLayout.bars[bi];
+          if (relX >= bar.x - 20 && relX <= bar.x - 1 &&
+              Math.abs(relY - (bar.y + bar.height / 2)) <= bar.height / 2 + hitPad) {
+            setEditingSchemaField({ type: 'bar-label', barIndex: bi });
+            onStartEdit(hitPiece.id);
+            schemaFound = true;
+            break;
+          }
+        }
+
+        // Check part labels (above parts)
+        if (!schemaFound) {
+          for (const part of schemaLayout.parts) {
+            if (Math.abs(relX - (part.x + part.width / 2)) <= part.width / 2 + hitPad &&
+                relY >= part.y - 10 && relY <= part.y) {
+              setEditingSchemaField({ type: 'part-label', barIndex: part.barIndex, partIndex: part.partIndex });
+              onStartEdit(hitPiece.id);
+              schemaFound = true;
+              break;
+            }
+          }
+        }
+
+        // Check total bracket label (below)
+        if (!schemaFound && schemaLayout.totalBracket) {
+          const tb = schemaLayout.totalBracket;
+          if (relY >= tb.y && relY <= tb.y + tb.height + hitPad &&
+              relX >= 0 && relX <= (schemaLayout.bars[0]?.width ?? schemaLayout.width)) {
+            setEditingSchemaField({ type: 'total' });
+            onStartEdit(hitPiece.id);
+            schemaFound = true;
+          }
+        }
+
+        // Check difference bracket label (right)
+        if (!schemaFound && schemaLayout.differenceBracket) {
+          const db = schemaLayout.differenceBracket;
+          if (relX >= db.x && relX <= db.x + 20 &&
+              relY >= db.y && relY <= db.y + db.height) {
+            setEditingSchemaField({ type: 'diff' });
+            onStartEdit(hitPiece.id);
+            schemaFound = true;
+          }
+        }
+
+        // Check bar body clicks (value editing) — only bars without parts
+        if (!schemaFound) {
+          for (let bi = 0; bi < schemaLayout.bars.length; bi++) {
+            const bar = schemaLayout.bars[bi];
+            if (schema.bars[bi]?.parts.length === 0 &&
+                relX >= bar.x && relX <= bar.x + bar.width &&
+                relY >= bar.y && relY <= bar.y + bar.height) {
+              setEditingSchemaField({ type: 'bar-value', barIndex: bi });
+              onStartEdit(hitPiece.id);
+              schemaFound = true;
+              break;
+            }
+          }
+        }
+
+        // Check part body clicks (value editing)
+        if (!schemaFound) {
+          for (const part of schemaLayout.parts) {
+            if (relX >= part.x && relX <= part.x + part.width &&
+                relY >= part.y && relY <= part.y + part.height) {
+              setEditingSchemaField({ type: 'part-value', barIndex: part.barIndex, partIndex: part.partIndex });
+              onStartEdit(hitPiece.id);
+              schemaFound = true;
+              break;
+            }
+          }
+        }
+
+        if (schemaFound) return;
       }
       // Boîte — 2nd click edits value (same pattern as bar)
       if (isBoite(hitPiece) && hitPiece.id === selectedPieceId) {
@@ -1890,6 +1988,43 @@ export function Canvas({
             fieldKey = `__arbre_level_${levelIndex}`;
             svgFontSizeMm = 6; // T2
           }
+        } else if (piece.type === 'schema' && editingSchemaField) {
+          const schema = piece as Schema;
+          if (editingSchemaField.type === 'bar-label') {
+            initialValue = schema.bars[editingSchemaField.barIndex]?.label ?? '';
+            placeholder = 'Nom (ex: Théo)';
+            fieldKey = `__schema_bar_${editingSchemaField.barIndex}_label`;
+            svgFontSizeMm = 6;
+          } else if (editingSchemaField.type === 'part-label') {
+            const { barIndex, partIndex } = editingSchemaField;
+            initialValue = schema.bars[barIndex]?.parts[partIndex]?.label ?? '';
+            placeholder = 'Partie...';
+            fieldKey = `__schema_part_${barIndex}_${partIndex}_label`;
+            svgFontSizeMm = 6;
+          } else if (editingSchemaField.type === 'total') {
+            initialValue = schema.totalLabel ?? '';
+            placeholder = 'Total...';
+            fieldKey = '__schema_total';
+            svgFontSizeMm = 6;
+          } else if (editingSchemaField.type === 'diff') {
+            initialValue = schema.totalLabel ?? '';
+            placeholder = 'Différence...';
+            fieldKey = '__schema_diff';
+            svgFontSizeMm = 6;
+          } else if (editingSchemaField.type === 'bar-value') {
+            const val = schema.bars[editingSchemaField.barIndex]?.value;
+            initialValue = val != null ? String(val) : '';
+            placeholder = '?';
+            fieldKey = `__schema_bar_${editingSchemaField.barIndex}_value`;
+            svgFontSizeMm = 7;
+          } else if (editingSchemaField.type === 'part-value') {
+            const { barIndex, partIndex } = editingSchemaField;
+            const val = schema.bars[barIndex]?.parts[partIndex]?.value;
+            initialValue = val != null ? String(val) : '';
+            placeholder = '?';
+            fieldKey = `__schema_part_${barIndex}_${partIndex}_value`;
+            svgFontSizeMm = 7;
+          }
         } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
           initialValue = (piece as any).title ?? '';
           placeholder = 'Titre du diagramme...';
@@ -1908,6 +2043,18 @@ export function Canvas({
           editTargetId = editingArbreField.type === 'node'
             ? `${piece.id}-node-${editingArbreField.nodeIndex}`
             : `${piece.id}-level-${editingArbreField.levelIndex}`;
+        } else if (piece.type === 'schema' && editingSchemaField) {
+          if (editingSchemaField.type === 'bar-label') {
+            editTargetId = `${piece.id}-bar-${editingSchemaField.barIndex}-label`;
+          } else if (editingSchemaField.type === 'bar-value') {
+            editTargetId = `${piece.id}-bar-${editingSchemaField.barIndex}-value`;
+          } else if (editingSchemaField.type === 'part-label') {
+            editTargetId = `${piece.id}-part-${editingSchemaField.barIndex}-${editingSchemaField.partIndex}-label`;
+          } else if (editingSchemaField.type === 'part-value') {
+            editTargetId = `${piece.id}-part-${editingSchemaField.barIndex}-${editingSchemaField.partIndex}-value`;
+          } else {
+            editTargetId = `${piece.id}-${editingSchemaField.type}`;
+          }
         } else {
           editTargetId = piece.id;
         }
@@ -2020,6 +2167,52 @@ export function Canvas({
             editorFixedWidth = true;
           }
           editorFontWeight = 'normal';
+        } else if (piece.type === 'schema' && editingSchemaField) {
+          const schemaLayout = computePartLayout(piece as Schema, referenceUnitMm);
+          if (editingSchemaField.type === 'bar-label') {
+            const bar = schemaLayout.bars[editingSchemaField.barIndex];
+            if (bar) {
+              const labelW = Math.max(40, (piece as Schema).bars[editingSchemaField.barIndex]?.label?.length * 6 + 16 || 40);
+              overlayOnBounds(piece.x + bar.x - labelW - 4, piece.y + bar.y, labelW, bar.height);
+              editorTextAlign = 'right';
+            }
+          } else if (editingSchemaField.type === 'part-label') {
+            const part = schemaLayout.parts.find(p =>
+              p.barIndex === editingSchemaField.barIndex && p.partIndex === editingSchemaField.partIndex
+            );
+            if (part) {
+              const pw = Math.max(15, part.width); // min 15mm for narrow parts
+              overlayOnBounds(piece.x + part.x, piece.y + part.y - 8, pw, 8);
+              editorTextAlign = 'center';
+              editorMinWidth = Math.max(80, editorMinWidth); // min 80px for narrow parts (ergo TDC)
+            }
+          } else if (editingSchemaField.type === 'bar-value') {
+            const bar = schemaLayout.bars[editingSchemaField.barIndex];
+            if (bar) {
+              overlayOnBounds(piece.x + bar.x, piece.y + bar.y, bar.width, bar.height);
+              editorTextAlign = 'center';
+              editorFontWeight = 600;
+            }
+          } else if (editingSchemaField.type === 'part-value') {
+            const part = schemaLayout.parts.find(p =>
+              p.barIndex === editingSchemaField.barIndex && p.partIndex === editingSchemaField.partIndex
+            );
+            if (part) {
+              overlayOnBounds(piece.x + part.x, piece.y + part.y, part.width, part.height);
+              editorTextAlign = 'center';
+              editorFontWeight = 600;
+              editorMinWidth = Math.max(80, editorMinWidth);
+            }
+          } else if (editingSchemaField.type === 'total' && schemaLayout.totalBracket) {
+            const tb = schemaLayout.totalBracket;
+            const barW = schemaLayout.bars[0]?.width ?? 60;
+            overlayOnBounds(piece.x, piece.y + tb.y + 4, barW, tb.height - 4);
+            editorTextAlign = 'center';
+          } else if (editingSchemaField.type === 'diff' && schemaLayout.differenceBracket) {
+            const db = schemaLayout.differenceBracket;
+            overlayOnBounds(piece.x + db.x + 6, piece.y + db.y, 30, db.height);
+          }
+          editorFontWeight = 'normal';
         } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
           // Title above diagram — width of piece
           const pw = (piece as DiagrammeBandes).width || 120;
@@ -2058,11 +2251,43 @@ export function Canvas({
                     ? { ...l, options: l.options.map((o, j) => j === editingArbreField.optionIndex ? value : o) } : l)
                   : arbre.levels.map((l, i) => i === editingArbreField.levelIndex ? { ...l, name: value } : l);
                 dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { levels: newLevels } });
+              } else if (piece.type === 'schema' && editingSchemaField) {
+                const schema = piece as Schema;
+                if (editingSchemaField.type === 'bar-label') {
+                  const newBars = schema.bars.map((b, i) =>
+                    i === editingSchemaField.barIndex ? { ...b, label: value } : b
+                  );
+                  dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+                } else if (editingSchemaField.type === 'part-label') {
+                  const { barIndex, partIndex } = editingSchemaField;
+                  const newBars = schema.bars.map((b, i) =>
+                    i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
+                      j === partIndex ? { ...p, label: value } : p) } : b
+                  );
+                  dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+                } else if (editingSchemaField.type === 'bar-value') {
+                  const numVal = value === '' ? null : Number(value);
+                  const newBars = schema.bars.map((b, i) =>
+                    i === editingSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b
+                  );
+                  dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+                } else if (editingSchemaField.type === 'part-value') {
+                  const { barIndex, partIndex } = editingSchemaField;
+                  const numVal = value === '' ? null : Number(value);
+                  const newBars = schema.bars.map((b, i) =>
+                    i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
+                      j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b
+                  );
+                  dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+                } else if (editingSchemaField.type === 'total' || editingSchemaField.type === 'diff') {
+                  dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
+                }
               } else {
                 dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
               }
               if (piece.type === 'reponse' && value.length > 0) onAcknowledge();
               setEditingArbreField(null);
+              setEditingSchemaField(null);
               onStopEdit();
             }}
             onTab={piece.type === 'arbre' && editingArbreField?.type === 'node' ? (value) => {
@@ -2091,8 +2316,80 @@ export function Canvas({
                 setEditingArbreField(null);
                 onStopEdit();
               }
+            } : piece.type === 'schema' && editingSchemaField ? (value) => {
+              // Commit current schema field, then advance to next empty label
+              const schema = piece as Schema;
+              let newBars = schema.bars;
+              if (editingSchemaField.type === 'bar-label') {
+                newBars = schema.bars.map((b, i) =>
+                  i === editingSchemaField.barIndex ? { ...b, label: value } : b
+                );
+              } else if (editingSchemaField.type === 'bar-value') {
+                const numVal = value === '' ? null : Number(value);
+                newBars = schema.bars.map((b, i) =>
+                  i === editingSchemaField.barIndex ? { ...b, value: isNaN(numVal as number) ? null : numVal } : b
+                );
+              } else if (editingSchemaField.type === 'part-label') {
+                const { barIndex, partIndex } = editingSchemaField;
+                newBars = schema.bars.map((b, i) =>
+                  i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
+                    j === partIndex ? { ...p, label: value } : p) } : b
+                );
+              } else if (editingSchemaField.type === 'part-value') {
+                const { barIndex, partIndex } = editingSchemaField;
+                const numVal = value === '' ? null : Number(value);
+                newBars = schema.bars.map((b, i) =>
+                  i === barIndex ? { ...b, parts: b.parts.map((p, j) =>
+                    j === partIndex ? { ...p, value: isNaN(numVal as number) ? null : numVal } : p) } : b
+                );
+              } else if (editingSchemaField.type === 'total' || editingSchemaField.type === 'diff') {
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
+                setEditingSchemaField(null);
+                onStopEdit();
+                return;
+              }
+              dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bars: newBars } });
+
+              // Build ordered list of all editable fields, find next empty one
+              type SchemaField = typeof editingSchemaField;
+              const allFields: SchemaField[] = [];
+              for (let bi = 0; bi < newBars.length; bi++) {
+                allFields.push({ type: 'bar-label', barIndex: bi });
+                for (let pi = 0; pi < newBars[bi].parts.length; pi++) {
+                  allFields.push({ type: 'part-label', barIndex: bi, partIndex: pi });
+                }
+              }
+              // Find current position
+              const curIdx = allFields.findIndex(f => {
+                if (!f || !editingSchemaField) return false;
+                if (f.type !== editingSchemaField.type) return false;
+                if (f.type === 'bar-label' && editingSchemaField.type === 'bar-label') return f.barIndex === editingSchemaField.barIndex;
+                if (f.type === 'part-label' && editingSchemaField.type === 'part-label') return f.barIndex === editingSchemaField.barIndex && f.partIndex === editingSchemaField.partIndex;
+                return false;
+              });
+              // Find next empty field (wrap around)
+              let nextField: SchemaField = null;
+              for (let offset = 1; offset < allFields.length; offset++) {
+                const fi = (curIdx + offset) % allFields.length;
+                const f = allFields[fi];
+                if (!f) continue;
+                if (f.type === 'bar-label' && !newBars[f.barIndex].label) {
+                  nextField = f;
+                  break;
+                }
+                if (f.type === 'part-label' && !newBars[f.barIndex].parts[f.partIndex]?.label) {
+                  nextField = f;
+                  break;
+                }
+              }
+              if (nextField) {
+                setEditingSchemaField(nextField);
+              } else {
+                setEditingSchemaField(null);
+                onStopEdit();
+              }
             } : undefined}
-            onCancel={() => { setEditingArbreField(null); onStopEdit(); }}
+            onCancel={() => { setEditingArbreField(null); setEditingSchemaField(null); onStopEdit(); }}
             onColumnCalc={piece.type === 'calcul' ? () => {
               onStopEdit();
               setColumnCalcPieceId(editingPieceId);
@@ -2113,8 +2410,55 @@ export function Canvas({
           svgElement={svgRef.current}
           referenceUnitMm={referenceUnitMm}
           onStartEdit={onStartEdit}
-          onStartEditLabel={(id) => { setEditingBarField('label'); onStartEdit(id); }}
-          onStartEditValue={(id) => { setEditingBarField('value'); onStartEdit(id); }}
+          onStartEditLabel={(id) => {
+            const p = pieces.find(p => p.id === id);
+            if (p?.type === 'schema') {
+              const schema = p as Schema;
+              // Target first empty label: bar labels first, then part labels
+              const emptyBarIdx = schema.bars.findIndex(b => !b.label);
+              if (emptyBarIdx >= 0) {
+                setEditingSchemaField({ type: 'bar-label', barIndex: emptyBarIdx });
+              } else {
+                let found = false;
+                for (let bi = 0; bi < schema.bars.length && !found; bi++) {
+                  const pi = schema.bars[bi].parts.findIndex(pt => !pt.label);
+                  if (pi >= 0) {
+                    setEditingSchemaField({ type: 'part-label', barIndex: bi, partIndex: pi });
+                    found = true;
+                  }
+                }
+                if (!found) setEditingSchemaField({ type: 'bar-label', barIndex: 0 });
+              }
+            } else {
+              setEditingBarField('label');
+            }
+            onStartEdit(id);
+          }}
+          onStartEditValue={(id) => {
+            const p = pieces.find(p => p.id === id);
+            if (p?.type === 'schema') {
+              const schema = p as Schema;
+              // Target first bar without a value, or first bar with no parts
+              const emptyBarIdx = schema.bars.findIndex(b => b.parts.length === 0 && b.value == null);
+              if (emptyBarIdx >= 0) {
+                setEditingSchemaField({ type: 'bar-value', barIndex: emptyBarIdx });
+              } else {
+                // Try first part without value
+                let found = false;
+                for (let bi = 0; bi < schema.bars.length && !found; bi++) {
+                  const pi = schema.bars[bi].parts.findIndex(pt => pt.value == null);
+                  if (pi >= 0) {
+                    setEditingSchemaField({ type: 'part-value', barIndex: bi, partIndex: pi });
+                    found = true;
+                  }
+                }
+                if (!found) setEditingSchemaField({ type: 'bar-value', barIndex: 0 });
+              }
+            } else {
+              setEditingBarField('value');
+            }
+            onStartEdit(id);
+          }}
           onStartColumnCalc={(id) => { setColumnCalcPieceId(id); onSelectPiece(null); }}
           onStartDivisionCalc={(id) => { setDivisionCalcPieceId(id); onSelectPiece(null); }}
           onResizeBar={handleResizeBar}
@@ -3064,7 +3408,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
     }
     case 'barre': {
       const w = piece.sizeMultiplier * refUnit;
-      return pos.x >= piece.x - p && pos.x <= piece.x + w + p &&
+      return pos.x >= piece.x - p - 20 && pos.x <= piece.x + w + p &&
              pos.y >= piece.y - p && pos.y <= piece.y + BAR_HEIGHT_MM + p;
     }
     case 'etiquette': {
@@ -3074,7 +3418,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
     }
     case 'boite': {
       return pos.x >= piece.x - p && pos.x <= piece.x + piece.width + p &&
-             pos.y >= piece.y - p && pos.y <= piece.y + piece.height + p;
+             pos.y >= piece.y - p - 8 && pos.y <= piece.y + piece.height + p;
     }
     case 'calcul': {
       const w = getCalculWidth(piece);
@@ -3100,13 +3444,13 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
     }
     case 'arbre': {
       const tl = computeTreeLayout((piece as Arbre).levels);
-      return pos.x >= piece.x - p && pos.x <= piece.x + tl.width + p &&
+      return pos.x >= piece.x - p - 20 && pos.x <= piece.x + tl.width + p &&
              pos.y >= piece.y - p && pos.y <= piece.y + tl.height + p;
     }
     case 'schema': {
       const sw = computeSchemaWidth(piece as Schema, refUnit);
       const sh = computeSchemaHeight(piece as Schema);
-      return pos.x >= piece.x - p && pos.x <= piece.x + sw + p &&
+      return pos.x >= piece.x - p - 20 && pos.x <= piece.x + sw + p &&
              pos.y >= piece.y - p && pos.y <= piece.y + sh + p;
     }
     case 'inconnue': {
@@ -3119,7 +3463,7 @@ function hitTest(piece: Piece, pos: { x: number; y: number }, refUnit: number, p
       const cw = (piece as any).width || 120;
       const ch = (piece as any).height || 90;
       return pos.x >= piece.x - p && pos.x <= piece.x + cw + p &&
-             pos.y >= piece.y - p && pos.y <= piece.y + ch + p;
+             pos.y >= piece.y - p && pos.y <= piece.y + ch + p + 12;
     }
     case 'fleche': {
       const fleche = piece as Fleche;
@@ -3148,19 +3492,19 @@ function distanceToSegment(p: {x:number,y:number}, a: {x:number,y:number}, b: {x
 function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0, ts = 1): { x: number; y: number; w: number; h: number } {
   switch (piece.type) {
     case 'jeton': return { x: piece.x - 5 - pad, y: piece.y - 5 - pad, w: 10 + 2 * pad, h: 10 + 2 * pad };
-    case 'barre': return { x: piece.x - pad, y: piece.y - pad, w: piece.sizeMultiplier * referenceUnitMm + 2 * pad, h: BAR_HEIGHT_MM + 2 * pad };
-    case 'boite': return { x: piece.x - pad, y: piece.y - pad, w: piece.width + 2 * pad, h: piece.height + 2 * pad };
+    case 'barre': return { x: piece.x - pad - 20, y: piece.y - pad, w: piece.sizeMultiplier * referenceUnitMm + 2 * pad + 20, h: BAR_HEIGHT_MM + 2 * pad };
+    case 'boite': return { x: piece.x - pad, y: piece.y - pad - 8, w: piece.width + 2 * pad, h: piece.height + 2 * pad + 8 };
     case 'calcul': return { x: piece.x - pad, y: piece.y - pad, w: getCalculWidth(piece, ts) + 2 * pad, h: 20 + 2 * pad };
     case 'reponse': return { x: piece.x - pad, y: piece.y - pad, w: getReponseWidth(piece as Reponse, ts) + 2 * pad, h: 26 + 2 * pad };
     case 'etiquette': return { x: piece.x - pad, y: piece.y - 7 - pad, w: Math.max(30, piece.text.length * 5.5 + 10) + 2 * pad, h: 10 + 2 * pad };
     case 'droiteNumerique': return { x: piece.x - pad, y: piece.y - 10 - pad, w: (piece as DroiteNumerique).width + 2 * pad, h: 20 + 2 * pad };
     case 'tableau': return { x: piece.x - pad, y: piece.y - pad, w: (piece as Tableau).cols * TABLEAU_CELL_W + 2 * pad, h: (piece as Tableau).rows * TABLEAU_CELL_H + 2 * pad };
-    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x - pad, y: piece.y - pad, w: tl.width + 2 * pad, h: tl.height + 2 * pad }; }
-    case 'schema': return { x: piece.x - pad, y: piece.y - pad, w: computeSchemaWidth(piece as Schema, referenceUnitMm) + 2 * pad, h: computeSchemaHeight(piece as Schema) + 2 * pad };
+    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); return { x: piece.x - pad - 20, y: piece.y - pad, w: tl.width + 2 * pad + 20, h: tl.height + 2 * pad }; }
+    case 'schema': return { x: piece.x - pad - 20, y: piece.y - pad, w: computeSchemaWidth(piece as Schema, referenceUnitMm) + 2 * pad + 20, h: computeSchemaHeight(piece as Schema) + 2 * pad };
     case 'inconnue': return { x: piece.x - 6 - pad, y: piece.y - 6 - pad, w: 12 + 2 * pad, h: 12 + 2 * pad };
     case 'diagrammeBandes':
     case 'diagrammeLigne':
-      return { x: piece.x - pad, y: piece.y - pad, w: ((piece as any).width || 120) + 2 * pad, h: ((piece as any).height || 90) + 2 * pad };
+      return { x: piece.x - pad, y: piece.y - pad, w: ((piece as any).width || 120) + 2 * pad, h: ((piece as any).height || 90) + 2 * pad + 12 };
     default: return { x: piece.x - pad, y: piece.y - pad, w: 20 + 2 * pad, h: 14 + 2 * pad };
   }
 }
@@ -3190,15 +3534,15 @@ function getEdgePoint(piece: Piece, target: { x: number; y: number }, refUnit: n
   let bx: number, by: number, bw: number, bh: number;
   switch (piece.type) {
     case 'jeton': return { x: piece.x, y: piece.y }; // circle — center is fine
-    case 'barre': bx = piece.x; by = piece.y; bw = piece.sizeMultiplier * refUnit; bh = BAR_HEIGHT_MM; break;
-    case 'boite': bx = piece.x; by = piece.y; bw = piece.width; bh = piece.height; break;
+    case 'barre': bx = piece.x - 20; by = piece.y; bw = piece.sizeMultiplier * refUnit + 20; bh = BAR_HEIGHT_MM; break;
+    case 'boite': bx = piece.x; by = piece.y - 8; bw = piece.width; bh = piece.height + 8; break;
     case 'calcul': bx = piece.x; by = piece.y; bw = getCalculWidth(piece); bh = 20; break;
     case 'reponse': bx = piece.x; by = piece.y; bw = getReponseWidth(piece); bh = 26; break;
     case 'etiquette': bx = piece.x; by = piece.y - 7; bw = Math.max(30, piece.text.length * 5.5 + 10); bh = 10; break;
     case 'droiteNumerique': bx = piece.x; by = piece.y - 10; bw = (piece as DroiteNumerique).width; bh = 20; break;
     case 'tableau': bx = piece.x; by = piece.y; bw = (piece as Tableau).cols * TABLEAU_CELL_W; bh = (piece as Tableau).rows * TABLEAU_CELL_H; break;
-    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); bx = piece.x; by = piece.y; bw = tl.width; bh = tl.height; break; }
-    case 'schema': bx = piece.x; by = piece.y; bw = computeSchemaWidth(piece as Schema, refUnit); bh = computeSchemaHeight(piece as Schema); break;
+    case 'arbre': { const tl = computeTreeLayout((piece as Arbre).levels); bx = piece.x - 20; by = piece.y; bw = tl.width + 20; bh = tl.height; break; }
+    case 'schema': bx = piece.x - 20; by = piece.y; bw = computeSchemaWidth(piece as Schema, refUnit) + 20; bh = computeSchemaHeight(piece as Schema); break;
     case 'inconnue': return { x: piece.x, y: piece.y }; // circle — center is fine
     case 'diagrammeBandes':
     case 'diagrammeLigne':

@@ -141,7 +141,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
       ],
       referenceUnitMm: 60,
       pieces: [
-        { id: 'schema-1', type: 'schema', x: 40, y: 10, locked: true, gabarit: 'groupes-egaux', totalLabel: '156', totalValue: 156, referenceWidth: 50, bars: [{ label: 'Ét. 1', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Ét. 2', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Ét. 3', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Ét. 4', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Ét. 5', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Ét. 6', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }] },
+        { id: 'schema-1', type: 'schema', x: 40, y: 10, locked: true, gabarit: 'groupes-egaux', totalLabel: '156', totalValue: 156, referenceWidth: 50, bars: [{ label: 'Étagère 1', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Étagère 2', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Étagère 3', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Étagère 4', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Étagère 5', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }, { label: 'Étagère 6', value: 26, sizeMultiplier: 0.5, couleur: 'bleu', parts: [] }] },
         { id: 'calcul', type: 'calcul', x: 40, y: 120, locked: true, expression: '156 ÷ 6 = 26' },
         { id: 'reponse', type: 'reponse', x: 40, y: 155, locked: true, text: 'Il y a 26 livres par étagère.', template: null },
       ] as ModelisationState['pieces'],
