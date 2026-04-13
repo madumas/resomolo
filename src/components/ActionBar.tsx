@@ -387,7 +387,7 @@ function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples, onShowAideMemo
             {onShowAideMemoire && (
               <ShareRow
                 icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="7" cy="7" r="5.5" /><text x="7" y="10" textAnchor="middle" fontSize="9" fill="currentColor" stroke="none">?</text></svg>}
-                label="Quel schéma choisir?"
+                label="Quelle pièce choisir?"
                 onClick={() => { onShowAideMemoire(); setOpen(false); }}
               />
             )}
