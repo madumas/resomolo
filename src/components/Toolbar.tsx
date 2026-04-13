@@ -91,6 +91,20 @@ const INLINE_TYPES: Set<string> = new Set(TOOL_GROUPS.flatMap(g => g.inlineTools
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
   const [showAbout, setShowAbout] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const toolbarScrollRef = useRef<HTMLDivElement>(null);
+  const [hasScrollRight, setHasScrollRight] = useState(false);
+
+  // Detect scroll overflow for tablet scroll indicator
+  useEffect(() => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    const check = () => setHasScrollRight(el.scrollWidth > el.clientWidth + el.scrollLeft + 4);
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', check); ro.disconnect(); };
+  }, [toolbarMode]);
 
   const isComplet = toolbarMode === 'complet';
 
@@ -158,14 +172,17 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
       fontSize: 13,
     }}>
       {/* Zone gauche : logo + inline tools + category buttons */}
-      <div style={{
+      <div ref={toolbarScrollRef} style={{
         display: 'flex',
         padding: '0 8px',
         gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flex: 1,
-        overflow: 'visible',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         height: '100%',
+        scrollbarWidth: 'none',       // Firefox
+        msOverflowStyle: 'none',      // IE/Edge
       }}>
         <button
           onClick={() => setShowAbout(true)}
@@ -260,6 +277,21 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           </button>
         )}
       </div>
+
+      {/* Scroll indicator — chevron when tools overflow */}
+      {hasScrollRight && (
+        <button
+          onClick={() => toolbarScrollRef.current?.scrollBy({ left: 120, behavior: 'smooth' })}
+          aria-label="Plus d'outils"
+          style={{
+            flexShrink: 0, background: 'linear-gradient(90deg, transparent, #F6F4FA 40%)',
+            border: 'none', cursor: 'pointer', padding: '0 8px 0 16px', height: '100%',
+            display: 'flex', alignItems: 'center', color: UI_PRIMARY, fontSize: 16,
+          }}
+        >
+          ›
+        </button>
+      )}
 
       {/* Zone droite : Déplacer (ancré) + ModeSelector + Problèmes */}
       <div style={{

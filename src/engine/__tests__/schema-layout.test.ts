@@ -17,9 +17,9 @@ function makeSchema(overrides: Partial<Schema> = {}): Schema {
 }
 
 describe('getGabaritDefaults', () => {
-  it('parties-tout returns undivided bar (0 parts) — R3', () => {
-    const d = getGabaritDefaults('parties-tout', REF);
-    expect(d.gabarit).toBe('parties-tout');
+  it('tout-et-parties returns undivided bar (0 parts) — R3', () => {
+    const d = getGabaritDefaults('tout-et-parties', REF);
+    expect(d.gabarit).toBe('tout-et-parties');
     expect(d.bars).toHaveLength(1);
     expect(d.bars![0].parts).toHaveLength(0); // R3: undivided
   });
@@ -88,8 +88,8 @@ describe('computeSchemaHeight', () => {
     expect(computeSchemaHeight(s)).toBe(15); // no labels for libre
   });
 
-  it('parties-tout has top + bottom label space', () => {
-    const s = makeSchema({ gabarit: 'parties-tout' });
+  it('tout-et-parties has top + bottom label space', () => {
+    const s = makeSchema({ gabarit: 'tout-et-parties' });
     expect(computeSchemaHeight(s)).toBe(15 + 8 + 8); // bar + top + bottom
   });
 
@@ -123,9 +123,9 @@ describe('computePartLayout', () => {
     expect(layout.bars).toHaveLength(1);
   });
 
-  it('parties-tout with 2 parts splits bar evenly', () => {
+  it('tout-et-parties with 2 parts splits bar evenly', () => {
     const s = makeSchema({
-      gabarit: 'parties-tout',
+      gabarit: 'tout-et-parties',
       bars: [{
         label: '', value: null, sizeMultiplier: 2, couleur: 'bleu',
         parts: [
@@ -158,8 +158,8 @@ describe('computePartLayout', () => {
     expect(layout.differenceBracket).not.toBeNull();
   });
 
-  it('parties-tout has total bracket', () => {
-    const defaults = getGabaritDefaults('parties-tout', REF);
+  it('tout-et-parties has total bracket', () => {
+    const defaults = getGabaritDefaults('tout-et-parties', REF);
     const s = makeSchema(defaults);
     const layout = computePartLayout(s, REF);
     expect(layout.totalBracket).not.toBeNull();

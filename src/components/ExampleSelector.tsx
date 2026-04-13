@@ -10,6 +10,7 @@ interface ExampleSelectorProps {
 }
 
 const GROUP_LABELS: Record<CategoryGroup, string> = {
+  'additif-c1': '1er cycle',
   additif: 'Additif',
   multiplicatif: 'Multiplicatif',
   fractions: 'Fractions',

@@ -1,12 +1,12 @@
 import type { ModelisationState } from '../model/types';
 
-export type CategoryGroup = 'additif' | 'multiplicatif' | 'fractions' | 'stats-proba' | 'complexe';
+export type CategoryGroup = 'additif' | 'additif-c1' | 'multiplicatif' | 'fractions' | 'stats-proba' | 'complexe';
 
 export interface WorkedExample {
   id: string;
   title: string;
   categoryGroup: CategoryGroup;
-  cycle: 2 | 3;
+  cycle: 1 | 2 | 3;
   explanation: string;
   pairedProblemIds: string[];
   state: ModelisationState;
@@ -14,6 +14,75 @@ export interface WorkedExample {
 
 // Helper: all fixture pieces are set to locked: true for read-only display.
 export const WORKED_EXAMPLES: WorkedExample[] = [
+  // ── Cycle 1 : Addition avec jetons ──
+  {
+    id: 'ex-c1-addition',
+    title: 'Addition avec jetons (1er cycle)',
+    categoryGroup: 'additif-c1',
+    cycle: 1,
+    explanation: 'Regarde comment les jetons bleus montrent les bonbons de Mia, et les jetons rouges ceux de son ami.',
+    pairedProblemIds: ['c1-add-1', 'c1-add-2'],
+    state: {
+      probleme: 'Mia a 5 bonbons. Son ami lui en donne 3. Combien Mia a-t-elle de bonbons?',
+      problemeReadOnly: true,
+      problemeHighlights: [
+        { start: 6, end: 7, color: 'bleu' },       // "5"
+        { start: 38, end: 39, color: 'bleu' },      // "3"
+        { start: 41, end: 73, color: 'orange' },    // "Combien Mia..."
+      ],
+      referenceUnitMm: 60,
+      pieces: [
+        { id: 'j1', type: 'jeton', x: 40, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j2', type: 'jeton', x: 54, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j3', type: 'jeton', x: 68, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j4', type: 'jeton', x: 82, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j5', type: 'jeton', x: 96, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'r1', type: 'jeton', x: 120, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'r2', type: 'jeton', x: 134, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'r3', type: 'jeton', x: 148, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'e-mia', type: 'etiquette', x: 50, y: 15, locked: true, text: 'Mia (5)', attachedTo: null },
+        { id: 'e-ami', type: 'etiquette', x: 120, y: 15, locked: true, text: 'Ami (3)', attachedTo: null },
+        { id: 'calcul', type: 'calcul', x: 40, y: 55, locked: true, expression: '5 + 3 = 8' },
+        { id: 'reponse', type: 'reponse', x: 40, y: 80, locked: true, text: 'Mia a 8 bonbons.', template: null },
+      ] as ModelisationState['pieces'],
+      availablePieces: null,
+    },
+  },
+  // ── Cycle 1 : Soustraction avec jetons ──
+  {
+    id: 'ex-c1-soustraction',
+    title: 'Soustraction avec jetons (1er cycle)',
+    categoryGroup: 'additif-c1',
+    cycle: 1,
+    explanation: 'Regarde comment on barre les jetons mangés pour montrer ce qui reste.',
+    pairedProblemIds: ['c1-sous-1', 'c1-sous-2'],
+    state: {
+      probleme: 'Noah a 9 biscuits. Il en mange 3. Combien lui en reste-t-il?',
+      problemeReadOnly: true,
+      problemeHighlights: [
+        { start: 8, end: 9, color: 'bleu' },       // "9"
+        { start: 30, end: 31, color: 'bleu' },     // "3"
+        { start: 33, end: 58, color: 'orange' },   // "Combien lui..."
+      ],
+      referenceUnitMm: 60,
+      pieces: [
+        { id: 'j1', type: 'jeton', x: 40, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j2', type: 'jeton', x: 54, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j3', type: 'jeton', x: 68, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j4', type: 'jeton', x: 82, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j5', type: 'jeton', x: 96, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j6', type: 'jeton', x: 110, y: 30, locked: true, couleur: 'bleu', parentId: null },
+        { id: 'j7', type: 'jeton', x: 124, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'j8', type: 'jeton', x: 138, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'j9', type: 'jeton', x: 152, y: 30, locked: true, couleur: 'rouge', parentId: null },
+        { id: 'e-total', type: 'etiquette', x: 70, y: 15, locked: true, text: '9 biscuits', attachedTo: null },
+        { id: 'e-mange', type: 'etiquette', x: 124, y: 15, locked: true, text: '3 mangés', attachedTo: null },
+        { id: 'calcul', type: 'calcul', x: 40, y: 55, locked: true, expression: '9 − 3 = 6' },
+        { id: 'reponse', type: 'reponse', x: 40, y: 80, locked: true, text: 'Il lui reste 6 biscuits.', template: null },
+      ] as ModelisationState['pieces'],
+      availablePieces: null,
+    },
+  },
   // ── Additif : Addition (jetons) ──
   {
     id: 'ex-addition',
@@ -184,7 +253,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
     categoryGroup: 'multiplicatif',
     cycle: 2,
     explanation: 'Regarde comment le schéma de groupes égaux montre le partage de 12 bonbons entre 3 amis.',
-    pairedProblemIds: ['division', 'c2-div-3'],
+    pairedProblemIds: ['c2-part-2', 'c2-div-3'],
     state: {
       probleme: 'Mia a 12 bonbons. Elle les partage également entre ses 3 amis. Combien chaque ami reçoit-il de bonbons?',
       problemeReadOnly: true,
@@ -210,7 +279,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
     title: 'Multi-étapes avec schéma',
     categoryGroup: 'complexe',
     cycle: 3,
-    explanation: 'Regarde comment le schéma parties-tout décompose le coût total en transport et entrée, avec un calcul par étape.',
+    explanation: 'Regarde comment le schéma tout-et-parties décompose le coût total en transport et entrée, avec un calcul par étape.',
     pairedProblemIds: ['c3-multi-2', 'c3-multi-3'],
     state: {
       probleme: 'Une classe de 28 élèves va au musée. Le transport coûte 4 $ par élève. L\'entrée coûte 6 $ par élève. Combien coûte la sortie en tout?',
@@ -225,7 +294,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
       ],
       referenceUnitMm: 60,
       pieces: [
-        { id: 'schema-1', type: 'schema', x: 40, y: 15, locked: true, gabarit: 'parties-tout', totalLabel: '?', totalValue: null, referenceWidth: 60, bars: [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [{ label: 'Transport', value: null, couleur: 'bleu' }, { label: 'Entrée', value: null, couleur: 'rouge' }] }] },
+        { id: 'schema-1', type: 'schema', x: 40, y: 15, locked: true, gabarit: 'tout-et-parties', totalLabel: '?', totalValue: null, referenceWidth: 60, bars: [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [{ label: 'Transport', value: null, couleur: 'bleu' }, { label: 'Entrée', value: null, couleur: 'rouge' }] }] },
         { id: 'calcul-1', type: 'calcul', x: 40, y: 80, locked: true, expression: '28 × 4 = 112' },
         { id: 'calcul-2', type: 'calcul', x: 40, y: 105, locked: true, expression: '28 × 6 = 168' },
         { id: 'calcul-3', type: 'calcul', x: 40, y: 130, locked: true, expression: '112 + 168 = 280' },
@@ -270,7 +339,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
     categoryGroup: 'fractions',
     cycle: 2,
     explanation: 'Regarde comment la barre divisée en 3 parties montre le tiers de 24 billes.',
-    pairedProblemIds: ['c2-frac-ens', 'c3-frac-mult'],
+    pairedProblemIds: ['c3-frac-ens', 'c3-frac-mult'],
     state: {
       probleme: 'Il y a 24 billes dans un sac. Le tiers des billes sont rouges. Combien y a-t-il de billes rouges?',
       problemeReadOnly: true,
@@ -315,6 +384,59 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
         { id: 'arbre-1', type: 'arbre', x: 30, y: 20, locked: true, levels: [{ name: 'Sandwich', options: ['Jambon', 'Poulet', 'Végé'] }, { name: 'Boisson', options: ['Jus', 'Lait'] }] },
         { id: 'calcul', type: 'calcul', x: 40, y: 160, locked: true, expression: '3 × 2 = 6' },
         { id: 'reponse', type: 'reponse', x: 40, y: 195, locked: true, text: 'Il y a 6 combinaisons possibles.', template: null },
+      ] as ModelisationState['pieces'],
+      availablePieces: null,
+    },
+  },
+  // ── Additif : Droite numérique avec bonds ──
+  {
+    id: 'ex-droite-bonds',
+    title: 'Addition sur la droite numérique',
+    categoryGroup: 'additif',
+    cycle: 2,
+    explanation: 'Regarde comment les bonds sur la droite numérique montrent les pas de +8 à partir de 12.',
+    pairedProblemIds: ['c2-add-1'],
+    state: {
+      probleme: 'Léa a 12 pommes. Marc lui en donne 8. Combien Léa a-t-elle de pommes maintenant?',
+      problemeReadOnly: true,
+      problemeHighlights: [
+        { start: 6, end: 8, color: 'bleu' },
+        { start: 35, end: 36, color: 'bleu' },
+        { start: 38, end: 80, color: 'orange' },
+      ],
+      referenceUnitMm: 60,
+      pieces: [
+        { id: 'dn-1', type: 'droiteNumerique', x: 30, y: 30, locked: true, min: 0, max: 25, step: 1, markers: [12, 20], bonds: [{ from: 12, to: 20, label: '+8' }], width: 250 },
+        { id: 'calcul', type: 'calcul', x: 40, y: 80, locked: true, expression: '12 + 8 = 20' },
+        { id: 'reponse', type: 'reponse', x: 40, y: 110, locked: true, text: 'Léa a 20 pommes maintenant.', template: null },
+      ] as ModelisationState['pieces'],
+      availablePieces: null,
+    },
+  },
+  // ── Complexe : Données superflues (surlignage gris) ──
+  {
+    id: 'ex-superflu',
+    title: 'Identifier les données superflues',
+    categoryGroup: 'complexe',
+    cycle: 2,
+    explanation: 'Regarde comment les données inutiles (le nom du chien) sont surlignées en gris pour les écarter.',
+    pairedProblemIds: ['c2-superflu-1'],
+    state: {
+      probleme: 'Léo a 12 pommes rouges et 8 pommes vertes. Son chien s\'appelle Rex. Il donne 5 pommes à Marc. Combien lui en reste-t-il?',
+      problemeReadOnly: true,
+      // "Léo a 12 pommes rouges et 8 pommes vertes. Son chien s'appelle Rex. Il donne 5 pommes à Marc. Combien lui en reste-t-il?"
+      problemeHighlights: [
+        { start: 6, end: 8, color: 'bleu' },       // "12"
+        { start: 28, end: 29, color: 'bleu' },     // "8"
+        { start: 44, end: 70, color: 'gris' },     // "Son chien s'appelle Rex."
+        { start: 81, end: 82, color: 'bleu' },     // "5"
+        { start: 97, end: 121, color: 'orange' },  // "Combien lui en reste-t-il?"
+      ],
+      referenceUnitMm: 60,
+      pieces: [
+        { id: 'calcul-1', type: 'calcul', x: 40, y: 25, locked: true, expression: '12 + 8 = 20' },
+        { id: 'calcul-2', type: 'calcul', x: 40, y: 50, locked: true, expression: '20 − 5 = 15' },
+        { id: 'reponse', type: 'reponse', x: 40, y: 85, locked: true, text: 'Il lui reste 15 pommes.', template: null },
       ] as ModelisationState['pieces'],
       availablePieces: null,
     },

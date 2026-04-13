@@ -102,6 +102,18 @@ svg .bond-removing {
   50% { stroke-opacity: 0.5; }
 }
 
+/* Reduced motion — disable canvas animations for vestibular sensitivity (TDC comorbidity 30-50%) */
+@media (prefers-reduced-motion: reduce) {
+  svg g.piece-new { animation: none; }
+  svg path.bond-new { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+  svg .bond-label-new { animation: none; opacity: 1; }
+  svg .bond-removing { transition: none; }
+  @keyframes marker-pulse { from, to { opacity: 1; } }
+  @keyframes bond-mode-pulse { from, to { stroke-opacity: 1; } }
+  @keyframes popover-slide-down { from, to { opacity: 1; transform: none; } }
+  @keyframes mobile-drawer-up { from, to { transform: none; } }
+}
+
 /* Mobile portrait: larger touch targets + toolbar grid layout */
 @media (max-width: 500px) and (orientation: portrait) {
   button {

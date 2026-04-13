@@ -110,7 +110,7 @@ export interface Arbre extends PieceBase {
 
 // === Schéma (tape/strip diagram — part-whole, comparison, transformation) ===
 
-export type SchemaGabarit = 'parties-tout' | 'comparaison' | 'groupes-egaux' | 'transformation' | 'libre';
+export type SchemaGabarit = 'tout-et-parties' | 'comparaison' | 'groupes-egaux' | 'transformation' | 'libre';
 
 export interface SchemaPart {
   label: string;
@@ -287,6 +287,9 @@ export interface Settings {
   ttsEnabled: boolean;            // show/hide TTS button in ProblemZone
   ttsRate: TTSRate;               // 0.7 (slow), 1.0 (normal), 1.3 (fast)
   guidedReadingEnabled: boolean;  // phrase-by-phrase mode in ProblemZone
+  fatigueClickThreshold: number;    // 0 = disabled; triggers nudge after N clicks in window
+  fatigueWindowMs: number;          // time window for click counting (ms)
+  fatigueUndoThreshold: number;     // consecutive undos before nudge (0 = disabled)
   activeProfile: SettingsProfile; // explicitly chosen profile
 }
 
@@ -312,6 +315,9 @@ export const DEFAULT_SETTINGS: Settings = {
   ttsEnabled: true,
   ttsRate: 1.0,
   guidedReadingEnabled: false,
+  fatigueClickThreshold: 15,
+  fatigueWindowMs: 30000,
+  fatigueUndoThreshold: 3,
   activeProfile: 'custom' as SettingsProfile,
 };
 
@@ -325,7 +331,7 @@ export function getToleranceMultiplier(profile: ToleranceProfile): number {
 
 // === Settings Profiles ===
 
-export type SettingsProfile = 'custom' | 'motricite-legere' | 'motricite-importante' | 'motricite-attention' | 'motricite-lecture';
+export type SettingsProfile = 'custom' | 'motricite-legere' | 'motricite-importante' | 'motricite-attention' | 'motricite-lecture' | 'motricite-math';
 
 export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Partial<Settings>> = {
   'motricite-legere': {
@@ -335,6 +341,9 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     soundMode: 'reduced',
     textScale: 1,
     problemAlwaysVisible: false,
+    fatigueClickThreshold: 20,
+    fatigueUndoThreshold: 4,
+    fatigueWindowMs: 30000,
   },
   'motricite-importante': {
     toleranceProfile: 'tres-large',
@@ -344,6 +353,9 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     soundMode: 'full',
     textScale: 1.25,
     problemAlwaysVisible: true,
+    fatigueClickThreshold: 10,
+    fatigueUndoThreshold: 2,
+    fatigueWindowMs: 20000,
   },
   'motricite-attention': {
     toleranceProfile: 'large',
@@ -353,6 +365,9 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     textScale: 1,
     problemAlwaysVisible: true,
     showSuggestedZones: true,
+    fatigueClickThreshold: 15,
+    fatigueUndoThreshold: 3,
+    fatigueWindowMs: 30000,
   },
   'motricite-lecture': {
     toleranceProfile: 'normal',
@@ -361,5 +376,21 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     soundMode: 'full',
     textScale: 1.5,
     problemAlwaysVisible: true,
+    fatigueClickThreshold: 15,
+    fatigueUndoThreshold: 3,
+    fatigueWindowMs: 30000,
+  },
+  'motricite-math': {
+    toleranceProfile: 'tres-large',
+    cursorSmoothing: true,
+    smoothingAlpha: 0.20,
+    relanceDelayMs: 30000,
+    soundMode: 'full',
+    textScale: 1.25,
+    problemAlwaysVisible: true,
+    showSuggestedZones: true,
+    fatigueClickThreshold: 10,
+    fatigueUndoThreshold: 2,
+    fatigueWindowMs: 20000,
   },
 };

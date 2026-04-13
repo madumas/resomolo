@@ -11,7 +11,7 @@ interface ProblemSelectorProps {
   onViewExample?: (example: WorkedExample) => void;
 }
 
-type CycleFilter = 2 | 3 | 'all';
+type CycleFilter = 1 | 2 | 3 | 'all';
 type CategoryFilter = 'all' | 'additif' | 'multiplicatif' | 'fractions' | 'stats-proba' | 'complexe';
 
 const CATEGORY_GROUPS: Record<Exclude<CategoryFilter, 'all'>, string[]> = {
@@ -121,6 +121,7 @@ export function ProblemSelector({ onSelect, onClose, onViewExample }: ProblemSel
             <div style={{ display: 'flex', gap: 6 }}>
               {([
                 { value: 'all' as CycleFilter, label: 'Tous' },
+                { value: 1 as CycleFilter, label: '1er cycle' },
                 { value: 2 as CycleFilter, label: '2e cycle' },
                 { value: 3 as CycleFilter, label: '3e cycle' },
               ]).map(opt => (
@@ -242,6 +243,11 @@ export function ProblemSelector({ onSelect, onClose, onViewExample }: ProblemSel
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                   <span style={{ fontWeight: 600, fontSize: 14, color: UI_TEXT_PRIMARY, flex: 1 }}>
                     {preset.title}
+                    {preset.note && (
+                      <span style={{ marginLeft: 6, fontSize: 10, color: '#B45309', background: '#FEF3C7', borderRadius: 3, padding: '1px 5px', fontWeight: 500 }}>
+                        {preset.note}
+                      </span>
+                    )}
                   </span>
                   <span style={{
                     fontSize: 11,

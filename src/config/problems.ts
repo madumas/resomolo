@@ -2,12 +2,95 @@ export interface ProblemPreset {
   id: string;
   title: string;
   text: string;
-  cycle: 2 | 3;
+  cycle: 1 | 2 | 3;
   category: 'addition' | 'soustraction' | 'multiplication' | 'division' | 'multi-etapes' | 'comparaison' | 'partage' | 'fraction' | 'statistique' | 'probabilite';
   difficulty: 1 | 2 | 3;
+  note?: string;
 }
 
 export const PROBLEM_PRESETS: ProblemPreset[] = [
+  // ── Cycle 1, Difficulty 1 (très facile, addition/soustraction < 100) ──
+  {
+    id: 'c1-add-1',
+    title: 'Bonbons de Mia',
+    text: 'Mia a 5 bonbons. Son ami lui en donne 3. Combien Mia a-t-elle de bonbons?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-add-2',
+    title: 'Crayons de Léo',
+    text: 'Léo a 7 crayons rouges et 4 crayons bleus. Combien a-t-il de crayons en tout?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-sous-1',
+    title: 'Biscuits de Noah',
+    text: 'Noah a 9 biscuits. Il en mange 3. Combien lui en reste-t-il?',
+    cycle: 1,
+    category: 'soustraction',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-sous-2',
+    title: 'Oiseaux dans l\'arbre',
+    text: 'Il y a 8 oiseaux dans un arbre. 5 s\'envolent. Combien en reste-t-il?',
+    cycle: 1,
+    category: 'soustraction',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-add-3',
+    title: 'Jouets de Rosalie',
+    text: 'Rosalie a 6 poupées et 8 toutous. Combien a-t-elle de jouets en tout?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-comp-1',
+    title: 'Pommes et oranges',
+    text: 'Théo a 9 pommes. Léa a 6 oranges. Qui a le plus de fruits?',
+    cycle: 1,
+    category: 'comparaison',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-add-4',
+    title: 'Élèves dans la classe',
+    text: 'Il y a 10 filles et 8 garçons dans la classe. Combien y a-t-il d\'élèves en tout?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-sous-3',
+    title: 'Poissons de Jade',
+    text: 'Jade a 12 poissons dans son aquarium. Elle en donne 4 à son amie. Combien lui en reste-t-il?',
+    cycle: 1,
+    category: 'soustraction',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-add-5',
+    title: 'Fleurs de Mamie',
+    text: 'Mamie a 15 fleurs rouges et 7 fleurs jaunes dans son jardin. Combien a-t-elle de fleurs en tout?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-sous-4',
+    title: 'Autocollants de Sam',
+    text: 'Sam a 20 autocollants. Il en colle 8 dans son cahier. Combien lui en reste-t-il?',
+    cycle: 1,
+    category: 'soustraction',
+    difficulty: 1,
+  },
+
   // ── Cycle 2, Difficulty 1 (facile) ──
   {
     id: 'c2-add-1',
@@ -44,7 +127,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
 
   // ── Cycle 2, Difficulty 2 (moyen) ──
   {
-    id: 'division',
+    id: 'c2-part-2',
     title: 'Division partage',
     text: '3 amis se partagent également 15 cartes. Combien chaque ami reçoit-il de cartes?',
     cycle: 2,
@@ -114,7 +197,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
 
   // ── Cycle 3, Difficulty 2 ──
   {
-    id: 'multiplicatif',
+    id: 'c3-comp-mult-2',
     title: 'Comparaison multiplicative',
     text: 'Camille a lu 3 fois plus de pages que Théo. Camille a lu 45 pages. Combien de pages Théo a-t-il lues?',
     cycle: 3,
@@ -148,7 +231,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
 
   // ── Cycle 3, Difficulty 3 ──
   {
-    id: 'multi-etapes',
+    id: 'c3-multi-etapes-3',
     title: 'Sortie au musée',
     text: "Une classe de 28 élèves va au musée. Le transport coûte 4 $ par élève. L'entrée coûte 6 $ par élève. L'école paie 100 $. Les parents doivent payer le reste. Combien les parents doivent-ils payer en tout?",
     cycle: 3,
@@ -162,6 +245,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     cycle: 3,
     category: 'fraction',
     difficulty: 3,
+    note: '6e année',
   },
   {
     id: 'c3-multi-3',
@@ -215,7 +299,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     text: 'Marie mange 2/8 d\'une pizza. Léo mange 3/8 de la même pizza. Quelle fraction de la pizza ont-ils mangée ensemble?',
     cycle: 3,
     category: 'fraction',
-    difficulty: 2,
+    difficulty: 1,
   },
   {
     id: 'c3-frac-mult',
@@ -226,7 +310,7 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     difficulty: 2,
   },
   {
-    id: 'c2-frac-comp',
+    id: 'c3-frac-comp',
     title: 'Comparaison de fractions',
     text: 'Marie a mangé 2/3 de sa tablette de chocolat. Léo a mangé 3/4 de la sienne. Les deux tablettes sont identiques. Qui a mangé le plus de chocolat?',
     cycle: 3,
@@ -234,10 +318,10 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     difficulty: 2,
   },
   {
-    id: 'c2-frac-ens',
+    id: 'c3-frac-ens',
     title: 'Fraction d\'un ensemble',
     text: 'Il y a 24 billes dans un sac. Le tiers des billes sont rouges. Combien y a-t-il de billes rouges?',
-    cycle: 2,
+    cycle: 3,
     category: 'fraction',
     difficulty: 1,
   },

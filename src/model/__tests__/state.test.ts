@@ -748,7 +748,7 @@ describe('appReducer', () => {
   describe('Schema', () => {
     function makeSchema(overrides: Partial<Schema> = {}): Schema {
       return { id: 's1', type: 'schema', x: 100, y: 100, locked: false,
-        gabarit: 'parties-tout', totalLabel: '', totalValue: null,
+        gabarit: 'tout-et-parties', totalLabel: '', totalValue: null,
         bars: [{ label: '', value: null, sizeMultiplier: 2, couleur: 'bleu', parts: [] }],
         referenceWidth: 120,
         ...overrides };
@@ -758,7 +758,7 @@ describe('appReducer', () => {
       let app = freshApp();
       app = dispatch(app, { type: 'PLACE_PIECE', piece: makeSchema() });
       expect(currentModel(app).pieces).toHaveLength(1);
-      expect((currentModel(app).pieces[0] as Schema).gabarit).toBe('parties-tout');
+      expect((currentModel(app).pieces[0] as Schema).gabarit).toBe('tout-et-parties');
     });
 
     it('EDIT_PIECE can change gabarit', () => {

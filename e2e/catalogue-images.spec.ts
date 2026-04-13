@@ -347,7 +347,7 @@ test.describe('Catalogue image generation', () => {
         past: [], future: [],
         current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
           id: 's1', type: 'schema', x: 40, y: 25, locked: false,
-          gabarit: 'parties-tout', totalLabel: '35', totalValue: 35, referenceWidth: 60,
+          gabarit: 'tout-et-parties', totalLabel: '35', totalValue: 35, referenceWidth: 60,
           bars: [{ label: '', value: null, sizeMultiplier: 1.5, couleur: 'bleu',
             parts: [
               { label: 'rouges', value: 20, couleur: 'rouge' },
@@ -420,14 +420,14 @@ test.describe('Catalogue image generation', () => {
     await screenshotPieces(page, img('catalogue-schema-transformation.png'));
   });
 
-  test('exemple-schema (parties-tout 35 = 20 + 15)', async ({ page }) => {
+  test('exemple-schema (tout-et-parties 35 = 20 + 15)', async ({ page }) => {
     await navigateAndReady(page);
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('test-restore', { detail: {
         past: [], future: [],
         current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
           id: 's1', type: 'schema', x: 40, y: 25, locked: false,
-          gabarit: 'parties-tout', totalLabel: '35', totalValue: 35, referenceWidth: 60,
+          gabarit: 'tout-et-parties', totalLabel: '35', totalValue: 35, referenceWidth: 60,
           bars: [{ label: '', value: null, sizeMultiplier: 1.5, couleur: 'bleu',
             parts: [
               { label: 'rouges', value: 20, couleur: 'rouge' },

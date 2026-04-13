@@ -108,7 +108,7 @@ await esc(page);
 await snap(page, 'exemple-barre.png', { x: 10, y: 25, w: 430, h: 110 });
 
 // ── SCHÉMA: 4 gabarits (images de base) ─────────
-console.log('Schéma parties-tout');
+console.log('Schéma tout-et-parties');
 await fresh(page);
 await tool(page, 'schema');
 await click(page, 130, 65);
@@ -157,13 +157,13 @@ await page.waitForTimeout(300);
 await esc(page);
 await snap(page, 'catalogue-schema-transformation.png', { x: 30, y: 18, w: 230, h: 90 });
 
-// ── SCHÉMA exemple — parties-tout ───────────────
+// ── SCHÉMA exemple — tout-et-parties ───────────────
 console.log('Schéma (exemple)');
 await fresh(page);
 await tool(page, 'schema');
 await click(page, 130, 65);
 await page.waitForTimeout(400);
-// Default gabarit is parties-tout, add 1 extra part
+// Default gabarit is tout-et-parties, add 1 extra part
 await page.locator('[data-testid="context-actions"] button:has-text("+ Partie")').click().catch(() => {});
 await page.waitForTimeout(200);
 await esc(page);

@@ -66,6 +66,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
               { value: 'motricite-importante', label: 'Aide maximale' },
               { value: 'motricite-attention', label: 'Aide + Minuterie' },
               { value: 'motricite-lecture', label: 'Aide + Gros texte' },
+              { value: 'motricite-math', label: 'TDC + Math' },
               { value: 'custom', label: 'Personnalisé' },
             ]}
             selected={settings.activeProfile}
@@ -166,6 +167,46 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
             )}
           </div>
         </SettingGroup>
+
+        {/* Fatigue detection */}
+        <SectionDivider label="Détection de fatigue" />
+
+        <SettingGroup label="Détection de fatigue">
+          <ToggleBtn
+            active={settings.fatigueClickThreshold > 0 || settings.fatigueUndoThreshold > 0}
+            onChange={on => update(on
+              ? { fatigueClickThreshold: 15, fatigueUndoThreshold: 3, fatigueWindowMs: 30000 }
+              : { fatigueClickThreshold: 0, fatigueUndoThreshold: 0 }
+            )}
+          />
+        </SettingGroup>
+
+        {(settings.fatigueClickThreshold > 0 || settings.fatigueUndoThreshold > 0) && (
+          <>
+            <SettingGroup label="Seuil clics rapides">
+              <input
+                type="range" min={5} max={30} step={1}
+                value={settings.fatigueClickThreshold}
+                onChange={e => update({ fatigueClickThreshold: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: UI_PRIMARY }}
+              />
+              <div style={{ fontSize: 11, color: UI_TEXT_SECONDARY, textAlign: 'center' }}>
+                {settings.fatigueClickThreshold} clics en {Math.round(settings.fatigueWindowMs / 1000)}s
+              </div>
+            </SettingGroup>
+            <SettingGroup label="Seuil annulations consécutives">
+              <input
+                type="range" min={1} max={6} step={1}
+                value={settings.fatigueUndoThreshold}
+                onChange={e => update({ fatigueUndoThreshold: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: UI_PRIMARY }}
+              />
+              <div style={{ fontSize: 11, color: UI_TEXT_SECONDARY, textAlign: 'center' }}>
+                {settings.fatigueUndoThreshold} annulations
+              </div>
+            </SettingGroup>
+          </>
+        )}
 
         {/* Text scale */}
         <SectionDivider label="Affichage" />

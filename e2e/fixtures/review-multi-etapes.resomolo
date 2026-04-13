@@ -15,7 +15,7 @@
       "id": "schema-1",
       "type": "schema",
       "x": 40, "y": 15, "locked": false,
-      "gabarit": "parties-tout",
+      "gabarit": "tout-et-parties",
       "totalLabel": "?",
       "totalValue": null,
       "referenceWidth": 60,

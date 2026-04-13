@@ -51,13 +51,13 @@ export function computeSchemaHeight(schema: Schema, verticalGap: number = VERTIC
 
   // Add label space
   const hasTopLabel = schema.gabarit !== 'libre';
-  const hasBottomLabel = schema.gabarit === 'parties-tout' || schema.gabarit === 'transformation' || schema.gabarit === 'comparaison';
+  const hasBottomLabel = schema.gabarit === 'tout-et-parties' || schema.gabarit === 'transformation' || schema.gabarit === 'comparaison';
   return barsHeight + (hasTopLabel ? LABEL_HEIGHT : 0) + (hasBottomLabel ? LABEL_HEIGHT : 0);
 }
 
 /**
  * Get default structure for a gabarit.
- * Follows R3: parties-tout starts undivided, groupes-egaux starts with 1 bar.
+ * Follows R3: tout-et-parties starts undivided, groupes-egaux starts with 1 bar.
  */
 export function getGabaritDefaults(gabarit: SchemaGabarit, referenceUnitMm: number): Partial<Schema> {
   const defaultBar = (sm: number, couleur: CouleurPiece = 'bleu'): SchemaBar => ({
@@ -65,7 +65,7 @@ export function getGabaritDefaults(gabarit: SchemaGabarit, referenceUnitMm: numb
   });
 
   switch (gabarit) {
-    case 'parties-tout':
+    case 'tout-et-parties':
       // R3: undivided bar, child adds parts via ContextActions
       return {
         gabarit,
@@ -197,7 +197,7 @@ export function computePartLayout(
     Math.max(0, schema.bars.length - 1) * verticalGap;
 
   // Brackets
-  if (schema.gabarit === 'parties-tout' || schema.gabarit === 'transformation') {
+  if (schema.gabarit === 'tout-et-parties' || schema.gabarit === 'transformation') {
     totalBracket = {
       x: 0,
       y: topOffset + barsHeight + 2,

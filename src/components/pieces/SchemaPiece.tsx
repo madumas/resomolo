@@ -132,7 +132,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         </g>
       )}
 
-      {/* Total bracket below (parties-tout, transformation) */}
+      {/* Total bracket below (tout-et-parties, transformation) */}
       {layout.totalBracket && (() => {
         const tb = layout.totalBracket!;
         const barWidth = layout.bars[0]?.width ?? 60;
@@ -186,7 +186,7 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
       {piece.gabarit !== 'libre' && (
         <text x={x + layout.width} y={y + layout.height + 6}
           textAnchor="end" fontSize={T3 * ts} fill="#7A7490">
-          {piece.gabarit === 'parties-tout' ? 'parties-tout' :
+          {piece.gabarit === 'tout-et-parties' ? 'tout et parties' :
            piece.gabarit === 'comparaison' ? 'comparaison' :
            piece.gabarit === 'groupes-egaux' ? 'groupes égaux' :
            piece.gabarit === 'transformation' ? 'transformation' : ''}

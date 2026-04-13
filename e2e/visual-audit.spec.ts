@@ -4504,13 +4504,13 @@ test.describe('Visual audit — full flow', () => {
   // Schéma — tous les gabarits et interactions pédagogiques
   // ══════════════════════════════════════════════════════════════════
 
-  test('144 — Schéma parties-tout: placement + ajout parties + valeurs', async ({ page }) => {
+  test('144 — Schéma tout-et-parties: placement + ajout parties + valeurs', async ({ page }) => {
     await navigateAndReady(page);
     await selectTool(page, 'schema');
     await clickCanvas(page, 100, 80);
     await page.waitForTimeout(400);
 
-    await page.screenshot({ path: shot('400-schema-parties-tout-default.png'), fullPage: true });
+    await page.screenshot({ path: shot('400-schema-tout-et-parties-default.png'), fullPage: true });
 
     // Select the schema piece
     await selectPieceAt(page, 130, 87);
@@ -4524,7 +4524,7 @@ test.describe('Visual audit — full flow', () => {
     await addPartie.click();
     await page.waitForTimeout(400);
 
-    await page.screenshot({ path: shot('401-schema-parties-tout-3-parts.png'), fullPage: true });
+    await page.screenshot({ path: shot('401-schema-tout-et-parties-3-parts.png'), fullPage: true });
 
     // Screenshot the context actions
     await ctx.screenshot({ path: shot('402-schema-ctx-actions.png') });
@@ -4646,7 +4646,7 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('409-schema-3x.png'), fullPage: true });
   });
 
-  test('150 — Schéma parties-tout rempli: contexte pédagogique avec valeurs', async ({ page }) => {
+  test('150 — Schéma tout-et-parties rempli: contexte pédagogique avec valeurs', async ({ page }) => {
     await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marie a 35 billes. 20 sont rouges et 15 sont bleues.'));
     await dismissOverlays(page);
 
@@ -4660,7 +4660,7 @@ test.describe('Visual audit — full flow', () => {
           referenceUnitMm: 60,
           pieces: [{
             id: 's1', type: 'schema', x: 40, y: 30, locked: false,
-            gabarit: 'parties-tout', totalLabel: '35 billes', totalValue: 35, referenceWidth: 60,
+            gabarit: 'tout-et-parties', totalLabel: '35 billes', totalValue: 35, referenceWidth: 60,
             bars: [{ label: 'Total', value: null, sizeMultiplier: 2, couleur: 'bleu',
               parts: [
                 { label: 'rouges', value: 20, couleur: 'rouge' },
@@ -4673,7 +4673,7 @@ test.describe('Visual audit — full flow', () => {
     });
     await page.waitForTimeout(500);
 
-    await page.screenshot({ path: shot('410-schema-parties-tout-rempli.png'), fullPage: true });
+    await page.screenshot({ path: shot('410-schema-tout-et-parties-rempli.png'), fullPage: true });
   });
 
   test('151 — Schéma comparaison rempli: contexte pédagogique avec différence', async ({ page }) => {
@@ -5180,7 +5180,7 @@ test.describe('Visual audit — full flow', () => {
           pieces: [
             {
               id: 's1', type: 'schema', x: 30, y: 20, locked: false,
-              gabarit: 'parties-tout', totalLabel: '25 élèves', totalValue: 25, referenceWidth: 60,
+              gabarit: 'tout-et-parties', totalLabel: '25 élèves', totalValue: 25, referenceWidth: 60,
               bars: [{ label: 'Classe', value: null, sizeMultiplier: 2.5, couleur: 'bleu',
                 parts: [
                   { label: 'Soccer', value: 12, couleur: 'bleu' },

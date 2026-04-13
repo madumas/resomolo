@@ -30,9 +30,11 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
-import { TOOL_MESSAGES, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS } from './config/messages';
-import { onUndoSound, onBond, onAcknowledge, setSoundMode, setGainMultiplier } from './engine/sound';
+import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS } from './config/messages';
+import { onUndoSound, onBond, onAcknowledge, onHighlight as onHighlightSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
+import { OnboardingOverlay, shouldShowOnboarding, markOnboardingDone } from './components/OnboardingOverlay';
+import { AideMemoire } from './components/AideMemoire';
 
 interface AppProps {
   initialRegistry: SlotRegistry;
@@ -46,6 +48,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     () => initialUndoManager
   );
   const { isMobilePortrait } = useViewport();
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  const [showAideMemoire, setShowAideMemoire] = useState(false);
   const [activeTool, setActiveTool] = useState<ToolType>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [editingPieceId, setEditingPieceId] = useState<string | null>(null);
@@ -79,11 +83,14 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
   const [inactivityRelanceIndex, setInactivityRelanceIndex] = useState(0);
 
-  // Fatigue detection — consecutive undos and rapid clicks
+  // Fatigue detection — consecutive undos, rapid clicks, inter-click variance
   const [showFatigueNudge, setShowFatigueNudge] = useState(false);
   const consecutiveUndos = useRef(0);
   const recentClicks = useRef<number[]>([]);
+  const recentClickIntervals = useRef<number[]>([]);
   const fatigueNudgeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   const current = undoManager.current;
   const { pieces, probleme, problemeHighlights } = current;
@@ -142,19 +149,38 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         problemZoneExpanded: true,
       };
       const result = appReducer(fakeAppState, action);
-      if (action.type === 'PLACE_PIECE' && action.piece.type === 'reponse') {
-        setProblemExpanded(true);
+      if (action.type === 'PLACE_PIECE') {
+        if (action.piece.type === 'reponse') setProblemExpanded(true);
+        // Dismiss onboarding on first piece placement
+        markOnboardingDone();
+        setShowOnboarding(false);
       }
       return result.undoManager;
     });
     setActivityTick(t => t + 1);
     // Reset consecutive undo counter on any non-undo action
     consecutiveUndos.current = 0;
-    // Fatigue: track rapid clicks (>15 actions in 30s)
+    // Fatigue: track rapid clicks + inter-click variance
     const now = Date.now();
+    const prevTime = recentClicks.current.length > 0 ? recentClicks.current[recentClicks.current.length - 1] : now;
     recentClicks.current.push(now);
-    recentClicks.current = recentClicks.current.filter(t => now - t < 30000);
-    if (recentClicks.current.length > 15) {
+    const s = settingsRef.current;
+    recentClicks.current = recentClicks.current.filter(t => now - t < s.fatigueWindowMs);
+    // Track inter-click intervals for variance detection
+    if (now !== prevTime) {
+      recentClickIntervals.current.push(now - prevTime);
+      if (recentClickIntervals.current.length > 10) recentClickIntervals.current.shift();
+    }
+    // Detect low variance in click intervals (rhythmic/frustrated clicking)
+    let varianceTrigger = false;
+    if (recentClickIntervals.current.length >= 5) {
+      const intervals = recentClickIntervals.current;
+      const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const variance = intervals.reduce((a, b) => a + (b - mean) ** 2, 0) / intervals.length;
+      const cv = Math.sqrt(variance) / Math.max(mean, 1); // coefficient of variation
+      if (cv < 0.15 && mean < 500) varianceTrigger = true; // very regular fast clicks
+    }
+    if ((s.fatigueClickThreshold > 0 && recentClicks.current.length > s.fatigueClickThreshold) || varianceTrigger) {
       setShowFatigueNudge(true);
       clearTimeout(fatigueNudgeTimer.current);
       fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
@@ -176,7 +202,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setSelectedBondInfo(null);
     // Fatigue detection: track consecutive undos
     consecutiveUndos.current += 1;
-    if (consecutiveUndos.current >= 3) {
+    if (settingsRef.current.fatigueUndoThreshold > 0 && consecutiveUndos.current >= settingsRef.current.fatigueUndoThreshold) {
       setShowFatigueNudge(true);
       clearTimeout(fatigueNudgeTimer.current);
       fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
@@ -559,8 +585,13 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }, [dispatch, tutorial, slotManager, pieces.length]);
 
   // Highlight handlers
+  const firstHighlightPlayed = useRef(false);
   const handleHighlightAdd = useCallback((h: Highlight) => {
     dispatch({ type: 'HIGHLIGHT_ADD', highlight: h });
+    if (!firstHighlightPlayed.current) {
+      firstHighlightPlayed.current = true;
+      onHighlightSound();
+    }
   }, [dispatch]);
 
   const handleHighlightRemove = useCallback((start: number, end: number) => {
@@ -606,12 +637,16 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   } else if (editingPieceId) {
     statusMessage = 'Entrée pour valider, Escape pour annuler';
   } else if (showRelance) {
-    statusMessage = RELANCE_QUESTIONS[relanceIndex];
+    // Relance level: aide maximale/TDC+math → directif (0), other profiles → guidé (1), custom → autonome (2)
+    const relanceLevel = (settings.activeProfile === 'motricite-importante' || settings.activeProfile === 'motricite-math') ? 0
+      : settings.activeProfile === 'custom' ? 2 : 1;
+    const questions = RELANCE_LEVELS[relanceLevel] ?? RELANCE_QUESTIONS;
+    statusMessage = questions[relanceIndex % questions.length];
     statusVariant = 'relance';
   } else if (activeTool === 'fleche' && arrowFromId) {
     statusMessage = 'Maintenant, clique sur la pièce d\'arrivée';
   } else if (activeTool) {
-    statusMessage = TOOL_MESSAGES[activeTool];
+    statusMessage = isMobilePortrait ? getToolMessages(true)[activeTool] : TOOL_MESSAGES[activeTool];
   } else if (isAmorcage) {
     statusMessage = AMORCAGE_WITH_PROBLEM;
   } else if (isPostHighlight) {
@@ -622,7 +657,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = 'Relis le problème. Est-ce que ta réponse répond à la question?';
     statusVariant = 'relance';
   } else if (showInactivityRelance) {
-    statusMessage = RELANCE_QUESTIONS[inactivityRelanceIndex];
+    const relanceLevel = (settings.activeProfile === 'motricite-importante' || settings.activeProfile === 'motricite-math') ? 0
+      : settings.activeProfile === 'custom' ? 2 : 1;
+    const questions = RELANCE_LEVELS[relanceLevel] ?? RELANCE_QUESTIONS;
+    statusMessage = questions[inactivityRelanceIndex % questions.length];
     statusVariant = 'relance';
   } else if (settings.sessionTimerEnabled && sessionTimer.alerted) {
     statusMessage = 'Tu travailles depuis un moment — prends une pause si tu veux';
@@ -653,13 +691,14 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   })()) {
     statusMessage = 'Beaucoup de pièces — essaie le bouton Ranger en bas à droite du canevas';
   } else {
-    statusMessage = 'Clique sur une pièce pour la sélectionner';
+    statusMessage = isMobilePortrait ? 'Touche une pièce pour la sélectionner' : 'Clique sur une pièce pour la sélectionner';
   }
 
   // Nudge
+  const verb = isMobilePortrait ? 'Touche' : 'Clique sur';
   let nudgeMessage: string | undefined;
   if (!hasPieces) {
-    if (isAmorcage) nudgeMessage = 'Commence par lire le problème.\nClique sur les nombres.';
+    if (isAmorcage) nudgeMessage = `Commence par lire le problème.\n${verb} les nombres et les mots clés.`;
     else if (isPostHighlight) nudgeMessage = 'Tu peux essayer un jeton ou une barre.';
     else if (!hasProblem) nudgeMessage = 'Tu peux commencer par placer\nun jeton ou une barre.';
   }
@@ -669,6 +708,21 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       style={{ display: 'flex', flexDirection: 'column', height: '100%', zoom: settings.textScale !== 1 ? settings.textScale : undefined }}
       onContextMenu={e => e.preventDefault()}
     >
+      {/* Skip link for keyboard navigation */}
+      <a
+        href="#canvas-svg"
+        onClick={(e) => { e.preventDefault(); (document.querySelector('[data-testid="canvas-svg"]') as HTMLElement | null)?.focus(); }}
+        style={{
+          position: 'absolute', left: -9999, top: 'auto', width: 1, height: 1, overflow: 'hidden',
+          zIndex: 300, padding: '8px 16px', background: '#7028e0', color: '#fff', borderRadius: 4,
+          fontSize: 14, fontWeight: 600, textDecoration: 'none',
+        }}
+        onFocus={(e) => { (e.target as HTMLElement).style.left = '8px'; (e.target as HTMLElement).style.top = '8px'; (e.target as HTMLElement).style.width = 'auto'; (e.target as HTMLElement).style.height = 'auto'; }}
+        onBlur={(e) => { (e.target as HTMLElement).style.left = '-9999px'; (e.target as HTMLElement).style.width = '1px'; (e.target as HTMLElement).style.height = '1px'; }}
+      >
+        Aller au canevas
+      </a>
+
       {/* Toolbar en haut (desktop/tablette) ou en bas (mobile portrait) */}
       {!isMobilePortrait && (
         <Toolbar
@@ -781,6 +835,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           selectedBondInfo={selectedBondInfo}
           onSelectBond={setSelectedBondInfo}
           toolbarMode={settings.toolbarMode}
+          dominantHand={settings.dominantHand}
+          highlightColors={problemeHighlights.length > 0 ? new Set(problemeHighlights.map(h => h.color === 'bleu' ? 'bleu' : h.color === 'vert' ? 'vert' : '').filter(Boolean)) : undefined}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} onViewExample={handleViewExample} />}
         {showExampleSelector && <ExampleSelector onSelect={(ex) => { setShowExampleSelector(false); handleViewExample(ex); }} onClose={() => setShowExampleSelector(false)} />}
@@ -806,6 +862,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         }}
         onExportPdf={handleExportPdf}
         onShareLink={() => setShowSharePanel(true)}
+        onShowAideMemoire={() => setShowAideMemoire(true)}
         sessionTimer={settings.sessionTimerEnabled ? { formatted: sessionTimer.formatted, alerted: sessionTimer.alerted } : undefined}
         activeProfile={settings.activeProfile}
         showSaveIndicator={showSaveIndicator}
@@ -871,6 +928,19 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           {...confirmDialog}
           onCancel={() => setConfirmDialog(null)}
         />
+      )}
+
+      {/* Aide-mémoire SBI */}
+      {showAideMemoire && (
+        <AideMemoire
+          cycle={current.probleme ? (PROBLEM_PRESETS.find(p => p.text === current.probleme)?.cycle ?? 2) : 2}
+          onClose={() => setShowAideMemoire(false)}
+        />
+      )}
+
+      {/* Onboarding overlay — first-time user guidance */}
+      {showOnboarding && (
+        <OnboardingOverlay onDone={() => setShowOnboarding(false)} />
       )}
     </div>
   );

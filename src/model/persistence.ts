@@ -78,7 +78,7 @@ function migratePieces(pieces: any[]): any[] {
     if (p.type === 'schema') {
       return {
         ...p,
-        gabarit: p.gabarit || 'libre',
+        gabarit: p.gabarit === 'parties-tout' ? 'tout-et-parties' : (p.gabarit || 'libre'),
         totalLabel: p.totalLabel ?? '',
         totalValue: p.totalValue ?? null,
         bars: p.bars || [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],

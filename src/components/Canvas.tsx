@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { useCellUndo } from '../hooks/useCellUndo';
 import { useContainerSize } from '../hooks/useContainerSize';
+import { useRovingTabindex } from '../hooks/useRovingTabindex';
 import { pointerToMm, snapToGrid, calculateViewBoxHeight } from '../engine/coordinates';
 import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
@@ -25,7 +26,7 @@ import { ContextActions } from './ContextActions';
 import { ColumnCalc, type ColumnCalcData } from './ColumnCalc';
 // TableauEditor overlay removed — editing is now in-place via foreignObject
 import { DivisionCalc, type DivisionCalcData } from './DivisionCalc';
-import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap } from '../engine/sound';
+import { onPlace, onSnap, onAttach, onDistribute, onAcknowledge, onGhostSnap, onMiss as onMissSound } from '../engine/sound';
 import { computeArrangement } from '../engine/arrange';
 import { createSmoothingState, smooth } from '../engine/smoothing';
 import type { SmoothingState } from '../engine/smoothing';
@@ -67,6 +68,8 @@ interface CanvasProps {
   selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
   toolbarMode?: 'essentiel' | 'complet';
+  dominantHand?: 'left' | 'right';
+  highlightColors?: Set<string>;  // active highlight colors from problem zone
   hideLockBadge?: boolean;
 }
 
@@ -151,6 +154,8 @@ export function Canvas({
   selectedBondInfo,
   onSelectBond,
   toolbarMode = 'essentiel',
+  dominantHand = 'right',
+  highlightColors,
   hideLockBadge,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -272,6 +277,28 @@ export function Canvas({
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const tolMultiplier = getToleranceMultiplier(_toleranceProfile);
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
+
+  // Roving tabindex for keyboard navigation
+  const pieceIds = useMemo(() => pieces.map(p => p.id), [pieces]);
+  const rovingCallbacks = useMemo(() => ({
+    onSelect: (id: string) => onSelectPiece(id),
+    onDelete: (id: string) => {
+      const p = pieces.find(pc => pc.id === id);
+      if (p && !p.locked) {
+        dispatch({ type: 'DELETE_PIECE', id });
+        onSelectPiece(null);
+      }
+    },
+    onMovePiece: (id: string, dx: number, dy: number) => {
+      const p = pieces.find(pc => pc.id === id);
+      if (p) {
+        const newX = Math.max(0, Math.min(CANVAS_WIDTH_MM, p.x + dx));
+        const newY = Math.max(0, p.y + dy);
+        dispatch({ type: 'MOVE_PIECE', id, x: newX, y: newY });
+      }
+    },
+  }), [onSelectPiece, dispatch, pieces]);
+  const { focusedId, onPieceFocus, onKeyDown: rovingOnKeyDown } = useRovingTabindex(pieceIds, selectedPieceId, rovingCallbacks);
 
   // Clear ghost states when tool or selection changes
   useEffect(() => {
@@ -932,9 +959,10 @@ export function Canvas({
         }
       }
     } else {
-      // No tool active, click on empty space — deselect
+      // No tool active, click on empty space — deselect + subtle miss sound
       if (tableauEditorPieceId) closeTableauEditor();
       onSelectPiece(null);
+      onMissSound();
     }
   }, [pieces, activeTool, referenceUnitMm, dispatch, onSelectPiece, onSetTool, mode, tol,
       editingPieceId, jetonQuantity, onStartEdit, onStopEdit,
@@ -1436,34 +1464,12 @@ export function Canvas({
         onPointerLeave={() => { setGhostCursorMm(null); setDnGhostMarker(null); }}
         onContextMenu={handleRightClick}
         onKeyDown={(e) => {
-          if (pieces.length === 0) return;
-          const STEP = 5; // mm per arrow press
-          if (e.key === 'Tab' && selectedPieceId) {
-            // Only trap Tab when a piece is selected — otherwise let focus flow naturally
-            e.preventDefault();
-            const idx = pieces.findIndex(p => p.id === selectedPieceId);
-            const next = e.shiftKey
-              ? (idx <= 0 ? pieces.length - 1 : idx - 1)
-              : (idx >= pieces.length - 1 ? 0 : idx + 1);
-            onSelectPiece(pieces[next].id);
-          } else if (e.key === 'Escape') {
+          if (e.key === 'Escape') {
             onSelectPiece(null);
-          } else if (selectedPieceId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-            e.preventDefault();
-            const piece = pieces.find(p => p.id === selectedPieceId);
-            if (!piece) return;
-            const dx = e.key === 'ArrowRight' ? STEP : e.key === 'ArrowLeft' ? -STEP : 0;
-            const dy = e.key === 'ArrowDown' ? STEP : e.key === 'ArrowUp' ? -STEP : 0;
-            const newX = Math.max(0, Math.min(CANVAS_WIDTH_MM, piece.x + dx));
-            const newY = Math.max(0, Math.min(viewBoxHeight, piece.y + dy));
-            dispatch({ type: 'EDIT_PIECE', id: selectedPieceId, changes: { x: newX, y: newY } });
-          } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedPieceId) {
-            const piece = pieces.find(p => p.id === selectedPieceId);
-            if (piece && !piece.locked) {
-              dispatch({ type: 'DELETE_PIECE', id: selectedPieceId });
-              onSelectPiece(null);
-            }
+            return;
           }
+          // Delegate to roving tabindex hook for navigation, selection, deletion, movement
+          rovingOnKeyDown(e);
         }}
       >
         <defs>
@@ -1565,11 +1571,36 @@ export function Canvas({
           const isMoving = mode.type === 'moving' && mode.pieceId === piece.id;
           const isFaded = focusMode && piece.id !== selectedPieceId;
           const opacity = isMoving ? 0.6 : isFaded ? 0.35 : 1;
+          const isFocused = focusedId === piece.id;
           return (
             <g key={piece.id} data-piece-id={piece.id}
+              tabIndex={isFocused ? 0 : -1}
+              role="group"
+              aria-label={getPieceAriaLabel(piece)}
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-              style={{ opacity, transition: 'opacity 0.4s ease-in-out' }}
+              style={{ opacity, transition: 'opacity 0.4s ease-in-out', outline: 'none' }}
+              onFocus={() => onPieceFocus(piece.id)}
             >
+              {/* Highlight-piece binding halo — shows when piece color matches an active highlight */}
+              {highlightColors && 'couleur' in piece && highlightColors.has((piece as any).couleur) && (
+                <circle
+                  cx={piece.x} cy={piece.y}
+                  r={10}
+                  fill={getPieceColor((piece as any).couleur)}
+                  opacity={0.2}
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
+              {/* Focus ring (keyboard navigation) */}
+              {isFocused && piece.id !== selectedPieceId && (
+                <rect
+                  x={piece.x - 4} y={piece.y - 4}
+                  width={12} height={12}
+                  rx={2}
+                  fill="none" stroke="#7028e0" strokeWidth={1.5} strokeDasharray="3 2"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
@@ -2602,6 +2633,7 @@ export function Canvas({
             onStartEdit(pieceId);
           }}
           toolbarMode={toolbarMode}
+          dominantHand={dominantHand}
         />
       )}
 
@@ -2960,8 +2992,9 @@ function PieceRenderer({ piece, referenceUnitMm, isSelected, reponseIds, highCon
 }
 
 function JetonPiece({ piece, isSelected, highContrast, toleranceMultiplier = 1 }: { piece: Piece & { type: 'jeton' }; isSelected: boolean; highContrast?: boolean; toleranceMultiplier?: number }) {
-  // Scale visual radius with tolerance: normal=5mm, large=5.6mm (+12%), très-large=6.25mm (+25%)
-  const r = 5 * (1 + (toleranceMultiplier - 1) * 0.5);
+  // Scale visual radius with tolerance, capped at ×1.25 to avoid visual overlap
+  const visualScale = Math.min(1.25, 1 + (toleranceMultiplier - 1) * 0.5);
+  const r = 5 * visualScale;
   const color = getPieceColor(piece.couleur, highContrast);
   return (
     <circle
@@ -3633,6 +3666,27 @@ function getPieceBounds(piece: Piece, referenceUnitMm: number, pad = 0, ts = 1):
   }
 }
 
+/** PFEQ-aligned aria-label for a piece (keyboard navigation) */
+function getPieceAriaLabel(piece: Piece): string {
+  switch (piece.type) {
+    case 'jeton': return `Jeton ${piece.couleur}`;
+    case 'barre': return `Barre${piece.label ? ' ' + piece.label : ''}${piece.value ? ' (' + piece.value + ')' : ''}`;
+    case 'calcul': return `Calcul${piece.expression ? ' : ' + piece.expression : ''}`;
+    case 'reponse': return `Réponse${piece.text ? ' : ' + piece.text : ''}`;
+    case 'boite': return `Boîte${piece.label ? ' ' + piece.label : ''}`;
+    case 'etiquette': return `Étiquette${piece.text ? ' : ' + piece.text : ''}`;
+    case 'inconnue': return `Inconnue (${piece.text || '?'})`;
+    case 'fleche': return 'Flèche';
+    case 'droiteNumerique': return `Droite numérique de ${(piece as DroiteNumerique).min} à ${(piece as DroiteNumerique).max}`;
+    case 'tableau': return 'Tableau';
+    case 'arbre': return 'Diagramme en arbre';
+    case 'schema': return `Schéma ${(piece as Schema).gabarit === 'tout-et-parties' ? 'tout et parties' : (piece as Schema).gabarit === 'groupes-egaux' ? 'groupes égaux' : (piece as Schema).gabarit}`;
+    case 'diagrammeBandes': return `Diagramme à bandes${(piece as DiagrammeBandes).title ? ' : ' + (piece as DiagrammeBandes).title : ''}`;
+    case 'diagrammeLigne': return 'Diagramme à ligne brisée';
+    default: return 'Pièce';
+  }
+}
+
 function getPieceCenter(piece: Piece, referenceUnitMm: number): { x: number; y: number } {
   switch (piece.type) {
     case 'jeton': return { x: piece.x, y: piece.y };
@@ -3718,9 +3772,9 @@ function createPiece(tool: NonNullable<ToolType>, pos: { x: number; y: number },
           { name: '', options: ['', ''] },
         ] };
     case 'schema': {
-      const defaults = getGabaritDefaults('parties-tout', referenceUnitMm); // R3: default parties-tout
+      const defaults = getGabaritDefaults('tout-et-parties', referenceUnitMm); // R3: default tout-et-parties
       return { id, type: 'schema', x: pos.x, y: pos.y, locked: false,
-        gabarit: 'parties-tout',
+        gabarit: 'tout-et-parties',
         totalLabel: defaults.totalLabel ?? '',
         totalValue: defaults.totalValue ?? null,
         bars: defaults.bars ?? [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],

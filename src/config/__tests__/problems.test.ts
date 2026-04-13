@@ -11,10 +11,15 @@ describe('Problem presets', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  test('all have valid cycle (2 or 3)', () => {
+  test('all have valid cycle (1, 2, or 3)', () => {
     PROBLEM_PRESETS.forEach(p => {
-      expect([2, 3]).toContain(p.cycle);
+      expect([1, 2, 3]).toContain(p.cycle);
     });
+  });
+
+  test('has at least 8 cycle 1 problems', () => {
+    const c1 = PROBLEM_PRESETS.filter(p => p.cycle === 1);
+    expect(c1.length).toBeGreaterThanOrEqual(8);
   });
 
   test('all have valid difficulty (1, 2, or 3)', () => {

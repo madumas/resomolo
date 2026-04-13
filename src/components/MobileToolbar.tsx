@@ -12,8 +12,9 @@ interface MobileToolbarProps {
   availablePieces?: string[] | null;
 }
 
-// Essential tools shown directly in the bottom bar
-const MOBILE_INLINE_TYPES = new Set(['jeton', 'barre', 'calcul', 'reponse', 'inconnue']);
+// Essential tools shown directly in the bottom bar (3 most-used: jeton, barre, calcul)
+// Réponse/inconnue moved to drawer — calcul is multi-use, réponse is once per problem
+const MOBILE_INLINE_TYPES = new Set(['jeton', 'barre', 'calcul']);
 
 export function MobileToolbar({ activeTool, toolbarMode, onSelectTool, dimmed, availablePieces }: MobileToolbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -171,7 +172,7 @@ export function MobileToolbar({ activeTool, toolbarMode, onSelectTool, dimmed, a
               fontSize: 10,
               fontWeight: 500,
               color: activeTool === tool.type ? UI_PRIMARY : UI_TEXT_PRIMARY,
-              minWidth: 48,
+              minWidth: 56,
               height: 56,
               opacity: dimmed && activeTool !== tool.type ? 0.5 : 1,
               cursor: 'pointer',

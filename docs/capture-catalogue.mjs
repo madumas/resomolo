@@ -152,8 +152,8 @@ await tool(page, 'barre');
 await click(page, 60, 78); await esc(page);
 await snap(page, 'catalogue-barre.png', { x: 25, y: 35, w: 130, h: 60 });
 
-// ── SCHÉMA: parties-tout ────────────────────────
-console.log('Schéma parties-tout');
+// ── SCHÉMA: tout-et-parties ────────────────────────
+console.log('Schéma tout-et-parties');
 await fresh(page);
 await tool(page, 'schema');
 await click(page, 130, 65);

@@ -212,6 +212,25 @@ export function onGhostSnap() {
   if (mode === 'full') { soundGhostSnap(); }
 }
 
+// Highlight — first text highlight (subtle ascending blip, distinct from other sounds)
+export function soundHighlight() {
+  play(520, 35, 'sine', 0.07);
+  setTimeout(() => play(660, 25, 'sine', 0.05), 25);
+}
+
+export function onHighlight() {
+  if (mode !== 'off') { soundHighlight(); haptic(15); }
+}
+
+// Miss — click on empty space (very quiet, low, NOT punitive)
+export function soundMiss() {
+  play(200, 30, 'triangle', 0.03);
+}
+
+export function onMiss() {
+  if (mode === 'full') { soundMiss(); }
+}
+
 // Bond (jump on number line) — sweep triangle evoking movement
 // Positive bonds sweep UP in frequency, negative bonds sweep DOWN
 function soundBond(baseFreq: number, positive: boolean) {

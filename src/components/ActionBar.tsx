@@ -22,6 +22,7 @@ interface ActionBarProps {
   onShareLink?: () => void;
   onStartTutorial?: () => void;
   onShowExamples?: () => void;
+  onShowAideMemoire?: () => void;
   sessionTimer?: { formatted: string; alerted: boolean };
   activeProfile?: SettingsProfile;
   showSaveIndicator?: boolean;
@@ -43,6 +44,7 @@ export function ActionBar({
   onShareLink,
   onStartTutorial,
   onShowExamples,
+  onShowAideMemoire,
   sessionTimer,
   activeProfile = 'custom',
   showSaveIndicator,
@@ -188,7 +190,7 @@ export function ActionBar({
       </button>
 
       {/* Menu aide */}
-      <HelpMenu onShowGuide={onShowGuide} onStartTutorial={onStartTutorial} onShowExamples={onShowExamples} />
+      <HelpMenu onShowGuide={onShowGuide} onStartTutorial={onStartTutorial} onShowExamples={onShowExamples} onShowAideMemoire={onShowAideMemoire} />
 
       {/* Fullscreen toggle — same position as GéoMolo */}
       <FullscreenToggle />
@@ -298,10 +300,11 @@ function ShareRow({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   );
 }
 
-function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples }: {
+function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples, onShowAideMemoire }: {
   onShowGuide: () => void;
   onStartTutorial?: () => void;
   onShowExamples?: () => void;
+  onShowAideMemoire?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
@@ -379,6 +382,13 @@ function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples }: {
                 icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M4 2v10l8-5z" /></svg>}
                 label="Tutoriel"
                 onClick={() => { onStartTutorial(); setOpen(false); }}
+              />
+            )}
+            {onShowAideMemoire && (
+              <ShareRow
+                icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="7" cy="7" r="5.5" /><text x="7" y="10" textAnchor="middle" fontSize="9" fill="currentColor" stroke="none">?</text></svg>}
+                label="Quel schéma choisir?"
+                onClick={() => { onShowAideMemoire(); setOpen(false); }}
               />
             )}
             {onShowExamples && (

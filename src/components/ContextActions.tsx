@@ -70,6 +70,7 @@ interface ContextActionsProps {
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
   onStartEditBond?: (pieceId: string, bondIndex: number) => void;
   toolbarMode?: 'essentiel' | 'complet';
+  dominantHand?: 'left' | 'right';
 }
 
 export function ContextActions({
@@ -104,6 +105,7 @@ export function ContextActions({
   onSelectBond,
   onStartEditBond,
   toolbarMode = 'essentiel',
+  dominantHand = 'right',
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
@@ -176,7 +178,9 @@ export function ContextActions({
 
   // Position: center horizontally on piece, above or below — pick side with more space.
   const halfMax = MAX_ACTIONS_WIDTH / 2;
-  const anchorX = Math.max(halfMax + 8, Math.min(pieceBounds.centerX, canvasRect.width - halfMax - 8));
+  // Offset away from dominant hand so panel isn't under the user's finger/hand
+  const handOffset = dominantHand === 'left' ? 30 : -30;
+  const anchorX = Math.max(halfMax + 8, Math.min(pieceBounds.centerX + handOffset, canvasRect.width - halfMax - 8));
   const spaceAbove = pieceBounds.top - 8;
   const spaceBelow = canvasRect.height - pieceBounds.bottom - 8;
   const placeAbove = spaceAbove > spaceBelow && spaceAbove >= 120;
@@ -872,8 +876,8 @@ export function ContextActions({
           <CtxBtn onClick={() => setSchemaSubmenu('taille')}>
             Taille {piece.bars[0]?.sizeMultiplier ?? 1}×
           </CtxBtn>
-          {/* Add/remove parts (for parties-tout, transformation) */}
-          {(piece.gabarit === 'parties-tout' || piece.gabarit === 'transformation' || piece.gabarit === 'libre') && (
+          {/* Add/remove parts (for tout-et-parties, transformation) */}
+          {(piece.gabarit === 'tout-et-parties' || piece.gabarit === 'transformation' || piece.gabarit === 'libre') && (
             <CtxBtn onClick={() => {
               const bar = piece.bars[0];
               if (bar && bar.parts.length < 6) {
@@ -935,7 +939,7 @@ export function ContextActions({
         <>
           <CtxBtn onClick={() => setSchemaSubmenu('none')} back>←</CtxBtn>
           {([
-            { g: 'parties-tout' as SchemaGabarit, label: 'Séparer en parties' },
+            { g: 'tout-et-parties' as SchemaGabarit, label: 'Séparer en parties' },
             { g: 'comparaison' as SchemaGabarit, label: 'Comparer deux quantités' },
             { g: 'groupes-egaux' as SchemaGabarit, label: 'Faire des groupes égaux' },
             { g: 'transformation' as SchemaGabarit, label: 'Avant → Après' },
@@ -1192,7 +1196,14 @@ function CtxBtn({ children, onClick, active, destructive, back, disabled, testId
   );
 }
 
-/** Rangée de pastilles couleur — convention universelle, toujours sur sa propre ligne */
+/** Rangée de pastilles couleur avec labels texte — WCAG 1.4.1 */
+const COLOR_LABELS: Record<CouleurPiece, string> = {
+  bleu: 'Bleu',
+  rouge: 'Rouge',
+  vert: 'Vert',
+  jaune: 'Jaune',
+};
+
 function ColorRow({ pieceId, current, onChange }: {
   pieceId: string;
   current: CouleurPiece;
@@ -1203,24 +1214,29 @@ function ColorRow({ pieceId, current, onChange }: {
       {(['bleu', 'rouge', 'vert', 'jaune'] as CouleurPiece[]).map(c => {
         const isSelected = current === c;
         return (
-          <button key={c} onClick={() => debouncedClick(() => onChange(pieceId, c), 200)}
-            aria-label={`Couleur ${c}${isSelected ? ' (sélectionnée)' : ''}`}
-            role="menuitem"
-            style={{
-              minWidth: 48, minHeight: 48, borderRadius: '50%',
-              background: getPieceColor(c),
-              border: `3px solid ${isSelected ? '#1E1A2E' : 'transparent'}`,
-              cursor: 'pointer', opacity: isSelected ? 1 : 0.5,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'opacity 0.1s, border-color 0.1s',
-            }}
-          >
-            {isSelected && (
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M4 9.5L7.5 13L14 5.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </button>
+          <div key={c} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <button onClick={() => debouncedClick(() => onChange(pieceId, c), 200)}
+              aria-label={`Couleur ${COLOR_LABELS[c]}${isSelected ? ' (sélectionnée)' : ''}`}
+              role="menuitem"
+              style={{
+                minWidth: 48, minHeight: 48, borderRadius: '50%',
+                background: getPieceColor(c),
+                border: `3px solid ${isSelected ? '#1E1A2E' : 'transparent'}`,
+                cursor: 'pointer', opacity: isSelected ? 1 : 0.5,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'opacity 0.1s, border-color 0.1s',
+              }}
+            >
+              {isSelected && (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M4 9.5L7.5 13L14 5.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <span style={{ fontSize: 10, color: isSelected ? '#1E1A2E' : UI_TEXT_SECONDARY, fontWeight: isSelected ? 600 : 400 }}>
+              {COLOR_LABELS[c]}
+            </span>
+          </div>
         );
       })}
     </div>
