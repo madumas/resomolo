@@ -3093,7 +3093,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(deleteBtn).toBeVisible({ timeout: 1000 });
     // Premier clic → "Supprimer ?"
     await deleteBtn.click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(400); // destructive debounce = 300ms
     const surBtn = ctx.locator('button:has-text("Supprimer ?")');
     await expect(surBtn).toBeVisible({ timeout: 1000 });
     // Deuxième clic → suppression
