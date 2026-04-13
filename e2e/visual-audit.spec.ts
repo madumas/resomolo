@@ -110,7 +110,7 @@ test.describe('Visual audit — full flow', () => {
     await page.waitForTimeout(300);
 
     // Click 3× in the Taille submenu (use dispatchEvent to bypass status bar overlay)
-    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
     await btn3x.click();
     await page.waitForTimeout(500);
@@ -723,7 +723,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
     await tailleBtn.click();
     await page.waitForTimeout(300);
-    const btn2x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '2×', exact: true });
+    const btn2x = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '2×', exact: true });
     await expect(btn2x).toBeVisible({ timeout: 2000 });
     await btn2x.click();
     await page.waitForTimeout(300);
@@ -1167,7 +1167,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(pasBtn).toBeVisible({ timeout: 2000 });
     await pasBtn.click();
     await page.waitForTimeout(200);
-    const val2 = ctxActions.locator('button:has-text("2")');
+    const val2 = ctxActions.getByRole('menuitem', { name: '2', exact: true });
     await expect(val2).toBeVisible({ timeout: 2000 });
     await val2.click();
     await page.waitForTimeout(300);
@@ -1351,7 +1351,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(minBtn).toBeVisible({ timeout: 2000 });
     await minBtn.click();
     await page.waitForTimeout(200);
-    const val5 = ctxActions.getByRole('button', { name: '5', exact: true });
+    const val5 = ctxActions.getByRole('menuitem', { name: '5', exact: true });
     await expect(val5).toBeVisible({ timeout: 2000 });
     await val5.click();
     await page.waitForTimeout(300);
@@ -1952,7 +1952,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
     await tailleBtn.click();
     await page.waitForTimeout(300);
-    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
     await btn3x.click();
     await page.waitForTimeout(300);
@@ -1967,7 +1967,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(tailleBtn2).toBeVisible({ timeout: 2000 });
     await tailleBtn2.click();
     await page.waitForTimeout(300);
-    const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("= une autre barre")');
+    const memeTailleBtn = page.locator('[data-testid="context-actions"] button:has-text("Même taille")');
     await expect(memeTailleBtn).toBeVisible({ timeout: 2000 });
     await memeTailleBtn.click();
     await page.waitForTimeout(200);
@@ -1997,7 +1997,7 @@ test.describe('Visual audit — full flow', () => {
     await tailleBtn.click();
     await page.waitForTimeout(200);
     // Use exact match to avoid matching "1½×"
-    const btnHalf = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '½×', exact: true });
+    const btnHalf = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '½×', exact: true });
     await expect(btnHalf).toBeVisible({ timeout: 2000 });
     await btnHalf.click();
     await page.waitForTimeout(200);
@@ -2047,7 +2047,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Select a jeton, click Répartir → 3 groupes
     await selectPieceAt(page, 150, 60);
-    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
+    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Partager")');
     await expect(repartirBtn).toBeVisible({ timeout: 2000 });
     await repartirBtn.click();
     await page.waitForTimeout(200);
@@ -2511,7 +2511,7 @@ test.describe('Visual audit — full flow', () => {
     await expect(tailleBtn).toBeVisible({ timeout: 2000 });
     await tailleBtn.click();
     await page.waitForTimeout(300);
-    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
+    const btn3x = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '3×', exact: true });
     await expect(btn3x).toBeVisible({ timeout: 2000 });
     await btn3x.click();
     await page.waitForTimeout(300);
@@ -2568,7 +2568,7 @@ test.describe('Visual audit — full flow', () => {
 
     // Répartir 7 jetons en 3 groupes → 3×2 + 1 reste
     await selectPieceAt(page, 150, 60);
-    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Répartir")');
+    const repartirBtn = page.locator('[data-testid="context-actions"] button:has-text("Partager")');
     await expect(repartirBtn).toBeVisible({ timeout: 2000 });
     await repartirBtn.click();
     await page.waitForTimeout(200);
@@ -3091,10 +3091,10 @@ test.describe('Visual audit — full flow', () => {
     await expect(ctx).toBeVisible({ timeout: 2000 });
     const deleteBtn = ctx.locator('button:has-text("Supprimer")');
     await expect(deleteBtn).toBeVisible({ timeout: 1000 });
-    // Premier clic → "Sûr?"
+    // Premier clic → "Supprimer ?"
     await deleteBtn.click();
     await page.waitForTimeout(200);
-    const surBtn = ctx.locator('button:has-text("Sûr?")');
+    const surBtn = ctx.locator('button:has-text("Supprimer ?")');
     await expect(surBtn).toBeVisible({ timeout: 1000 });
     // Deuxième clic → suppression
     await surBtn.click();
@@ -3856,7 +3856,7 @@ test.describe('Visual audit — full flow', () => {
     if (await tailleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await tailleBtn.click();
       await page.waitForTimeout(200);
-      const btn3x = page.locator('[data-testid="context-actions"]').getByRole('button', { name: '3×', exact: true });
+      const btn3x = page.locator('[data-testid="context-actions"]').getByRole('menuitem', { name: '3×', exact: true });
       if (await btn3x.isVisible({ timeout: 1000 }).catch(() => false)) {
         await btn3x.click();
         await page.waitForTimeout(300);
@@ -4489,11 +4489,10 @@ test.describe('Visual audit — full flow', () => {
     await selectPieceAt(page, 280, 200);
     await ctxActions.locator('button:has-text("Max:")').click();
     await page.waitForTimeout(200);
-    const max5 = ctxActions.getByRole('button', { name: '5', exact: true });
-    if (await max5.isVisible({ timeout: 500 }).catch(() => false)) {
-      await max5.click();
-      await page.waitForTimeout(300);
-    }
+    const max5 = ctxActions.getByRole('menuitem', { name: '5', exact: true });
+    await expect(max5).toBeVisible({ timeout: 2000 });
+    await max5.click();
+    await page.waitForTimeout(300);
 
     // Bond should be filtered out
     expect(await bondPaths.count()).toBe(0);

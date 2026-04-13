@@ -256,7 +256,8 @@ export function Canvas({
   >(null);
   const editingSchemaFieldRef = useRef(editingSchemaField);
   useEffect(() => { editingSchemaFieldRef.current = editingSchemaField; }, [editingSchemaField]);
-  useEffect(() => { if (!editingPieceId) { setEditingArbreField(null); setEditingSchemaField(null); } }, [editingPieceId]);
+  const [editingBondField, setEditingBondField] = useState<{ bondIndex: number } | null>(null);
+  useEffect(() => { if (!editingPieceId) { setEditingArbreField(null); setEditingSchemaField(null); setEditingBondField(null); } }, [editingPieceId]);
   const [isArranging, setIsArranging] = useState(false);
   const [hoveredPieceId, setHoveredPieceId] = useState<string | null>(null);
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
@@ -2119,6 +2120,13 @@ export function Canvas({
             fieldKey = `__schema_part_${barIndex}_${partIndex}_value`;
             svgFontSizeMm = 7;
           }
+        } else if (piece.type === 'droiteNumerique' && editingBondField) {
+          const dn = piece as DroiteNumerique;
+          const bond = (dn.bonds ?? [])[editingBondField.bondIndex];
+          initialValue = bond?.label ?? '';
+          placeholder = 'Étiquette du saut...';
+          fieldKey = `__droite_bond_${editingBondField.bondIndex}`;
+          svgFontSizeMm = 7;
         } else if (piece.type === 'diagrammeBandes' || piece.type === 'diagrammeLigne') {
           initialValue = (piece as any).title ?? '';
           placeholder = 'Titre du diagramme...';
@@ -2137,6 +2145,8 @@ export function Canvas({
           editTargetId = editingArbreField.type === 'node'
             ? `${piece.id}-node-${editingArbreField.nodeIndex}`
             : `${piece.id}-level-${editingArbreField.levelIndex}`;
+        } else if (piece.type === 'droiteNumerique' && editingBondField) {
+          editTargetId = `${piece.id}-bond-${editingBondField.bondIndex}`;
         } else if (piece.type === 'schema' && editingSchemaField) {
           if (editingSchemaField.type === 'bar-label') {
             editTargetId = `${piece.id}-bar-${editingSchemaField.barIndex}-label`;
@@ -2379,12 +2389,19 @@ export function Canvas({
                 } else if (editingSchemaField.type === 'total' || editingSchemaField.type === 'diff') {
                   dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { totalLabel: value } });
                 }
+              } else if (piece.type === 'droiteNumerique' && editingBondField) {
+                const dn = piece as DroiteNumerique;
+                const newBonds = (dn.bonds ?? []).map((b, i) =>
+                  i === editingBondField.bondIndex ? { ...b, label: value } : b
+                );
+                dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { bonds: newBonds } });
               } else {
                 dispatch({ type: 'EDIT_PIECE', id: editingPieceId, changes: { [fieldKey]: value } });
               }
               if (piece.type === 'reponse' && value.length > 0) onAcknowledge();
               setEditingArbreField(null);
               setEditingSchemaField(null);
+              setEditingBondField(null);
               onStopEdit();
             }}
             onTab={piece.type === 'arbre' && editingArbreField?.type === 'node' ? (value) => {
@@ -2580,6 +2597,10 @@ export function Canvas({
           bondMode={bondMode}
           selectedBondInfo={selectedBondInfo}
           onSelectBond={onSelectBond}
+          onStartEditBond={(pieceId, bondIndex) => {
+            setEditingBondField({ bondIndex });
+            onStartEdit(pieceId);
+          }}
           toolbarMode={toolbarMode}
         />
       )}

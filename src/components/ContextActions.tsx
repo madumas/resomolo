@@ -68,6 +68,7 @@ interface ContextActionsProps {
   bondMode?: { pieceId: string; fromVal: number | null; chainCount: number } | null;
   selectedBondInfo?: { pieceId: string; bondIndex: number } | null;
   onSelectBond?: (info: { pieceId: string; bondIndex: number } | null) => void;
+  onStartEditBond?: (pieceId: string, bondIndex: number) => void;
   toolbarMode?: 'essentiel' | 'complet';
 }
 
@@ -101,6 +102,7 @@ export function ContextActions({
   bondMode,
   selectedBondInfo,
   onSelectBond,
+  onStartEditBond,
   toolbarMode = 'essentiel',
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
@@ -494,14 +496,7 @@ export function ContextActions({
       {isDroiteNumerique(piece) && selectedBondInfo && selectedBondInfo.pieceId === piece.id && (
         <>
           <CtxBtn onClick={() => {
-            const bond = (piece.bonds ?? [])[selectedBondInfo.bondIndex];
-            if (!bond) return;
-            const newLabel = prompt('Étiquette du saut :', bond.label);
-            if (newLabel !== null) {
-              const bonds = [...(piece.bonds ?? [])];
-              bonds[selectedBondInfo.bondIndex] = { ...bond, label: newLabel };
-              onEditPiece(piece.id, { bonds });
-            }
+            onStartEditBond?.(piece.id, selectedBondInfo.bondIndex);
           }}>
             Éditer
           </CtxBtn>

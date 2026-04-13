@@ -165,7 +165,8 @@ export function DroiteNumeriquePiece({ piece, isSelected, highContrast, textScal
                     fontSize={Math.max(T1 * ts, 5)}
                     fontWeight={600}
                     fill={isSel ? '#7028E0' : '#185FA5'}
-                    pointerEvents="none">
+                    pointerEvents="none"
+                    data-edit-target={`${piece.id}-bond-${i}`}>
                     {displayLabel}
                   </text>
                 </>
