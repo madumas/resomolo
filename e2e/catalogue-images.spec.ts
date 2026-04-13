@@ -336,4 +336,30 @@ test.describe('Catalogue image generation', () => {
     await page.waitForTimeout(600);
     await screenshotPieces(page, img('exemple-boite.png'));
   });
+
+  test('exemple-schema-comparaison-ex (Léa vs Marc avec écart ?)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Léa a 14 billes, Marc en a 9. Combien de plus?',
+          problemeReadOnly: false, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 'schema-comp', type: 'schema', x: 40, y: 25, locked: false,
+            gabarit: 'comparaison',
+            totalLabel: '?', totalValue: null, referenceWidth: 60,
+            bars: [
+              { label: 'Léa', value: 14, sizeMultiplier: 1.4, couleur: 'bleu', parts: [] },
+              { label: 'Marc', value: 9, sizeMultiplier: 0.9, couleur: 'rouge', parts: [] },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('exemple-schema-comparaison-ex.png'));
+  });
 });

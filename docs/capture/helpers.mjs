@@ -18,29 +18,33 @@ export async function init(page) {
     await page.locator(`button:has-text("${t}")`).click().catch(() => {});
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  // Switch to Complet
-  await page.locator('button:has-text("Simplifié"), button:has-text("Complet")').first().click().catch(() => {});
+  // Switch to Complet via mode selector
+  await page.locator('[data-testid="mode-selector"]').click().catch(() => {});
   await page.waitForTimeout(200);
-  await page.locator(':has-text("Complet")').last().click().catch(() => {});
+  await page.locator('[data-testid="mode-option-complet"]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(300);
   svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }
 
 export async function fresh(page) {
-  // Clear IndexedDB to avoid leftover pieces
-  await page.evaluate(() => {
-    const dbs = window.indexedDB.databases ? window.indexedDB.databases() : Promise.resolve([]);
-    return dbs.then(list => Promise.all(list.map(db => {
-      return new Promise((resolve) => {
-        const req = window.indexedDB.deleteDatabase(db.name);
-        req.onsuccess = resolve;
-        req.onerror = resolve;
-        req.onblocked = resolve;
-      });
-    })));
-  }).catch(() => {});
-  await page.evaluate(() => localStorage.clear()).catch(() => {});
-  await init(page);
+  // Reset app state via test-restore event with empty canvas (avoids IDB delete crash)
+  const emptyState = {
+    past: [], future: [],
+    current: {
+      probleme: '', problemeReadOnly: false, problemeHighlights: [],
+      referenceUnitMm: 60, pieces: [], availablePieces: null,
+    },
+  };
+  // If page is already on the app, restore directly; otherwise navigate first
+  const currentUrl = page.url();
+  if (!currentUrl.includes('localhost:5199')) {
+    await init(page);
+  }
+  await page.evaluate((um) => {
+    window.dispatchEvent(new CustomEvent('test-restore', { detail: um }));
+  }, emptyState);
+  await page.waitForTimeout(400);
+  svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }
 
 function mm2px(mm) { return mm * svgBox.width / CANVAS_W; }
@@ -139,41 +143,12 @@ export async function snap(page, filename, region) {
   console.log(`  OK: ${filename}`);
 }
 
-/** Load a fixture state via the slot system, then reload */
+/** Load a fixture state via test-restore event (no IDB/reload needed) */
 export async function loadFixture(page, modelisationState) {
-  const slotId = 'capture-fixture';
   const undoManager = { past: [], current: modelisationState, future: [] };
-  const slotJson = JSON.stringify({ version: 1, data: undoManager });
-  const registry = { slots: [{ id: slotId, name: 'Fixture', createdAt: Date.now(), updatedAt: Date.now() }], activeSlotId: slotId, nextNumber: 2 };
-  const registryJson = JSON.stringify(registry);
-
-  await page.evaluate(({ registryJson, slotJson, slotId }) => {
-    // Write to localStorage mirrors (synchronous, always available)
-    localStorage.setItem('resomolo_ls_registry', registryJson);
-    localStorage.setItem('resomolo_ls_slot_' + slotId, slotJson);
-    // Write to IDB via raw API
-    return new Promise((resolve) => {
-      const req = indexedDB.open('keyval-store');
-      req.onupgradeneeded = () => req.result.createObjectStore('keyval');
-      req.onsuccess = () => {
-        const db = req.result;
-        const tx = db.transaction('keyval', 'readwrite');
-        const store = tx.objectStore('keyval');
-        store.put(registryJson, 'resomolo_registry');
-        store.put(slotJson, 'resomolo_slot_' + slotId);
-        tx.oncomplete = () => { db.close(); resolve(); };
-        tx.onerror = () => { db.close(); resolve(); };
-      };
-      req.onerror = () => resolve();
-    });
-  }, { registryJson, slotJson, slotId });
-
-  await page.waitForTimeout(200);
-  await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForSelector('[data-testid="canvas-svg"]', { timeout: 10000 });
-  for (const t of ['Compris', 'Passer', 'OK', 'Fermer'])
-    await page.locator(`button:has-text("${t}")`).click().catch(() => {});
-  await page.keyboard.press('Escape');
+  await page.evaluate((um) => {
+    window.dispatchEvent(new CustomEvent('test-restore', { detail: um }));
+  }, undoManager);
   await page.waitForTimeout(500);
   svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }

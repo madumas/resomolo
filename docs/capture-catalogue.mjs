@@ -21,11 +21,10 @@ async function init(page) {
     await page.locator(`button:has-text("${t}")`).click().catch(() => {});
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  // Switch to mode Complet (dropdown: Simplifié▾ → Complet)
-const modeBtn = page.locator('button:has-text("Simplifié"), button:has-text("Complet")').first();
-await modeBtn.click().catch(() => {});
-await page.waitForTimeout(200);
-await page.locator(':has-text("Complet")').last().click().catch(() => {});
+  // Switch to mode Complet via mode selector
+  await page.locator('[data-testid="mode-selector"]').click().catch(() => {});
+  await page.waitForTimeout(200);
+  await page.locator('[data-testid="mode-option-complet"]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(200);
   svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }
@@ -103,11 +102,10 @@ async function fresh(page) {
     await page.locator(`button:has-text("${t}")`).click().catch(() => {});
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  // Switch to mode Complet (dropdown: Simplifié▾ → Complet)
-const modeBtn = page.locator('button:has-text("Simplifié"), button:has-text("Complet")').first();
-await modeBtn.click().catch(() => {});
-await page.waitForTimeout(200);
-await page.locator(':has-text("Complet")').last().click().catch(() => {});
+  // Switch to mode Complet via mode selector
+  await page.locator('[data-testid="mode-selector"]').click().catch(() => {});
+  await page.waitForTimeout(200);
+  await page.locator('[data-testid="mode-option-complet"]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(200);
   svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }
