@@ -279,19 +279,28 @@ export function ContextActions({
         </>
       )}
 
-      {/* Column calc (calcul only) */}
-      {piece.type === 'calcul' && (
-        <CtxBtn onClick={() => { onStartColumnCalc(piece.id); }}>
-          En colonnes
-        </CtxBtn>
-      )}
-
-      {/* Division posée (calcul only) */}
-      {piece.type === 'calcul' && (
-        <CtxBtn onClick={() => { onStartDivisionCalc(piece.id); }}>
-          Division posée
-        </CtxBtn>
-      )}
+      {/* Column calc / Division posée — only for × and ÷, never on locked pieces (worked examples) */}
+      {piece.type === 'calcul' && !piece.locked && (() => {
+        const expr = piece.expression || '';
+        const hasDivision = expr.includes('÷') || expr.includes('/');
+        const hasMultiplication = expr.includes('×') || expr.includes('*');
+        const isEmpty = expr.trim() === '';
+        // × → En colonnes, ÷ → Division posée, + ou − → neither, empty → both
+        return (
+          <>
+            {(hasMultiplication || isEmpty) && (
+              <CtxBtn onClick={() => { onStartColumnCalc(piece.id); }}>
+                En colonnes
+              </CtxBtn>
+            )}
+            {(hasDivision || isEmpty) && (
+              <CtxBtn onClick={() => { onStartDivisionCalc(piece.id); }}>
+                Division posée
+              </CtxBtn>
+            )}
+          </>
+        );
+      })()}
 
       {/* Boite: Nommer + Valeur + Couleur */}
       {isBoite(piece) && (
