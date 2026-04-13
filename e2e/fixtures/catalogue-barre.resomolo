@@ -6,8 +6,8 @@
   "problemeHighlights": [],
   "referenceUnitMm": 40,
   "pieces": [
-    {"id":"b1","type":"barre","x":30,"y":20,"locked":false,"couleur":"bleu","sizeMultiplier":3.5,"label":"Mia","value":"","divisions":null,"coloredParts":[],"showFraction":false,"groupId":null,"groupLabel":null},
-    {"id":"b2","type":"barre","x":30,"y":50,"locked":false,"couleur":"rouge","sizeMultiplier":2.2,"label":"Noah","value":"","divisions":null,"coloredParts":[],"showFraction":false,"groupId":null,"groupLabel":null}
+    {"id":"b1","type":"barre","x":30,"y":20,"locked":false,"couleur":"bleu","sizeMultiplier":3.5,"label":"Mia","value":"14","divisions":null,"coloredParts":[],"showFraction":false,"groupId":null,"groupLabel":null},
+    {"id":"b2","type":"barre","x":30,"y":50,"locked":false,"couleur":"rouge","sizeMultiplier":2.2,"label":"Noah","value":"9","divisions":null,"coloredParts":[],"showFraction":false,"groupId":null,"groupLabel":null}
   ],
   "availablePieces": null
 }

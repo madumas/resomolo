@@ -249,7 +249,7 @@ test.describe('Catalogue image generation', () => {
         current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 40, pieces: [
           {id:'b1',type:'barre',x:40,y:20,locked:false,couleur:'bleu',sizeMultiplier:3.5,label:'Léa',value:'14',divisions:null,coloredParts:[],showFraction:false,groupId:null,groupLabel:null},
           {id:'b2',type:'barre',x:40,y:55,locked:false,couleur:'rouge',sizeMultiplier:2.25,label:'Maxime',value:'9',divisions:null,coloredParts:[],showFraction:false,groupId:null,groupLabel:null},
-          {id:'inc',type:'inconnue',x:115,y:42,locked:false,text:'?',attachedTo:null},
+          {id:'inc',type:'inconnue',x:155,y:61,locked:false,text:'?',attachedTo:null},
         ], availablePieces: null },
       }}));
     });
@@ -297,8 +297,8 @@ test.describe('Catalogue image generation', () => {
       window.dispatchEvent(new CustomEvent('test-restore', { detail: {
         past: [], future: [],
         current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [
-          {id:'t1',type:'tableau',x:20,y:15,locked:false,rows:2,cols:3,
-           cells:[['—','—','—'],['','','']],
+          {id:'t1',type:'tableau',x:20,y:15,locked:false,rows:3,cols:3,
+           cells:[['Nom','Âge','Ville'],['Léa','8','Québec'],['Marc','9','Laval']],
            headerRow:true},
         ], availablePieces: null },
       }}));
@@ -317,7 +317,8 @@ test.describe('Catalogue image generation', () => {
         const bx = 20 + b * 65;
         const by = 15;
         const boxId = `box-${b}`;
-        pieces.push({id: boxId, type: 'boite', x: bx, y: by, locked: false, width: 55, height: 45, label: b === 0 ? 'sac 1' : '', value: '', couleur: colors[b]});
+        const boxLabels = ['sac 1', 'sac 2', 'sac 3', 'sac 4'];
+        pieces.push({id: boxId, type: 'boite', x: bx, y: by, locked: false, width: 55, height: 45, label: boxLabels[b], value: '', couleur: colors[b]});
         // 6 jetons in 2 rows of 3, spacing 17mm
         for (let r = 0; r < 2; r++) {
           for (let c = 0; c < 3; c++) {
@@ -335,6 +336,198 @@ test.describe('Catalogue image generation', () => {
     });
     await page.waitForTimeout(600);
     await screenshotPieces(page, img('exemple-boite.png'));
+  });
+
+  // ═══════ PIÈCES STRUCTURÉES — avec labels pertinents ═══════
+
+  test('catalogue-schema-parties (35 = 20 + 15)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 's1', type: 'schema', x: 40, y: 25, locked: false,
+          gabarit: 'parties-tout', totalLabel: '35', totalValue: 35, referenceWidth: 60,
+          bars: [{ label: '', value: null, sizeMultiplier: 1.5, couleur: 'bleu',
+            parts: [
+              { label: 'rouges', value: 20, couleur: 'rouge' },
+              { label: 'bleus', value: 15, couleur: 'bleu' },
+            ] }],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-schema-parties.png'));
+  });
+
+  test('catalogue-schema-comparaison (Léa 14 vs Marc 9)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 's1', type: 'schema', x: 40, y: 25, locked: false,
+          gabarit: 'comparaison', totalLabel: '?', totalValue: null, referenceWidth: 60,
+          bars: [
+            { label: 'Léa', value: 14, sizeMultiplier: 1.5, couleur: 'bleu', parts: [] },
+            { label: 'Marc', value: 9, sizeMultiplier: 0.96, couleur: 'rouge', parts: [] },
+          ],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-schema-comparaison.png'));
+  });
+
+  test('catalogue-schema-groupes (4 × 6)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 's1', type: 'schema', x: 40, y: 15, locked: false,
+          gabarit: 'groupes-egaux', totalLabel: '24', totalValue: 24, referenceWidth: 60,
+          bars: [
+            { label: 'sac 1', value: 6, sizeMultiplier: 1.5, couleur: 'bleu', parts: [] },
+            { label: 'sac 2', value: 6, sizeMultiplier: 1.5, couleur: 'bleu', parts: [] },
+            { label: 'sac 3', value: 6, sizeMultiplier: 1.5, couleur: 'bleu', parts: [] },
+            { label: 'sac 4', value: 6, sizeMultiplier: 1.5, couleur: 'bleu', parts: [] },
+          ],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-schema-groupes.png'));
+  });
+
+  test('catalogue-schema-transformation (départ 12 → résultat 19)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 's1', type: 'schema', x: 40, y: 25, locked: false,
+          gabarit: 'transformation', totalLabel: '19', totalValue: 19, referenceWidth: 60,
+          bars: [{ label: '', value: null, sizeMultiplier: 1.5, couleur: 'bleu',
+            parts: [
+              { label: 'avant', value: 12, couleur: 'bleu' },
+              { label: 'ajout', value: 7, couleur: 'vert' },
+            ] }],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-schema-transformation.png'));
+  });
+
+  test('exemple-schema (parties-tout 35 = 20 + 15)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 's1', type: 'schema', x: 40, y: 25, locked: false,
+          gabarit: 'parties-tout', totalLabel: '35', totalValue: 35, referenceWidth: 60,
+          bars: [{ label: '', value: null, sizeMultiplier: 1.5, couleur: 'bleu',
+            parts: [
+              { label: 'rouges', value: 20, couleur: 'rouge' },
+              { label: 'bleus', value: 15, couleur: 'bleu' },
+            ] }],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('exemple-schema.png'));
+  });
+
+  test('catalogue-droite (0 à 20, pas de 1)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 'd1', type: 'droiteNumerique', x: 30, y: 30, locked: false,
+          min: 0, max: 20, step: 1, markers: [8, 15], width: 200,
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-droite.png'));
+  });
+
+  test('catalogue-arbre (Pile/Face × Rouge/Bleu)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 'a1', type: 'arbre', x: 60, y: 25, locked: false,
+          levels: [
+            { name: 'Pièce', options: ['Pile', 'Face'] },
+            { name: 'Couleur', options: ['Rouge', 'Bleu'] },
+          ],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-arbre.png'));
+  });
+
+  test('catalogue-diagramme-bandes (Fruits préférés)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 'db1', type: 'diagrammeBandes', x: 15, y: 15, locked: false,
+          title: 'Fruits préférés', yAxisLabel: 'Votes',
+          width: 120, height: 90,
+          categories: [
+            { label: 'Pommes', value: 12, couleur: 'bleu' },
+            { label: 'Bananes', value: 8, couleur: 'jaune' },
+            { label: 'Raisins', value: 5, couleur: 'rouge' },
+          ],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-diagramme-bandes.png'));
+  });
+
+  test('catalogue-diagramme-ligne (Température)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 60, pieces: [{
+          id: 'dl1', type: 'diagrammeLigne', x: 15, y: 15, locked: false,
+          title: 'Température', yAxisLabel: '°C',
+          width: 120, height: 90,
+          points: [
+            { label: 'Lun', value: 3 },
+            { label: 'Mar', value: 7 },
+            { label: 'Mer', value: 5 },
+          ],
+        }], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-diagramme-ligne.png'));
+  });
+
+  test('catalogue-inconnue (barre + marqueur ?)', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: { probleme: '', problemeReadOnly: false, problemeHighlights: [], referenceUnitMm: 40, pieces: [
+          {id:'b1',type:'barre',x:40,y:30,locked:false,couleur:'bleu',sizeMultiplier:3,label:'Mia',value:'12',divisions:null,coloredParts:[],showFraction:false,groupId:null,groupLabel:null},
+          {id:'inc',type:'inconnue',x:110,y:25,locked:false,text:'?',attachedTo:null},
+        ], availablePieces: null },
+      }}));
+    });
+    await page.waitForTimeout(600);
+    await screenshotPieces(page, img('catalogue-inconnue.png'));
   });
 
   test('exemple-schema-comparaison-ex (Léa vs Marc avec écart ?)', async ({ page }) => {
