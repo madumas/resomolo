@@ -13,6 +13,9 @@ let svgBox;
 
 export async function init(page) {
   await page.goto(BASE, { timeout: 15000 });
+  // Mark onboarding as done to prevent overlay blocking
+  await page.evaluate(() => { localStorage.setItem('resomolo-onboarding-done', '1'); });
+  await page.reload();
   await page.waitForSelector('[data-testid="canvas-svg"]', { timeout: 5000 });
   for (const t of ['Compris', 'Passer', 'OK', 'Fermer'])
     await page.locator(`button:has-text("${t}")`).click().catch(() => {});
@@ -106,7 +109,7 @@ export async function esc(page) {
 }
 
 export async function colorBtn(page, couleur) {
-  await page.locator(`button[aria-label="Couleur ${couleur}"]`).click({ timeout: 2000 }).catch(() => {
+  await page.locator(`button[aria-label^="Couleur ${couleur}"]`).click({ timeout: 2000 }).catch(() => {
     console.log(`  (skip color ${couleur})`);
   });
   await page.waitForTimeout(150);
