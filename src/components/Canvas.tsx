@@ -3379,6 +3379,7 @@ function InlineEditor({ left, top, initialValue, placeholder, isCalcul, fontSize
 
 // Simple expression formatting for display
 function formatExpr(s: string): string {
+  if (!s) return '';
   return s.replace(/\*/g, '×').replace(/x/gi, '×').replace(/\//g, '÷').replace(/\./g, ',');
 }
 

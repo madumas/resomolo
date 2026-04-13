@@ -4500,6 +4500,751 @@ test.describe('Visual audit — full flow', () => {
     await page.screenshot({ path: shot('305-droite-bond-max-filter.png'), fullPage: true });
   });
 
+  // ══════════════════════════════════════════════════════════════════
+  // Schéma — tous les gabarits et interactions pédagogiques
+  // ══════════════════════════════════════════════════════════════════
+
+  test('144 — Schéma parties-tout: placement + ajout parties + valeurs', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('400-schema-parties-tout-default.png'), fullPage: true });
+
+    // Select the schema piece
+    await selectPieceAt(page, 130, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Add 2 parties
+    const addPartie = ctx.locator('button:has-text("+ Partie")');
+    await expect(addPartie).toBeVisible({ timeout: 2000 });
+    await addPartie.click();
+    await page.waitForTimeout(400);
+    await addPartie.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('401-schema-parties-tout-3-parts.png'), fullPage: true });
+
+    // Screenshot the context actions
+    await ctx.screenshot({ path: shot('402-schema-ctx-actions.png') });
+  });
+
+  test('145 — Schéma comparaison: deux barres de tailles différentes', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    // Select and switch to comparaison type
+    await selectPieceAt(page, 130, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    const typeBtn = ctx.locator('button:has-text("Type")');
+    await expect(typeBtn).toBeVisible({ timeout: 2000 });
+    await typeBtn.click();
+    await page.waitForTimeout(300);
+    const comparBtn = ctx.locator('button:has-text("Comparer deux quantités")');
+    await expect(comparBtn).toBeVisible({ timeout: 2000 });
+    await comparBtn.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('403-schema-comparaison.png'), fullPage: true });
+
+    // Screenshot type submenu
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await selectPieceAt(page, 130, 87);
+    await ctx.locator('button:has-text("Type")').click();
+    await page.waitForTimeout(300);
+    await ctx.screenshot({ path: shot('404-schema-type-submenu.png') });
+  });
+
+  test('146 — Schéma groupes égaux: barres multiples', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 130, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Switch to groupes-egaux — ctx stays open on L1 after type change
+    await ctx.locator('button:has-text("Type")').click();
+    await page.waitForTimeout(300);
+    await ctx.locator('button:has-text("Faire des groupes égaux")').click();
+    await page.waitForTimeout(400);
+
+    // "+ Barre" should now be visible directly (groupes-egaux gabarit)
+    const addBarre = ctx.locator('button:has-text("+ Barre")');
+    await expect(addBarre).toBeVisible({ timeout: 2000 });
+    await addBarre.click();
+    await page.waitForTimeout(400);
+    await addBarre.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('405-schema-groupes-egaux-3-barres.png'), fullPage: true });
+  });
+
+  test('147 — Schéma transformation: départ → changement → résultat', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 80, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 110, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Switch to transformation
+    await ctx.locator('button:has-text("Type")').click();
+    await page.waitForTimeout(300);
+    await ctx.locator('button:has-text("Avant → Après")').click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('406-schema-transformation.png'), fullPage: true });
+  });
+
+  test('148 — Schéma libre: placement et structure minimale', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 130, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Switch to libre
+    await ctx.locator('button:has-text("Type")').click();
+    await page.waitForTimeout(300);
+    await ctx.locator('button:has-text("Schéma libre")').click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('407-schema-libre.png'), fullPage: true });
+  });
+
+  test('149 — Schéma taille submenu: resize et options fractionnaires', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'schema');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 130, 87);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Open taille submenu
+    const tailleBtn = ctx.locator('button:has-text("Taille")');
+    await expect(tailleBtn).toBeVisible({ timeout: 2000 });
+    await tailleBtn.click();
+    await page.waitForTimeout(300);
+    await ctx.screenshot({ path: shot('408-schema-taille-submenu.png') });
+
+    // Resize to 3×
+    const btn3x = ctx.getByRole('menuitem', { name: '3×', exact: true });
+    await expect(btn3x).toBeVisible({ timeout: 2000 });
+    await btn3x.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('409-schema-3x.png'), fullPage: true });
+  });
+
+  test('150 — Schéma parties-tout rempli: contexte pédagogique avec valeurs', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Marie a 35 billes. 20 sont rouges et 15 sont bleues.'));
+    await dismissOverlays(page);
+
+    // Inject a pre-filled schema via test-restore
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Marie a 35 billes. 20 sont rouges et 15 sont bleues.',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 's1', type: 'schema', x: 40, y: 30, locked: false,
+            gabarit: 'parties-tout', totalLabel: '35 billes', totalValue: 35, referenceWidth: 60,
+            bars: [{ label: 'Total', value: null, sizeMultiplier: 2, couleur: 'bleu',
+              parts: [
+                { label: 'rouges', value: 20, couleur: 'rouge' },
+                { label: 'bleues', value: 15, couleur: 'bleu' },
+              ] }],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('410-schema-parties-tout-rempli.png'), fullPage: true });
+  });
+
+  test('151 — Schéma comparaison rempli: contexte pédagogique avec différence', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Léa a 8 pommes et Noah a 5 pommes. Combien de plus a Léa?'));
+    await dismissOverlays(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Léa a 8 pommes et Noah a 5 pommes. Combien de plus a Léa?',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 's1', type: 'schema', x: 40, y: 30, locked: false,
+            gabarit: 'comparaison', totalLabel: '', totalValue: null, referenceWidth: 60,
+            bars: [
+              { label: 'Léa', value: 8, sizeMultiplier: 2, couleur: 'bleu', parts: [] },
+              { label: 'Noah', value: 5, sizeMultiplier: 1.25, couleur: 'rouge', parts: [] },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('411-schema-comparaison-rempli.png'), fullPage: true });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Arbre de décomposition — gabarits et édition
+  // ══════════════════════════════════════════════════════════════════
+
+  test('152 — Arbre: placement par défaut 2×2', async ({ page }) => {
+    await navigateAndReady(page);
+    // Switch to complet mode first (arbre is in Organiser category)
+    const modeSelector = page.locator('[data-testid="mode-selector"]');
+    await modeSelector.click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'arbre');
+    await clickCanvas(page, 150, 100);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('420-arbre-default-2x2.png'), fullPage: true });
+
+    // Select and show context actions
+    await selectPieceAt(page, 180, 107);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    await ctx.screenshot({ path: shot('421-arbre-ctx-actions.png') });
+  });
+
+  test('153 — Arbre: gabarit 3×3 avec labels remplis', async ({ page }) => {
+    await navigateAndReady(page);
+    // Switch to complet mode
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'arbre');
+    await clickCanvas(page, 100, 60);
+    await page.waitForTimeout(400);
+
+    // Select arbre and switch to 3×3 template
+    await selectPieceAt(page, 130, 67);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    const gabaritBtn = ctx.locator('button:has-text("Gabarit")');
+    await expect(gabaritBtn).toBeVisible({ timeout: 2000 });
+    await gabaritBtn.click();
+    await page.waitForTimeout(300);
+    await ctx.screenshot({ path: shot('422-arbre-gabarit-submenu.png') });
+
+    const btn3x3 = ctx.locator('button:has-text("3×3")');
+    await expect(btn3x3).toBeVisible({ timeout: 2000 });
+    await btn3x3.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('423-arbre-3x3.png'), fullPage: true });
+  });
+
+  test('154 — Arbre: ajout et retrait de niveau', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'arbre');
+    await clickCanvas(page, 100, 50);
+    await page.waitForTimeout(400);
+
+    // Select and add a 3rd level
+    await selectPieceAt(page, 130, 57);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    const addNiveau = ctx.locator('button:has-text("+ Niveau")');
+    await expect(addNiveau).toBeVisible({ timeout: 2000 });
+    await addNiveau.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('424-arbre-3-niveaux.png'), fullPage: true });
+
+    // Add a 4th level (max)
+    // Need to re-select since context may have re-rendered
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    await selectPieceAt(page, 130, 57);
+    const addNiveau2 = ctx.locator('button:has-text("+ Niveau")');
+    await addNiveau2.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('425-arbre-4-niveaux-max.png'), fullPage: true });
+  });
+
+  test('155 — Arbre: sous-menu Niveaux — ajuster branches par niveau', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'arbre');
+    await clickCanvas(page, 100, 60);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 130, 67);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    const niveauxBtn = ctx.locator('button:has-text("Niveaux")');
+    await expect(niveauxBtn).toBeVisible({ timeout: 2000 });
+    await niveauxBtn.click();
+    await page.waitForTimeout(300);
+
+    await ctx.screenshot({ path: shot('426-arbre-niveaux-submenu.png') });
+
+    // Add a branch to first level (click + button)
+    const plusBtns = ctx.locator('button:has-text("+")');
+    await plusBtns.first().click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('427-arbre-3-branches-niveau1.png'), fullPage: true });
+  });
+
+  test('156 — Arbre rempli: contexte pédagogique — menus cantine', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Combien de menus différents peut-on composer avec 2 entrées et 3 plats?'));
+    await dismissOverlays(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Combien de menus différents peut-on composer avec 2 entrées et 3 plats?',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 'a1', type: 'arbre', x: 60, y: 20, locked: false,
+            levels: [
+              { name: 'Entrée', options: ['Soupe', 'Salade'] },
+              { name: 'Plat', options: ['Poulet', 'Poisson', 'Pâtes'] },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('428-arbre-menus-rempli.png'), fullPage: true });
+  });
+
+  test('157 — Arbre: compteur de feuilles visible', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    // Inject a larger tree to show leaf counter
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: '', problemeReadOnly: false, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 'a1', type: 'arbre', x: 30, y: 20, locked: false,
+            levels: [
+              { name: 'Couleur', options: ['Rouge', 'Bleu', 'Vert', 'Jaune'] },
+              { name: 'Taille', options: ['Petit', 'Grand'] },
+              { name: 'Forme', options: ['Rond', 'Carré'] },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('429-arbre-16-feuilles-warning.png'), fullPage: true });
+
+    // Verify leaf counter text (use first() since warning text also contains "feuilles")
+    const leafText = page.locator('[data-testid="canvas-svg"] text:has-text("16 feuilles")').first();
+    await expect(leafText).toBeVisible({ timeout: 2000 });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Diagramme à bandes — catégories, données, axes
+  // ══════════════════════════════════════════════════════════════════
+
+  test('158 — Diagramme à bandes: placement par défaut avec 3 catégories', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'diagrammeBandes');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('440-diagramme-bandes-default.png'), fullPage: true });
+
+    // Select and show context actions
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    await ctx.screenshot({ path: shot('441-diagramme-bandes-ctx.png') });
+  });
+
+  test('159 — Diagramme à bandes: édition des données via sous-menu', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'diagrammeBandes');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Open Données submenu
+    const donneesBtn = ctx.locator('button:has-text("Données")');
+    await expect(donneesBtn).toBeVisible({ timeout: 2000 });
+    await donneesBtn.click();
+    await page.waitForTimeout(300);
+
+    await ctx.screenshot({ path: shot('442-diagramme-bandes-donnees-submenu.png') });
+
+    // Edit first category label and value
+    const textInputs = ctx.locator('input[type="text"]');
+    const numInputs = ctx.locator('input[type="number"]');
+    await textInputs.first().fill('Chats');
+    await numInputs.first().fill('7');
+    await page.waitForTimeout(200);
+
+    // Go back to commit
+    await ctx.locator('button:has-text("←")').click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('443-diagramme-bandes-edited.png'), fullPage: true });
+  });
+
+  test('160 — Diagramme à bandes: ajout catégories + axe Y', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'diagrammeBandes');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Add 3 more categories (total 6)
+    for (let i = 0; i < 3; i++) {
+      const addBtn = ctx.locator('button:has-text("+ Bande")');
+      await expect(addBtn).toBeVisible({ timeout: 2000 });
+      await addBtn.click();
+      await page.waitForTimeout(400);
+    }
+
+    await page.screenshot({ path: shot('444-diagramme-bandes-6-categories.png'), fullPage: true });
+
+    // Set Y axis label
+    await ctx.locator('button:has-text("Axe Y")').click();
+    await page.waitForTimeout(300);
+    const axeInput = ctx.locator('input[type="text"]');
+    await axeInput.fill('Nombre d\'animaux');
+    await axeInput.press('Enter');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('445-diagramme-bandes-axe-y.png'), fullPage: true });
+  });
+
+  test('161 — Diagramme à bandes rempli: contexte pédagogique — sondage classe', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Les élèves ont voté pour leur fruit préféré. Quel est le fruit le plus populaire?'));
+    await dismissOverlays(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Les élèves ont voté pour leur fruit préféré. Quel est le fruit le plus populaire?',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 'd1', type: 'diagrammeBandes', x: 40, y: 30, locked: false,
+            title: 'Fruit préféré des élèves',
+            yAxisLabel: 'Nombre de votes',
+            width: 160, height: 100,
+            categories: [
+              { label: 'Pommes', value: 8, couleur: 'rouge' },
+              { label: 'Bananes', value: 5, couleur: 'jaune' },
+              { label: 'Oranges', value: 6, couleur: 'vert' },
+              { label: 'Fraises', value: 10, couleur: 'bleu' },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('446-diagramme-bandes-sondage-complet.png'), fullPage: true });
+  });
+
+  test('162 — Diagramme à bandes: retirer une bande', async ({ page }) => {
+    await navigateAndReady(page);
+    await selectTool(page, 'diagrammeBandes');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Remove last category
+    const removeBtn = ctx.locator('button:has-text("Retirer bande")');
+    await expect(removeBtn).toBeVisible({ timeout: 2000 });
+    await removeBtn.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('447-diagramme-bandes-2-categories.png'), fullPage: true });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Diagramme à ligne brisée — points, données, axes
+  // ══════════════════════════════════════════════════════════════════
+
+  test('163 — Ligne brisée: placement par défaut avec 3 points', async ({ page }) => {
+    await navigateAndReady(page);
+    // Switch to complet mode (ligne brisée is in Organiser)
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'diagrammeLigne');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('460-ligne-brisee-default.png'), fullPage: true });
+
+    // Select and show context actions
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+    await ctx.screenshot({ path: shot('461-ligne-brisee-ctx.png') });
+  });
+
+  test('164 — Ligne brisée: édition des points via sous-menu', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'diagrammeLigne');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Open Points submenu
+    const pointsBtn = ctx.locator('button:has-text("Points")');
+    await expect(pointsBtn).toBeVisible({ timeout: 2000 });
+    await pointsBtn.click();
+    await page.waitForTimeout(300);
+
+    await ctx.screenshot({ path: shot('462-ligne-brisee-points-submenu.png') });
+
+    // Edit point labels
+    const textInputs = ctx.locator('input[type="text"]');
+    await textInputs.nth(0).fill('Lundi');
+    await textInputs.nth(1).fill('Mardi');
+    await textInputs.nth(2).fill('Mercredi');
+
+    // Edit values
+    const numInputs = ctx.locator('input[type="number"]');
+    await numInputs.nth(0).fill('12');
+    await numInputs.nth(1).fill('8');
+    await numInputs.nth(2).fill('15');
+
+    // Go back to commit
+    await ctx.locator('button:has-text("←")').click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('463-ligne-brisee-edited.png'), fullPage: true });
+  });
+
+  test('165 — Ligne brisée: ajout de points + axe Y', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'diagrammeLigne');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    // Add 2 more points
+    for (let i = 0; i < 2; i++) {
+      const addBtn = ctx.locator('button:has-text("+ Point")');
+      await expect(addBtn).toBeVisible({ timeout: 2000 });
+      await addBtn.click();
+      await page.waitForTimeout(400);
+    }
+
+    // Set Y axis label
+    await ctx.locator('button:has-text("Axe Y")').click();
+    await page.waitForTimeout(300);
+    const axeInput = ctx.locator('input[type="text"]');
+    await axeInput.fill('Température (°C)');
+    await axeInput.press('Enter');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: shot('464-ligne-brisee-5-points-axe-y.png'), fullPage: true });
+  });
+
+  test('166 — Ligne brisée remplie: contexte pédagogique — température semaine', async ({ page }) => {
+    await navigateAndReady(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Voici les températures de la semaine. Quel jour a été le plus chaud?',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [{
+            id: 'l1', type: 'diagrammeLigne', x: 40, y: 30, locked: false,
+            title: 'Température de la semaine',
+            yAxisLabel: 'Température (°C)',
+            width: 180, height: 100,
+            points: [
+              { label: 'Lundi', value: 12 },
+              { label: 'Mardi', value: 15 },
+              { label: 'Mercredi', value: 10 },
+              { label: 'Jeudi', value: 18 },
+              { label: 'Vendredi', value: 14 },
+            ],
+          }],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('465-ligne-brisee-temperature-complet.png'), fullPage: true });
+  });
+
+  test('167 — Ligne brisée: retirer un point', async ({ page }) => {
+    await navigateAndReady(page);
+    await page.locator('[data-testid="mode-selector"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-testid="mode-option-complet"]').click();
+    await page.waitForTimeout(300);
+
+    await selectTool(page, 'diagrammeLigne');
+    await clickCanvas(page, 100, 80);
+    await page.waitForTimeout(400);
+
+    await selectPieceAt(page, 160, 130);
+    const ctx = page.locator('[data-testid="context-actions"]');
+
+    const removeBtn = ctx.locator('button:has-text("Retirer point")');
+    await expect(removeBtn).toBeVisible({ timeout: 2000 });
+    await removeBtn.click();
+    await page.waitForTimeout(400);
+
+    await page.screenshot({ path: shot('466-ligne-brisee-2-points.png'), fullPage: true });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Scénarios combinés — outils multiples en contexte pédagogique
+  // ══════════════════════════════════════════════════════════════════
+
+  test('168 — Combinaison schéma + diagramme: problème complet', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Dans la classe, 12 élèves aiment le soccer, 8 le hockey et 5 le basketball.'));
+    await dismissOverlays(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Dans la classe, 12 élèves aiment le soccer, 8 le hockey et 5 le basketball.',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [
+            {
+              id: 's1', type: 'schema', x: 30, y: 20, locked: false,
+              gabarit: 'parties-tout', totalLabel: '25 élèves', totalValue: 25, referenceWidth: 60,
+              bars: [{ label: 'Classe', value: null, sizeMultiplier: 2.5, couleur: 'bleu',
+                parts: [
+                  { label: 'Soccer', value: 12, couleur: 'bleu' },
+                  { label: 'Hockey', value: 8, couleur: 'rouge' },
+                  { label: 'Basket', value: 5, couleur: 'vert' },
+                ] }],
+            },
+            {
+              id: 'd1', type: 'diagrammeBandes', x: 30, y: 120, locked: false,
+              title: 'Sports préférés', yAxisLabel: 'Élèves',
+              width: 140, height: 80,
+              categories: [
+                { label: 'Soccer', value: 12, couleur: 'bleu' },
+                { label: 'Hockey', value: 8, couleur: 'rouge' },
+                { label: 'Basket', value: 5, couleur: 'vert' },
+              ],
+            },
+          ],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('470-combinaison-schema-diagramme.png'), fullPage: true });
+  });
+
+  test('169 — Combinaison arbre + calcul: dénombrement complet', async ({ page }) => {
+    await navigateAndReady(page, '/?probleme=' + encodeURIComponent('Au restaurant, on propose 3 entrées et 2 desserts. Combien de combinaisons possibles?'));
+    await dismissOverlays(page);
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('test-restore', { detail: {
+        past: [], future: [],
+        current: {
+          probleme: 'Au restaurant, on propose 3 entrées et 2 desserts. Combien de combinaisons possibles?',
+          problemeReadOnly: true, problemeHighlights: [],
+          referenceUnitMm: 60,
+          pieces: [
+            {
+              id: 'a1', type: 'arbre', x: 50, y: 20, locked: false,
+              levels: [
+                { name: 'Entrée', options: ['Soupe', 'Salade', 'Bruschetta'] },
+                { name: 'Dessert', options: ['Gâteau', 'Fruit'] },
+              ],
+            },
+            {
+              id: 'c1', type: 'calcul', x: 50, y: 150, locked: false,
+              expression: '3 × 2 = 6',
+            },
+            {
+              id: 'r1', type: 'reponse', x: 50, y: 180, locked: false,
+              text: 'Il y a 6 combinaisons possibles.',
+            },
+          ],
+          availablePieces: null,
+        },
+      }}));
+    });
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: shot('471-combinaison-arbre-calcul.png'), fullPage: true });
+  });
+
   test('137 — Desktop non affecté : top toolbar visible, pas de mobile toolbar', async ({ page }) => {
     // Default viewport is 1366x768
     await navigateAndReady(page);
