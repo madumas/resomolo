@@ -5,7 +5,6 @@ import { fmtNum } from '../../utils/format';
 
 // SVG font tiers (mm) — harmonized across all pieces
 const T1 = 7;   // content: tick/marker labels
-const T2 = 6;   // labels (réservé)
 const T3 = 5;   // annotation
 
 export function DroiteNumeriquePiece({ piece, isSelected, highContrast, textScale = 1, selectedBondIndex, bondMode, bondFromVal, toleranceMultiplier = 1, toolbarMode = 'essentiel' }: {

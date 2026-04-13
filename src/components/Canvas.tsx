@@ -2467,7 +2467,7 @@ export function Canvas({
                 return false;
               });
               // Find next empty field (wrap around)
-              let nextField: SchemaField = null;
+              let nextField: SchemaField | null = null;
               for (let offset = 1; offset < allFields.length; offset++) {
                 const fi = (curIdx + offset) % allFields.length;
                 const f = allFields[fi];

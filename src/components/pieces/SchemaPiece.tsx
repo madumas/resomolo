@@ -162,7 +162,6 @@ export function SchemaPiece({ piece, referenceUnitMm, isSelected, highContrast, 
         const db = layout.differenceBracket!;
         const bx = x + db.x;
         const by = y + db.y;
-        const midY = by + db.height / 2;
         return (
           <g>
             {/* Horizontal bracket ⊔: short ticks up, line at bottom, label below */}
