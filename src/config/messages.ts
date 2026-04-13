@@ -26,11 +26,20 @@ export function getToolMessages(touch: boolean): Record<NonNullable<ToolType>, s
 /** Messages d'outils par défaut (souris). */
 export const TOOL_MESSAGES = getToolMessages(false);
 
-export const STATUS_DELETE_MODE = 'Supprimer — Clique sur un élément pour le supprimer';
-export const STATUS_DELETE_CONFIRM = (label: string) =>
-  `Supprimer — ${label}? Clique à nouveau pour confirmer.`;
+export function getDeleteModeMessage(touch: boolean): string {
+  return `Supprimer — ${touch ? 'Touche' : 'Clique sur'} un élément pour le supprimer`;
+}
+export const STATUS_DELETE_MODE = getDeleteModeMessage(false);
 
-export const AMORCAGE_WITH_PROBLEM = 'Commence par lire le problème. Clique sur les nombres et les mots clés.';
+export function getDeleteConfirmMessage(label: string, touch: boolean): string {
+  return `Supprimer — ${label}? ${touch ? 'Touche' : 'Clique'} à nouveau pour confirmer.`;
+}
+export const STATUS_DELETE_CONFIRM = (label: string) => getDeleteConfirmMessage(label, false);
+
+export function getAmorcageWithProblem(touch: boolean): string {
+  return `Commence par lire le problème. ${touch ? 'Touche' : 'Clique sur'} les nombres et les mots clés.`;
+}
+export const AMORCAGE_WITH_PROBLEM = getAmorcageWithProblem(false);
 export const AMORCAGE_POST_HIGHLIGHT = 'Tu peux essayer un jeton ou une barre.';
 export const AMORCAGE_NO_PROBLEM = 'Tu peux commencer par placer un jeton ou une barre.';
 /** Relances métacognitives différenciées par niveau (directif → autonome).

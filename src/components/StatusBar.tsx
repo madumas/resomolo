@@ -97,7 +97,12 @@ export function StatusBar({
             color: '#9060C0',
             fontStyle: 'italic',
           }}
-          title="Cliquer pour fermer"
+          title={isMobilePortrait ? 'Toucher pour fermer' : 'Cliquer pour fermer'}
+          aria-label={fatigueType === 'rapid-clicks'
+            ? 'Suggestion de pause — rythme rapide'
+            : fatigueType === 'consecutive-undos'
+            ? 'Suggestion — consulter l\'aide-mémoire'
+            : 'Suggestion de pause'}
         >
           {fatigueType === 'rapid-clicks'
             ? 'Prends ton temps, c\'est correct d\'aller à ton rythme.'

@@ -31,6 +31,12 @@ await tool(page, 'boite');
 await click(page, 70, 60); await esc(page);
 await tool(page, 'boite');
 await click(page, 170, 60);
+await page.waitForTimeout(300);
+// Deselect then re-select to get context actions (not inline editor)
+await esc(page);
+await page.waitForTimeout(200);
+await click(page, 170, 60);
+await page.waitForTimeout(500);
 await colorBtn(page, 'rouge');
 await esc(page);
 await tool(page, 'etiquette');
@@ -67,6 +73,12 @@ await tool(page, 'jeton');
 await click(page, 80, 70); await esc(page);
 await tool(page, 'jeton');
 await click(page, 170, 70);
+await page.waitForTimeout(300);
+// Deselect then re-select to get context actions (not inline editor)
+await esc(page);
+await page.waitForTimeout(200);
+await click(page, 170, 70);
+await page.waitForTimeout(500);
 await colorBtn(page, 'rouge');
 await esc(page);
 await tool(page, 'etiquette');

@@ -30,7 +30,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
-import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS } from './config/messages';
+import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS, getAmorcageWithProblem, getDeleteModeMessage, getDeleteConfirmMessage } from './config/messages';
 import { onUndoSound, onBond, onAcknowledge, onHighlight as onHighlightSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
 import { OnboardingOverlay, shouldShowOnboarding, markOnboardingDone } from './components/OnboardingOverlay';
@@ -657,7 +657,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   } else if (activeTool) {
     statusMessage = isMobilePortrait ? getToolMessages(true)[activeTool] : TOOL_MESSAGES[activeTool];
   } else if (isAmorcage) {
-    statusMessage = AMORCAGE_WITH_PROBLEM;
+    statusMessage = isMobilePortrait ? getAmorcageWithProblem(true) : AMORCAGE_WITH_PROBLEM;
   } else if (isPostHighlight) {
     statusMessage = AMORCAGE_POST_HIGHLIGHT;
   } else if (!hasPieces) {
@@ -675,7 +675,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = 'Tu travailles depuis un moment — prends une pause si tu veux';
     statusVariant = 'relance';
   } else if (showLabelNudge) {
-    statusMessage = 'Tu peux nommer tes barres en cliquant dessus → Nommer';
+    statusMessage = isMobilePortrait
+      ? 'Tu peux écrire un nombre sur tes barres en touchant dessus → Nommer'
+      : 'Tu peux écrire un nombre sur tes barres en cliquant dessus → Nommer';
   } else if (
     pieces.filter(p => p.type === 'barre' || p.type === 'jeton' || p.type === 'boite').length >= 2 &&
     pieces.some(p => p.type === 'calcul' && 'expression' in p && /[+\-×÷=]/.test((p as any).expression || '')) &&

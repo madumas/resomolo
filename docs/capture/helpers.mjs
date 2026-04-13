@@ -47,6 +47,11 @@ export async function fresh(page) {
     window.dispatchEvent(new CustomEvent('test-restore', { detail: um }));
   }, emptyState);
   await page.waitForTimeout(400);
+  // Ensure Complet mode is active (fleche, arbre, etc. need it)
+  await page.locator('[data-testid="mode-selector"]').click().catch(() => {});
+  await page.waitForTimeout(200);
+  await page.locator('[data-testid="mode-option-complet"]').click({ timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(200);
   svgBox = await page.locator('[data-testid="canvas-svg"]').boundingBox();
 }
 
