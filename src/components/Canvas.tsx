@@ -1582,25 +1582,31 @@ export function Canvas({
               onFocus={() => onPieceFocus(piece.id)}
             >
               {/* Highlight-piece binding halo — shows when piece color matches an active highlight */}
-              {highlightColors && 'couleur' in piece && highlightColors.has((piece as any).couleur) && (
-                <circle
-                  cx={piece.x} cy={piece.y}
-                  r={10}
-                  fill={getPieceColor((piece as any).couleur)}
-                  opacity={0.2}
-                  style={{ pointerEvents: 'none' }}
-                />
-              )}
-              {/* Focus ring (keyboard navigation) */}
-              {isFocused && piece.id !== selectedPieceId && (
-                <rect
-                  x={piece.x - 4} y={piece.y - 4}
-                  width={12} height={12}
-                  rx={2}
-                  fill="none" stroke="#7028e0" strokeWidth={1.5} strokeDasharray="3 2"
-                  style={{ pointerEvents: 'none' }}
-                />
-              )}
+              {highlightColors && 'couleur' in piece && highlightColors.has((piece as any).couleur) && (() => {
+                const center = getPieceCenter(piece, referenceUnitMm);
+                return (
+                  <circle
+                    cx={center.x} cy={center.y}
+                    r={12}
+                    fill={getPieceColor((piece as any).couleur)}
+                    opacity={0.2}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                );
+              })()}
+              {/* Focus ring (keyboard navigation) — sized to piece bounds */}
+              {isFocused && piece.id !== selectedPieceId && (() => {
+                const b = getPieceBounds(piece, referenceUnitMm, 3, textScale ?? 1);
+                return (
+                  <rect
+                    x={b.x} y={b.y}
+                    width={b.w} height={b.h}
+                    rx={3}
+                    fill="none" stroke="#7028e0" strokeWidth={1.5} strokeDasharray="3 2"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                );
+              })()}
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}

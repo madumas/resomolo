@@ -34,6 +34,14 @@ export function useRovingTabindex(
     }
   }, [pieceIds, focusedId]);
 
+  // Move DOM focus to the focused piece element (accessibility: screen readers)
+  useEffect(() => {
+    if (focusedId) {
+      const el = document.querySelector(`[data-piece-id="${focusedId}"]`) as HTMLElement | null;
+      el?.focus();
+    }
+  }, [focusedId]);
+
   const onPieceFocus = useCallback((id: string) => {
     setFocusedId(id);
   }, []);

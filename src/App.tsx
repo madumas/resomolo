@@ -160,6 +160,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setActivityTick(t => t + 1);
     // Reset consecutive undo counter on any non-undo action
     consecutiveUndos.current = 0;
+    // Skip fatigue tracking for movement actions (keyboard arrows generate rapid MOVE_PIECE)
+    if (action.type === 'MOVE_PIECE' || action.type === 'MOVE_PIECE_LIVE') return;
     // Fatigue: track rapid clicks + inter-click variance
     const now = Date.now();
     const prevTime = recentClicks.current.length > 0 ? recentClicks.current[recentClicks.current.length - 1] : now;
