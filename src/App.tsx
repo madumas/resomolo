@@ -30,7 +30,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
-import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS, getAmorcageWithProblem, getDeleteModeMessage, getDeleteConfirmMessage } from './config/messages';
+import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS, getAmorcageWithProblem } from './config/messages';
 import { onUndoSound, onBond, onAcknowledge, onHighlight as onHighlightSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
 import { OnboardingOverlay, shouldShowOnboarding, markOnboardingDone } from './components/OnboardingOverlay';
@@ -83,6 +83,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const problemJustSelected = useRef(false);
   const [showInactivityRelance, setShowInactivityRelance] = useState(false);
   const [inactivityRelanceIndex, setInactivityRelanceIndex] = useState(0);
+
+  // One-shot move from context actions
+  const [startMoveId, setStartMoveId] = useState<string | null>(null);
+  const oneShotMoveRef = useRef(false);
 
   // Fatigue detection — consecutive undos, rapid clicks, inter-click variance
   const [showFatigueNudge, setShowFatigueNudge] = useState(false);
@@ -417,6 +421,22 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     setEditingPieceId(null);
   }, []);
 
+  // One-shot move from context actions
+  const handleContextMoveStart = useCallback((pieceId: string) => {
+    oneShotMoveRef.current = true;
+    setSelectedPieceId(null);
+    setEditingPieceId(null);
+    setStartMoveId(pieceId);
+    onAcknowledge();
+  }, []);
+
+  const handleMoveDone = useCallback(() => {
+    if (oneShotMoveRef.current) {
+      oneShotMoveRef.current = false;
+      setStartMoveId(null);
+    }
+  }, []);
+
   // Bond mode handlers
   const handleStartBondMode = useCallback((pieceId: string) => {
     setBondMode({ pieceId, fromVal: null, chainCount: 0 });
@@ -654,6 +674,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusVariant = 'relance';
   } else if (activeTool === 'fleche' && arrowFromId) {
     statusMessage = `Maintenant, ${touchVerb.toLowerCase()} la pièce d'arrivée`;
+  } else if (startMoveId) {
+    statusMessage = `${isMobilePortrait ? 'Touche' : 'Clique'} pour poser la pièce. Échap pour annuler.`;
   } else if (activeTool) {
     statusMessage = isMobilePortrait ? getToolMessages(true)[activeTool] : TOOL_MESSAGES[activeTool];
   } else if (isAmorcage) {
@@ -852,6 +874,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
             // Map HighlightColor → CouleurPiece: bleu→bleu, vert→vert, orange→rouge, gris→(skip)
             h.color === 'bleu' ? 'bleu' : h.color === 'vert' ? 'vert' : h.color === 'orange' ? 'rouge' : ''
           ).filter(Boolean)) : undefined}
+          startMoveId={startMoveId}
+          onMoveDone={handleMoveDone}
+          onMoveOneShot={handleContextMoveStart}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} onViewExample={handleViewExample} />}
         {showExampleSelector && <ExampleSelector onSelect={(ex) => { setShowExampleSelector(false); handleViewExample(ex); }} onClose={() => setShowExampleSelector(false)} />}

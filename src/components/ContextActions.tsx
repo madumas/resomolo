@@ -8,6 +8,7 @@ import { computeTreeLayout } from '../engine/arbre-layout';
 import { computeSchemaWidth, computeSchemaHeight, getGabaritDefaults } from '../engine/schema-layout';
 import { onAddNode, onChangeGabarit, onAddPart } from '../engine/sound';
 import { COLORS, UI_BG, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
+import { DeplacerIcon, DeleteIcon } from './ToolIcons';
 import { getPieceColor } from '../config/theme';
 import { RESPONSE_TEMPLATES } from '../config/messages';
 import { onSubdivide } from '../engine/sound';
@@ -71,6 +72,7 @@ interface ContextActionsProps {
   onStartEditBond?: (pieceId: string, bondIndex: number) => void;
   toolbarMode?: 'essentiel' | 'complet';
   dominantHand?: 'left' | 'right';
+  onMoveOneShot?: (id: string) => void;
 }
 
 export function ContextActions({
@@ -97,7 +99,7 @@ export function ContextActions({
   onUngroup,
   onTableauPreview,
   onDeletePiece,
-  onDismiss: _onDismiss,
+  onDismiss,
   onStartBondMode,
   onStopBondMode,
   bondMode,
@@ -106,6 +108,7 @@ export function ContextActions({
   onStartEditBond,
   toolbarMode = 'essentiel',
   dominantHand = 'right',
+  onMoveOneShot,
 }: ContextActionsProps) {
   // I7: Local state for inline division options (replaces prompt())
   // showDivideOptions removed — fraction submenu handles division presets
@@ -484,15 +487,26 @@ export function ContextActions({
               ))}
             </>
           )}
-          {onDeletePiece && !showRepartir && (
+          {!showRepartir && (onMoveOneShot || onDeletePiece) && (
             <>
               <Divider />
-              <CtxBtn testId="ctx-delete-jeton" destructive pulse={deleteConfirm} onClick={() => {
-                if (deleteConfirm) { onDeletePiece(piece.id); }
-                else { setDeleteConfirm(true); }
-              }}>
-                {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
-              </CtxBtn>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 8 }}>
+                {onMoveOneShot && !piece.locked && (
+                  <CtxBtn testId="ctx-move" onClick={() => { onMoveOneShot(piece.id); onDismiss?.(); }}>
+                    <span style={{ display: 'inline-flex', marginRight: 4, verticalAlign: 'middle' }}><DeplacerIcon /></span> Déplacer
+                  </CtxBtn>
+                )}
+                <div style={{ flex: 1 }} />
+                {onDeletePiece && (
+                  <CtxBtn testId="ctx-delete-jeton" destructive pulse={deleteConfirm} onClick={() => {
+                    if (deleteConfirm) { onDeletePiece(piece.id); }
+                    else { setDeleteConfirm(true); }
+                  }}>
+                    <span style={{ display: 'inline-flex', marginRight: 4, verticalAlign: 'middle' }}><DeleteIcon /></span>
+                    {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
+                  </CtxBtn>
+                )}
+              </div>
             </>
           )}
         </>
@@ -1132,24 +1146,35 @@ export function ContextActions({
         <CtxBtn onClick={() => onStartEdit(piece.id)}>Texte</CtxBtn>
       )}
 
-      {/* Delete — isolated at bottom with separator. Micro-confirmation 3.5s. Hidden inside submenus. */}
-      {onDeletePiece && !piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && !(selectedBondInfo && selectedBondInfo.pieceId === piece.id) && (
+      {/* Structural actions (Move + Delete) — isolated at bottom with separator. Hidden inside submenus. */}
+      {!piece.locked && !isJeton(piece) && arbreSubmenu === 'none' && schemaSubmenu === 'none' && tableauSubmenu === 'none' && droiteSubmenu === 'none' && bandesSubmenu === 'none' && ligneSubmenu === 'none' && !(selectedBondInfo && selectedBondInfo.pieceId === piece.id) && (onMoveOneShot || onDeletePiece) && (
         <>
           <Divider />
-          <CtxBtn
-            testId="ctx-delete"
-            destructive
-            pulse={deleteConfirm}
-            onClick={() => {
-              if (deleteConfirm) {
-                onDeletePiece(piece.id);
-              } else {
-                setDeleteConfirm(true);
-              }
-            }}
-          >
-            {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
-          </CtxBtn>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 8 }}>
+            {onMoveOneShot && (
+              <CtxBtn testId="ctx-move" onClick={() => { onMoveOneShot(piece.id); onDismiss?.(); }}>
+                <span style={{ display: 'inline-flex', marginRight: 4, verticalAlign: 'middle' }}><DeplacerIcon /></span> Déplacer
+              </CtxBtn>
+            )}
+            <div style={{ flex: 1 }} />
+            {onDeletePiece && (
+              <CtxBtn
+                testId="ctx-delete"
+                destructive
+                pulse={deleteConfirm}
+                onClick={() => {
+                  if (deleteConfirm) {
+                    onDeletePiece(piece.id);
+                  } else {
+                    setDeleteConfirm(true);
+                  }
+                }}
+              >
+                <span style={{ display: 'inline-flex', marginRight: 4, verticalAlign: 'middle' }}><DeleteIcon /></span>
+                {deleteConfirm ? 'Supprimer ?' : 'Supprimer'}
+              </CtxBtn>
+            )}
+          </div>
         </>
       )}
     </div>

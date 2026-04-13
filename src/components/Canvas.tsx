@@ -72,10 +72,14 @@ interface CanvasProps {
   dominantHand?: 'left' | 'right';
   highlightColors?: Set<string>;  // active highlight colors from problem zone
   hideLockBadge?: boolean;
+  startMoveId?: string | null;   // one-shot move triggered from context actions
+  onMoveDone?: () => void;       // called after put-down in one-shot move
+  onMoveOneShot?: (id: string) => void; // context action: start one-shot move
 }
 
 type InteractionMode =
   | { type: 'idle' }
+  | { type: 'pending-move'; pieceId: string }  // waiting for first pointerMove to start ghost
   | { type: 'moving'; pieceId: string };
 
 const JETON_SPACING_MM = 12; // minimum distance between jeton centers
@@ -108,10 +112,11 @@ function findNonOverlappingPosition(
 
 function getCanvasCursor(
   activeTool: ToolType,
-  isMoving: boolean,
+  modeType: string,
   isHoveringPiece: boolean,
 ): string {
-  if (isMoving) return 'grabbing';
+  if (modeType === 'moving') return 'grabbing';
+  if (modeType === 'pending-move') return 'grab';
   if (!activeTool && isHoveringPiece) return 'pointer';
   if (activeTool === 'deplacer') return 'grab';
   if (activeTool) return 'crosshair';
@@ -158,6 +163,9 @@ export function Canvas({
   dominantHand = 'right',
   highlightColors,
   hideLockBadge,
+  startMoveId,
+  onMoveDone,
+  onMoveOneShot,
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -523,6 +531,7 @@ export function Canvas({
       const finalPos = snapBarAlignment(adjusted, mode.pieceId, pieces, tol.barAlignSnapMm, referenceUnitMm);
       dispatch({ type: 'MOVE_PIECE', id: mode.pieceId, x: finalPos.x, y: finalPos.y });
       setMode({ type: 'idle' });
+      onMoveDone?.();
       return;
     }
 
@@ -979,6 +988,17 @@ export function Canvas({
 
     const rawPos = pointerToMm(e, svgRef.current);
 
+    // Pending one-shot move: first pointerMove on canvas → start real move with correct offset
+    if (mode.type === 'pending-move') {
+      const piece = pieces.find(p => p.id === mode.pieceId);
+      if (piece) {
+        smoothingRef.current = createSmoothingState();
+        moveOffset.current = { dx: rawPos.x - piece.x, dy: rawPos.y - piece.y };
+        setMode({ type: 'moving', pieceId: mode.pieceId });
+      }
+      return;
+    }
+
     if (mode.type === 'moving') {
       // R5: Apply cursor smoothing if enabled
       let pos: { x: number; y: number };
@@ -1141,9 +1161,22 @@ export function Canvas({
     onSelectPiece(null);
   }, [pieces, onSelectPiece]);
 
-  // Escape during move: restore original position
+  // One-shot move from context actions: wait for first pointerMove to start ghost
+  // This avoids the piece jumping to the cursor (which is still on the context menu button)
   useEffect(() => {
-    if (mode.type !== 'moving') return;
+    if (!startMoveId) return;
+    const piece = pieces.find(p => p.id === startMoveId);
+    if (piece) {
+      originalMovePos.current = { x: piece.x, y: piece.y };
+      setMode({ type: 'pending-move', pieceId: startMoveId });
+      onSelectPiece(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trigger only when startMoveId changes
+  }, [startMoveId]);
+
+  // Escape during move or pending-move: restore original position
+  useEffect(() => {
+    if (mode.type !== 'moving' && mode.type !== 'pending-move') return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -1152,6 +1185,7 @@ export function Canvas({
         }
         setMode({ type: 'idle' });
         originalMovePos.current = null;
+        onMoveDone?.();
         if (activePointerId.current !== null && svgRef.current) {
           try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* already released */ }
           activePointerId.current = null;
@@ -1160,7 +1194,7 @@ export function Canvas({
     };
     window.addEventListener('keydown', handler, true); // capture phase — before App.tsx
     return () => window.removeEventListener('keydown', handler, true);
-  }, [mode, dispatch]);
+  }, [mode, dispatch, onMoveDone]);
 
   // Resize bar
   const handleResizeBar = useCallback((id: string, multiplier: number) => {
@@ -1368,13 +1402,14 @@ export function Canvas({
   // Right-click = cancel/escape
   const handleRightClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    if (mode.type === 'moving') {
+    if (mode.type === 'moving' || mode.type === 'pending-move') {
       // Cancel move — restore original position
-      if (originalMovePos.current) {
+      if (originalMovePos.current && mode.type === 'moving') {
         dispatch({ type: 'MOVE_PIECE_LIVE', id: mode.pieceId, x: originalMovePos.current.x, y: originalMovePos.current.y });
       }
       setMode({ type: 'idle' });
       originalMovePos.current = null;
+      onMoveDone?.();
     } else if (editingPieceId) {
       onStopEdit();
     } else if (selectedPieceId) {
@@ -1453,7 +1488,7 @@ export function Canvas({
         position: 'relative',
         zIndex: 1, // context actions (z-index:10) must escape above status bar
         overflow: 'hidden',
-        cursor: getCanvasCursor(activeTool, mode.type === 'moving', !!hoveredPieceId),
+        cursor: getCanvasCursor(activeTool, mode.type, !!hoveredPieceId),
         // Haptic flash fallback (iOS/Safari) — brief border pulse
         ...(hapticFlash ? { boxShadow: 'inset 0 0 0 3px rgba(112, 40, 224, 0.3)', transition: 'box-shadow 0.1s' } : {}),
       }}
@@ -1587,7 +1622,11 @@ export function Canvas({
               role="group"
               aria-label={getPieceAriaLabel(piece)}
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-              style={{ opacity, transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out', outline: 'none' }}
+              style={{
+                opacity,
+                transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out',
+                outline: 'none',
+              }}
               onFocus={() => onPieceFocus(piece.id)}
             >
               {/* Highlight-piece binding halo — shows when piece color matches an active highlight */}
@@ -2649,6 +2688,7 @@ export function Canvas({
           }}
           toolbarMode={toolbarMode}
           dominantHand={dominantHand}
+          onMoveOneShot={onMoveOneShot}
         />
       )}
 
