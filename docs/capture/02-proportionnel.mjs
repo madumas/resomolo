@@ -118,7 +118,7 @@ await page.waitForTimeout(200);
 await page.locator('[data-testid="context-actions"] button:has-text("+ Partie")').click().catch(() => {});
 await page.waitForTimeout(200);
 await esc(page);
-await snap(page, 'catalogue-schema-parties.png', { x: 30, y: 28, w: 230, h: 80 });
+await snap(page, 'catalogue-schema-tout-et-parties.png', { x: 30, y: 28, w: 230, h: 80 });
 
 console.log('Schéma comparaison');
 await fresh(page);

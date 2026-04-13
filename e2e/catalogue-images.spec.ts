@@ -340,7 +340,7 @@ test.describe('Catalogue image generation', () => {
 
   // ═══════ PIÈCES STRUCTURÉES — avec labels pertinents ═══════
 
-  test('catalogue-schema-parties (35 = 20 + 15)', async ({ page }) => {
+  test('catalogue-schema-tout-et-parties (35 = 20 + 15)', async ({ page }) => {
     await navigateAndReady(page);
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent('test-restore', { detail: {
@@ -357,7 +357,7 @@ test.describe('Catalogue image generation', () => {
       }}));
     });
     await page.waitForTimeout(600);
-    await screenshotPieces(page, img('catalogue-schema-parties.png'));
+    await screenshotPieces(page, img('catalogue-schema-tout-et-parties.png'));
   });
 
   test('catalogue-schema-comparaison (Léa 14 vs Marc 9)', async ({ page }) => {
