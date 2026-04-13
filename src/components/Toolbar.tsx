@@ -278,18 +278,22 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         )}
       </div>
 
-      {/* Scroll indicator — chevron when tools overflow */}
+      {/* Scroll indicator — 44px chevron with pulse animation when tools overflow */}
       {hasScrollRight && (
         <button
           onClick={() => toolbarScrollRef.current?.scrollBy({ left: 120, behavior: 'smooth' })}
-          aria-label="Plus d'outils"
+          aria-label="Plus d'outils — glisse pour voir"
           style={{
             flexShrink: 0, background: 'linear-gradient(90deg, transparent, #F6F4FA 40%)',
-            border: 'none', cursor: 'pointer', padding: '0 8px 0 16px', height: '100%',
-            display: 'flex', alignItems: 'center', color: UI_PRIMARY, fontSize: 16,
+            border: 'none', cursor: 'pointer', padding: '0 4px 0 12px', height: '100%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: UI_PRIMARY, minWidth: 44, minHeight: 44,
+            animation: 'scroll-hint 0.6s ease-in-out 3',
           }}
         >
-          ›
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       )}
 

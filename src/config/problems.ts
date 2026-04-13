@@ -90,6 +90,22 @@ export const PROBLEM_PRESETS: ProblemPreset[] = [
     category: 'soustraction',
     difficulty: 1,
   },
+  {
+    id: 'c1-comp-2',
+    title: 'Autocollants de Tom et Sara',
+    text: 'Tom a 7 autocollants. Sara en a 4. Combien Tom en a-t-il de plus que Sara?',
+    cycle: 1,
+    category: 'comparaison',
+    difficulty: 1,
+  },
+  {
+    id: 'c1-add-6',
+    title: 'Pommes de Maman',
+    text: 'Maman achète 6 pommes le matin et 9 pommes l\'après-midi. Combien de pommes a-t-elle achetées en tout?',
+    cycle: 1,
+    category: 'addition',
+    difficulty: 1,
+  },
 
   // ── Cycle 2, Difficulty 1 (facile) ──
   {

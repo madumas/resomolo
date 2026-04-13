@@ -102,6 +102,12 @@ svg .bond-removing {
   50% { stroke-opacity: 0.5; }
 }
 
+/* Toolbar scroll hint — 3 pulses then stop */
+@keyframes scroll-hint {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
 /* Reduced motion — disable canvas animations for vestibular sensitivity (TDC comorbidity 30-50%) */
 @media (prefers-reduced-motion: reduce) {
   svg g.piece-new { animation: none; }
@@ -112,6 +118,7 @@ svg .bond-removing {
   @keyframes bond-mode-pulse { from, to { stroke-opacity: 1; } }
   @keyframes popover-slide-down { from, to { opacity: 1; transform: none; } }
   @keyframes mobile-drawer-up { from, to { transform: none; } }
+  @keyframes scroll-hint { from, to { transform: none; } }
 }
 
 /* Mobile portrait: larger touch targets + toolbar grid layout */

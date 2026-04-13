@@ -1,34 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { UI_PRIMARY } from '../config/theme';
 
 const STORAGE_KEY = 'resomolo-onboarding-done';
 
 interface OnboardingStep {
-  target: string;        // data-testid or CSS selector
+  target: string;
   title: string;
   text: string;
 }
 
-const STEPS: OnboardingStep[] = [
-  {
-    target: '[data-testid="problem-zone"]',
-    title: 'Le problème',
-    text: 'Lis le problème ici. Touche les nombres et les mots clés pour les surligner.',
-  },
-  {
-    target: '[data-testid="toolbar"], [data-testid="mobile-toolbar"]',
-    title: 'Les outils',
-    text: 'Choisis un outil pour modéliser : jetons, barres, schéma...',
-  },
-  {
-    target: '[data-testid="canvas-container"]',
-    title: 'Ton espace de travail',
-    text: 'Place tes pièces ici pour résoudre le problème. Écris ta réponse quand tu es prêt.',
-  },
-];
+function getSteps(touch: boolean): OnboardingStep[] {
+  const verb = touch ? 'Touche' : 'Clique sur';
+  return [
+    {
+      target: '[data-testid="problem-zone"]',
+      title: 'Le problème',
+      text: `Lis le problème ici. ${verb} les nombres et les mots clés pour les surligner.`,
+    },
+    {
+      target: '[data-testid="toolbar"], [data-testid="mobile-toolbar"]',
+      title: 'Les outils',
+      text: `Choisis un outil pour modéliser : jetons, barres, schéma...`,
+    },
+    {
+      target: '[data-testid="canvas-container"]',
+      title: 'Ton espace de travail',
+      text: `Place tes pièces ici pour résoudre le problème. Écris ta réponse quand tu es prêt.`,
+    },
+  ];
+}
 
 interface OnboardingOverlayProps {
   onDone: () => void;
+  touchMode?: boolean;
 }
 
 export function shouldShowOnboarding(): boolean {
@@ -45,13 +49,14 @@ export function markOnboardingDone(): void {
   } catch { /* quota */ }
 }
 
-export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
+export function OnboardingOverlay({ onDone, touchMode = false }: OnboardingOverlayProps) {
+  const steps = getSteps(touchMode);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
   // Find and measure target element — recalculate on resize/rotation
   useEffect(() => {
-    const s = STEPS[step];
+    const s = steps[step];
     if (!s) return;
     const measure = () => {
       const el = document.querySelector(s.target);
@@ -70,7 +75,7 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (step < STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setStep(step + 1);
     } else {
       markOnboardingDone();
@@ -84,7 +89,21 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
     onDone();
   };
 
-  const current = STEPS[step];
+  // Auto-focus next button on step change
+  const nextBtnRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    nextBtnRef.current?.focus();
+  }, [step]);
+
+  // Keyboard handler: Escape closes, Tab traps focus within tooltip
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      markOnboardingDone();
+      onDone();
+    }
+  }, [onDone]);
+
+  const current = steps[step];
   if (!current) return null;
 
   // Position tooltip below or above target
@@ -97,7 +116,12 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-roledescription="tutoriel"
+      aria-label={`Tutoriel étape ${step + 1} sur ${steps.length}`}
       onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
       style={{
         position: 'fixed',
         inset: 0,
@@ -140,12 +164,12 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
         }}
       >
         <div style={{ fontSize: 11, color: UI_PRIMARY, fontWeight: 700, marginBottom: 4 }}>
-          {step + 1} / {STEPS.length}
+          {step + 1} / {steps.length}
         </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#1E1A2E', marginBottom: 6 }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: '#1E1A2E', marginBottom: 6 }}>
           {current.title}
         </div>
-        <div style={{ fontSize: 13, color: '#55506A', lineHeight: 1.4, marginBottom: 16 }}>
+        <div aria-live="polite" style={{ fontSize: 15, color: '#55506A', lineHeight: 1.4, marginBottom: 16 }}>
           {current.text}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -163,6 +187,7 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
             Passer
           </button>
           <button
+            ref={nextBtnRef}
             onClick={handleNext}
             style={{
               background: UI_PRIMARY,
@@ -177,7 +202,7 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
               minHeight: 44,
             }}
           >
-            {step < STEPS.length - 1 ? 'Suivant' : 'C\'est parti!'}
+            {step < steps.length - 1 ? 'Suivant' : 'C\'est parti!'}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { UI_PRIMARY, UI_BG, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
+import { UI_PRIMARY, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, BoiteIcon, DiagrammeBandesIcon } from './ToolIcons';
 import type { ToolbarMode } from '../model/types';
@@ -41,7 +41,7 @@ const PIECE_ENTRIES: AideMemoireEntry[] = [
     Icon: BoiteIcon,
     example: '3 sacs de 6 bonbons',
     color: '#FEF9E7',
-    cycles: [1, 2, 3],
+    cycles: [2, 3],
     essentiel: true,
   },
   {

@@ -86,6 +86,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
 
   // Fatigue detection — consecutive undos, rapid clicks, inter-click variance
   const [showFatigueNudge, setShowFatigueNudge] = useState(false);
+  const [fatigueType, setFatigueType] = useState<'rapid-clicks' | 'consecutive-undos' | null>(null);
   const consecutiveUndos = useRef(0);
   const recentClicks = useRef<number[]>([]);
   const recentClickIntervals = useRef<number[]>([]);
@@ -185,8 +186,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     }
     if ((s.fatigueClickThreshold > 0 && recentClicks.current.length > s.fatigueClickThreshold) || varianceTrigger) {
       setShowFatigueNudge(true);
+      setFatigueType('rapid-clicks');
       clearTimeout(fatigueNudgeTimer.current);
-      fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
+      fatigueNudgeTimer.current = setTimeout(() => { setShowFatigueNudge(false); setFatigueType(null); }, 10000);
       recentClicks.current = []; // reset after triggering
     }
   }, []);
@@ -207,8 +209,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     consecutiveUndos.current += 1;
     if (settingsRef.current.fatigueUndoThreshold > 0 && consecutiveUndos.current >= settingsRef.current.fatigueUndoThreshold) {
       setShowFatigueNudge(true);
+      setFatigueType('consecutive-undos');
       clearTimeout(fatigueNudgeTimer.current);
-      fatigueNudgeTimer.current = setTimeout(() => setShowFatigueNudge(false), 10000);
+      fatigueNudgeTimer.current = setTimeout(() => { setShowFatigueNudge(false); setFatigueType(null); }, 10000);
     }
   }, []);
 
@@ -607,11 +610,13 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }, [dispatch]);
 
   // Status bar message
+  const touchVerb = isMobilePortrait ? 'Touche' : 'Clique sur';
+  const touchVerbShort = isMobilePortrait ? 'Touche' : 'Clique';
   let statusMessage: string;
   let statusVariant: 'default' | 'relance' = 'default';
 
   if (bondMode && bondMode.fromVal === null) {
-    statusMessage = 'Clique sur le point de départ du saut.';
+    statusMessage = `${touchVerb} le point de départ du saut.`;
     statusVariant = 'relance';
   } else if (bondMode && bondMode.fromVal !== null && bondGhostInfo) {
     // Dynamic message updating in real-time as cursor moves
@@ -620,19 +625,19 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     const gDiff = Math.abs(gTo - gFrom);
     const gDir = gTo >= gFrom ? 'avances' : 'recules';
     statusMessage = settings.toolbarMode === 'essentiel'
-      ? `Saut depuis ${gFrom} — tu es sur ${gTo}, tu ${gDir} de ${gDiff}. Clique pour placer.`
-      : `Saut depuis ${gFrom} → sur ${gTo} (${gTo >= gFrom ? '+' : ''}${gTo - gFrom}). Clique pour placer.`;
+      ? `Saut depuis ${gFrom} — tu es sur ${gTo}, tu ${gDir} de ${gDiff}. ${touchVerbShort} pour placer.`
+      : `Saut depuis ${gFrom} → sur ${gTo} (${gTo >= gFrom ? '+' : ''}${gTo - gFrom}). ${touchVerbShort} pour placer.`;
     statusVariant = 'relance';
   } else if (bondMode && bondMode.fromVal !== null) {
     // Fallback static (cursor not on droite)
     statusMessage = settings.toolbarMode === 'essentiel'
-      ? 'Clique sur le point d\'arrivée.'
-      : 'Clique sur le point d\'arrivée. Échap pour annuler.';
+      ? `${touchVerb} le point d'arrivée.`
+      : `${touchVerb} le point d'arrivée. Échap pour annuler.`;
     statusVariant = 'relance';
   } else if (equalizingFromId) {
-    statusMessage = 'Clique sur la barre à redimensionner';
+    statusMessage = `${touchVerb} la barre à redimensionner`;
   } else if (groupingBarId) {
-    statusMessage = 'Clique sur les barres à ajouter au groupe.';
+    statusMessage = `${touchVerb} les barres à ajouter au groupe.`;
     statusVariant = 'relance'; // highlight to show active mode
   } else if (workedExample.isExampleMode) {
     statusMessage = workedExample.message;
@@ -648,7 +653,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
     statusMessage = questions[relanceIndex % questions.length];
     statusVariant = 'relance';
   } else if (activeTool === 'fleche' && arrowFromId) {
-    statusMessage = 'Maintenant, clique sur la pièce d\'arrivée';
+    statusMessage = `Maintenant, ${touchVerb.toLowerCase()} la pièce d'arrivée`;
   } else if (activeTool) {
     statusMessage = isMobilePortrait ? getToolMessages(true)[activeTool] : TOOL_MESSAGES[activeTool];
   } else if (isAmorcage) {
@@ -699,10 +704,9 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }
 
   // Nudge
-  const verb = isMobilePortrait ? 'Touche' : 'Clique sur';
   let nudgeMessage: string | undefined;
   if (!hasPieces) {
-    if (isAmorcage) nudgeMessage = `Commence par lire le problème.\n${verb} les nombres et les mots clés.`;
+    if (isAmorcage) nudgeMessage = `Commence par lire le problème.\n${touchVerb} les nombres et les mots clés.`;
     else if (isPostHighlight) nudgeMessage = 'Tu peux essayer un jeton ou une barre.';
     else if (!hasProblem) nudgeMessage = 'Tu peux commencer par placer\nun jeton ou une barre.';
   }
@@ -744,6 +748,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       <StatusBar
         message={statusMessage}
         variant={statusVariant}
+        isMobilePortrait={isMobilePortrait}
         cancelLabel={bondMode ? '✓ Terminer' : groupingBarId ? '✓ Terminer' : undefined}
         onCancel={(activeTool || equalizingFromId || groupingBarId || bondMode) ? () => {
           if (bondMode) setBondMode(null);
@@ -761,7 +766,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         problemText={probleme}
         onExpandProblem={() => setProblemExpanded(true)}
         fatigueNudge={showFatigueNudge}
-        onDismissFatigueNudge={() => setShowFatigueNudge(false)}
+        fatigueType={fatigueType}
+        onDismissFatigueNudge={() => { setShowFatigueNudge(false); setFatigueType(null); }}
         exampleMode={workedExample.isExampleMode}
         examplePhaseIndex={workedExample.phaseIndex}
         examplePhaseCount={workedExample.phaseCount}
@@ -948,7 +954,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
 
       {/* Onboarding overlay — first-time user guidance */}
       {showOnboarding && (
-        <OnboardingOverlay onDone={() => setShowOnboarding(false)} />
+        <OnboardingOverlay onDone={() => setShowOnboarding(false)} touchMode={isMobilePortrait} />
       )}
     </div>
   );

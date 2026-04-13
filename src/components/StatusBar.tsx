@@ -4,6 +4,7 @@ import { STATUS_BAR_HEIGHT, STATUS_BAR_BG, UI_PRIMARY, UI_BORDER, UI_TEXT_SECOND
 interface StatusBarProps {
   message: string;
   variant?: 'default' | 'relance';
+  isMobilePortrait?: boolean;
   cancelLabel?: string;
   onCancel?: () => void;
   showJetonQuantity?: boolean;
@@ -16,6 +17,7 @@ interface StatusBarProps {
   problemText?: string;
   onExpandProblem?: () => void;
   fatigueNudge?: boolean;
+  fatigueType?: 'rapid-clicks' | 'consecutive-undos' | null;
   onDismissFatigueNudge?: () => void;
   // Worked example mode
   exampleMode?: boolean;
@@ -37,6 +39,7 @@ function extractQuestion(text: string): string {
 export function StatusBar({
   message,
   variant = 'default',
+  isMobilePortrait = false,
   cancelLabel,
   onCancel,
   showJetonQuantity,
@@ -49,6 +52,7 @@ export function StatusBar({
   problemText,
   onExpandProblem,
   fatigueNudge,
+  fatigueType,
   onDismissFatigueNudge,
   exampleMode,
   examplePhaseIndex = 0,
@@ -72,12 +76,14 @@ export function StatusBar({
       fontSize: 13,
       color: variant === 'relance' ? '#7545A5' : UI_PRIMARY,
       flexShrink: 0,
-      height: STATUS_BAR_HEIGHT,
+      height: isMobilePortrait ? 'auto' : STATUS_BAR_HEIGHT,
+      minHeight: isMobilePortrait ? 32 : STATUS_BAR_HEIGHT,
       display: 'flex',
+      flexWrap: isMobilePortrait ? 'wrap' : 'nowrap',
       position: 'relative',
       zIndex: 0, // below context actions (z-index: 10) which escape via Canvas z-index: 1
       alignItems: 'center',
-      gap: 12,
+      gap: isMobilePortrait ? 6 : 12,
     }}>
       {fatigueNudge ? (
         <span
@@ -93,7 +99,11 @@ export function StatusBar({
           }}
           title="Cliquer pour fermer"
         >
-          Tu sembles hésiter — prends une pause si tu veux, ton travail est sauvegardé.
+          {fatigueType === 'rapid-clicks'
+            ? 'Prends ton temps, c\'est correct d\'aller à ton rythme.'
+            : fatigueType === 'consecutive-undos'
+            ? 'Tu hésites\u00a0? L\'aide-mémoire peut t\'aider.'
+            : 'Prends une pause si tu veux, ton travail est sauvegardé.'}
         </span>
       ) : showProblemReminder ? (
         <span

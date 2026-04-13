@@ -2,6 +2,7 @@ import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { useCellUndo } from '../hooks/useCellUndo';
 import { useContainerSize } from '../hooks/useContainerSize';
 import { useRovingTabindex } from '../hooks/useRovingTabindex';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { pointerToMm, snapToGrid, calculateViewBoxHeight } from '../engine/coordinates';
 import { snapBarAlignment } from '../engine/snap';
 import { getTolerances } from '../engine/tolerances';
@@ -276,6 +277,7 @@ export function Canvas({
   const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const tolMultiplier = getToleranceMultiplier(_toleranceProfile);
+  const reducedMotion = useReducedMotion();
   const reponseIds = pieces.filter(p => p.type === 'reponse').map(p => p.id);
 
   // Roving tabindex for keyboard navigation
@@ -1394,6 +1396,13 @@ export function Canvas({
 
     setIsArranging(true);
 
+    // Skip animation if user prefers reduced motion
+    if (reducedMotion) {
+      dispatch({ type: 'ARRANGE_PIECES', moves });
+      setIsArranging(false);
+      return;
+    }
+
     // Capture starting positions
     const startPositions = new Map(pieces.map(p => [p.id, { x: p.x, y: p.y }]));
     const startTime = performance.now();
@@ -1433,7 +1442,7 @@ export function Canvas({
     }
 
     arrangeRafRef.current = requestAnimationFrame(animate);
-  }, [pieces, referenceUnitMm, isArranging, dispatch]);
+  }, [pieces, referenceUnitMm, isArranging, dispatch, reducedMotion]);
 
   return (
     <div
@@ -1540,7 +1549,7 @@ export function Canvas({
           const isFaded = focusMode && piece.id !== selectedPieceId;
           return (
             <g key={piece.id} data-piece-id={piece.id} className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-              style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
+              style={isFaded ? { opacity: 0.35, transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out' } : { transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out' }}>
               <PieceRenderer piece={piece} referenceUnitMm={referenceUnitMm} isSelected={piece.id === selectedPieceId} reponseIds={reponseIds} highContrast={highContrast} textScale={textScale} toleranceMultiplier={tolMultiplier} toolbarMode={toolbarMode}
                 bondModeActive={bondMode?.pieceId === piece.id ? true : undefined}
                 bondFromVal={bondMode?.pieceId === piece.id ? bondMode.fromVal : undefined}
@@ -1578,7 +1587,7 @@ export function Canvas({
               role="group"
               aria-label={getPieceAriaLabel(piece)}
               className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-              style={{ opacity, transition: 'opacity 0.4s ease-in-out', outline: 'none' }}
+              style={{ opacity, transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out', outline: 'none' }}
               onFocus={() => onPieceFocus(piece.id)}
             >
               {/* Highlight-piece binding halo — shows when piece color matches an active highlight */}
@@ -1622,7 +1631,7 @@ export function Canvas({
           return (
           <g key={piece.id} data-piece-id={piece.id}
             className={piece.id === lastPlacedId ? 'piece-new' : undefined}
-            style={isFaded ? { opacity: 0.35, transition: 'opacity 0.4s ease-in-out' } : { transition: 'opacity 0.4s ease-in-out' }}>
+            style={isFaded ? { opacity: 0.35, transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out' } : { transition: reducedMotion ? 'none' : 'opacity 0.4s ease-in-out' }}>
             <TableauPiece
               piece={piece as Tableau}
               isSelected={piece.id === selectedPieceId}

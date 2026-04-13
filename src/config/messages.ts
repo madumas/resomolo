@@ -43,7 +43,7 @@ export const RELANCE_LEVELS = [
   [
     'Regarde les pièces que tu as placées. Que manque-t-il?',
     'Quels nombres as-tu trouvés dans le problème?',
-    'Essaie de placer une barre ou un jeton pour commencer.',
+    'Essaie de placer une première pièce pour commencer.',
   ],
   // Niveau 2 — guidé (aide modérée)
   [
@@ -67,7 +67,7 @@ export const RESPONSE_TEMPLATES = [
   { id: 'chacun', label: 'Chaque...reçoit...', template: 'Chaque ___ reçoit ___ .' },
   { id: 'plus', label: '...de plus que...', template: '___ a ___ de plus que ___ .' },
   { id: 'fois', label: '...fois plus que...', template: '___ a ___ fois plus que ___ .' },
-  { id: 'fois-moins', label: '...fois moins que...', template: '___ a ___ fois moins que ___ .' },
+  { id: 'fois-moins', label: '...fois plus petit que...', template: '___ est ___ fois plus petit que ___ .' },
   { id: 'total', label: 'En tout...', template: 'En tout, il y a ___ .' },
   { id: 'reponse', label: 'La réponse est...', template: 'La réponse est ___ .' },
   { id: 'partage-reste', label: '...groupes et il reste...', template: '___ groupes de ___ et il en reste ___ .' },

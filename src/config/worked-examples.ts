@@ -54,7 +54,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
     title: 'Soustraction avec jetons (1er cycle)',
     categoryGroup: 'additif-c1',
     cycle: 1,
-    explanation: 'Regarde comment on barre les jetons mangés pour montrer ce qui reste.',
+    explanation: 'Regarde comment les jetons rouges montrent ceux qui sont partis. Les bleus sont ceux qui restent.',
     pairedProblemIds: ['c1-sous-1', 'c1-sous-2'],
     state: {
       probleme: 'Noah a 9 biscuits. Il en mange 3. Combien lui en reste-t-il?',
@@ -76,7 +76,7 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
         { id: 'j8', type: 'jeton', x: 138, y: 30, locked: true, couleur: 'rouge', parentId: null },
         { id: 'j9', type: 'jeton', x: 152, y: 30, locked: true, couleur: 'rouge', parentId: null },
         { id: 'e-total', type: 'etiquette', x: 70, y: 15, locked: true, text: '9 biscuits', attachedTo: null },
-        { id: 'e-mange', type: 'etiquette', x: 124, y: 15, locked: true, text: '3 mangés', attachedTo: null },
+        { id: 'e-mange', type: 'etiquette', x: 124, y: 15, locked: true, text: '3 partis', attachedTo: null },
         { id: 'calcul', type: 'calcul', x: 40, y: 55, locked: true, expression: '9 − 3 = 6' },
         { id: 'reponse', type: 'reponse', x: 40, y: 80, locked: true, text: 'Il lui reste 6 biscuits.', template: null },
       ] as ModelisationState['pieces'],
