@@ -283,7 +283,7 @@ export function ContextActions({
       {piece.type === 'calcul' && !piece.locked && (() => {
         const expr = piece.expression || '';
         const hasDivision = expr.includes('÷') || expr.includes('/');
-        const hasMultiplication = expr.includes('×') || expr.includes('*');
+        const hasMultiplication = expr.includes('×') || expr.includes('*') || /\bx\b/i.test(expr);
         const isEmpty = expr.trim() === '';
         // × → En colonnes, ÷ → Division posée, + ou − → neither, empty → both
         return (
@@ -1225,7 +1225,7 @@ function ColorRow({ pieceId, current, onChange }: {
         return (
           <div key={c} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <button onClick={() => debouncedClick(() => onChange(pieceId, c), 200)}
-              aria-label={`Couleur ${COLOR_LABELS[c]}${isSelected ? ' (sélectionnée)' : ''}`}
+              aria-label={`Couleur ${c}${isSelected ? ' (sélectionnée)' : ''}`}
               role="menuitem"
               style={{
                 minWidth: 48, minHeight: 48, borderRadius: '50%',

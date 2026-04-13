@@ -4192,9 +4192,9 @@ test.describe('Visual audit — full flow', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await navigateAndReady(page);
 
-    // 5 essential tools + "Tout" + Déplacer should be in the bottom bar
+    // 3 essential tools + "Tout" + Déplacer in bottom bar (réponse/inconnue moved to drawer)
     const mobileToolbar = page.locator('[data-testid="mobile-toolbar"]');
-    for (const tool of ['jeton', 'barre', 'calcul', 'reponse', 'inconnue', 'deplacer']) {
+    for (const tool of ['jeton', 'barre', 'calcul', 'deplacer']) {
       const btn = mobileToolbar.locator(`[data-testid="tool-${tool}"]`);
       await expect(btn).toBeVisible({ timeout: 1000 });
     }
