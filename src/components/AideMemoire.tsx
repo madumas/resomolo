@@ -1,18 +1,24 @@
 import { useRef, useState } from 'react';
 import { UI_PRIMARY, UI_BG, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
 import { useModalBehavior } from '../hooks/useModalBehavior';
+import { JetonIcon, BarreIcon, SchemaIcon, DroiteNumeriqueIcon, ArbreIcon, BoiteIcon, DiagrammeBandesIcon } from './ToolIcons';
+import type { ToolbarMode } from '../model/types';
 
 interface AideMemoireProps {
   cycle: 1 | 2 | 3;
+  toolbarMode: ToolbarMode;
   onClose: () => void;
 }
 
 interface AideMemoireEntry {
   question: string;
   piece: string;
+  Icon: React.ComponentType;
   example: string;
   color: string;
   cycles: (1 | 2 | 3)[];
+  /** Available in essentiel mode? (false = complet only) */
+  essentiel: boolean;
   /** If set, clicking this entry opens the schema sub-level */
   opensSchemaLevel?: boolean;
 }
@@ -23,52 +29,66 @@ const PIECE_ENTRIES: AideMemoireEntry[] = [
   {
     question: 'Tu veux montrer des objets un par un\u00a0?',
     piece: 'Jeton',
+    Icon: JetonIcon,
     example: '8 billes bleues et 5 billes rouges',
     color: '#E8F0FE',
     cycles: [1, 2, 3],
+    essentiel: true,
   },
   {
     question: 'Tu veux regrouper des objets ensemble\u00a0?',
     piece: 'Boîte',
+    Icon: BoiteIcon,
     example: '3 sacs de 6 bonbons',
     color: '#FEF9E7',
     cycles: [1, 2, 3],
+    essentiel: true,
   },
   {
     question: 'Tu veux comparer des longueurs ou des quantités\u00a0?',
     piece: 'Barre',
+    Icon: BarreIcon,
     example: 'Théo a lu 15 pages, Camille a lu 45 pages',
     color: '#FEEADD',
     cycles: [1, 2, 3],
+    essentiel: true,
   },
   {
     question: 'Tu veux compter par bonds ou par sauts\u00a0?',
     piece: 'Droite numérique',
+    Icon: DroiteNumeriqueIcon,
     example: '23 + 8, en faisant des sauts de 1',
     color: '#E0F5E0',
     cycles: [1, 2, 3],
+    essentiel: true,
   },
   {
     question: 'Tu veux montrer une relation entre des quantités\u00a0?',
     piece: 'Schéma',
+    Icon: SchemaIcon,
     example: '12 pommes + 8 pommes = ? pommes en tout',
     color: '#F0E6FF',
     cycles: [1, 2, 3],
+    essentiel: true,
     opensSchemaLevel: true,
   },
   {
     question: 'Tu veux trouver toutes les combinaisons\u00a0?',
     piece: 'Arbre',
+    Icon: ArbreIcon,
     example: '3 entrées × 2 desserts = ? repas possibles',
     color: '#FFF0F0',
     cycles: [3],
+    essentiel: false,  // mode Complet seulement
   },
   {
     question: 'Tu organises des données\u00a0?',
     piece: 'Diagramme à bandes ou tableau',
+    Icon: DiagrammeBandesIcon,
     example: 'Fruits préférés de la classe',
     color: '#E0F0FF',
     cycles: [2, 3],
+    essentiel: true,
   },
 ];
 
@@ -127,12 +147,13 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
   },
 ];
 
-export function AideMemoire({ cycle, onClose }: AideMemoireProps) {
+export function AideMemoire({ cycle, toolbarMode, onClose }: AideMemoireProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalBehavior(dialogRef, onClose);
   const [level, setLevel] = useState<1 | 2>(1);
+  const isComplet = toolbarMode === 'complet';
 
-  const filteredPieces = PIECE_ENTRIES.filter(e => e.cycles.includes(cycle));
+  const filteredPieces = PIECE_ENTRIES.filter(e => e.cycles.includes(cycle) && (isComplet || e.essentiel));
   const filteredSchemas = SCHEMA_ENTRIES.filter(e => e.cycles.includes(cycle));
 
   return (
@@ -204,7 +225,8 @@ export function AideMemoire({ cycle, onClose }: AideMemoireProps) {
                 <div style={{ fontSize: 13, fontWeight: 600, color: UI_TEXT_PRIMARY, marginBottom: 4 }}>
                   {entry.question}
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: UI_PRIMARY, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: UI_PRIMARY, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ display: 'inline-flex', flexShrink: 0 }}><entry.Icon /></span>
                   &rarr; {entry.piece}
                   {entry.opensSchemaLevel && (
                     <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY, fontWeight: 400 }}>(voir les types &rarr;)</span>

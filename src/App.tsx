@@ -941,6 +941,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       {showAideMemoire && (
         <AideMemoire
           cycle={loadedProblemCycle}
+          toolbarMode={settings.toolbarMode}
           onClose={() => setShowAideMemoire(false)}
         />
       )}
