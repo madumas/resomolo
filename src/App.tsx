@@ -50,6 +50,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const { isMobilePortrait } = useViewport();
   const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
   const [showAideMemoire, setShowAideMemoire] = useState(false);
+  const [loadedProblemCycle, setLoadedProblemCycle] = useState<1 | 2 | 3>(2);
   const [activeTool, setActiveTool] = useState<ToolType>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [editingPieceId, setEditingPieceId] = useState<string | null>(null);
@@ -571,6 +572,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       slotManager.ensureSlot();
     }
     dispatch({ type: 'SET_PROBLEM_AND_CLEAR', text: preset.text, readOnly: preset.text.length > 0 });
+    setLoadedProblemCycle(preset.cycle);
     setShowProblemSelector(false);
     setProblemZoneActive(true);
     setSelectedPieceId(null);
@@ -838,7 +840,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           onSelectBond={setSelectedBondInfo}
           toolbarMode={settings.toolbarMode}
           dominantHand={settings.dominantHand}
-          highlightColors={problemeHighlights.length > 0 ? new Set(problemeHighlights.map(h => h.color === 'bleu' ? 'bleu' : h.color === 'vert' ? 'vert' : '').filter(Boolean)) : undefined}
+          highlightColors={problemeHighlights.length > 0 ? new Set(problemeHighlights.map(h =>
+            // Map HighlightColor → CouleurPiece: bleu→bleu, vert→vert, orange→rouge, gris→(skip)
+            h.color === 'bleu' ? 'bleu' : h.color === 'vert' ? 'vert' : h.color === 'orange' ? 'rouge' : ''
+          ).filter(Boolean)) : undefined}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} onViewExample={handleViewExample} />}
         {showExampleSelector && <ExampleSelector onSelect={(ex) => { setShowExampleSelector(false); handleViewExample(ex); }} onClose={() => setShowExampleSelector(false)} />}
@@ -935,7 +940,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       {/* Aide-mémoire SBI */}
       {showAideMemoire && (
         <AideMemoire
-          cycle={current.probleme ? (PROBLEM_PRESETS.find(p => p.text === current.probleme)?.cycle ?? 2) : 2}
+          cycle={loadedProblemCycle}
           onClose={() => setShowAideMemoire(false)}
         />
       )}

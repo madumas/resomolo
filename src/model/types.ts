@@ -380,8 +380,12 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     fatigueUndoThreshold: 3,
     fatigueWindowMs: 30000,
   },
+  // TDC + difficultés math : toolbar essentielle, zones suggérées, lecture guidée
+  // Se distingue de motricite-importante par : toolbarMode essentiel (moins de choix),
+  // showSuggestedZones (guidage spatial), guidedReadingEnabled (phrase par phrase)
   'motricite-math': {
     toleranceProfile: 'tres-large',
+    toolbarMode: 'essentiel',
     cursorSmoothing: true,
     smoothingAlpha: 0.20,
     relanceDelayMs: 30000,
@@ -389,6 +393,7 @@ export const SETTINGS_PROFILES: Record<Exclude<SettingsProfile, 'custom'>, Parti
     textScale: 1.25,
     problemAlwaysVisible: true,
     showSuggestedZones: true,
+    guidedReadingEnabled: true,
     fatigueClickThreshold: 10,
     fatigueUndoThreshold: 2,
     fatigueWindowMs: 20000,

@@ -49,16 +49,17 @@ export function OnboardingOverlay({ onDone }: OnboardingOverlayProps) {
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
-  // Find and measure target element
+  // Find and measure target element — recalculate on resize/rotation
   useEffect(() => {
     const s = STEPS[step];
     if (!s) return;
-    const el = document.querySelector(s.target);
-    if (el) {
-      setTargetRect(el.getBoundingClientRect());
-    } else {
-      setTargetRect(null);
-    }
+    const measure = () => {
+      const el = document.querySelector(s.target);
+      setTargetRect(el ? el.getBoundingClientRect() : null);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, [step]);
 
   // Dismiss on any click/tap outside tooltip
