@@ -1587,9 +1587,9 @@ export function Canvas({
                 return (
                   <circle
                     cx={center.x} cy={center.y}
-                    r={12}
+                    r={8}
                     fill={getPieceColor((piece as any).couleur)}
-                    opacity={0.2}
+                    opacity={0.15}
                     style={{ pointerEvents: 'none' }}
                   />
                 );
