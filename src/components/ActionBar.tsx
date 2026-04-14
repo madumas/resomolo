@@ -3,7 +3,7 @@ import { canUndo, canRedo } from '../model/undo';
 import type { UndoManager, DominantHand, SettingsProfile } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_PRIMARY, UI_DESTRUCTIVE, UI_TEXT_SECONDARY, UI_SURFACE, UI_DISABLED_BG } from '../config/theme';
-import { UndoIcon, RedoIcon, FocusIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
+import { UndoIcon, RedoIcon, FocusIcon, SettingsIcon, CameraIcon } from './ToolIcons';
 import { AboutDialog } from './AboutDialog';
 import { useViewport } from '../hooks/useViewport';
 
@@ -358,7 +358,7 @@ function HelpMenu({ onShowGuide, onStartTutorial, onShowExamples, onShowAideMemo
             justifyContent: 'center',
           }}
         >
-          <HelpIcon />
+          <span style={{ fontSize: 18, fontWeight: 700 }}>?</span>
         </button>
         {open && (
           <div

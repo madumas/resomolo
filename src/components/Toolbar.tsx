@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { ToolType, ToolbarMode } from '../model/types';
-import { MIN_BUTTON_GAP_PX } from '../config/accessibility';
-import { UI_BG, UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY } from '../config/theme';
+import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
+import { UI_BG, UI_BORDER, UI_SURFACE, UI_PRIMARY, UI_TEXT_PRIMARY, TOOLBAR_HEIGHT } from '../config/theme';
 import { ModeSelector } from './ModeSelector';
 import { Logo } from './Logo';
 import { AboutDialog } from './AboutDialog';
@@ -88,6 +89,40 @@ for (const g of TOOL_GROUPS) for (const t of g.tools) TOOL_GROUP_ID[t.type] = g.
 // Inline tools (always directly visible in toolbar, not behind a popover)
 const INLINE_TYPES: Set<string> = new Set(TOOL_GROUPS.flatMap(g => g.inlineTools));
 
+// ── Shared button styles (aligned with GéoMolo) ──────────────────
+const toolBtnBase: React.CSSProperties = {
+  minWidth: MIN_BUTTON_SIZE_PX,
+  height: 58,
+  padding: '4px 8px',
+  border: 'none',
+  borderRadius: 6,
+  cursor: 'pointer',
+  fontWeight: 500,
+  background: 'transparent',
+  color: UI_TEXT_PRIMARY,
+  fontSize: 11,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 2,
+};
+
+const activeStyle: React.CSSProperties = {
+  boxShadow: `inset 0 0 0 2px ${UI_PRIMARY}`,
+  background: '#EDE0FA',
+};
+
+const separatorStyle: React.CSSProperties = {
+  width: 2,
+  height: 28,
+  background: UI_BORDER,
+  margin: '0 6px',
+  flexShrink: 0,
+  borderRadius: 1,
+  opacity: 0.6,
+};
+
 export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, onNewProblem, dimmed, availablePieces }: ToolbarProps) {
   const [showAbout, setShowAbout] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -162,37 +197,31 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
     <>
     {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     <div ref={toolbarRef} data-testid="toolbar" role="toolbar" aria-label="Outils de modélisation" style={{
+      height: TOOLBAR_HEIGHT + 1,
       display: 'flex',
-      padding: '0 8px',
+      alignItems: 'center',
       background: UI_SURFACE,
       borderBottom: `1px solid ${UI_BORDER}`,
-      flexShrink: 0,
-      alignItems: 'center',
-      height: 64,
       fontSize: 13,
     }}>
-      {/* Zone gauche : logo + inline tools + category buttons */}
+      {/* Zone scrollable : logo + inline tools + category buttons */}
       <div ref={toolbarScrollRef} style={{
         display: 'flex',
-        padding: '0 8px',
-        gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flex: 1,
         overflowX: 'auto',
-        overflowY: 'hidden',
-        height: '100%',
-        scrollbarWidth: 'none',       // Firefox
-        msOverflowStyle: 'none',      // IE/Edge
+        padding: '0 8px',
+        gap: MIN_BUTTON_GAP_PX,
       }}>
         <button
           onClick={() => setShowAbout(true)}
           aria-label="À propos de RésoMolo"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center' }}
         >
           <img src="/favicon.svg" alt="" width={28} height={28} style={{ marginRight: 4 }} />
           <Logo height={32} />
         </button>
-        <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
+        <div style={separatorStyle} />
 
         {/* Inline tools with inter-group spacing */}
         {inlineTools.map((tool, i, arr) => {
@@ -200,23 +229,24 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           const isGroupStart = i > 0 && prevType !== null &&
             TOOL_GROUP_ID[tool.type] !== TOOL_GROUP_ID[prevType];
           return (
-            <ToolButton
-              key={tool.type}
-              tool={tool}
-              active={activeTool === tool.type}
-              dimmed={!!dimmed && activeTool !== tool.type}
-              onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
-              extraStyle={isGroupStart ? { marginLeft: 16 } : undefined}
-            />
+            <React.Fragment key={tool.type}>
+              {isGroupStart && <div style={separatorStyle} />}
+              <ToolButton
+                tool={tool}
+                active={activeTool === tool.type}
+                dimmed={!!dimmed && activeTool !== tool.type}
+                onClick={() => onSelectTool(activeTool === tool.type ? null : tool.type)}
+              />
+            </React.Fragment>
           );
         })}
 
         {/* Separator between inline tools and category buttons */}
         {groupsWithPopover.length > 0 && (
-          <div style={{ width: 1, height: 40, background: UI_BORDER, margin: '0 4px', flexShrink: 0 }} />
+          <div style={separatorStyle} />
         )}
 
-        {/* Category buttons with popovers */}
+        {/* Category buttons with popovers (popover rendered via portal to escape overflow clipping) */}
         {groupsWithPopover.map(group => {
           const popoverTools = group.tools.filter(t => !INLINE_TYPES.has(t.type));
           const hasActiveTool = group.tools.some(t => t.type === activeTool);
@@ -224,23 +254,17 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           const isOpen = openGroup === group.id;
 
           return (
-            <div key={group.id} style={{ position: 'relative', flexShrink: 0 }}>
-              <ToolGroupButton
-                group={group}
-                activeToolInGroup={activeToolInGroup}
-                isOpen={isOpen}
-                dimmed={!!dimmed}
-                onClick={() => setOpenGroup(isOpen ? null : group.id)}
-              />
-              {isOpen && (
-                <ToolGroupPopover
-                  group={group}
-                  tools={popoverTools}
-                  activeTool={activeTool}
-                  onSelectTool={(t) => handleSelectTool(activeTool === t ? null : t)}
-                />
-              )}
-            </div>
+            <CategoryButtonWithPopover
+              key={group.id}
+              group={group}
+              popoverTools={popoverTools}
+              activeToolInGroup={activeToolInGroup}
+              isOpen={isOpen}
+              dimmed={!!dimmed}
+              activeTool={activeTool}
+              onToggle={() => setOpenGroup(isOpen ? null : group.id)}
+              onSelectTool={(t) => handleSelectTool(activeTool === t ? null : t)}
+            />
           );
         })}
 
@@ -250,22 +274,11 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
             onClick={() => onModeChange('complet')}
             aria-label="Plus d'outils"
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              padding: '4px 8px',
+              ...toolBtnBase,
               background: UI_BG,
               border: `1.5px dashed ${UI_PRIMARY}`,
               borderRadius: 8,
-              fontSize: 11,
-              fontWeight: 500,
               color: UI_PRIMARY,
-              minWidth: 44,
-              height: 56,
-              cursor: 'pointer',
-              flexShrink: 0,
             }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -298,15 +311,13 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         </button>
       )}
 
-      {/* Zone droite : Déplacer (ancré) + ModeSelector + Problèmes */}
+      {/* Zone fixe droite — Déplacer + ModeSelector + Problèmes (pas clippée par overflow) */}
       <div style={{
         display: 'flex',
-        padding: '0 8px',
-        gap: MIN_BUTTON_GAP_PX,
         alignItems: 'center',
         flexShrink: 0,
-        marginLeft: MIN_BUTTON_GAP_PX,
-        height: '100%',
+        padding: '0 8px',
+        gap: MIN_BUTTON_GAP_PX,
       }}>
         <ToolButton
           tool={{ type: 'deplacer', label: 'Déplacer', Icon: DeplacerIcon }}
@@ -314,7 +325,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
           dimmed={!!dimmed && activeTool !== 'deplacer'}
           onClick={() => onSelectTool(activeTool === 'deplacer' ? null : 'deplacer')}
         />
-        <div style={{ width: 1, height: 40, background: UI_BORDER, flexShrink: 0 }} />
+        <div style={separatorStyle} />
         <ModeSelector mode={toolbarMode} onChange={onModeChange} />
         <button
           onClick={onNewProblem}
@@ -362,10 +373,11 @@ function ToolGroupButton({ group, activeToolInGroup, isOpen, dimmed, onClick }: 
         gap: 2,
         padding: '4px 6px',
         background: hasActive ? '#EDE0FA' : group.color,
-        border: hasActive ? `2px solid ${UI_PRIMARY}` : isOpen ? `1.5px solid ${UI_PRIMARY}` : `1px solid ${UI_BORDER}`,
+        border: 'none',
+        boxShadow: hasActive ? `inset 0 0 0 2px ${UI_PRIMARY}` : isOpen ? `inset 0 0 0 1.5px ${UI_PRIMARY}` : `inset 0 0 0 1px ${UI_BORDER}`,
         borderRadius: 8,
         minWidth: 64,
-        height: 56,
+        height: 58,
         cursor: 'pointer',
         flexShrink: 0,
         opacity: dimmed && !hasActive ? 0.5 : 1,
@@ -401,77 +413,103 @@ function ToolGroupButton({ group, activeToolInGroup, isOpen, dimmed, onClick }: 
   );
 }
 
-// === Popover showing tools within a category ===
+// === Category button + portal popover (escapes overflow clipping) ===
 
-function ToolGroupPopover({ group, tools, activeTool, onSelectTool }: {
+function CategoryButtonWithPopover({ group, popoverTools, activeToolInGroup, isOpen, dimmed, activeTool, onToggle, onSelectTool }: {
   group: ToolGroup;
-  tools: ToolDef[];
+  popoverTools: ToolDef[];
+  activeToolInGroup: ToolDef | null | undefined;
+  isOpen: boolean;
+  dimmed: boolean;
   activeTool: ToolType;
+  onToggle: () => void;
   onSelectTool: (tool: NonNullable<ToolType>) => void;
 }) {
+  const btnRef = useRef<HTMLDivElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (isOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPopoverPos({ top: rect.bottom, left: rect.left });
+    } else {
+      setPopoverPos(null);
+    }
+  }, [isOpen]);
+
   return (
-    <div
-      role="menu"
-      style={{
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        marginTop: 0,
-        background: UI_SURFACE,
-        border: `1px solid ${UI_BORDER}`,
-        borderRadius: 10,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-        zIndex: 50,
-        padding: 6,
-        display: 'grid',
-        gridTemplateColumns: `repeat(${Math.min(tools.length, 3)}, auto)`,
-        gap: 4,
-        animation: 'popover-slide-down 150ms ease-out',
-      }}
-    >
-      {tools.map(tool => (
-        <button
-          key={tool.type}
-          role="menuitem"
-          data-testid={`tool-${tool.type}`}
-          aria-label={tool.label}
-          aria-pressed={activeTool === tool.type}
-          onClick={() => onSelectTool(tool.type)}
+    <div ref={btnRef} style={{ flexShrink: 0 }}>
+      <ToolGroupButton
+        group={group}
+        activeToolInGroup={activeToolInGroup}
+        isOpen={isOpen}
+        dimmed={dimmed}
+        onClick={onToggle}
+      />
+      {isOpen && popoverPos && createPortal(
+        <div
+          role="menu"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            padding: '6px 10px',
-            background: activeTool === tool.type ? '#EDE0FA' : group.color + '80',
-            border: activeTool === tool.type ? `2px solid ${UI_PRIMARY}` : `1px solid ${UI_BORDER}`,
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 500,
-            color: activeTool === tool.type ? UI_PRIMARY : UI_TEXT_PRIMARY,
-            minWidth: 64,
-            minHeight: 64,
-            cursor: 'pointer',
-            flexShrink: 0,
+            position: 'fixed',
+            top: popoverPos.top,
+            left: popoverPos.left,
+            background: UI_SURFACE,
+            border: `1px solid ${UI_BORDER}`,
+            borderRadius: 10,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            zIndex: 1000,
+            padding: 6,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${Math.min(popoverTools.length, 3)}, auto)`,
+            gap: 4,
+            animation: 'popover-slide-down 150ms ease-out',
           }}
         >
-          <tool.Icon />
-          <span>{tool.label}</span>
-        </button>
-      ))}
+          {popoverTools.map(tool => (
+            <button
+              key={tool.type}
+              role="menuitem"
+              data-testid={`tool-${tool.type}`}
+              aria-label={tool.label}
+              aria-pressed={activeTool === tool.type}
+              onClick={() => onSelectTool(tool.type)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                padding: '6px 10px',
+                background: activeTool === tool.type ? '#EDE0FA' : group.color + '80',
+                border: activeTool === tool.type ? `2px solid ${UI_PRIMARY}` : `1px solid ${UI_BORDER}`,
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                color: activeTool === tool.type ? UI_PRIMARY : UI_TEXT_PRIMARY,
+                minWidth: 64,
+                minHeight: 64,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <tool.Icon />
+              <span>{tool.label}</span>
+            </button>
+          ))}
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
 
 // === Individual tool button ===
 
-function ToolButton({ tool, active, dimmed, onClick, extraStyle }: {
+function ToolButton({ tool, active, dimmed, onClick }: {
   tool: ToolDef;
   active: boolean;
   dimmed: boolean;
   onClick: () => void;
-  extraStyle?: React.CSSProperties;
 }) {
   return (
     <button
@@ -480,29 +518,14 @@ function ToolButton({ tool, active, dimmed, onClick, extraStyle }: {
       aria-pressed={active}
       onClick={onClick}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 2,
-        padding: '4px 8px',
-        background: active ? '#EDE0FA' : 'transparent',
-        border: active ? `2px solid ${UI_PRIMARY}` : '1px solid transparent',
-        borderRadius: 6,
-        fontSize: 11,
-        fontWeight: 500,
-        color: active ? UI_PRIMARY : UI_TEXT_PRIMARY,
-        minWidth: 44,
-        height: 56,
+        ...toolBtnBase,
+        ...(active ? activeStyle : {}),
         opacity: dimmed ? 0.5 : 1,
         transition: 'opacity 0.3s',
-        cursor: 'pointer',
-        flexShrink: 0,
-        ...extraStyle,
       }}
     >
       <tool.Icon />
-      <span>{tool.label}</span>
+      <span className="tool-label">{tool.label}</span>
     </button>
   );
 }
