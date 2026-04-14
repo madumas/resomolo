@@ -62,6 +62,7 @@ export function ActionBar({
       borderTop: `1px solid ${UI_BORDER}`,
       flexShrink: 0,
       alignItems: 'center',
+      fontSize: 13,
       marginBottom: isMobilePortrait ? 64 : 0,
     }}>
       {/* Undo */}
@@ -132,29 +133,14 @@ export function ActionBar({
         </span>
       )}
 
-      {/* Mes travaux — zone droite comme GéoMolo */}
-      <button
+      {/* Mes travaux — même style ActionBtn que GéoMolo */}
+      <ActionBtn
         onClick={onShowSlotManager}
         title="Mes travaux"
         aria-label="Mes travaux"
-        style={{
-          background: 'none',
-          border: `1px solid ${UI_PRIMARY}`,
-          borderRadius: 6,
-          minHeight: MIN_BUTTON_SIZE_PX,
-          padding: '4px 10px',
-          color: UI_PRIMARY,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 11,
-          fontWeight: 600,
-          whiteSpace: 'nowrap',
-        }}
       >
         <FolderIcon /> Mes travaux
-      </button>
+      </ActionBtn>
 
       {/* Partager */}
       <ShareMenu
@@ -162,6 +148,8 @@ export function ActionBar({
         onExportPdf={onExportPdf}
         onShareLink={onShareLink}
       />
+
+      <Separator />
 
       {/* Settings — dot indicator when a non-custom profile is active */}
       <button
@@ -495,7 +483,7 @@ function ActionBtn({ children, onClick, disabled, active, destructive, title, 'a
         alignItems: 'center',
         gap: 4,
         padding: '4px 10px',
-        fontSize: 12,
+        fontSize: 'inherit',
         borderRadius: 6,
         background: isDestructiveActive ? UI_DESTRUCTIVE : UI_SURFACE,
         border: `2px solid ${isDestructiveActive ? UI_DESTRUCTIVE : disabled ? UI_DISABLED_BG : UI_BORDER}`,
