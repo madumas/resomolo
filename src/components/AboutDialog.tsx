@@ -51,6 +51,9 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
         role="dialog"
         aria-modal="true"
       >
+        <div style={{ marginBottom: 12 }}>
+          <img src="/favicon.svg" alt="" width={64} height={64} style={{ display: 'block', margin: '0 auto' }} />
+        </div>
         <Logo height={40} brand="reso" />
         <div style={{ height: 8 }} />
         <div style={{ fontSize: 12, color: UI_TEXT_SECONDARY, marginBottom: 16 }}>
