@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ToolType, ToolbarMode } from '../model/types';
 import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
