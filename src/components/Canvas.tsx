@@ -75,6 +75,7 @@ interface CanvasProps {
   startMoveId?: string | null;   // one-shot move triggered from context actions
   onMoveDone?: () => void;       // called after put-down in one-shot move
   onMoveOneShot?: (id: string) => void; // context action: start one-shot move
+  canvasWidthMm?: number;        // responsive viewBox width (mobile vs desktop)
 }
 
 type InteractionMode =
@@ -166,7 +167,9 @@ export function Canvas({
   startMoveId,
   onMoveDone,
   onMoveOneShot,
+  canvasWidthMm: _canvasWidthMm,
 }: CanvasProps) {
+  const canvasWidthMm = _canvasWidthMm ?? CANVAS_WIDTH_MM;
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const lastClickTime = useRef(0);
@@ -282,7 +285,7 @@ export function Canvas({
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const { width: containerWidth, height: containerHeight } = useContainerSize(containerRef);
-  const viewBoxHeight = calculateViewBoxHeight(CANVAS_WIDTH_MM, containerWidth, containerHeight);
+  const viewBoxHeight = calculateViewBoxHeight(canvasWidthMm, containerWidth, containerHeight);
   const tol = useMemo(() => getTolerances(_toleranceProfile), [_toleranceProfile]);
   const tolMultiplier = getToleranceMultiplier(_toleranceProfile);
   const reducedMotion = useReducedMotion();
@@ -302,12 +305,12 @@ export function Canvas({
     onMovePiece: (id: string, dx: number, dy: number) => {
       const p = pieces.find(pc => pc.id === id);
       if (p) {
-        const newX = Math.max(0, Math.min(CANVAS_WIDTH_MM, p.x + dx));
+        const newX = Math.max(0, Math.min(canvasWidthMm, p.x + dx));
         const newY = Math.max(0, p.y + dy);
         dispatch({ type: 'MOVE_PIECE', id, x: newX, y: newY });
       }
     },
-  }), [onSelectPiece, dispatch, pieces]);
+  }), [onSelectPiece, dispatch, pieces, canvasWidthMm]);
   const { focusedId, onPieceFocus, onKeyDown: rovingOnKeyDown } = useRovingTabindex(pieceIds, selectedPieceId, rovingCallbacks);
 
   // Clear ghost states when tool or selection changes
@@ -1297,7 +1300,7 @@ export function Canvas({
     const colorOrder: CouleurPiece[] = ['bleu', 'rouge', 'vert', 'jaune'];
     const sourceColorIdx = colorOrder.indexOf(source.couleur);
     const gap = 10; // mm
-    const maxX = CANVAS_WIDTH_MM - 15;
+    const maxX = canvasWidthMm - 15;
 
     const newBoiteId = generateId();
 
@@ -1426,7 +1429,7 @@ export function Canvas({
   useEffect(() => () => { if (arrangeRafRef.current) cancelAnimationFrame(arrangeRafRef.current); }, []);
   const handleArrange = useCallback(() => {
     if (isArranging) return;
-    const moves = computeArrangement(pieces, referenceUnitMm, viewBoxHeight);
+    const moves = computeArrangement(pieces, referenceUnitMm, viewBoxHeight, canvasWidthMm - 30);
     if (moves.length === 0) return;
 
     setIsArranging(true);
@@ -1477,7 +1480,7 @@ export function Canvas({
     }
 
     arrangeRafRef.current = requestAnimationFrame(animate);
-  }, [pieces, referenceUnitMm, isArranging, dispatch, reducedMotion]);
+  }, [pieces, referenceUnitMm, isArranging, dispatch, reducedMotion, viewBoxHeight, canvasWidthMm]);
 
   return (
     <div
@@ -1500,7 +1503,7 @@ export function Canvas({
         tabIndex={0}
         aria-label={`Canevas de modélisation — ${pieces.length} pièce${pieces.length !== 1 ? 's' : ''}`}
         aria-roledescription="Espace de travail interactif"
-        viewBox={`0 0 ${CANVAS_WIDTH_MM} ${viewBoxHeight}`}
+        viewBox={`0 0 ${canvasWidthMm} ${viewBoxHeight}`}
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none', outline: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -1527,12 +1530,12 @@ export function Canvas({
 
         {/* Canvas background — subtle border and area indicator */}
         <rect
-          x={0} y={0} width={CANVAS_WIDTH_MM} height={viewBoxHeight}
+          x={0} y={0} width={canvasWidthMm} height={viewBoxHeight}
           fill="none" stroke="#E8E5F0" strokeWidth={0.5} rx={0}
           pointerEvents="none"
         />
         <rect
-          x={2} y={2} width={CANVAS_WIDTH_MM - 4} height={viewBoxHeight - 4}
+          x={2} y={2} width={canvasWidthMm - 4} height={viewBoxHeight - 4}
           fill="none" stroke="#F2F0F8" strokeWidth={0.3} rx={2}
           pointerEvents="none"
         />
@@ -1548,13 +1551,13 @@ export function Canvas({
             {/* Top zone */}
             <rect
               x={15} y={viewBoxHeight * 0.08}
-              width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.48}
+              width={canvasWidthMm - 30} height={viewBoxHeight * 0.48}
               fill="#F2F0F8"
               stroke="#B0BEC5" strokeWidth={1} strokeDasharray="6 4"
               rx={4}
             />
             <text
-              x={CANVAS_WIDTH_MM / 2} y={viewBoxHeight * 0.08 + viewBoxHeight * 0.24}
+              x={canvasWidthMm / 2} y={viewBoxHeight * 0.08 + viewBoxHeight * 0.24}
               textAnchor="middle" dominantBaseline="central"
               fontSize={10} fill="#90A4AE" fontWeight={500}
             >
@@ -1563,13 +1566,13 @@ export function Canvas({
             {/* Bottom zone */}
             <rect
               x={15} y={viewBoxHeight * 0.62}
-              width={CANVAS_WIDTH_MM - 30} height={viewBoxHeight * 0.30}
+              width={canvasWidthMm - 30} height={viewBoxHeight * 0.30}
               fill="#F2F0F8"
               stroke="#B0BEC5" strokeWidth={1} strokeDasharray="6 4"
               rx={4}
             />
             <text
-              x={CANVAS_WIDTH_MM / 2} y={viewBoxHeight * 0.62 + viewBoxHeight * 0.15}
+              x={canvasWidthMm / 2} y={viewBoxHeight * 0.62 + viewBoxHeight * 0.15}
               textAnchor="middle" dominantBaseline="central"
               fontSize={10} fill="#90A4AE" fontWeight={500}
             >

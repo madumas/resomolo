@@ -218,6 +218,7 @@ export interface UndoManager {
 
 export const REFERENCE_UNIT_MM = 60;
 export const CANVAS_WIDTH_MM = 500;
+export const MOBILE_CANVAS_WIDTH_MM = 280;
 export const SNAP_GRID_MM = 5;
 export const BAR_HEIGHT_MM = 15;
 export const BAR_VERTICAL_GAP_MM = 5;

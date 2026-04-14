@@ -1,6 +1,14 @@
 import { type Page, expect } from '@playwright/test';
 
-const CANVAS_WIDTH_MM = 500;
+/**
+ * Read the actual viewBox width from the SVG element (handles responsive canvas).
+ */
+async function getViewBoxWidth(page: Page): Promise<number> {
+  const vb = await page.locator('[data-testid="canvas-svg"]').getAttribute('viewBox');
+  if (!vb) return 500; // fallback
+  const parts = vb.split(/\s+/);
+  return parseFloat(parts[2]) || 500;
+}
 
 /**
  * Get the px-per-mm ratio from the SVG viewBox and DOM size.
@@ -9,7 +17,8 @@ export async function getPxPerMm(page: Page): Promise<number> {
   const svg = page.locator('[data-testid="canvas-svg"]');
   const box = await svg.boundingBox();
   if (!box) throw new Error('SVG bounding box not found');
-  return box.width / CANVAS_WIDTH_MM;
+  const viewBoxWidth = await getViewBoxWidth(page);
+  return box.width / viewBoxWidth;
 }
 
 /**
@@ -21,7 +30,8 @@ export async function clickCanvas(page: Page, xMm: number, yMm: number): Promise
   const box = await svg.boundingBox();
   if (!box) throw new Error('SVG bounding box not found');
 
-  const pxPerMm = box.width / CANVAS_WIDTH_MM;
+  const viewBoxWidth = await getViewBoxWidth(page);
+  const pxPerMm = box.width / viewBoxWidth;
   const localX = xMm * pxPerMm;
   const localY = yMm * pxPerMm;
 

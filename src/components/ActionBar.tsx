@@ -5,6 +5,7 @@ import { MIN_BUTTON_SIZE_PX, MIN_BUTTON_GAP_PX } from '../config/accessibility';
 import { UI_BG, UI_BORDER, UI_PRIMARY, UI_DESTRUCTIVE, UI_TEXT_SECONDARY, UI_SURFACE, UI_DISABLED_BG } from '../config/theme';
 import { UndoIcon, RedoIcon, FocusIcon, SettingsIcon, HelpIcon, CameraIcon } from './ToolIcons';
 import { AboutDialog } from './AboutDialog';
+import { useViewport } from '../hooks/useViewport';
 
 interface ActionBarProps {
   undoManager: UndoManager;
@@ -50,6 +51,7 @@ export function ActionBar({
   showSaveIndicator,
 }: ActionBarProps) {
   // showMore removed — fullscreen is now a standalone toggle
+  const { isMobilePortrait } = useViewport();
   return (
     <div data-testid="action-bar" style={{
       display: 'flex',
@@ -60,6 +62,7 @@ export function ActionBar({
       borderTop: `1px solid ${UI_BORDER}`,
       flexShrink: 0,
       alignItems: 'center',
+      marginBottom: isMobilePortrait ? 64 : 0,
     }}>
       {/* Undo */}
       <ActionBtn

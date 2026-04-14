@@ -7,6 +7,7 @@ import { exportModelisationAsPdf } from './engine/pdf-export';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useSlotManager } from './hooks/useSlotManager';
 import type { UndoManager, ToolType, Highlight, Settings, DroiteNumerique } from './model/types';
+import { CANVAS_WIDTH_MM, MOBILE_CANVAS_WIDTH_MM } from './model/types';
 import type { SlotRegistry } from './model/slots';
 import { canUndo, canRedo, undo, redo } from './model/undo';
 import { useTutorial } from './hooks/useTutorial';
@@ -828,6 +829,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           pieces={workedExample.isExampleMode ? workedExample.visiblePieces : pieces}
           hideLockBadge={workedExample.isExampleMode}
           referenceUnitMm={current.referenceUnitMm}
+          canvasWidthMm={isMobilePortrait ? MOBILE_CANVAS_WIDTH_MM : CANVAS_WIDTH_MM}
           activeTool={activeTool}
           selectedPieceId={selectedPieceId}
           editingPieceId={editingPieceId}

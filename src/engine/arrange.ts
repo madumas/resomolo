@@ -6,7 +6,7 @@ const V_GAP = 15; // mm vertical gap between groups
 const H_GAP = 10; // mm horizontal gap between pieces in a row
 const MARGIN = 15; // mm from canvas edge
 const MARGIN_BOTTOM = 30; // mm from canvas bottom (room for Ranger button)
-const CANVAS_MAX_X = 470; // mm (CANVAS_WIDTH_MM - 2*margin)
+const DEFAULT_CANVAS_MAX_X = 470; // mm (CANVAS_WIDTH_MM - 2*margin)
 
 export interface ArrangementMove {
   id: string;
@@ -24,7 +24,7 @@ const LAYOUT_ORDER = ['barre', 'schema', 'droiteNumerique', 'arbre', 'boite', 'j
  * - Free jetons are sub-grouped by color.
  * - Flèches are skipped (they follow their attached pieces).
  */
-export function computeArrangement(pieces: Piece[], referenceUnitMm: number, maxHeight = 350): ArrangementMove[] {
+export function computeArrangement(pieces: Piece[], referenceUnitMm: number, maxHeight = 350, canvasMaxX = DEFAULT_CANVAS_MAX_X): ArrangementMove[] {
   // Identify jetons parented to a boîte — they move with the boîte
   const parentedJetonIds = new Set(
     pieces.filter(p => p.type === 'jeton' && (p as any).parentId).map(p => p.id)
@@ -66,7 +66,7 @@ export function computeArrangement(pieces: Piece[], referenceUnitMm: number, max
   // Try layout with decreasing vertical gaps until it fits
   const pieceMap = new Map(movable.map(p => [p.id, p]));
   for (const vGap of [V_GAP, 8, 4, 2]) {
-    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected);
+    const moves = layoutWithGap(groups, referenceUnitMm, vGap, flecheConnected, canvasMaxX);
     // maxBottom = lowest piece bottom edge (y + height)
     const maxBottom = moves.reduce((m, mv) => {
       const p = pieceMap.get(mv.id);
@@ -95,6 +95,7 @@ function layoutWithGap(
   referenceUnitMm: number,
   vGap: number,
   flecheConnected: Set<string>,
+  canvasMaxX: number = DEFAULT_CANVAS_MAX_X,
 ): ArrangementMove[] {
   const moves: ArrangementMove[] = [];
   let currentX = MARGIN;
@@ -129,7 +130,7 @@ function layoutWithGap(
         const maxLabel = Math.max(...barres.map(b => getBarreLabelWidth(b)));
         const barW = maxLabel + (barres[0] as any).sizeMultiplier * referenceUnitMm;
         const stackH = barres.length * (BAR_HEIGHT_MM + 5) + 15; // +15 for group bracket
-        if (currentX + barW > CANVAS_MAX_X && currentX > MARGIN) {
+        if (currentX + barW > canvasMaxX && currentX > MARGIN) {
           currentX = MARGIN;
           currentY += rowMaxHeight + vGap;
           rowMaxHeight = 0;
@@ -146,7 +147,7 @@ function layoutWithGap(
       for (const piece of ungrouped) {
         const w = getPieceWidth(piece, referenceUnitMm);
         const h = getPieceHeight(piece);
-        if (currentX + w > CANVAS_MAX_X && currentX > MARGIN) {
+        if (currentX + w > canvasMaxX && currentX > MARGIN) {
           currentX = MARGIN;
           currentY += rowMaxHeight + vGap;
           rowMaxHeight = 0;
@@ -164,7 +165,7 @@ function layoutWithGap(
       const w = getPieceWidth(piece, referenceUnitMm);
       const h = getPieceHeight(piece);
 
-      if (currentX + w > CANVAS_MAX_X && currentX > MARGIN) {
+      if (currentX + w > canvasMaxX && currentX > MARGIN) {
         currentX = MARGIN;
         currentY += rowMaxHeight + vGap;
         rowMaxHeight = 0;
