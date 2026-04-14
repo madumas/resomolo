@@ -15,7 +15,21 @@ const CANVAS_W = 500;
 let svgBox;
 
 async function init(page) {
+  // Clear storage before first load
   await page.goto(BASE, { timeout: 15000 });
+  await page.evaluate(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    const dbs = await indexedDB.databases?.() || [];
+    for (const db of dbs) {
+      if (db.name) indexedDB.deleteDatabase(db.name);
+    }
+    indexedDB.deleteDatabase('resomolo');
+    indexedDB.deleteDatabase('resomolo-slots');
+    indexedDB.deleteDatabase('keyval-store');
+  });
+  await page.waitForTimeout(300);
+  await page.reload({ timeout: 15000 });
   await page.waitForSelector('[data-testid="canvas-svg"]');
   for (const t of ['Compris', 'Passer', 'OK', 'Fermer'])
     await page.locator(`button:has-text("${t}")`).click().catch(() => {});
@@ -45,6 +59,7 @@ async function tool(page, name) {
     await page.waitForTimeout(150);
     return;
   }
+  // Try "Voir tout" / "Plus d'outils" button
   await page.locator('button[aria-label="Plus d\'outils"]').first().click().catch(() => {});
   await page.waitForTimeout(200);
   if (await btn.isVisible().catch(() => false)) {
@@ -52,15 +67,18 @@ async function tool(page, name) {
     await page.waitForTimeout(150);
     return;
   }
-  const groups = page.locator('[data-testid="toolbar"] [data-testid^="group-"]');
+  // Try opening each group popover (portal renders to body, so search globally)
+  const groups = page.locator('[data-testid^="group-"]');
   for (let i = 0; i < await groups.count(); i++) {
     await groups.nth(i).click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
     if (await btn.isVisible().catch(() => false)) {
       await btn.click();
       await page.waitForTimeout(150);
       return;
     }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
   }
 }
 
@@ -86,7 +104,22 @@ async function esc(page) {
   await page.waitForTimeout(200);
 }
 
+/** Robustly deselect everything: select tool + click empty area + Escape */
+async function deselect(page) {
+  // Switch to deplacer tool (no placement on click)
+  await page.locator('[data-testid="tool-deplacer"]').click().catch(() => {});
+  await page.waitForTimeout(100);
+  // Click far empty corner of canvas
+  await page.mouse.click(cx(480), cy(5));
+  await page.waitForTimeout(150);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(100);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+}
+
 async function snap(page, filename, region) {
+  await deselect(page);
   const clip = {
     x: cx(region.x), y: cy(region.y),
     width: mm2px(region.w), height: mm2px(region.h),
@@ -96,6 +129,20 @@ async function snap(page, filename, region) {
 }
 
 async function fresh(page) {
+  // Clear all storage to remove persisted pieces from previous captures
+  await page.evaluate(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    const dbs = await indexedDB.databases?.() || [];
+    for (const db of dbs) {
+      if (db.name) indexedDB.deleteDatabase(db.name);
+    }
+    // Also try known names
+    indexedDB.deleteDatabase('resomolo');
+    indexedDB.deleteDatabase('resomolo-slots');
+    indexedDB.deleteDatabase('keyval-store');
+  });
+  await page.waitForTimeout(300);
   await page.reload({ timeout: 15000 });
   await page.waitForSelector('[data-testid="canvas-svg"]');
   for (const t of ['Compris', 'Passer', 'OK', 'Fermer'])
