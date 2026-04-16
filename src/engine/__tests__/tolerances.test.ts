@@ -6,7 +6,9 @@ describe('getTolerances', () => {
   it('normal profile returns baseline values', () => {
     const t = getTolerances('normal');
     expect(t.barAlignSnapMm).toBe(15);
-    expect(t.dragThresholdMm).toBe(1.5);
+    // Changement intentionnel (QA 2.7) : 1.5 mm laissait passer le tremblement
+    // postural TDC (≈ 1.5–3 mm). 2.5 mm filtre la majorité sans couper les gestes.
+    expect(t.dragThresholdMm).toBe(2.5);
     expect(t.hitTestPaddingMm).toBe(0);
     expect(t.jetonHitPaddingMm).toBe(0);
     expect(t.snapGridMm).toBe(SNAP_GRID_MM);
@@ -16,14 +18,14 @@ describe('getTolerances', () => {
   it('large profile scales spatial tolerances by 1.5', () => {
     const t = getTolerances('large');
     expect(t.barAlignSnapMm).toBe(22.5);
-    expect(t.dragThresholdMm).toBe(2.25);
+    expect(t.dragThresholdMm).toBe(3.75); // 2.5 × 1.5
     expect(t.hitTestPaddingMm).toBe(1.5);
   });
 
   it('tres-large profile scales spatial tolerances by 2.0', () => {
     const t = getTolerances('tres-large');
     expect(t.barAlignSnapMm).toBe(30);
-    expect(t.dragThresholdMm).toBe(3.0);
+    expect(t.dragThresholdMm).toBe(5.0); // 2.5 × 2.0
     expect(t.hitTestPaddingMm).toBe(3.0);
   });
 

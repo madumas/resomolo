@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { UI_PRIMARY } from '../config/theme';
+import { useState, useEffect, useRef } from 'react';
+import { UI_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const STORAGE_KEY = 'resomolo-onboarding-done';
 
@@ -91,17 +92,18 @@ export function OnboardingOverlay({ onDone, touchMode = false }: OnboardingOverl
 
   // Auto-focus next button on step change
   const nextBtnRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     nextBtnRef.current?.focus();
   }, [step]);
 
-  // Keyboard handler: Escape closes, Tab traps focus within tooltip
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      markOnboardingDone();
-      onDone();
-    }
-  }, [onDone]);
+  // useModalBehavior fournit Escape, focus trap et focus restore.
+  // Sans ça, un enfant au clavier pouvait sortir du tooltip vers la toolbar sous-jacente
+  // cachée par le backdrop. Maintenant Tab cycle entre "Passer" et "Suivant".
+  useModalBehavior(dialogRef, () => {
+    markOnboardingDone();
+    onDone();
+  }, { initialFocusRef: nextBtnRef });
 
   const current = steps[step];
   if (!current) return null;
@@ -116,12 +118,12 @@ export function OnboardingOverlay({ onDone, touchMode = false }: OnboardingOverl
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-roledescription="tutoriel"
       aria-label={`Tutoriel étape ${step + 1} sur ${steps.length}`}
       onClick={handleBackdropClick}
-      onKeyDown={handleKeyDown}
       style={{
         position: 'fixed',
         inset: 0,
@@ -175,13 +177,18 @@ export function OnboardingOverlay({ onDone, touchMode = false }: OnboardingOverl
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
             onClick={handleSkip}
+            aria-label="Passer le tutoriel"
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#7A7490',
-              fontSize: 13,
+              background: 'transparent',
+              // Contraste AA : texte secondaire lisible sur blanc, bordure discrète mais visible.
+              border: `1px solid ${UI_TEXT_SECONDARY}`,
+              color: UI_TEXT_SECONDARY,
+              fontSize: 14,
+              fontWeight: 500,
               cursor: 'pointer',
-              padding: '6px 10px',
+              padding: '8px 14px',
+              minHeight: 44,
+              borderRadius: 6,
             }}
           >
             Passer

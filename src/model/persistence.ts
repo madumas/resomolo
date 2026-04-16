@@ -1,6 +1,7 @@
 import { get, set, del, keys } from 'idb-keyval';
 import type { UndoManager, Settings, ModelisationState } from './types';
 import { DEFAULT_SETTINGS } from './types';
+import { STORAGE_VERSION, migrate, isFutureVersion, extractVersion } from './migrations';
 
 const STORAGE_KEY = 'resomolo_slot';
 const SETTINGS_KEY = 'resomolo_settings';
@@ -8,7 +9,8 @@ const EMERGENCY_KEY = 'resomolo_emergency';
 // Legacy keys for backward compat (migration reads these)
 const LEGACY_SETTINGS_KEY = 'modelivite_settings';
 const LEGACY_EMERGENCY_KEY = 'modelivite_emergency';
-const STORAGE_VERSION = 1;
+
+export { STORAGE_VERSION };
 
 export async function saveToStorage(undoManager: UndoManager): Promise<void> {
   try {
@@ -18,10 +20,24 @@ export async function saveToStorage(undoManager: UndoManager): Promise<void> {
   }
 }
 
-/** Synchronous emergency save via localStorage (for beforeunload). */
+/** Taille max en caractères JSON pour le payload emergency — évite QuotaExceeded en Safari privé. */
+const EMERGENCY_SIZE_LIMIT = 1_000_000; // ~1 MB
+
+/** Synchronous emergency save via localStorage (for beforeunload).
+ * Sauvegarde uniquement `current` (pas past/future) — l'historique d'undo est secondaire
+ * à la survie de l'état courant. Évite le quota iOS privé (~0 MB disponibles). */
 export function saveEmergency(undoManager: UndoManager): void {
   try {
-    localStorage.setItem(EMERGENCY_KEY, JSON.stringify({ version: STORAGE_VERSION, data: undoManager, savedAt: Date.now() }));
+    const payload = JSON.stringify({
+      version: STORAGE_VERSION,
+      data: { past: [], current: undoManager.current, future: [] },
+      savedAt: Date.now(),
+    });
+    if (payload.length > EMERGENCY_SIZE_LIMIT) {
+      console.warn(`RésoMolo: emergency payload ${payload.length} bytes > ${EMERGENCY_SIZE_LIMIT} — skipped`);
+      return;
+    }
+    localStorage.setItem(EMERGENCY_KEY, payload);
   } catch { /* quota exceeded — best effort */ }
 }
 
@@ -136,19 +152,22 @@ export function migrateUndoManager(um: any): any {
   return um;
 }
 
-function extractUndoManager(parsed: any): UndoManager | null {
-  if (parsed && typeof parsed.version === 'number') {
-    const um = parsed.data;
-    if (um && um.current && Array.isArray(um.current.pieces)) {
-      return migrateUndoManager(um) as UndoManager;
-    }
+export function extractUndoManager(parsed: any): UndoManager | null {
+  if (!parsed) return null;
+  const version = extractVersion(parsed);
+  if (isFutureVersion(version)) {
+    console.warn(`RésoMolo: stored payload is v${version}, newer than app v${STORAGE_VERSION} — ignoring`);
     return null;
   }
-  // Legacy unversioned format (v0): direct UndoManager
-  if (parsed && parsed.current && Array.isArray(parsed.current.pieces)) {
-    return migrateUndoManager(parsed) as UndoManager;
+  const payload = (parsed && typeof parsed.version === 'number') ? parsed.data : parsed;
+  if (!payload || !payload.current || !Array.isArray(payload.current.pieces)) return null;
+  try {
+    const migrated = migrate(version, STORAGE_VERSION, payload) as any;
+    return migrateUndoManager(migrated) as UndoManager;
+  } catch (e) {
+    console.warn('RésoMolo: migration failed', e);
+    return null;
   }
-  return null;
 }
 
 export async function clearAllStorage(): Promise<void> {
@@ -202,7 +221,7 @@ export async function loadSettings(): Promise<Settings> {
 
 export function exportModelisation(state: ModelisationState, name = 'modelisation'): void {
   const data = {
-    version: 1,
+    version: STORAGE_VERSION,
     name,
     probleme: state.probleme,
     problemeReadOnly: state.problemeReadOnly,
@@ -221,20 +240,34 @@ export function exportModelisation(state: ModelisationState, name = 'modelisatio
   URL.revokeObjectURL(url);
 }
 
-export async function importModelisation(file: File): Promise<ModelisationState | null> {
+export interface ImportResult {
+  state: ModelisationState | null;
+  reason?: 'future-version' | 'invalid-file';
+  foundVersion?: number;
+}
+
+export async function importModelisation(file: File): Promise<ImportResult> {
   try {
     const text = await file.text();
     const data = JSON.parse(text);
-    if (!data.version || !Array.isArray(data.pieces)) return null;
+    if (!data.version || !Array.isArray(data.pieces)) {
+      return { state: null, reason: 'invalid-file' };
+    }
+    const version = Number(data.version);
+    if (Number.isFinite(version) && isFutureVersion(version)) {
+      return { state: null, reason: 'future-version', foundVersion: version };
+    }
     return {
-      probleme: data.probleme || '',
-      problemeReadOnly: data.problemeReadOnly ?? false,
-      problemeHighlights: data.problemeHighlights || [],
-      referenceUnitMm: data.referenceUnitMm || 60,
-      pieces: migratePieces(data.pieces || []),
-      availablePieces: data.availablePieces ?? null,
+      state: {
+        probleme: data.probleme || '',
+        problemeReadOnly: data.problemeReadOnly ?? false,
+        problemeHighlights: data.problemeHighlights || [],
+        referenceUnitMm: data.referenceUnitMm || 60,
+        pieces: migratePieces(data.pieces || []),
+        availablePieces: data.availablePieces ?? null,
+      },
     };
   } catch {
-    return null;
+    return { state: null, reason: 'invalid-file' };
   }
 }

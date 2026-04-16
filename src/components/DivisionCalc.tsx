@@ -24,6 +24,7 @@ interface DivisionCalcProps {
   savedData?: DivisionCalcData;
   onCommit: (expression: string, data: DivisionCalcData) => void;
   onCancel: () => void;
+  onStatusOverride?: (message: string | null) => void;
 }
 
 const DIV_COLS = 4;     // dividend/quotient columns
@@ -94,7 +95,7 @@ function emptyStep(): DivisionStep {
   };
 }
 
-export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor, savedData, onCommit, onCancel }: DivisionCalcProps) {
+export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor, savedData, onCommit, onCancel, onStatusOverride }: DivisionCalcProps) {
   const initialDecPos = savedData?.decimalPos !== undefined ? savedData.decimalPos : (detectDecimalPosition(initialDividend) ?? detectDecimalPosition(initialDivisor));
   const [decimalPos, setDecimalPos] = useState<number | null>(initialDecPos);
   const [decimalLocked, setDecimalLocked] = useState(
@@ -177,11 +178,15 @@ export function DivisionCalc({ left, top: _top, initialDividend, initialDivisor,
     const newDec = newDecPos ?? 0;
     const shift = newDec - oldDecPos;
     if (shift !== 0) {
-      // Block if reducing decimals would truncate non-empty cells
+      // Block if reducing decimals would truncate non-empty cells — feedback via StatusBar
       if (shift < 0) {
         const wouldLose = (row: Row) => row.slice(row.length + shift).some(d => d !== '');
         if (wouldLose(dividend) || wouldLose(quotient) || wouldLose(divisor) ||
             steps.some(s => wouldLose(s.product) || wouldLose(s.partialRemainder))) {
+          onStatusOverride?.(
+            `Impossible de déplacer la virgule ici sans perdre un chiffre. Efface d'abord le dernier chiffre à droite.`
+          );
+          setTimeout(() => onStatusOverride?.(null), 4000);
           return;
         }
       }

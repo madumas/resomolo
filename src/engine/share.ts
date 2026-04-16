@@ -6,6 +6,8 @@ import { generateId } from '../model/id';
 // === Minified piece format for URL encoding ===
 
 interface MinPiece {
+  /** Original ID — sérialisé pour permettre le remap des relations (parentId, attachedTo, fromId, toId). */
+  i?: string;
   T: string; x: number; y: number;
   c?: string; sm?: number; l?: string; v?: string;
   w?: number; h?: number; tx?: string; ex?: string;
@@ -35,7 +37,9 @@ interface SharePayload {
 }
 
 function minifyPiece(p: Piece): MinPiece {
-  const m: MinPiece = { T: p.type, x: p.x, y: p.y };
+  // Conserver l'ID d'origine permet à expandPiece de remapper les relations (parentId, etc.)
+  // vers les nouveaux IDs générés côté destinataire.
+  const m: MinPiece = { i: p.id, T: p.type, x: p.x, y: p.y };
   if (p.locked) m.lk = true;
   switch (p.type) {
     case 'jeton':
@@ -78,6 +82,9 @@ function minifyPiece(p: Piece): MinPiece {
     case 'droiteNumerique':
       m.mn = p.min; m.mx = p.max; m.st = p.step; m.wd = p.width;
       if (p.markers.length) m.mk = p.markers;
+      // Bonds (sauts pédagogiques) — indispensable pour conserver le travail de l'enfant
+      // au round-trip URL/QR. Sans ça, toute droite numérique partagée perd ses sauts.
+      if (p.bonds?.length) m.bd = p.bonds;
       break;
     case 'tableau':
       m.rw = p.rows; m.cl = p.cols; m.clz = p.cells;
@@ -113,11 +120,17 @@ function minifyPiece(p: Piece): MinPiece {
   return m;
 }
 
-function expandPiece(m: MinPiece): Piece {
-  const base = { id: generateId(), x: m.x, y: m.y, locked: m.lk ?? false };
+/** Remap un ID d'origine vers le nouvel ID généré (ou null s'il est absent/inconnu). */
+function remapId(idMap: Map<string, string>, old: string | null | undefined): string | null {
+  if (!old) return null;
+  return idMap.get(old) ?? null;
+}
+
+function expandPiece(m: MinPiece, newId: string, idMap: Map<string, string>): Piece {
+  const base = { id: newId, x: m.x, y: m.y, locked: m.lk ?? false };
   switch (m.T) {
     case 'jeton':
-      return { ...base, type: 'jeton', couleur: (m.c as any) ?? 'bleu', parentId: m.pi ?? null };
+      return { ...base, type: 'jeton', couleur: (m.c as any) ?? 'bleu', parentId: remapId(idMap, m.pi) };
     case 'barre':
       return { ...base, type: 'barre', couleur: (m.c as any) ?? 'bleu', sizeMultiplier: m.sm ?? 1,
         label: m.l ?? '', value: m.v ?? '', divisions: m.dv ?? null, coloredParts: m.cp ?? [],
@@ -129,9 +142,12 @@ function expandPiece(m: MinPiece): Piece {
     case 'boite':
       return { ...base, type: 'boite', width: m.w ?? 60, height: m.h ?? 40, label: m.l ?? '', value: m.v ?? '', couleur: (m.c as any) ?? 'bleu' };
     case 'etiquette':
-      return { ...base, type: 'etiquette', text: m.tx ?? '', attachedTo: m.at ?? null };
+      return { ...base, type: 'etiquette', text: m.tx ?? '', attachedTo: remapId(idMap, m.at) };
     case 'fleche':
-      return { ...base, type: 'fleche', fromId: m.fi ?? '', toId: m.ti ?? '', label: m.l ?? '' };
+      return { ...base, type: 'fleche',
+        fromId: remapId(idMap, m.fi) ?? '',
+        toId: remapId(idMap, m.ti) ?? '',
+        label: m.l ?? '' };
     case 'droiteNumerique':
       return { ...base, type: 'droiteNumerique', min: m.mn ?? 0, max: m.mx ?? 10, step: m.st ?? 1,
         markers: m.mk ?? [], bonds: m.bd ?? [], width: m.wd ?? 200 };
@@ -151,7 +167,7 @@ function expandPiece(m: MinPiece): Piece {
         bars: m.brs ?? [{ label: '', value: null, sizeMultiplier: 1, couleur: 'bleu', parts: [] }],
         referenceWidth: m.rfw ?? 60 };
     case 'inconnue':
-      return { ...base, type: 'inconnue', text: m.tx ?? '?', attachedTo: m.at ?? null };
+      return { ...base, type: 'inconnue', text: m.tx ?? '?', attachedTo: remapId(idMap, m.at) };
     case 'diagrammeBandes':
       return { ...base, type: 'diagrammeBandes',
         title: m.ttl ?? '', yAxisLabel: m.yal ?? '',
@@ -165,6 +181,23 @@ function expandPiece(m: MinPiece): Piece {
     default:
       return { ...base, type: 'jeton', couleur: 'bleu', parentId: null };
   }
+}
+
+/**
+ * Expand une liste de MinPiece en Piece[] avec remap complet des relations.
+ * Deux passes : (1) générer nouveaux IDs et construire idMap ; (2) construire les Piece
+ * en remplaçant parentId/attachedTo/fromId/toId via idMap.
+ */
+function expandPieces(minified: MinPiece[]): Piece[] {
+  // Pass 1 : nouveaux IDs + table old→new
+  const idMap = new Map<string, string>();
+  const newIds: string[] = minified.map(m => {
+    const newId = generateId();
+    if (m.i) idMap.set(m.i, newId);
+    return newId;
+  });
+  // Pass 2 : construction effective
+  return minified.map((m, idx) => expandPiece(m, newIds[idx], idMap));
 }
 
 // === URL generation & parsing ===
@@ -200,7 +233,7 @@ export function parseShareParam(search: string): { text: string; pieces: Piece[]
       if (!data.t) return null;
       return {
         text: data.t,
-        pieces: Array.isArray(data.p) ? data.p.map(expandPiece) : [],
+        pieces: Array.isArray(data.p) ? expandPieces(data.p) : [],
       };
     } catch {
       return null;

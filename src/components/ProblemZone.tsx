@@ -14,6 +14,8 @@ interface ProblemZoneProps {
   onHighlightRemove: (start: number, end: number) => void;
   onTextChange?: (text: string) => void;
   ttsEnabled?: boolean;
+  /** True si window.speechSynthesis est disponible ; sinon le bouton TTS est grisé (pas masqué). */
+  ttsSupported?: boolean;
   ttsRate?: number;
   onTTSCharIndex?: number;
   onStartTTS?: () => void;
@@ -49,6 +51,7 @@ export function ProblemZone({
   onHighlightRemove,
   onTextChange,
   ttsEnabled,
+  ttsSupported = true,
   ttsRate: _ttsRate,
   onTTSCharIndex,
   onStartTTS,
@@ -288,20 +291,32 @@ export function ProblemZone({
               </button>
             );
           })}
-          {/* Bouton TTS — lecture à voix haute */}
-          {ttsEnabled && text && (
+          {/* Bouton TTS — visible même si non supporté (grisé + tooltip) pour préserver
+              le modèle mental de l'enfant. Un bouton qui disparaît = confusion. */}
+          {(ttsEnabled || !ttsSupported) && text && (
             <>
               <div style={{ width: 1, height: 28, background: UI_BORDER, margin: '0 2px' }} />
               <button
-                onClick={isTTSSpeaking ? onStopTTS : onStartTTS}
-                title={isTTSSpeaking ? 'Arrêter la lecture' : 'Lire à voix haute'}
-                aria-label={isTTSSpeaking ? 'Arrêter la lecture' : 'Lire à voix haute'}
+                onClick={ttsSupported ? (isTTSSpeaking ? onStopTTS : onStartTTS) : undefined}
+                disabled={!ttsSupported}
+                aria-disabled={!ttsSupported}
+                title={
+                  !ttsSupported
+                    ? 'La lecture à voix haute n\'est pas disponible sur cet appareil.'
+                    : isTTSSpeaking ? 'Arrêter la lecture' : 'Lire à voix haute'
+                }
+                aria-label={
+                  !ttsSupported
+                    ? 'Lecture à voix haute indisponible'
+                    : isTTSSpeaking ? 'Arrêter la lecture' : 'Lire à voix haute'
+                }
                 style={{
                   minWidth: 44, minHeight: 44,
                   background: isTTSSpeaking ? '#FEF3C7' : 'none',
                   border: `1px solid ${isTTSSpeaking ? '#F59E0B' : UI_BORDER}`,
                   borderRadius: 6,
-                  cursor: 'pointer',
+                  cursor: ttsSupported ? 'pointer' : 'not-allowed',
+                  opacity: ttsSupported ? 1 : 0.45,
                   color: isTTSSpeaking ? '#9060C0' : UI_TEXT_SECONDARY,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}

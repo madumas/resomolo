@@ -1,5 +1,46 @@
 import jsPDF from 'jspdf';
 
+/**
+ * Cache du blob TTF Atkinson Hyperlegible (Google Fonts) — chargé à la demande
+ * pour injecter une police Unicode dans jsPDF. Sans ça, les em-dash (—), apostrophes
+ * typographiques et certains accents français tombent en caractère manquant.
+ */
+const ATKINSON_URL = 'https://fonts.gstatic.com/s/atkinsonhyperlegible/v11/9Bt23C1KxNDXMspQ1lPyU89-1h6ONRlW45GE.woff2';
+let atkinsonBase64Promise: Promise<string | null> | null = null;
+
+async function loadAtkinsonBase64(): Promise<string | null> {
+  if (atkinsonBase64Promise) return atkinsonBase64Promise;
+  atkinsonBase64Promise = (async () => {
+    try {
+      const res = await fetch(ATKINSON_URL);
+      if (!res.ok) return null;
+      const buf = await res.arrayBuffer();
+      // Convert to base64 chunk-by-chunk to éviter "Maximum call stack" sur gros blobs
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      }
+      return btoa(binary);
+    } catch {
+      return null;
+    }
+  })();
+  return atkinsonBase64Promise;
+}
+
+async function ensurePdfFont(pdf: jsPDF): Promise<void> {
+  const base64 = await loadAtkinsonBase64();
+  if (!base64) return; // fallback silencieux vers helvetica Latin1
+  try {
+    pdf.addFileToVFS('Atkinson.ttf', base64);
+    pdf.addFont('Atkinson.ttf', 'Atkinson', 'normal');
+    pdf.setFont('Atkinson');
+  } catch {
+    // addFont échoue si la police est déjà enregistrée, ou si jsPDF ne parse pas le woff2.
+  }
+}
+
 export async function exportModelisationAsPdf(
   problemText: string,
   svgElement: SVGSVGElement,
@@ -30,10 +71,11 @@ export async function exportModelisationAsPdf(
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   URL.revokeObjectURL(url);
 
-  // 3. Create PDF (landscape A4)
+  // 3. Create PDF (landscape Letter)
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
-  const pageW = pdf.internal.pageSize.getWidth();   // 297mm
-  const pageH = pdf.internal.pageSize.getHeight();  // 210mm
+  await ensurePdfFont(pdf);
+  const pageW = pdf.internal.pageSize.getWidth();   // 279mm (Letter)
+  const pageH = pdf.internal.pageSize.getHeight();  // 216mm
   const margin = 10;
 
   // 4. Problem text at top

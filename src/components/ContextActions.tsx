@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fmtNum } from '../utils/format';
+import { fmtNum, parseNumOr, DECIMAL_INPUT_PATTERN } from '../utils/format';
 import type { Piece, CouleurPiece } from '../model/types';
 import { isBarre, isBoite, isJeton, isFleche, isDroiteNumerique, isTableau, isArbre, isSchema, isDiagrammeBandes } from '../model/types';
 import { CHART_MAX_CATEGORIES, CHART_MAX_CATEGORIES_COMPLET } from '../model/types';
@@ -618,9 +618,11 @@ export function ContextActions({
                 ←
               </CtxBtn>
               <input
-                type="number"
-                value={customValue}
-                onChange={e => setCustomValue(Number(e.target.value))}
+                type="text"
+                inputMode="decimal"
+                pattern={DECIMAL_INPUT_PATTERN}
+                value={fmtNum(customValue)}
+                onChange={e => setCustomValue(parseNumOr(e.target.value, 0))}
                 autoFocus
                 style={{ width: 60, minHeight: 44, fontSize: 15, textAlign: 'center', borderRadius: 8, border: '2px solid #D1D5DB', padding: '0 4px' }}
                 onKeyDown={e => { if (e.key === 'Enter' && customValue < piece.max) { onEditPiece(piece.id, { min: customValue }); setDroiteSubmenu('none'); } }}
@@ -658,9 +660,11 @@ export function ContextActions({
                 ←
               </CtxBtn>
               <input
-                type="number"
-                value={customValue}
-                onChange={e => setCustomValue(Number(e.target.value))}
+                type="text"
+                inputMode="decimal"
+                pattern={DECIMAL_INPUT_PATTERN}
+                value={fmtNum(customValue)}
+                onChange={e => setCustomValue(parseNumOr(e.target.value, 0))}
                 autoFocus
                 style={{ width: 60, minHeight: 44, fontSize: 15, textAlign: 'center', borderRadius: 8, border: '2px solid #D1D5DB', padding: '0 4px' }}
                 onKeyDown={e => { if (e.key === 'Enter' && customValue > piece.min) { onEditPiece(piece.id, { max: customValue }); setDroiteSubmenu('none'); } }}
@@ -1025,10 +1029,11 @@ export function ContextActions({
                   border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
                   outline: 'none',
                 }} />
-              <input type="number" value={cat.value} min={0}
+              <input type="text" inputMode="decimal" pattern={DECIMAL_INPUT_PATTERN}
+                value={fmtNum(cat.value)}
                 onChange={e => {
                   const updated = [...editingCategories];
-                  updated[i] = { ...updated[i], value: parseFloat(e.target.value) || 0 };
+                  updated[i] = { ...updated[i], value: parseNumOr(e.target.value, 0) };
                   setEditingCategories(updated);
                 }}
                 onBlur={() => onEditPiece(piece.id, { categories: editingCategories as any })}
@@ -1105,10 +1110,11 @@ export function ContextActions({
                   border: `1px solid ${UI_BORDER}`, background: UI_BG, color: UI_TEXT_SECONDARY,
                   outline: 'none',
                 }} />
-              <input type="number" value={pt.value} min={0}
+              <input type="text" inputMode="decimal" pattern={DECIMAL_INPUT_PATTERN}
+                value={fmtNum(pt.value)}
                 onChange={e => {
                   const updated = [...editingPoints];
-                  updated[i] = { ...updated[i], value: parseFloat(e.target.value) || 0 };
+                  updated[i] = { ...updated[i], value: parseNumOr(e.target.value, 0) };
                   setEditingPoints(updated);
                 }}
                 onBlur={() => onEditPiece(piece.id, { points: editingPoints })}

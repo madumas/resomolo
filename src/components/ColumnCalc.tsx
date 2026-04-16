@@ -32,6 +32,8 @@ interface ColumnCalcProps {
   savedData?: ColumnCalcData;
   onCommit: (expression: string, data: ColumnCalcData) => void;
   onCancel: () => void;
+  /** Optional feedback channel — affiche un message StatusBar (aria-live) pendant quelques secondes. */
+  onStatusOverride?: (message: string | null) => void;
 }
 
 const OPERATORS = ['+', '−', '×'];
@@ -89,7 +91,7 @@ function countDigits(row: Row): number {
   return row.filter(d => d !== '').length;
 }
 
-export function ColumnCalc({ left, top: _top, initialOperands, initialOperator, initialResult, savedData, onCommit, onCancel }: ColumnCalcProps) {
+export function ColumnCalc({ left, top: _top, initialOperands, initialOperator, initialResult, savedData, onCommit, onCancel, onStatusOverride }: ColumnCalcProps) {
   const migratedData = savedData ? migrateColumnCalcData(savedData) : undefined;
 
   const initOps = migratedData?.operands
@@ -182,11 +184,30 @@ export function ColumnCalc({ left, top: _top, initialOperands, initialOperator, 
     onSnap();
   };
 
-  // Change decimal position: shift digits so the comma adds/removes places on the RIGHT
+  // Change decimal position: shift digits so the comma adds/removes places on the RIGHT.
+  // Garde `wouldLose` : ne tronque jamais un chiffre sans avertir l'enfant.
   const changeDecimalPosition = (newDecPos: number | null) => {
     const oldDecPos = decimalPosition ?? 0;
     const newDec = newDecPos ?? 0;
     const shift = newDec - oldDecPos;
+
+    if (shift < 0) {
+      // Réduction de décimales : vérifie qu'aucune cellule non-vide ne serait tronquée
+      const wouldLose = (row: Row) => row.slice(row.length + shift).some(d => d !== '');
+      if (
+        operands.some(wouldLose) ||
+        wouldLose(result) ||
+        wouldLose(carry) ||
+        wouldLose(addCarry) ||
+        intermediates.some(wouldLose)
+      ) {
+        onStatusOverride?.(
+          `Impossible de déplacer la virgule ici sans perdre un chiffre. Efface d'abord le dernier chiffre à droite.`
+        );
+        setTimeout(() => onStatusOverride?.(null), 4000);
+        return;
+      }
+    }
 
     if (shift !== 0) {
       const shiftRow = (row: Row): Row => {

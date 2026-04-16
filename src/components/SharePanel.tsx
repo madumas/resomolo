@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_SECONDARY } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { generateShareUrl, generateQrDataUrl, copyTextToClipboard, copyImageToClipboard, downloadDataUrl } from '../engine/share';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 import type { Piece } from '../model/types';
 
 interface SharePanelProps {
@@ -17,21 +18,19 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Intégration au stack modale commun : Escape, focus trap, focus restore.
+  useModalBehavior(panelRef, onClose);
 
   useEffect(() => {
     const url = generateShareUrl(problemText, pieces);
     setShareUrl(url);
-    generateQrDataUrl(url).then(setQrDataUrl);
+    generateQrDataUrl(url).then(setQrDataUrl).catch(() => {
+      // QR trop grand pour le payload, ou erreur réseau — on laisse le lien seul.
+      setQrDataUrl(null);
+    });
   }, [problemText, pieces]);
-
-  // Escape to close
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
-    };
-    window.addEventListener('keydown', handler, true);
-    return () => window.removeEventListener('keydown', handler, true);
-  }, [onClose]);
 
   const handleCopyLink = useCallback(async () => {
     await copyTextToClipboard(shareUrl);
@@ -57,6 +56,10 @@ export function SharePanel({ problemText, pieces, onClose }: SharePanelProps) {
 
   return (
     <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Partager la modélisation"
       style={{
         padding: '12px 16px',
         paddingRight: 56,

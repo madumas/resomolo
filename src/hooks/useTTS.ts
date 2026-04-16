@@ -5,10 +5,13 @@ export function useTTS() {
   const [currentCharIndex, setCurrentCharIndex] = useState(-1);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+  // Exposé aux consommateurs pour afficher le bouton grisé (non masqué) quand TTS
+  // indisponible — préserve le modèle mental de l'enfant ("il était là hier").
+  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
   // Get best French voice
   const getFrenchVoice = useCallback(() => {
     const voices = window.speechSynthesis?.getVoices() || [];
-    // Prefer fr-CA, then fr-FR, then any fr
     return voices.find(v => v.lang === 'fr-CA')
         || voices.find(v => v.lang === 'fr-FR')
         || voices.find(v => v.lang.startsWith('fr'))
@@ -17,12 +20,14 @@ export function useTTS() {
 
   const speak = useCallback((text: string, rate = 1.0) => {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // stop any previous
+    window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getFrenchVoice();
     if (voice) utterance.voice = voice;
-    utterance.lang = 'fr-CA';
+    // Aligner `lang` à la voix réellement utilisée — certains moteurs re-routent
+    // par `lang` et ignorent `voice`, ce qui sortait une voix fr-FR avec lang=fr-CA.
+    utterance.lang = voice?.lang || 'fr-CA';
     utterance.rate = rate;
 
     utterance.onboundary = (e) => {
@@ -64,5 +69,5 @@ export function useTTS() {
     };
   }, []);
 
-  return { speak, stop, isSpeaking, currentCharIndex };
+  return { speak, stop, isSpeaking, currentCharIndex, isSupported };
 }

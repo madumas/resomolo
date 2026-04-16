@@ -68,7 +68,10 @@ export function StatusBar({
   const questionText = showProblemReminder ? extractQuestion(problemText) : '';
 
   return (
-    <div data-testid="status-bar" role="status" aria-live="polite" style={{
+    // role="toolbar" + aria-label pour le conteneur ; aria-live est déplacé sur le seul
+    // span StatusMessage (voir ligne ~302) pour éviter les re-lectures NVDA de tous les
+    // boutons internes (jetons 1/3/5/10, tutoriel, etc.) à chaque re-render.
+    <div data-testid="status-bar" role="toolbar" aria-label="Barre de statut" style={{
       padding: '6px 16px',
       background: variant === 'relance' ? '#F5F0FA' : STATUS_BAR_BG,
       borderBottom: `1px solid ${UI_BORDER}`,
@@ -298,14 +301,21 @@ export function StatusBar({
 
 function StatusMessage({ message, variant }: { message: string; variant: 'default' | 'relance' }) {
   const sep = message.indexOf(' — ');
+  // role="status" + aria-live="polite" + aria-atomic="true" sur ce span uniquement.
+  // Lecteurs d'écran relisent le message complet à chaque changement sans fragmentation.
+  const liveProps = {
+    role: 'status',
+    'aria-live': 'polite' as const,
+    'aria-atomic': true as const,
+  };
   if (sep === -1) {
-    return <span style={{ flex: 1 }}>{message}</span>;
+    return <span {...liveProps} style={{ flex: 1 }}>{message}</span>;
   }
   const badge = message.slice(0, sep);
   const instruction = message.slice(sep + 3);
   const badgeColor = variant === 'relance' ? '#7545A5' : UI_PRIMARY;
   return (
-    <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <span {...liveProps} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{
         background: badgeColor,
         color: '#fff',

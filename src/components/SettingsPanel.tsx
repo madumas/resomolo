@@ -101,6 +101,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
                 Délai :
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={30}
                   max={120}
                   value={Math.round(settings.relanceDelayMs / 1000)}
@@ -153,6 +154,7 @@ export function SettingsPanel({ settings, onChange, onClose, onExport, onImport,
                 Alerte après :
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={5}
                   max={60}
                   value={settings.sessionTimerAlertMinutes}

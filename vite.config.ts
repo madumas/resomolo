@@ -42,7 +42,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' : onNeedRefresh callback, l'app affiche un toast et l'utilisateur choisit
+      // quand recharger (vs 'autoUpdate' qui rafraîchit seulement au prochain close).
+      registerType: 'prompt',
       manifest: {
         name: 'RésoMolo — Modélisation mathématique',
         short_name: 'RésoMolo',

@@ -145,8 +145,10 @@ export function MobileToolbar({ activeTool, toolbarMode, onSelectTool, dimmed, a
           alignItems: 'center',
           justifyContent: 'center',
           gap: 4,
-          padding: '4px 8px',
-          height: 64,
+          // Plancher 4 px + safe-area home indicator (iPhone X+) — sinon les boutons "Déplacer"
+          // sont partiellement masqués par la barre de gestes iOS.
+          padding: '4px 8px max(4px, env(safe-area-inset-bottom, 0px))',
+          minHeight: 64,
           background: UI_SURFACE,
           borderTop: `1px solid ${UI_BORDER}`,
           boxShadow: '0 -2px 8px rgba(0,0,0,0.08)',

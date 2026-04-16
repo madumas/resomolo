@@ -15,7 +15,7 @@ import { generateId } from '../model/id';
 import { COLORS, UI_BG, UI_BORDER, UI_PRIMARY, UI_TEXT_SECONDARY, getPieceColor, getPieceFillColor } from '../config/theme';
 import { BarrePiece } from './pieces/BarrePiece';
 import { DroiteNumeriquePiece } from './pieces/DroiteNumeriquePiece';
-import { filterBondsOnRangeChange, snapBondsToStep as snapBondsHelper, computeBondPath, computeAutoLabel, snapToStep } from '../engine/bonds';
+import { filterBondsOnRangeChange, filterMarkersOnRangeChange, snapBondsToStep as snapBondsHelper, computeBondPath, computeAutoLabel, snapToStep } from '../engine/bonds';
 import { ArbrePiece } from './pieces/ArbrePiece';
 import { SchemaPiece } from './pieces/SchemaPiece';
 import { DiagrammeBandesPiece } from './pieces/DiagrammeBandesPiece';
@@ -76,6 +76,8 @@ interface CanvasProps {
   onMoveDone?: () => void;       // called after put-down in one-shot move
   onMoveOneShot?: (id: string) => void; // context action: start one-shot move
   canvasWidthMm?: number;        // responsive viewBox width (mobile vs desktop)
+  /** Status override from Canvas (e.g. "Appuie encore pour effacer"). */
+  onStatusOverride?: (message: string | null) => void;
 }
 
 type InteractionMode =
@@ -168,6 +170,7 @@ export function Canvas({
   onMoveDone,
   onMoveOneShot,
   canvasWidthMm: _canvasWidthMm,
+  onStatusOverride,
 }: CanvasProps) {
   const canvasWidthMm = _canvasWidthMm ?? CANVAS_WIDTH_MM;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -280,6 +283,9 @@ export function Canvas({
   const [alignGuide, setAlignGuide] = useState<{ x: number; y1: number; y2: number } | null>(null);
   // Pan removed — drag conflicts with piece movement. Ranger + auto-height suffisent.
   const originalMovePos = useRef<{ x: number; y: number } | null>(null);
+  // Position du pointerDown initial pour seuil anti-tremblement TDC (2.5 mm par défaut).
+  // Réinitialisé après transition vers le mode 'moving' (ou abandon).
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
   // tableauEditCellRef removed — TableauEditor handles its own cell editing
   const moveOffset = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
@@ -310,7 +316,13 @@ export function Canvas({
         dispatch({ type: 'MOVE_PIECE', id, x: newX, y: newY });
       }
     },
-  }), [onSelectPiece, dispatch, pieces, canvasWidthMm]);
+    onDeleteArmed: () => {
+      onStatusOverride?.('Appuie encore sur Effacer pour supprimer la pièce sélectionnée.');
+    },
+    onDeleteDisarmed: () => {
+      onStatusOverride?.(null);
+    },
+  }), [onSelectPiece, dispatch, pieces, canvasWidthMm, onStatusOverride]);
   const { focusedId, onPieceFocus, onKeyDown: rovingOnKeyDown } = useRovingTabindex(pieceIds, selectedPieceId, rovingCallbacks);
 
   // Clear ghost states when tool or selection changes
@@ -354,6 +366,9 @@ export function Canvas({
   }, [hoveredPieceId, arrowFromId]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    // Palm rejection / multi-touch : silently ignore any secondary pointer while one is active.
+    // Matches TDC grip patterns where a paume ou un second doigt stabilise la tablette.
+    if (activePointerId.current !== null && e.pointerId !== activePointerId.current) return;
     const now = Date.now();
     if (now - lastClickTime.current < tol.clickDebounceMs) return;
     lastClickTime.current = now;
@@ -988,17 +1003,28 @@ export function Canvas({
   // Pointer move for pick-up/put-down + hover hit-test for cursor
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     if (!svgRef.current) return;
+    // Palm rejection : route uniquement les events du pointer actif pendant une interaction.
+    if (activePointerId.current !== null && e.pointerId !== activePointerId.current) return;
 
     const rawPos = pointerToMm(e, svgRef.current);
 
-    // Pending one-shot move: first pointerMove on canvas → start real move with correct offset
+    // Pending move: one-shot (context menu) OR touch-drag awaiting threshold.
+    // - Si pointerDownPos est défini (touch-drag), on applique le seuil dragThresholdMm
+    //   pour éviter les pickups accidentels sur tremblement TDC.
+    // - Sinon (one-shot depuis un bouton), on transite au premier déplacement.
     if (mode.type === 'pending-move') {
+      if (pointerDownPos.current) {
+        const dx = rawPos.x - pointerDownPos.current.x;
+        const dy = rawPos.y - pointerDownPos.current.y;
+        if (Math.hypot(dx, dy) < tol.dragThresholdMm) return;
+      }
       const piece = pieces.find(p => p.id === mode.pieceId);
       if (piece) {
         smoothingRef.current = createSmoothingState();
         moveOffset.current = { dx: rawPos.x - piece.x, dy: rawPos.y - piece.y };
         setMode({ type: 'moving', pieceId: mode.pieceId });
       }
+      pointerDownPos.current = null;
       return;
     }
 
@@ -1128,11 +1154,44 @@ export function Canvas({
   // Pointer up — finalize move ONLY for touch/pen (finger lift = put down).
   // Mouse uses click-click (pick up on pointerDown, put down on next pointerDown).
   // This avoids drag-and-drop which requires too much precision for young children.
+  // Handler pointercancel / lostpointercapture : iOS émet ces events sur appel entrant,
+  // swipe multitâche, ou reprise de focus — sans ça, une pièce reste collée en mode `moving`.
+  const handlePointerCancel = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (activePointerId.current !== null && e.pointerId !== activePointerId.current) return;
+    // Restaurer la position d'origine si on était en plein drag
+    if (mode.type === 'moving' && originalMovePos.current) {
+      dispatch({ type: 'MOVE_PIECE_LIVE', id: mode.pieceId, x: originalMovePos.current.x, y: originalMovePos.current.y });
+    }
+    if (svgRef.current && activePointerId.current !== null) {
+      try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* ignore */ }
+    }
+    activePointerId.current = null;
+    setMode({ type: 'idle' });
+    setAlignGuide(null);
+    setDnGhostBond(null);
+    originalMovePos.current = null;
+    pointerDownPos.current = null;
+    onMoveDone?.();
+  }, [mode, dispatch, onMoveDone]);
+
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    // Palm rejection : ignorer les pointer-up secondaires durant une interaction active.
+    if (activePointerId.current !== null && e.pointerId !== activePointerId.current) return;
     // Touch fallback for bond mode: finger lift = confirm bond at ghost position
     if (bondMode && bondMode.fromVal !== null && dnGhostBond && e.pointerType !== 'mouse') {
       onBondCreated?.(dnGhostBond.pieceId, dnGhostBond.fromVal, dnGhostBond.toVal);
       setDnGhostBond(null);
+      return;
+    }
+    // Tap sans déplacement au-delà du seuil : on reste en 'pending-move', on quitte proprement.
+    if (mode.type === 'pending-move' && e.pointerType !== 'mouse') {
+      pointerDownPos.current = null;
+      setMode({ type: 'idle' });
+      originalMovePos.current = null;
+      if (activePointerId.current !== null && svgRef.current) {
+        try { svgRef.current.releasePointerCapture(activePointerId.current); } catch { /* ignore */ }
+        activePointerId.current = null;
+      }
       return;
     }
     if (mode.type !== 'moving' || !svgRef.current) return;
@@ -1152,7 +1211,9 @@ export function Canvas({
     }
   }, [mode, pieces, referenceUnitMm, tol.barAlignSnapMm, dispatch, bondMode, dnGhostBond, onBondCreated]);
 
-  // Start moving a piece (pick-up) — records offset between cursor and piece origin
+  // Start moving a piece (pick-up) — records offset between cursor and piece origin.
+  // Passe par 'pending-move' : transition vers 'moving' seulement quand le pointer a dépassé
+  // tol.dragThresholdMm depuis le pointerDown (évite pickup accidentel sur micro-tremblement).
   const handleStartMove = useCallback((pieceId: string, cursorPos: { x: number; y: number }) => {
     const piece = pieces.find(p => p.id === pieceId);
     smoothingRef.current = createSmoothingState();
@@ -1160,7 +1221,8 @@ export function Canvas({
       originalMovePos.current = { x: piece.x, y: piece.y };
       moveOffset.current = { dx: cursorPos.x - piece.x, dy: cursorPos.y - piece.y };
     }
-    setMode({ type: 'moving', pieceId });
+    pointerDownPos.current = cursorPos;
+    setMode({ type: 'pending-move', pieceId });
     onSelectPiece(null);
   }, [pieces, onSelectPiece]);
 
@@ -1364,21 +1426,28 @@ export function Canvas({
         changes = { ...changes, cells: newCells };
       }
     }
-    // When min/max/step changes on a droiteNumerique, filter/resnap bonds atomically
+    // When min/max/step changes on a droiteNumerique, filter/resnap bonds AND markers atomically
     if ('min' in changes || 'max' in changes || 'step' in changes) {
       const piece = pieces.find(p => p.id === id);
-      if (piece && isDroiteNumerique(piece) && (piece.bonds?.length ?? 0) > 0) {
+      if (piece && isDroiteNumerique(piece)) {
         const newMin = (changes.min ?? piece.min) as number;
         const newMax = (changes.max ?? piece.max) as number;
         const newStep = (changes.step ?? piece.step) as number;
-        let bonds = piece.bonds;
-        if ('min' in changes || 'max' in changes) {
-          bonds = filterBondsOnRangeChange(bonds, newMin, newMax);
+        const rangeChanged = 'min' in changes || 'max' in changes;
+        if ((piece.bonds?.length ?? 0) > 0) {
+          let bonds = piece.bonds;
+          if (rangeChanged) bonds = filterBondsOnRangeChange(bonds, newMin, newMax);
+          if ('step' in changes) bonds = snapBondsHelper(bonds, newStep, newMin, newMax, toolbarMode ?? 'essentiel');
+          changes = { ...changes, bonds };
         }
-        if ('step' in changes) {
-          bonds = snapBondsHelper(bonds, newStep, newMin, newMax, toolbarMode ?? 'essentiel');
+        // Filtrer aussi les markers explicites — sinon ils restent hors bornes et
+        // sont rendus décalés ou hors SVG.
+        if (rangeChanged && (piece.markers?.length ?? 0) > 0) {
+          const filteredMarkers = filterMarkersOnRangeChange(piece.markers, newMin, newMax);
+          if (filteredMarkers.length !== piece.markers.length) {
+            changes = { ...changes, markers: filteredMarkers };
+          }
         }
-        changes = { ...changes, bonds };
       }
     }
     dispatch({ type: 'EDIT_PIECE', id, changes });
@@ -1508,6 +1577,8 @@ export function Canvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onLostPointerCapture={handlePointerCancel}
         onPointerLeave={() => { setGhostCursorMm(null); setDnGhostMarker(null); }}
         onContextMenu={handleRightClick}
         onKeyDown={(e) => {
@@ -2730,6 +2801,7 @@ export function Canvas({
               setColumnCalcPieceId(null);
             }}
             onCancel={() => setColumnCalcPieceId(null)}
+            onStatusOverride={onStatusOverride}
           />
         );
       })()}
@@ -2770,6 +2842,7 @@ export function Canvas({
               setDivisionCalcPieceId(null);
             }}
             onCancel={() => setDivisionCalcPieceId(null)}
+            onStatusOverride={onStatusOverride}
           />
         );
       })()}

@@ -55,6 +55,9 @@ export const UI_BG = '#F6F4FA';
 export const UI_SURFACE = '#FFFFFF';
 export const UI_PRIMARY = '#7028e0';
 export const UI_DESTRUCTIVE = '#C82828';
+// Orange ambré — "attention/irréversible" moins anxiogène que rouge saturé pour public enfant.
+// Utilisé par ConfirmDialog variant="attention".
+export const UI_CAUTION = '#E07A00';
 export const UI_BORDER = '#D5D0E0';
 export const UI_TEXT_PRIMARY = '#1E1A2E';
 export const UI_TEXT_SECONDARY = '#4A455E';

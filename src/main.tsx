@@ -8,6 +8,9 @@ import { parseShareParam } from './engine/share';
 import { createInitialUndoManager } from './model/state';
 import { createSlotMetadata, createEmptyRegistry } from './model/slots';
 import type { UndoManager } from './model/types';
+import { initPwaUpdate } from './pwa-update';
+
+initPwaUpdate();
 
 // Parse URL share params synchronously (avant boot)
 const shared = parseShareParam(window.location.search);

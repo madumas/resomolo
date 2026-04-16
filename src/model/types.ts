@@ -225,7 +225,9 @@ export const BAR_VERTICAL_GAP_MM = 5;
 export const BAR_ALIGN_SNAP_MM = 15;
 export const JETON_DIAMETER_MM = 10;
 export const JETON_SPACING_MM = 10;
-export const DRAG_THRESHOLD_MM = 1.5;
+// Seuil de départ de drag : 2.5 mm filtre les tremblements posturaux (≈1.5–3 mm chez TDC)
+// sans couper les déplacements intentionnels. À ajuster via ToleranceProfile multiplier.
+export const DRAG_THRESHOLD_MM = 2.5;
 export const CLICK_DEBOUNCE_MS = 150;
 export const AUTOSAVE_DEBOUNCE_MS = 2000;
 export const MAX_UNDO_LEVELS = 100;

@@ -31,6 +31,8 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { SlotManager } from './components/SlotManager';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import type { ConfirmDialogProps } from './components/ConfirmDialog';
+import { UpdateToast } from './components/UpdateToast';
+import { onPwaUpdateAvailable, applyPwaUpdate, dismissPwaUpdate } from './pwa-update';
 import { TOOL_MESSAGES, getToolMessages, AMORCAGE_WITH_PROBLEM, AMORCAGE_POST_HIGHLIGHT, AMORCAGE_NO_PROBLEM, RELANCE_QUESTIONS, RELANCE_LEVELS, getAmorcageWithProblem } from './config/messages';
 import { onUndoSound, onBond, onAcknowledge, onHighlight as onHighlightSound, setSoundMode, setGainMultiplier } from './engine/sound';
 import { isUnitaryChain, computeAllBondLevels } from './engine/bonds';
@@ -76,6 +78,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   const [showSettings, setShowSettings] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<Omit<ConfirmDialogProps, 'onCancel'> | null>(null);
   const [showSlotManager, setShowSlotManager] = useState(false);
+  // Transient status override (e.g. Canvas arming a 2-step keyboard Delete)
+  const [statusOverride, setStatusOverride] = useState<string | null>(null);
+  // PWA update toast — différé tant que l'élève est en activité (pointer récent ou canvas non idle)
+  const [pwaUpdatePending, setPwaUpdatePending] = useState(false);
   const relanceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [showLabelNudge, setShowLabelNudge] = useState(false);
@@ -200,6 +206,12 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
 
   // Slot manager — pre-loaded registry from boot()
   const slotManager = useSlotManager({ initialRegistry, undoManager, dispatch });
+
+  // PWA update : le SW signale une nouvelle version — on affiche le toast
+  // si l'utilisateur n'a pas dit "Plus tard" dans les dernières 24h.
+  useEffect(() => {
+    onPwaUpdateAvailable(() => setPwaUpdatePending(true));
+  }, []);
 
   const handleUndo = useCallback(() => {
     setUndoManager(prev => {
@@ -506,6 +518,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       subtitle: 'Tu peux toujours revenir avec Annuler.',
       confirmLabel: 'Oui, tout effacer',
       cancelLabel: 'Non, je continue',
+      variant: 'attention',
       onConfirm: () => {
         dispatch({ type: 'CLEAR_PIECES' });
         setSelectedPieceId(null);
@@ -523,6 +536,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
       subtitle: 'Le tutoriel va reprendre.',
       confirmLabel: 'Oui, tout effacer',
       cancelLabel: 'Non, je continue',
+      variant: 'attention',
       onConfirm: async () => {
         setConfirmDialog(null);
         await clearAllStorage();
@@ -542,10 +556,14 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   }, [probleme]);
 
   const handleImport = useCallback(async (file: File) => {
-    const state = await importModelisation(file);
-    if (state) {
-      dispatch({ type: 'RESTORE', undoManager: { past: [], current: state, future: [] } });
+    const result = await importModelisation(file);
+    if (result.state) {
+      dispatch({ type: 'RESTORE', undoManager: { past: [], current: result.state, future: [] } });
       setShowSettings(false);
+    } else if (result.reason === 'future-version') {
+      alert(`Ce fichier provient d'une version plus récente de RésoMolo (v${result.foundVersion}). Mets à jour l'application.`);
+    } else {
+      alert('Fichier .resomolo invalide ou corrompu.');
     }
   }, [dispatch]);
 
@@ -636,7 +654,10 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
   let statusMessage: string;
   let statusVariant: 'default' | 'relance' = 'default';
 
-  if (bondMode && bondMode.fromVal === null) {
+  if (statusOverride) {
+    statusMessage = statusOverride;
+    statusVariant = 'relance';
+  } else if (bondMode && bondMode.fromVal === null) {
     statusMessage = `${touchVerb} le point de départ du saut.`;
     statusVariant = 'relance';
   } else if (bondMode && bondMode.fromVal !== null && bondGhostInfo) {
@@ -814,7 +835,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         onHighlightAdd={handleHighlightAdd}
         onHighlightRemove={handleHighlightRemove}
         onTextChange={handleTextChange}
-        ttsEnabled={settings.ttsEnabled}
+        ttsEnabled={settings.ttsEnabled && tts.isSupported}
+        ttsSupported={tts.isSupported}
         ttsRate={settings.ttsRate}
         onTTSCharIndex={tts.currentCharIndex}
         onStartTTS={() => tts.speak(probleme, settings.ttsRate)}
@@ -879,6 +901,7 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
           startMoveId={startMoveId}
           onMoveDone={handleMoveDone}
           onMoveOneShot={handleContextMoveStart}
+          onStatusOverride={setStatusOverride}
         />
         {showProblemSelector && <ProblemSelector onSelect={handleSelectProblem} onClose={() => setShowProblemSelector(false)} onViewExample={handleViewExample} />}
         {showExampleSelector && <ExampleSelector onSelect={(ex) => { setShowExampleSelector(false); handleViewExample(ex); }} onClose={() => setShowExampleSelector(false)} />}
@@ -951,6 +974,8 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         <SlotManager
           registry={slotManager.registry}
           activeSlotId={slotManager.activeSlotId}
+          isSwitching={slotManager.isSwitching}
+          switchingTargetId={slotManager.switchingTargetId}
           onSwitchSlot={async (id) => {
             const loaded = await slotManager.switchSlot(id);
             setProblemZoneActive(loaded.current.probleme.length > 0);
@@ -969,6 +994,15 @@ export default function App({ initialRegistry, initialUndoManager, initialSettin
         <ConfirmDialog
           {...confirmDialog}
           onCancel={() => setConfirmDialog(null)}
+        />
+      )}
+
+      {/* Toast "Nouvelle version" — n'apparaît pas pendant qu'une modale bloque,
+          ni pendant une activité Canvas sur le point de se terminer. */}
+      {pwaUpdatePending && !confirmDialog && !showSettings && !showSlotManager && !showSharePanel && (
+        <UpdateToast
+          onUpdate={() => { setPwaUpdatePending(false); applyPwaUpdate(); }}
+          onDismiss={() => { setPwaUpdatePending(false); dismissPwaUpdate(); }}
         />
       )}
 

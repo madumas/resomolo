@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { UI_PRIMARY, UI_SURFACE, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY } from '../config/theme';
+import { useEffect, useRef, useState } from 'react';
+import { UI_PRIMARY, UI_CAUTION, UI_SURFACE, UI_TEXT_PRIMARY, UI_TEXT_SECONDARY, UI_BORDER } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
@@ -10,7 +10,11 @@ export interface ConfirmDialogProps {
   readonly cancelLabel: string;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
+  /** 'default' = confirm primary violet, 'attention' = orange ambré pour actions destructives. */
+  readonly variant?: 'default' | 'attention';
 }
+
+const ANTI_DOUBLE_TAP_MS = 300;
 
 export function ConfirmDialog({
   title,
@@ -19,10 +23,21 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   onCancel,
+  variant = 'default',
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalBehavior(dialogRef, onCancel, { initialFocusRef: cancelRef });
+
+  // Anti-double-tap : le bouton Confirm est désactivé 300 ms après l'apparition
+  // pour éviter les clics rebonds / double-taps accidentels (impulsivité, TDAH).
+  const [confirmArmed, setConfirmArmed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setConfirmArmed(true), ANTI_DOUBLE_TAP_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  const confirmBg = variant === 'attention' ? UI_CAUTION : UI_PRIMARY;
 
   return (
     <div
@@ -62,39 +77,43 @@ export function ConfirmDialog({
 
         <div style={{ display: 'flex', gap: 12, marginTop: 20, justifyContent: 'flex-end' }}>
           <button
-            onClick={onConfirm}
+            ref={cancelRef}
+            onClick={onCancel}
             style={{
               height: MIN_BUTTON_SIZE_PX,
-              padding: '0 12px',
-              border: 'none',
+              padding: '0 16px',
+              border: `1px solid ${UI_BORDER}`,
               borderRadius: 4,
-              background: '#6B7280',
-              color: '#FFFFFF',
+              background: 'transparent',
+              color: UI_TEXT_SECONDARY,
               cursor: 'pointer',
               fontSize: 13,
             }}
-            data-testid="confirm-dialog-confirm"
+            data-testid="confirm-dialog-cancel"
           >
-            {confirmLabel}
+            {cancelLabel}
           </button>
 
           <button
-            ref={cancelRef}
-            onClick={onCancel}
+            onClick={confirmArmed ? onConfirm : undefined}
+            disabled={!confirmArmed}
+            aria-disabled={!confirmArmed}
             style={{
               height: MIN_BUTTON_SIZE_PX,
               padding: '0 20px',
               border: 'none',
               borderRadius: 4,
-              background: UI_PRIMARY,
+              background: confirmBg,
               color: '#FFFFFF',
-              cursor: 'pointer',
+              cursor: confirmArmed ? 'pointer' : 'not-allowed',
               fontSize: 14,
               fontWeight: 600,
+              opacity: confirmArmed ? 1 : 0.6,
+              pointerEvents: confirmArmed ? 'auto' : 'none',
             }}
-            data-testid="confirm-dialog-cancel"
+            data-testid="confirm-dialog-confirm"
           >
-            {cancelLabel}
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -1,7 +1,53 @@
-import type { ModelisationState, Piece, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Inconnue, Reponse, DroiteNumerique } from './types';
+import type { ModelisationState, Piece, PieceType, Highlight, UndoManager, ToolType, Jeton, Boite, Etiquette, Inconnue, Reponse, DroiteNumerique } from './types';
 import { REFERENCE_UNIT_MM, BAR_HEIGHT_MM, CANVAS_WIDTH_MM } from './types';
 import { generateId } from './id';
 import { createUndoManager, pushState, undo as undoFn, redo as redoFn } from './undo';
+
+/**
+ * Whitelist des champs modifiables via EDIT_PIECE par type.
+ * Exclut systématiquement : type, id (scellés), parentId/attachedTo/fromId/toId (gérés par
+ * actions dédiées), locked (action dédiée). `x`/`y` passent par MOVE_PIECE*.
+ * Les champs numériques sont validés via Number.isFinite au moment du spread.
+ */
+const EDITABLE_FIELDS_BY_TYPE: Record<PieceType, readonly string[]> = {
+  jeton: ['couleur'],
+  barre: ['couleur', 'sizeMultiplier', 'label', 'value', 'divisions', 'coloredParts', 'showFraction', 'groupId', 'groupLabel'],
+  calcul: ['expression', 'columnData'],
+  reponse: ['text', 'template'],
+  boite: ['width', 'height', 'label', 'value', 'couleur'],
+  etiquette: ['text'],
+  fleche: ['label'],
+  droiteNumerique: ['min', 'max', 'step', 'markers', 'bonds', 'width'],
+  tableau: ['rows', 'cols', 'cells', 'headerRow'],
+  arbre: ['levels'],
+  schema: ['gabarit', 'totalLabel', 'totalValue', 'bars', 'referenceWidth'],
+  inconnue: ['text'],
+  diagrammeBandes: ['title', 'categories', 'yAxisLabel', 'width', 'height'],
+  diagrammeLigne: ['title', 'points', 'yAxisLabel', 'width', 'height'],
+};
+
+/** Champs numériques attendus — validés via Number.isFinite pour rejeter NaN/Infinity. */
+const NUMERIC_FIELDS = new Set([
+  'sizeMultiplier', 'divisions', 'width', 'height', 'min', 'max', 'step', 'rows', 'cols',
+  'totalValue', 'referenceWidth',
+]);
+
+function sanitizeEditChanges(piece: Piece, rawChanges: Record<string, unknown>): Record<string, unknown> {
+  const allowed = EDITABLE_FIELDS_BY_TYPE[piece.type] ?? [];
+  const safe: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (!(key in rawChanges)) continue;
+    const v = rawChanges[key];
+    if (NUMERIC_FIELDS.has(key)) {
+      if (v === null || v === undefined) { safe[key] = v; continue; }
+      if (typeof v === 'number' && Number.isFinite(v)) safe[key] = v;
+      // Non-finite silently dropped : ne propage pas NaN/Infinity dans les layouts
+      continue;
+    }
+    safe[key] = v;
+  }
+  return safe;
+}
 
 // === Initial state ===
 
@@ -108,33 +154,59 @@ function getPieceCenterSimple(piece: Piece, referenceUnitMm: number): { x: numbe
   }
 }
 
-/** Auto-resize boîtes to fit their child jetons. */
+/** Estime la largeur de rendu du label d'une boîte pour servir de plancher au resize. */
+function estimateLabelWidthMm(boite: Boite): number {
+  const label = boite.label ?? '';
+  const value = boite.value ?? '';
+  const maxLen = Math.max(label.length, value.length);
+  // Approximation : ~3.2 mm par caractère (14 px system-ui). Flexible sur ±2 mm.
+  return maxLen > 0 ? Math.max(0, maxLen * 3.2 + 8) : 0;
+}
+
+/** Auto-resize boîtes to fit their child jetons. Rétrécit aussi quand les enfants
+ * sont enlevés, avec un plancher = max(taille minimum, largeur du label). */
 function autoResizeBoite(state: ModelisationState): ModelisationState {
   const boites = state.pieces.filter((p): p is Boite => p.type === 'boite');
   let pieces = state.pieces;
   let changed = false;
 
+  const DEFAULT_WIDTH = 60, DEFAULT_HEIGHT = 40;
+  const TOLERANCE = 5; // mm
+  const padding = 10; // mm
+
   for (const boite of boites) {
     const children = pieces.filter(p => p.type === 'jeton' && p.parentId === boite.id);
-    if (children.length === 0) continue;
+    const labelFloorW = estimateLabelWidthMm(boite);
 
-    const padding = 10; // mm
+    if (children.length === 0) {
+      // Boîte vide → ramener aux dimensions par défaut, mais respecter le plancher label
+      const targetW = Math.max(DEFAULT_WIDTH, labelFloorW);
+      if (boite.width !== targetW || boite.height !== DEFAULT_HEIGHT) {
+        changed = true;
+        pieces = pieces.map(p =>
+          p.id === boite.id
+            ? { ...p, width: targetW, height: DEFAULT_HEIGHT } as Piece
+            : p
+        );
+      }
+      continue;
+    }
+
     const childMinX = Math.min(...children.map(c => c.x)) - padding;
     const childMaxX = Math.max(...children.map(c => c.x)) + padding;
     const childMinY = Math.min(...children.map(c => c.y)) - padding;
     const childMaxY = Math.max(...children.map(c => c.y)) + padding;
 
-    // Keep the boîte position stable — only expand if children overflow by more than tolerance
-    const DEFAULT_WIDTH = 60, DEFAULT_HEIGHT = 40;
-    const TOLERANCE = 5; // mm — allow children to be slightly outside before resizing
-    const newX = childMinX < boite.x - TOLERANCE ? childMinX : boite.x;
-    const newY = childMinY < boite.y - TOLERANCE ? childMinY : boite.y;
-    const boiteRight = boite.x + boite.width;
-    const boiteBottom = boite.y + boite.height;
-    const newRight = childMaxX > boiteRight + TOLERANCE ? childMaxX : boiteRight;
-    const newBottom = childMaxY > boiteBottom + TOLERANCE ? childMaxY : boiteBottom;
-    const newWidth = Math.max(DEFAULT_WIDTH, newRight - newX);
-    const newHeight = Math.max(DEFAULT_HEIGHT, newBottom - newY);
+    // Étend ou rétrécit la boîte pour suivre les enfants, avec planchers :
+    //   width ≥ max(DEFAULT_WIDTH, labelFloorW, childSpan)
+    //   height ≥ DEFAULT_HEIGHT
+    // Position : newX = min(boite.x, childMinX) ; newY = min(boite.y, childMinY) si enfants débordent.
+    const newX = childMinX < boite.x - TOLERANCE ? childMinX : Math.min(boite.x, childMinX + TOLERANCE);
+    const newY = childMinY < boite.y - TOLERANCE ? childMinY : Math.min(boite.y, childMinY + TOLERANCE);
+    const childSpanW = childMaxX - newX;
+    const childSpanH = childMaxY - newY;
+    const newWidth = Math.max(DEFAULT_WIDTH, labelFloorW, childSpanW);
+    const newHeight = Math.max(DEFAULT_HEIGHT, childSpanH);
 
     if (newWidth !== boite.width || newHeight !== boite.height || newX !== boite.x || newY !== boite.y) {
       changed = true;
@@ -302,8 +374,12 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
     }
 
     case 'EDIT_PIECE': {
-      // I5: Guard — prevent overwriting type and id via changes
-      const { type: _t, id: _i, ...safeChanges } = action.changes as any;
+      // Whitelist par type + validation Number.isFinite sur les champs numériques.
+      // Protège contre parseFloat('1e400') === Infinity et injection de parentId/locked.
+      const target = state.pieces.find(p => p.id === action.id);
+      if (!target) return state;
+      const safeChanges = sanitizeEditChanges(target, action.changes);
+      if (Object.keys(safeChanges).length === 0) return state;
       let newState = {
         ...state,
         pieces: state.pieces.map(p =>
@@ -349,7 +425,8 @@ function reduceModelisation(state: ModelisationState, action: Action): Modelisat
         }),
       };
       // C3: Recalculate reference unit after deletion (may allow restoration)
-      return autoRestoreReference(filteredState);
+      // + rétrécir les boîtes dont on a retiré un jeton (2.10).
+      return autoResizeBoite(autoRestoreReference(filteredState));
     }
 
     case 'HIGHLIGHT_ADD':

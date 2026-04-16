@@ -6,13 +6,14 @@ import { useState, useCallback, useRef, useEffect } from 'react';
  * Arrow keys cycle through pieces, Enter activates (select), Delete removes.
  */
 export interface RovingTabindexResult {
-  /** ID of the currently focused piece (for tabIndex assignment) */
   focusedId: string | null;
-  /** Call when a piece receives focus via click — syncs roving state */
   onPieceFocus: (id: string) => void;
-  /** Keyboard handler to attach to the SVG container */
   onKeyDown: (e: React.KeyboardEvent) => void;
+  /** ID awaiting confirmation via second Delete/Backspace press (3.5s window). */
+  deleteArmedId: string | null;
 }
+
+const DELETE_CONFIRM_WINDOW_MS = 3500;
 
 export function useRovingTabindex(
   pieceIds: string[],
@@ -21,9 +22,14 @@ export function useRovingTabindex(
     onSelect: (id: string) => void;
     onDelete: (id: string) => void;
     onMovePiece: (id: string, dx: number, dy: number) => void;
+    /** Fired on first Delete/Backspace press to show "Appuie encore pour effacer". */
+    onDeleteArmed?: (id: string) => void;
+    /** Fired when the 3.5s window expires or action is cancelled. */
+    onDeleteDisarmed?: () => void;
   },
 ): RovingTabindexResult {
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [deleteArmedId, setDeleteArmedId] = useState<string | null>(null);
   const pieceIdsRef = useRef(pieceIds);
   pieceIdsRef.current = pieceIds;
 
@@ -33,6 +39,24 @@ export function useRovingTabindex(
       setFocusedId(pieceIds.length > 0 ? pieceIds[0] : null);
     }
   }, [pieceIds, focusedId]);
+
+  // If armed piece is removed, disarm
+  useEffect(() => {
+    if (deleteArmedId && !pieceIds.includes(deleteArmedId)) {
+      setDeleteArmedId(null);
+      callbacks.onDeleteDisarmed?.();
+    }
+  }, [pieceIds, deleteArmedId, callbacks]);
+
+  // Auto-disarm after timeout
+  useEffect(() => {
+    if (!deleteArmedId) return;
+    const timer = setTimeout(() => {
+      setDeleteArmedId(null);
+      callbacks.onDeleteDisarmed?.();
+    }, DELETE_CONFIRM_WINDOW_MS);
+    return () => clearTimeout(timer);
+  }, [deleteArmedId, callbacks]);
 
   // Move DOM focus to the focused piece element (accessibility: screen readers)
   useEffect(() => {
@@ -58,10 +82,8 @@ export function useRovingTabindex(
       case 'ArrowDown': {
         e.preventDefault();
         if (selectedPieceId && focusedId === selectedPieceId) {
-          // Move selected piece
           callbacks.onMovePiece(selectedPieceId, e.key === 'ArrowRight' ? GRID_STEP : 0, e.key === 'ArrowDown' ? GRID_STEP : 0);
         } else {
-          // Navigate to next piece
           const next = (currentIndex + 1) % ids.length;
           setFocusedId(ids[next]);
         }
@@ -99,17 +121,26 @@ export function useRovingTabindex(
       case 'Delete':
       case 'Backspace': {
         e.preventDefault();
-        if (focusedId) {
+        if (!focusedId) break;
+        // Two-step: first press arms; second press within 3.5s actually deletes
+        if (deleteArmedId === focusedId) {
+          setDeleteArmedId(null);
+          callbacks.onDeleteDisarmed?.();
           callbacks.onDelete(focusedId);
+        } else {
+          setDeleteArmedId(focusedId);
+          callbacks.onDeleteArmed?.(focusedId);
         }
         break;
       }
       case 'Escape': {
-        // Handled by Canvas already
+        if (deleteArmedId) {
+          setDeleteArmedId(null);
+          callbacks.onDeleteDisarmed?.();
+        }
         break;
       }
       case 'Tab': {
-        // Let Tab move focus to next piece (roving)
         if (!e.shiftKey && currentIndex < ids.length - 1) {
           e.preventDefault();
           setFocusedId(ids[currentIndex + 1]);
@@ -117,11 +148,10 @@ export function useRovingTabindex(
           e.preventDefault();
           setFocusedId(ids[currentIndex - 1]);
         }
-        // If at boundary, let Tab escape to next focusable element
         break;
       }
     }
-  }, [focusedId, selectedPieceId, callbacks]);
+  }, [focusedId, selectedPieceId, callbacks, deleteArmedId]);
 
-  return { focusedId, onPieceFocus, onKeyDown };
+  return { focusedId, onPieceFocus, onKeyDown, deleteArmedId };
 }

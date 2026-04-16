@@ -4,6 +4,9 @@ import { MAX_SLOTS } from '../model/slots';
 import { UI_PRIMARY, UI_BORDER, UI_TEXT_SECONDARY, UI_TEXT_PRIMARY, UI_DESTRUCTIVE } from '../config/theme';
 import { MIN_BUTTON_SIZE_PX } from '../config/accessibility';
 import { useModalBehavior } from '../hooks/useModalBehavior';
+import { MAX_SLOT_NAME_LENGTH } from '../hooks/useSlotManager';
+
+const NAME_COUNTER_THRESHOLD = 50;
 
 interface SlotManagerProps {
   registry: SlotRegistry;
@@ -14,6 +17,8 @@ interface SlotManagerProps {
   onRenameSlot: (id: string, name: string) => void;
   onExportSlot?: (id: string) => void;
   onClose: () => void;
+  isSwitching?: boolean;
+  switchingTargetId?: string | null;
 }
 
 export function SlotManager({
@@ -25,6 +30,8 @@ export function SlotManager({
   onRenameSlot,
   onExportSlot,
   onClose,
+  isSwitching = false,
+  switchingTargetId = null,
 }: SlotManagerProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -51,7 +58,7 @@ export function SlotManager({
 
   const commitRename = () => {
     if (editingId && editName.trim()) {
-      onRenameSlot(editingId, editName.trim());
+      onRenameSlot(editingId, editName.trim().slice(0, MAX_SLOT_NAME_LENGTH));
     }
     setEditingId(null);
     setEditName('');
@@ -147,6 +154,7 @@ export function SlotManager({
               const isEditing = editingId === slot.id;
               const isDeleting = deletingId === slot.id;
 
+              const isSwitchingThis = isSwitching && switchingTargetId === slot.id;
               return (
                 <div
                   key={slot.id}
@@ -157,31 +165,41 @@ export function SlotManager({
                     borderRadius: 8,
                     border: `2px solid ${isActive ? UI_PRIMARY : UI_BORDER}`,
                     background: isActive ? '#F5F0FC' : '#fff',
+                    opacity: isSwitching && !isSwitchingThis ? 0.6 : 1,
+                    cursor: isSwitchingThis ? 'wait' : undefined,
+                    transition: 'opacity 120ms',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32 }}>
                     {/* Slot name (editable) */}
                     {isEditing ? (
-                      <input
-                        autoFocus
-                        value={editName}
-                        onChange={e => setEditName(e.target.value)}
-                        onBlur={commitRename}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') commitRename();
-                          if (e.key === 'Escape') { setEditingId(null); setEditName(''); }
-                        }}
-                        style={{
-                          flex: 1,
-                          fontSize: 14,
-                          fontWeight: 600,
-                          padding: '4px 8px',
-                          borderRadius: 4,
-                          border: `1px solid ${UI_PRIMARY}`,
-                          outline: 'none',
-                          color: UI_TEXT_PRIMARY,
-                        }}
-                      />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <input
+                          autoFocus
+                          value={editName}
+                          maxLength={MAX_SLOT_NAME_LENGTH}
+                          onChange={e => setEditName(e.target.value)}
+                          onBlur={commitRename}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') commitRename();
+                            if (e.key === 'Escape') { setEditingId(null); setEditName(''); }
+                          }}
+                          style={{
+                            fontSize: 14,
+                            fontWeight: 600,
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            border: `1px solid ${UI_PRIMARY}`,
+                            outline: 'none',
+                            color: UI_TEXT_PRIMARY,
+                          }}
+                        />
+                        {editName.length >= NAME_COUNTER_THRESHOLD && (
+                          <span style={{ fontSize: 11, color: UI_TEXT_SECONDARY }}>
+                            {MAX_SLOT_NAME_LENGTH - editName.length} caractères restants
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span
                         style={{

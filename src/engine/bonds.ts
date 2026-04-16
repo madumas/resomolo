@@ -132,6 +132,11 @@ export function filterBondsOnRangeChange(bonds: Bond[], newMin: number, newMax: 
   return bonds.filter(b => b.from >= newMin && b.from <= newMax && b.to >= newMin && b.to <= newMax);
 }
 
+/** Filtre les markers explicites qui tomberaient hors des nouvelles bornes après un changement de range. */
+export function filterMarkersOnRangeChange(markers: number[], newMin: number, newMax: number): number[] {
+  return markers.filter(v => v >= newMin && v <= newMax);
+}
+
 export function snapBondsToStep(bonds: Bond[], newStep: number, min: number, max: number, toolbarMode: 'essentiel' | 'complet'): Bond[] {
   return bonds.map(b => {
     const from = snapToStep(b.from, min, max, newStep);

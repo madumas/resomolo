@@ -3,6 +3,7 @@ import type { UndoManager } from './types';
 import type { SlotRegistry } from './slots';
 import { createEmptyRegistry, createSlotMetadata } from './slots';
 import { migrateUndoManager } from './persistence';
+import { STORAGE_VERSION, migrate, extractVersion, isFutureVersion } from './migrations';
 
 const REGISTRY_KEY = 'resomolo_registry';
 const slotKey = (id: string) => `resomolo_slot_${id}`;
@@ -51,7 +52,7 @@ export async function loadRegistry(): Promise<SlotRegistry> {
 }
 
 export async function saveSlotData(slotId: string, undoManager: UndoManager): Promise<void> {
-  const json = JSON.stringify({ version: 1, data: undoManager });
+  const json = JSON.stringify({ version: STORAGE_VERSION, data: undoManager });
   lsSet(lsSlotKey(slotId), json);
   try {
     await set(slotKey(slotId), json);
@@ -60,23 +61,36 @@ export async function saveSlotData(slotId: string, undoManager: UndoManager): Pr
   }
 }
 
+function parseSlotPayload(raw: string): UndoManager | null {
+  try {
+    const parsed = JSON.parse(raw);
+    const version = extractVersion(parsed);
+    if (isFutureVersion(version)) {
+      console.warn(`RésoMolo: slot payload v${version} is newer than app v${STORAGE_VERSION} — ignoring`);
+      return null;
+    }
+    const payload = (parsed && typeof parsed.version === 'number') ? parsed.data : parsed;
+    if (!payload?.current?.pieces) return null;
+    const migrated = migrate(version, STORAGE_VERSION, payload) as UndoManager;
+    return migrateUndoManager(migrated) as UndoManager;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadSlotData(slotId: string): Promise<UndoManager | null> {
   try {
     const raw = await get<string>(slotKey(slotId)) || await get<string>(legacySlotKey(slotId));
     if (raw) {
-      const parsed = JSON.parse(raw);
-      const um = parsed.data || parsed;
-      return migrateUndoManager(um) as UndoManager;
+      const um = parseSlotPayload(raw);
+      if (um) return um;
     }
   } catch { /* IDB failed */ }
   // Fallback: localStorage mirror
   const lsRaw = lsGet(lsSlotKey(slotId));
   if (lsRaw) {
-    try {
-      const parsed = JSON.parse(lsRaw);
-      const um = parsed.data || parsed;
-      return migrateUndoManager(um) as UndoManager;
-    } catch { /* ignore */ }
+    const um = parseSlotPayload(lsRaw);
+    if (um) return um;
   }
   return null;
 }

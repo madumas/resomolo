@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { importModelisation } from '../persistence';
+import { STORAGE_VERSION } from '../migrations';
 
 describe('importModelisation', () => {
   test('parses valid file', async () => {
@@ -15,20 +16,21 @@ describe('importModelisation', () => {
     const file = new File([JSON.stringify(data)], 'test.resomolo', {
       type: 'application/json',
     });
-    const result = await importModelisation(file);
-    expect(result).not.toBeNull();
-    expect(result!.probleme).toBe('Test problem');
-    expect(result!.problemeReadOnly).toBe(true);
-    expect(result!.problemeHighlights).toEqual([]);
-    expect(result!.referenceUnitMm).toBe(60);
-    expect(result!.pieces).toEqual([]);
-    expect(result!.availablePieces).toBeNull();
+    const { state } = await importModelisation(file);
+    expect(state).not.toBeNull();
+    expect(state!.probleme).toBe('Test problem');
+    expect(state!.problemeReadOnly).toBe(true);
+    expect(state!.problemeHighlights).toEqual([]);
+    expect(state!.referenceUnitMm).toBe(60);
+    expect(state!.pieces).toEqual([]);
+    expect(state!.availablePieces).toBeNull();
   });
 
   test('returns null for invalid JSON', async () => {
     const file = new File(['not json'], 'bad.resomolo');
     const result = await importModelisation(file);
-    expect(result).toBeNull();
+    expect(result.state).toBeNull();
+    expect(result.reason).toBe('invalid-file');
   });
 
   test('returns null for missing pieces', async () => {
@@ -37,7 +39,8 @@ describe('importModelisation', () => {
       'no-pieces.resomolo',
     );
     const result = await importModelisation(file);
-    expect(result).toBeNull();
+    expect(result.state).toBeNull();
+    expect(result.reason).toBe('invalid-file');
   });
 
   test('returns null for missing version', async () => {
@@ -46,19 +49,29 @@ describe('importModelisation', () => {
       'no-version.resomolo',
     );
     const result = await importModelisation(file);
-    expect(result).toBeNull();
+    expect(result.state).toBeNull();
+    expect(result.reason).toBe('invalid-file');
+  });
+
+  test('rejects future version', async () => {
+    const data = { version: STORAGE_VERSION + 10, pieces: [] };
+    const file = new File([JSON.stringify(data)], 'future.resomolo');
+    const result = await importModelisation(file);
+    expect(result.state).toBeNull();
+    expect(result.reason).toBe('future-version');
+    expect(result.foundVersion).toBe(STORAGE_VERSION + 10);
   });
 
   test('fills defaults for missing optional fields', async () => {
     const data = { version: 1, pieces: [] };
     const file = new File([JSON.stringify(data)], 'minimal.resomolo');
-    const result = await importModelisation(file);
-    expect(result).not.toBeNull();
-    expect(result!.referenceUnitMm).toBe(60);
-    expect(result!.probleme).toBe('');
-    expect(result!.problemeReadOnly).toBe(false);
-    expect(result!.problemeHighlights).toEqual([]);
-    expect(result!.availablePieces).toBeNull();
+    const { state } = await importModelisation(file);
+    expect(state).not.toBeNull();
+    expect(state!.referenceUnitMm).toBe(60);
+    expect(state!.probleme).toBe('');
+    expect(state!.problemeReadOnly).toBe(false);
+    expect(state!.problemeHighlights).toEqual([]);
+    expect(state!.availablePieces).toBeNull();
   });
 
   test('preserves pieces from file', async () => {
@@ -73,10 +86,10 @@ describe('importModelisation', () => {
     };
     const data = { version: 1, pieces: [fakePiece] };
     const file = new File([JSON.stringify(data)], 'with-piece.resomolo');
-    const result = await importModelisation(file);
-    expect(result).not.toBeNull();
-    expect(result!.pieces).toHaveLength(1);
-    expect(result!.pieces[0].id).toBe('p1');
+    const { state } = await importModelisation(file);
+    expect(state).not.toBeNull();
+    expect(state!.pieces).toHaveLength(1);
+    expect(state!.pieces[0].id).toBe('p1');
   });
 
   test('migrates droiteNumerique without bonds field', async () => {
@@ -92,10 +105,10 @@ describe('importModelisation', () => {
     };
     const data = { version: 1, pieces: [droite] };
     const file = new File([JSON.stringify(data)], 'droite-old.resomolo');
-    const result = await importModelisation(file);
-    expect(result).not.toBeNull();
-    expect((result!.pieces[0] as any).bonds).toEqual([]);
-    expect((result!.pieces[0] as any).markers).toEqual([3, 7]);
+    const { state } = await importModelisation(file);
+    expect(state).not.toBeNull();
+    expect((state!.pieces[0] as any).bonds).toEqual([]);
+    expect((state!.pieces[0] as any).markers).toEqual([3, 7]);
   });
 
   test('preserves droiteNumerique with bonds field', async () => {
@@ -111,9 +124,9 @@ describe('importModelisation', () => {
     };
     const data = { version: 1, pieces: [droite] };
     const file = new File([JSON.stringify(data)], 'droite-bonds.resomolo');
-    const result = await importModelisation(file);
-    expect(result).not.toBeNull();
-    expect((result!.pieces[0] as any).bonds).toHaveLength(2);
-    expect((result!.pieces[0] as any).bonds[0].label).toBe('4');
+    const { state } = await importModelisation(file);
+    expect(state).not.toBeNull();
+    expect((state!.pieces[0] as any).bonds).toHaveLength(2);
+    expect((state!.pieces[0] as any).bonds[0].label).toBe('4');
   });
 });
