@@ -4152,8 +4152,8 @@ test.describe('Visual audit — full flow', () => {
     await autreBtn.click();
     await page.waitForTimeout(300);
 
-    // Vérifier que l'input number apparaît
-    const input = page.locator('[data-testid="context-actions"] input[type="number"]');
+    // Vérifier que l'input décimal apparaît (type=text + inputMode=decimal pour virgule FR-CA)
+    const input = page.locator('[data-testid="context-actions"] input[inputmode="decimal"]');
     await expect(input).toBeVisible({ timeout: 2000 });
 
     // Saisir -5
@@ -4916,10 +4916,10 @@ test.describe('Visual audit — full flow', () => {
 
     await ctx.screenshot({ path: shot('442-diagramme-bandes-donnees-submenu.png') });
 
-    // Edit first category label and value
-    const textInputs = ctx.locator('input[type="text"]');
-    const numInputs = ctx.locator('input[type="number"]');
-    await textInputs.first().fill('Chats');
+    // Edit first category label and value (inputs décimaux FR-CA = type=text + inputMode=decimal)
+    const labelInputs = ctx.locator('input:not([inputmode="decimal"])');
+    const numInputs = ctx.locator('input[inputmode="decimal"]');
+    await labelInputs.first().fill('Chats');
     await numInputs.first().fill('7');
     await page.waitForTimeout(200);
 
@@ -5056,14 +5056,14 @@ test.describe('Visual audit — full flow', () => {
 
     await ctx.screenshot({ path: shot('462-ligne-brisee-points-submenu.png') });
 
-    // Edit point labels
-    const textInputs = ctx.locator('input[type="text"]');
-    await textInputs.nth(0).fill('Lundi');
-    await textInputs.nth(1).fill('Mardi');
-    await textInputs.nth(2).fill('Mercredi');
+    // Edit point labels (inputs non-numériques uniquement)
+    const labelInputs = ctx.locator('input:not([inputmode="decimal"])');
+    await labelInputs.nth(0).fill('Lundi');
+    await labelInputs.nth(1).fill('Mardi');
+    await labelInputs.nth(2).fill('Mercredi');
 
-    // Edit values
-    const numInputs = ctx.locator('input[type="number"]');
+    // Edit values (inputs décimaux FR-CA)
+    const numInputs = ctx.locator('input[inputmode="decimal"]');
     await numInputs.nth(0).fill('12');
     await numInputs.nth(1).fill('8');
     await numInputs.nth(2).fill('15');

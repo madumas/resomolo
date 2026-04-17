@@ -177,13 +177,18 @@ export function ContextActions({
   const pieceBounds = getPieceBoundsScreen(piece, svgElement, referenceUnitMm, canvasRect);
   if (!pieceBounds) return null;
 
-  const MAX_ACTIONS_WIDTH = Math.min(380, canvasRect.width - 16);
+  const viewportW = typeof window !== 'undefined' ? window.innerWidth : canvasRect.width;
+  const MAX_ACTIONS_WIDTH = Math.min(380, viewportW - 16);
 
   // Position: center horizontally on piece, above or below — pick side with more space.
   const halfMax = MAX_ACTIONS_WIDTH / 2;
   // Offset away from dominant hand so panel isn't under the user's finger/hand
   const handOffset = dominantHand === 'left' ? 30 : -30;
-  const anchorX = Math.max(halfMax + 8, Math.min(pieceBounds.centerX + handOffset, canvasRect.width - halfMax - 8));
+  // Clamp against viewport (screen) bounds, not just canvasRect — on narrow tablets
+  // the canvas offset can push the translated panel past the viewport edge.
+  const viewportMinAnchor = (halfMax + 8) - canvasRect.left;
+  const viewportMaxAnchor = (viewportW - canvasRect.left) - halfMax - 8;
+  const anchorX = Math.max(viewportMinAnchor, Math.min(pieceBounds.centerX + handOffset, viewportMaxAnchor));
   const spaceAbove = pieceBounds.top - 8;
   const spaceBelow = canvasRect.height - pieceBounds.bottom - 8;
   const placeAbove = spaceAbove > spaceBelow && spaceAbove >= 120;

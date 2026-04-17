@@ -168,8 +168,11 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
   useEffect(() => {
     if (!openGroup) return;
     const handler = (e: PointerEvent) => {
-      // Close if click is outside the toolbar entirely
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      // Popover is rendered via createPortal outside the toolbar DOM tree,
+      // so check for role="menu" ancestor before treating the click as outside.
+      if (target instanceof Element && target.closest('[role="menu"]')) return;
+      if (toolbarRef.current && !toolbarRef.current.contains(target)) {
         setOpenGroup(null);
       }
     };
@@ -216,7 +219,7 @@ export function Toolbar({ activeTool, toolbarMode, onSelectTool, onModeChange, o
         <button
           onClick={() => setShowAbout(true)}
           aria-label="À propos de RésoMolo"
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, display: 'flex', alignItems: 'center' }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', minHeight: 44, minWidth: 44 }}
         >
           <img src="/favicon.svg" alt="" width={28} height={28} style={{ marginRight: 4 }} />
           <Logo height={32} />
