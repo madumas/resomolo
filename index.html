@@ -56,9 +56,76 @@
     <meta name="theme-color" content="#7028e0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "RésoMolo",
+        "alternateName": "RésoMolo — Modélisation de problèmes mathématiques",
+        "url": "https://resomolo.ca/",
+        "description": "Outil web gratuit de modélisation visuelle de problèmes mathématiques pour les élèves du primaire au Québec. Manipulation de jetons, barres et boîtes, sans crayon. Accessible aux enfants avec trouble développemental de la coordination (TDC) et dyslexie.",
+        "applicationCategory": "EducationalApplication",
+        "applicationSubCategory": "Mathematics",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires JavaScript. Requires modern browser.",
+        "inLanguage": "fr-CA",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "CAD"
+        },
+        "audience": {
+          "@type": "EducationalAudience",
+          "educationalRole": "student"
+        },
+        "typicalAgeRange": "6-12",
+        "educationalUse": ["Problem Solving", "Visual Modeling"],
+        "learningResourceType": "Interactive Tool",
+        "featureList": [
+          "Manipulation de jetons, barres et boîtes",
+          "Schémas parties-tout et comparaison",
+          "Droite numérique avec bonds",
+          "Calcul en colonnes",
+          "Polices accessibles (Atkinson Hyperlegible, OpenDyslexic)",
+          "Aucun compte requis, données locales"
+        ],
+        "publisher": {
+          "@type": "Organization",
+          "name": "RésoMolo",
+          "url": "https://resomolo.ca/"
+        }
+      }
+    </script>
   </head>
   <body>
-    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">RésoMolo — Modélisation de problèmes mathématiques</h1>
+    <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">
+      <h1>RésoMolo — Modélisation de problèmes mathématiques</h1>
+      <p>RésoMolo est un outil web gratuit de modélisation visuelle de problèmes mathématiques pour les élèves du primaire au Québec. L'élève représente un problème avec des jetons, des barres et des boîtes, sans crayon ni papier. Conçu pour être accessible aux enfants avec un trouble développemental de la coordination (TDC) ou une dyslexie.</p>
+      <h2>Fonctionnalités</h2>
+      <ul>
+        <li>Pièces manipulables : jetons, barres, boîtes, schémas parties-tout et de comparaison</li>
+        <li>Droite numérique avec bonds, calcul en colonnes, tableaux de numération</li>
+        <li>Vocabulaire aligné sur le PFEQ (Programme de formation de l'école québécoise)</li>
+        <li>Polices accessibles : Atkinson Hyperlegible pour la basse vision, OpenDyslexic pour la dyslexie</li>
+        <li>Fonctionne hors ligne, aucun compte requis, données stockées localement</li>
+        <li>Partage de problèmes par URL ou code QR</li>
+      </ul>
+      <h2>Public cible</h2>
+      <p>Élèves du primaire de 6 à 12 ans, enseignants, orthopédagogues et parents du Québec. Aucune installation requise : l'outil fonctionne dans tout navigateur moderne.</p>
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="/docs/">Index de la documentation</a></li>
+          <li><a href="/docs/fiche-descriptive">Fiche descriptive</a> — présentation générale de l'outil</li>
+          <li><a href="/docs/guide-enseignant">Guide de l'enseignant</a> — utilisation en classe</li>
+          <li><a href="/docs/note-parent">Note aux parents</a> — accompagner son enfant</li>
+          <li><a href="/docs/catalogue-pieces">Catalogue des pièces</a> — inventaire des outils manipulables</li>
+          <li><a href="/docs/aide-memoire-enfant">Aide-mémoire pour l'enfant</a> — étapes de résolution</li>
+        </ul>
+      </nav>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
